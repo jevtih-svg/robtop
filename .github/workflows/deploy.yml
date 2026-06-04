@@ -1,0 +1,41 @@
+name: Deploy RobTop to Hostinger
+
+# Релиз = коммит в ветку main (авто-деплой)
+# ИЛИ кнопка «Run workflow» во вкладке Actions на GitHub.
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-robtop
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Upload to Hostinger (FTPS)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via FTPS
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server:   ${{ secrets.FTP_SERVER }}      # напр. ftp.tilley.live или IP
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          # Папка на сервере, КУДА кладём сайт (должна заканчиваться на /).
+          # напр. /domains/apps.tilley.live/public_html/robtop/
+          server-dir: ${{ secrets.FTP_REMOTE_DIR }}
+          # Заливаем только содержимое app/ (сам сайт). Документы и схема не публикуются.
+          local-dir: ./app/
+          # Эти файлы не трогаем на сервере (там лежит боевой config.php).
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/config.php
+            **/.DS_Store
+            **/Thumbs.db

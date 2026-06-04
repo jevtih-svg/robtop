@@ -1,0 +1,13 @@
+# Боевой конфиг с паролями БД — НИКОГДА не коммитим
+config.php
+app/config.php
+**/config.php
+
+# Системное
+.DS_Store
+Thumbs.db
+*.log
+node_modules/
+
+# Состояние FTP-деплоя (создаётся экшеном на сервере)
+.ftp-deploy-sync-state.json
