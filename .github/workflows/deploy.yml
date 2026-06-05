@@ -11,6 +11,11 @@ concurrency:
   group: deploy-robtop
   cancel-in-progress: true
 
+# Node.js 20 в GitHub Actions устарел. Форсируем Node 24 для JS-экшенов
+# (checkout, FTP-Deploy), пока у них нет собственных релизов на Node 24.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   deploy:
     name: Upload to Hostinger (FTPS)
