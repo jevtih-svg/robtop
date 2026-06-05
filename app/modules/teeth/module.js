@@ -46,8 +46,6 @@
   function trackSrc(i){ return MUSIC_DIR+encodeURIComponent(PLAYLIST[i]+".mp3"); }
   function trackTitle(i){ return String(PLAYLIST[i]||"").replace(/^ES_/,"").replace(/\s+$/,"").trim() || ("Трек "+(i+1)); }
 
-  var PLAY_IC='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>';
-  var PAUSE_IC='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>';
   var SKIP_IC='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5.5v13l9-6.5zM16.5 5H19v14h-2.5z"/></svg>';
 
   var sdk=null, root=null, E={}, sessions=[], meta=null, metaId=null;
@@ -78,39 +76,27 @@
     return { done:done, skip:skip, points:done*10+manual, streak:streak(dates) };
   }
 
-  /* ----- звук (спокойный пад) ----- */
-  function startAudio(){
-    try{
-      var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
-      audio=new AC(); if(audio.state==="suspended") audio.resume();
-      var g=audio.createGain(); g.gain.value=0.05; g.connect(audio.destination);
-      audio._osc=[196,261.63,329.63].map(function(f){ var o=audio.createOscillator(); o.type="sine"; o.frequency.value=f; var og=audio.createGain(); og.gain.value=0.5; o.connect(og); og.connect(g); o.start(); return o; });
-    }catch(e){}
-  }
-  function stopAudio(){ try{ if(audio){ if(audio._osc) audio._osc.forEach(function(o){ try{o.stop();}catch(e){} }); audio.close(); audio=null; } }catch(e){} }
-
-  /* ----- музыка-награда (нативный HTML5 Audio, дружелюбно к мобильным) ----- */
+  /* ----- музыка во время чистки (нативный HTML5 Audio, дружелюбно к мобильным) -----
+     Трек из плейлиста играет все 2 минуты чистки вместо звука-пада.
+     Старт идёт из обработчика клика по «Начать чистку» — это жест пользователя,
+     поэтому play() разрешён даже на мобильных. */
   function ensurePlayer(){
-    if(!player){ player=new Audio(); player.preload="none"; player.addEventListener("ended", onTrackEnded); }
+    if(!player){ player=new Audio(); player.preload="none"; player.loop=false; }
     return player;
   }
-  function onTrackEnded(){ playing=false; updatePlayBtn(); }
   function stopMusic(){ try{ if(player){ player.pause(); } }catch(e){} playing=false; }
-  function updatePlayBtn(){ if(E.playBtn){ E.playBtn.innerHTML=playing?PAUSE_IC:PLAY_IC; E.playBtn.setAttribute("aria-label", playing?"Пауза":"Играть"); } }
   function setTrack(i, autoplay){
     curTrack=((i%PLAYLIST.length)+PLAYLIST.length)%PLAYLIST.length;
     ensurePlayer(); player.src=trackSrc(curTrack); playing=false;
-    if(E.trackName) E.trackName.textContent=trackTitle(curTrack);
-    if(E.trackNum) E.trackNum.textContent="Трек "+(curTrack+1)+" из "+PLAYLIST.length;
-    if(autoplay) playTrack(); else updatePlayBtn();
+    if(E.npName) E.npName.textContent=trackTitle(curTrack);
+    if(autoplay) playTrack();
   }
   function playTrack(){
     ensurePlayer();
     var pr=player.play();
-    if(pr&&pr.then){ pr.then(function(){ playing=true; updatePlayBtn(); }).catch(function(){ playing=false; updatePlayBtn(); sdk.ui.toast("Нажми ещё раз, чтобы включить музыку"); }); }
-    else { playing=true; updatePlayBtn(); }
+    if(pr&&pr.then){ pr.then(function(){ playing=true; }).catch(function(){ playing=false; sdk.ui.toast("Нажми «Начать чистку» ещё раз, чтобы включить музыку"); }); }
+    else { playing=true; }
   }
-  function togglePlay(){ if(playing){ player.pause(); playing=false; updatePlayBtn(); } else { playTrack(); } sdk.ui.haptics(8); }
   /* индекс трека для ЭТОЙ чистки + куда сдвинуть указатель для следующей */
   function pickTrackForSession(){
     var idx, len=PLAYLIST.length;
@@ -145,30 +131,16 @@
   function renderStageRunning(){
     E.stage.innerHTML='<div class="tt-ring-wrap">'+ringSVG(0)
       +'<div class="tt-center"><div class="tt-count" id="ttCount">'+fmtTime(DURATION)+'</div><div class="tt-state">Чистим зубки…</div></div></div>'
+      +'<div class="tt-nowplaying"><span class="tt-np-label">🎵</span><span class="tt-np-name" id="ttNpName"></span>'
+        +'<button class="tt-np-skip" id="ttNpSkip" aria-label="Другой трек">'+SKIP_IC+'</button></div>'
       +'<button class="tt-cancel" id="ttCancel">Отменить</button>';
-    E.prog=E.stage.querySelector("#ttProg"); E.count=E.stage.querySelector("#ttCount");
+    E.prog=E.stage.querySelector("#ttProg"); E.count=E.stage.querySelector("#ttCount"); E.npName=E.stage.querySelector("#ttNpName");
+    E.stage.querySelector("#ttNpSkip").onclick=skipTrack;
     E.stage.querySelector("#ttCancel").onclick=cancel;
   }
-  function renderStageReward(idx){
-    curTrack=((idx%PLAYLIST.length)+PLAYLIST.length)%PLAYLIST.length;
-    E.stage.innerHTML='<div class="tt-reward">'
-      +'<div class="tt-reward-emoji">🎉</div>'
-      +'<div class="tt-reward-title">Молодец! Чистка завершена</div>'
-      +'<div class="tt-reward-sub">Включи музыку — это твоя награда 🎵</div>'
-      +'<div class="tt-player">'
-        +'<button class="tt-play" id="ttPlay" aria-label="Играть">'+PLAY_IC+'</button>'
-        +'<div class="tt-player-info"><div class="tt-track-num" id="ttTrackNum"></div><div class="tt-track-name" id="ttTrackName"></div></div>'
-      +'</div>'
-      +'<button class="tt-skip" id="ttSkip">'+SKIP_IC+'<span>Другой трек</span></button>'
-      +'<button class="tt-done" id="ttDone">Готово</button>';
-    E.playBtn=E.stage.querySelector("#ttPlay"); E.trackName=E.stage.querySelector("#ttTrackName"); E.trackNum=E.stage.querySelector("#ttTrackNum");
-    E.playBtn.onclick=togglePlay;
-    E.stage.querySelector("#ttSkip").onclick=skipTrack;
-    E.stage.querySelector("#ttDone").onclick=function(){ stopMusic(); renderStageIdle(); };
-    setTrack(curTrack, false);
-  }
   function start(){
-    if(running) return; stopMusic(); running=true; remaining=DURATION; renderStageRunning(); startAudio();
+    if(running) return; running=true; remaining=DURATION; renderStageRunning();
+    curTrack=pickTrackForSession(); setTrack(curTrack, true);
     sdk.ui.haptics(10); sdk.events.track("started",{});
     var startMs=Date.now();
     timerId=setInterval(function(){
@@ -179,13 +151,13 @@
       if(remaining<=0) finish();
     },200);
   }
-  function stopTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } stopAudio(); running=false; }
+  function stopTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } stopMusic(); running=false; }
   function finish(){
     stopTimer();
     sdk.ui.confetti(); sdk.ui.chime(); sdk.ui.haptics([25,40,25,40,70]);
     sdk.ui.toast("Отлично! Чистка завершена 🎉");
     sdk.points.add(10,"teeth");
-    sdk.data.create("sessions",{date:todayStr(),time:nowHM(),status:"done",points:10}).then(function(){ return reloadSessions(); }).then(function(){ renderStageReward(pickTrackForSession()); refresh(); });
+    sdk.data.create("sessions",{date:todayStr(),time:nowHM(),status:"done",points:10}).then(function(){ return reloadSessions(); }).then(function(){ renderStageIdle(); refresh(); });
   }
   function cancel(){
     if(!running) return;
