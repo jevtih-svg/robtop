@@ -18,6 +18,9 @@
   background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)}
 .rev-row .w{flex:1;min-width:0;color:#e7eeff;font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rev-row .w small{display:block;color:#9fb0d6;font-weight:600;font-size:12.5px;margin-top:2px}
+.rev-row .say{flex:none;width:34px;height:34px;border-radius:10px;border:1px solid rgba(25,227,255,.5);
+  background:rgba(25,227,255,.12);color:#bdeeff;cursor:pointer;display:grid;place-items:center;font-size:15px}
+.rev-row .say:active{transform:scale(.92)}
 .rev-row .del{flex:none;width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,77,109,.5);
   background:rgba(255,77,109,.14);color:#ffb3c0;cursor:pointer;display:grid;place-items:center;font-size:16px}
 .rev-row .del:active{transform:scale(.92)}

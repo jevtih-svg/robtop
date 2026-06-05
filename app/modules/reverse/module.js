@@ -9,6 +9,20 @@
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
   function reverseStr(s){ return Array.from(String(s||"")).reverse().join(""); }
 
+  /* ----- озвучка (Web Speech API) ----- */
+  function ruVoice(){ try{ var vs=window.speechSynthesis.getVoices()||[]; for(var i=0;i<vs.length;i++){ if(/^ru/i.test(vs[i].lang)) return vs[i]; } }catch(e){} return null; }
+  function speak(text){
+    text=(text||"").trim(); if(!text){ sdk.ui.toast("Сначала введи слово"); return; }
+    if(!("speechSynthesis" in window) || typeof window.SpeechSynthesisUtterance==="undefined"){ sdk.ui.toast("Озвучка не поддерживается на этом устройстве"); return; }
+    try{
+      window.speechSynthesis.cancel();
+      var u=new window.SpeechSynthesisUtterance(text);
+      u.lang="ru-RU"; u.rate=0.85; u.pitch=1.05;
+      var v=ruVoice(); if(v) u.voice=v;
+      window.speechSynthesis.speak(u); sdk.ui.haptics(6);
+    }catch(e){ sdk.ui.toast("Не удалось озвучить"); }
+  }
+
   function hud(){ sdk.ui.hud({ left:'Слова <b>наоборот</b>', cNum:items.length, cLbl:"в истории", rNum:items.length, rLbl:"слов" }); }
 
   function renderOut(){
@@ -20,7 +34,9 @@
     if(!items.length){ E.list.innerHTML='<div style="color:#6f80a6;font-weight:600;font-size:14px;text-align:center;padding:14px">Пока пусто. Переверни слово и нажми «Сохранить».</div>'; hud(); return; }
     E.list.innerHTML=items.map(function(it){
       var d=it.data||{};
-      return '<div class="rev-row" data-id="'+esc(it.id)+'"><div class="w">'+esc(d.reversed||"")+'<small>'+esc(d.text||"")+'</small></div><button class="del" data-del="'+esc(it.id)+'" aria-label="Удалить">✕</button></div>';
+      return '<div class="rev-row" data-id="'+esc(it.id)+'"><div class="w">'+esc(d.reversed||"")+'<small>'+esc(d.text||"")+'</small></div>'
+        +'<button class="say" data-say="'+esc(d.reversed||"")+'" aria-label="Озвучить">🔊</button>'
+        +'<button class="del" data-del="'+esc(it.id)+'" aria-label="Удалить">✕</button></div>';
     }).join("");
     hud();
   }
@@ -51,7 +67,7 @@
       +'<div class="rev-header"><button class="back" id="revBack" aria-label="Назад">'+BACK_IC+'</button>'
       +'<div><div class="rev-title">Слова наоборот</div><div class="rev-sub">Введи слово — переверну его</div></div></div>'
       +'<div class="rev-card"><input class="rev-in" id="revIn" type="text" maxlength="60" placeholder="Например: привет" autocomplete="off"><div class="rev-out empty" id="revOut">Напиши слово — покажу его задом наперёд</div></div>'
-      +'<div class="sheet-actions" style="margin-top:14px"><button class="btn btn-primary" id="revSave" style="flex:1">Сохранить в историю</button></div>'
+      +'<div class="sheet-actions" style="margin-top:14px"><button class="btn" id="revSpeak" style="flex:0 0 46%">🔊 Озвучить</button><button class="btn btn-primary" id="revSave">Сохранить</button></div>'
       +'<div class="store-section">История</div><div class="rev-list" id="revList"></div>'
     +'</div>';
     E.in=root.querySelector("#revIn"); E.out=root.querySelector("#revOut"); E.list=root.querySelector("#revList");
@@ -59,11 +75,15 @@
     E.in.addEventListener("input",renderOut);
     E.in.addEventListener("keydown",function(e){ if(e.key==="Enter") saveCurrent(); });
     root.querySelector("#revSave").addEventListener("click",saveCurrent);
-    E.list.addEventListener("click",function(e){ var b=e.target.closest("[data-del]"); if(b) del(b.getAttribute("data-del")); });
+    root.querySelector("#revSpeak").addEventListener("click",function(){ speak(reverseStr((E.in.value||"").trim())); });
+    E.list.addEventListener("click",function(e){
+      var sb=e.target.closest("[data-say]"); if(sb){ speak(sb.getAttribute("data-say")); return; }
+      var b=e.target.closest("[data-del]"); if(b) del(b.getAttribute("data-del"));
+    });
     renderOut(); hud(); loadHistory();
     setTimeout(function(){ if(E.in) E.in.focus(); },250);
   }
-  function unmount(){ E={}; items=[]; }
+  function unmount(){ try{ if(window.speechSynthesis) window.speechSynthesis.cancel(); }catch(e){} E={}; items=[]; }
 
   RobTop.register({ id:"reverse", mount:mount, unmount:unmount });
 })();
