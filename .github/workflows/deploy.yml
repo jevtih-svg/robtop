@@ -1,51 +1,31 @@
-name: Deploy RobTop to Hostinger
+name: RobTop CI (без деплоя)
 
-# Релиз = коммит в ветку main (авто-деплой)
-# ИЛИ кнопка «Run workflow» во вкладке Actions на GitHub.
+# ДЕПЛОЙ РobTop идёт через вебхук Hostinger Git (Hostinger сам делает pull из ветки main при push).
+# Этот workflow НИЧЕГО не деплоит и НЕ использует FTP. Он только быстро проверяет синтаксис JS,
+# чтобы в main не уезжал сломанный код. Секреты FTP_* больше не нужны (можно удалить в Settings → Secrets).
+
 on:
   push:
     branches: [ main ]
   workflow_dispatch: {}
 
-concurrency:
-  group: deploy-robtop
-  cancel-in-progress: true
-
-# Node.js 20 в GitHub Actions устарел. Форсируем Node 24 для JS-экшенов
-# (checkout, FTP-Deploy), пока у них нет собственных релизов на Node 24.
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-
 jobs:
-  deploy:
-    name: Upload to Hostinger (FTPS)
+  check:
+    name: Проверка синтаксиса JS (node --check)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy via FTPS
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          server:   ${{ secrets.FTP_SERVER }}      # напр. ftp.tilley.live или IP
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps
-          port: 21
-          # Папка на сервере, КУДА кладём сайт (должна заканчиваться на /).
-          # напр. /domains/apps.tilley.live/public_html/robtop/
-          server-dir: ${{ secrets.FTP_REMOTE_DIR }}
-          # Заливаем только содержимое app/ (сам сайт). Документы и схема не публикуются.
-          local-dir: ./app/
-          # Эти файлы не трогаем на сервере (там лежит боевой config.php).
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/config.php
-            **/.DS_Store
-            **/Thumbs.db
-            **/uploads/**
-            **/apps/**
-            **/storage/**
-            **/cache/**
-            **/logs/**
+          node-version: '20'
+
+      - name: node --check всех .js в app/
+        run: |
+          set -e
+          find app -name '*.js' -print0 | while IFS= read -r -d '' f; do
+            echo "check $f"
+            node --check "$f"
+          done

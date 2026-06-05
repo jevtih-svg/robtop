@@ -131,3 +131,8 @@
 .tt-mpick svg{width:20px;height:20px}
 .tt-mpick:active{transform:scale(.92)}
 .tt-mpick.on{color:#04212b;border-color:transparent;background:linear-gradient(180deg,#3df0c0,#19c7e0);box-shadow:0 0 14px -4px var(--cyan)}
+/* трек, который звучит прямо во время чистки (золотая подсветка) */
+.tt-mrow.live{border-color:transparent;box-shadow:0 0 18px -6px #ffc23b;
+  background:linear-gradient(180deg, rgba(255,210,59,.14), rgba(255,210,59,.05))}
+.tt-mnum{transition:color .2s}
+.tt-mrow.live .tt-mnum{color:#ffd86b}

@@ -238,10 +238,11 @@
     }).join("");
   }
 
-  /* ----- Музыка: выбор трека (что заиграет следующим) + превью -----
-     Выбор пишется в СУЩЕСТВУЮЩИЙ указатель meta.trackIndex — его уже читает pickTrackForSession,
-     поэтому выбранный трек заиграет на следующей чистке. Логику плеера не трогаем.
-     Превью — отдельный Audio, полностью независим от плеера чистки. */
+  /* ----- Музыка: выбор трека (что заиграет следующим) + прослушивание -----
+     Звёздочка пишет выбор в СУЩЕСТВУЮЩИЙ указатель meta.trackIndex (его читает pickTrackForSession),
+     поэтому выбранный трек заиграет на следующей чистке.
+     Кнопка ▶: ВНЕ чистки — превью на отдельном previewAudio (плеер чистки не трогает);
+     ВО ВРЕМЯ чистки — переключает ЖИВОЙ трек плеера (setTrack), чтобы не звучало два трека сразу. */
   function selIdx(){ var i=(meta&&typeof meta.trackIndex==="number")?(meta.trackIndex%PLAYLIST.length):0; return i<0?0:i; }
   function ensurePreview(){
     if(!previewAudio){ previewAudio=new Audio(); previewAudio.preload="none";
@@ -250,6 +251,13 @@
   }
   function stopPreview(){ try{ if(previewAudio){ previewAudio.pause(); } }catch(e){} previewPlaying=false; previewIdx=-1; }
   function previewToggle(i){
+    /* во время активной чистки переключаем ЖИВОЙ трек плеера, без параллельного превью */
+    if(running){
+      stopPreview();
+      if(i!==curTrack || !playing){ setTrack(i, true); }
+      renderMusic(); sdk.ui.haptics(8);
+      return;
+    }
     ensurePreview();
     if(previewPlaying && previewIdx===i){ stopPreview(); renderMusic(); sdk.ui.haptics(6); return; }
     previewIdx=i; previewAudio.src=trackSrc(i);
@@ -266,12 +274,18 @@
   function renderMusic(){
     if(!E.musicList) return;
     var sel=selIdx(), shuffle=!!(meta&&meta.shuffle);
-    if(E.mhint) E.mhint.innerHTML=NOTE_IC+' '+(shuffle?'Сейчас случайный порядок треков. Выбор отметит трек, но играть он будет вразнобой.':'Выбери трек — он заиграет на следующей чистке. ▶ послушать.');
+    if(E.mhint) E.mhint.innerHTML=NOTE_IC+' '+(running
+        ? 'Идёт чистка. Нажми на трек, чтобы переключить музыку прямо сейчас.'
+        : (shuffle?'Сейчас случайный порядок треков. Выбор отметит трек, но играть он будет вразнобой.'
+                 :'Выбери трек — он заиграет на следующей чистке. ▶ послушать.'));
     E.musicList.innerHTML=PLAYLIST.map(function(_,i){
-      var on=(i===sel && !shuffle), prev=(i===previewIdx&&previewPlaying);
-      return '<div class="tt-mrow'+(on?" sel":"")+'" data-i="'+i+'">'
-        +'<button class="tt-mplay'+(prev?" playing":"")+'" data-act="prev" data-i="'+i+'" aria-label="'+(prev?"Пауза":"Слушать")+'">'+(prev?PV_PAUSE:PV_PLAY)+'</button>'
-        +'<div class="tt-minfo"><div class="tt-mnum">Трек '+(i+1)+(on?' · играет следующим':'')+'</div><div class="tt-mname">'+esc(trackTitle(i))+'</div></div>'
+      var on=(i===sel && !shuffle);
+      var live=(running && i===curTrack);                       // трек, который звучит во время чистки
+      var previewing=(!running && previewPlaying && i===previewIdx);
+      var note=live?' · играет сейчас':((on && !running)?' · играет следующим':'');
+      return '<div class="tt-mrow'+(on?" sel":"")+(live?" live":"")+'" data-i="'+i+'">'
+        +'<button class="tt-mplay'+((previewing||live)?" playing":"")+'" data-act="prev" data-i="'+i+'" aria-label="'+(previewing?"Пауза":(live?"Играет сейчас":"Слушать"))+'">'+(previewing?PV_PAUSE:PV_PLAY)+'</button>'
+        +'<div class="tt-minfo"><div class="tt-mnum">Трек '+(i+1)+note+'</div><div class="tt-mname">'+esc(trackTitle(i))+'</div></div>'
         +'<button class="tt-mpick'+(on?" on":"")+'" data-act="pick" data-i="'+i+'" aria-label="Выбрать">'+(on?CHECK_IC:STAR_O_IC)+'</button>'
         +'</div>';
     }).join("");
