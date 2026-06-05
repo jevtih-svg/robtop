@@ -33,6 +33,8 @@ window.RobTop = window.RobTop || {};
     });
   }
   function folder(meta){ return (meta.source==="installed" ? "apps/" : "modules/") + meta.id + "/"; }
+  /* cache-busting: добавляет ?v=<версия> к URL ассета, чтобы при смене версии браузер тянул свежий файл, а не кэш */
+  function bust(u){ var v=window.RT_VER; return v ? u+(u.indexOf("?")<0?"?":"&")+"v="+encodeURIComponent(v) : u; }
 
   RT.open = function(id){
     var meta=RT.metaFor(id); if(!meta) return;
@@ -41,9 +43,9 @@ window.RobTop = window.RobTop || {};
     var bundle = (meta.source==="installed" && RT.isDemo() && RT._shell.demoBundle) ? RT._shell.demoBundle(id) : null;
     var styles=meta.styles||"module.css", entry=meta.entry||"module.js";
     if(bundle){ if(bundle.files[styles]!=null) injectCss(dir+styles, bundle.files[styles]); }
-    else if(meta.styles!==false) injectCss(dir+styles);
+    else if(meta.styles!==false) injectCss(bust(dir+styles));
     var jsText = bundle ? bundle.files[entry] : null;
-    injectJs(dir+entry, jsText).then(function(){
+    injectJs(jsText!=null ? dir+entry : bust(dir+entry), jsText).then(function(){
       var def=RT._defs[id];
       if(!def){ RT._shell.toast("Модуль не загрузился"); return; }
       var view=RT._shell.moduleView();

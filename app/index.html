@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Rubik:wght@400;500;600;700;800&display=swap&subset=cyrillic" rel="stylesheet">
-<link rel="stylesheet" href="core/ui.css">
+<link rel="stylesheet" href="core/ui.css?v=2026.06.05.3">
 </head>
 <body data-view="home">
 <canvas id="bg"></canvas>
@@ -58,11 +58,13 @@
 <div class="demo-badge" id="demoBadge">демо</div>
 
 <!-- Индикатор версии (слева внизу). Меняй число при КАЖДОМ обновлении — видно, залилась ли новая версия на сайт. -->
-<div class="appver" id="appver">v2026.06.05.2</div>
+<div class="appver" id="appver">v2026.06.05.3</div>
 
-<script src="core/bg.js"></script>
-<script src="core/sdk.js"></script>
-<script src="core/loader.js"></script>
-<script src="core/shell.js"></script>
+<!-- Версия приложения = маркер деплоя и cache-busting. Меняй ТОЛЬКО это число при каждом обновлении. -->
+<script>window.RT_VER="2026.06.05.3";</script>
+<script src="core/bg.js?v=2026.06.05.3"></script>
+<script src="core/sdk.js?v=2026.06.05.3"></script>
+<script src="core/loader.js?v=2026.06.05.3"></script>
+<script src="core/shell.js?v=2026.06.05.3"></script>
 </body>
 </html>
