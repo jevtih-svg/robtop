@@ -1,13 +1,24 @@
-# Боевой конфиг с паролями БД — НИКОГДА не коммитим
+# Production configuration
 config.php
-app/config.php
 **/config.php
 
-# Системное
-.DS_Store
-Thumbs.db
-*.log
-node_modules/
+# User-generated files
+uploads/
+storage/
+cache/
+logs/
 
-# Состояние FTP-деплоя (создаётся экшеном на сервере)
+# Deployment files
 .ftp-deploy-sync-state.json
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Logs
+*.log
+
+# Node
+node_modules/
