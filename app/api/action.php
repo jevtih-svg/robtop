@@ -10,6 +10,7 @@
  */
 
 require __DIR__ . '/_bootstrap.php';
+require __DIR__ . '/_storage.php';
 rt_guard();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') rt_json(['error' => 'method'], 405);
@@ -66,6 +67,7 @@ switch ($type) {
 
         $st = $db->prepare("UPDATE wishlist_items SET title=?, note=?, link=?, photo=?, icon=?, updated_at=NOW() WHERE id=? AND user_id=?");
         $st->execute([$title, $note, $link, $photo, $icon, $itemId, $uid]);
+        if ($it['photo'] && $it['photo'] !== $photo) rt_storage()->delete($it['photo']); // убрать старый файл при замене
         rt_log('wishlist', 'edited', $itemId, $title);
         rt_json(['ok' => true]);
     }

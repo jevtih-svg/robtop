@@ -14,15 +14,21 @@ app/                     ← то, что публикуется на серве
   .htaccess
   config.example.php     ← шаблон конфига (боевой config.php создаётся на сервере)
   api/
-    _db.php, _bootstrap.php
+    _db.php, _bootstrap.php, _storage.php
     state.php            ← GET: пользователь + желания
     action.php           ← POST: все действия + запись событий
     stats.php            ← GET: агрегаты для дашбордов
+    upload.php           ← POST: загрузка фото на диск (в БД только путь)
+  uploads/               ← медиа на сервере (вне Git, создаётся автоматически)
 schema.sql               ← импортировать один раз в MySQL
 .github/workflows/deploy.yml
 РЕЛИЗ.md                 ← пошаговая настройка и релиз
 КОНТЕКСТ.md              ← полный контекст проекта
 ```
+
+## Медиа и пользователи
+
+Фото хранятся файлами в `uploads/users/<id>/wishlist/` (в БД — только путь), вне Git и переживают деплой. Хранилище за абстракцией `api/_storage.php` (на будущее S3/R2/Spaces). Пока один пользователь (Артём, id 1) — задаётся одной функцией `rt_user_id()` в `api/_bootstrap.php`.
 
 ## Как настроить и релизить
 

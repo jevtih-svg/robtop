@@ -1,8 +1,34 @@
-# RobTop — Apache (Hostinger)
+# RobTop — Apache (Hostinger). Публикуется как robtop/.htaccess
+# Приложение открывается по «корневому» пути:  <домен>/robtop/
+# (например apps.tilley.live/robtop). Зависит только от пути /robtop, не от домена.
+
 Options -Indexes
 DirectoryIndex index.html
 AddDefaultCharset UTF-8
 
+# ===== Доступ к приложению по пути /robtop (SPA-маршрутизация) =====
+# index.html отдаётся на корне папки (DirectoryIndex). Дополнительно:
+# реальные файлы/папки (api/*.php, assets/, uploads/, картинки) отдаём как есть,
+# а любой другой под-путь под /robtop отправляем на index.html — чтобы
+# приложение открывалось и не было 404 на под-адресах.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # Базовый путь приложения. Если папка на сервере не /robtop — поменяй здесь.
+  RewriteBase /robtop/
+
+  # Существующие файлы и папки — напрямую (API, ассеты, загрузки)
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # API не трогаем
+  RewriteRule ^api/ - [L]
+
+  # Всё остальное — на главную страницу приложения
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# ===== Безопасность =====
 # Не отдавать конфиг и внутренние include-файлы API наружу
 <FilesMatch "^config.*\.php$">
   Require all denied
@@ -11,16 +37,18 @@ AddDefaultCharset UTF-8
   Require all denied
 </FilesMatch>
 
-# Кэш статики (по желанию)
+# ===== Кэш статики (по желанию) =====
 <IfModule mod_expires.c>
   ExpiresActive On
-  ExpiresByType image/png  "access plus 7 days"
-  ExpiresByType image/jpeg "access plus 7 days"
+  ExpiresByType image/png      "access plus 7 days"
+  ExpiresByType image/jpeg     "access plus 7 days"
+  ExpiresByType image/svg+xml  "access plus 7 days"
+  ExpiresByType image/webp     "access plus 7 days"
 </IfModule>
 
-# При необходимости можно включить принудительный HTTPS:
+# ===== Принудительный HTTPS =====
+# Включи (убери #), когда у домена активен SSL в hPanel:
 # <IfModule mod_rewrite.c>
-#   RewriteEngine On
 #   RewriteCond %{HTTPS} off
 #   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 # </IfModule>

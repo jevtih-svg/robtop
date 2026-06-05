@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS wishlist_items (
   title      VARCHAR(120) NOT NULL,
   note       VARCHAR(400) NOT NULL DEFAULT '',     -- «почему хочу»
   link       VARCHAR(500) NOT NULL DEFAULT '',
-  photo      MEDIUMTEXT   DEFAULT NULL,            -- data URL (base64) или внешняя ссылка
+  photo      VARCHAR(255) DEFAULT NULL,            -- относительный путь к файлу, напр. uploads/users/1/wishlist/abc.jpg
   icon       VARCHAR(16)  DEFAULT NULL,            -- эмодзи-заглушка
   favorite   TINYINT(1)   NOT NULL DEFAULT 0,      -- «очень хочу»
   status     ENUM('want','thinking','bought') NOT NULL DEFAULT 'want',
@@ -60,7 +60,26 @@ CREATE TABLE IF NOT EXISTS events (
   KEY idx_user        (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ---------- Реестр загруженных файлов (медиа на диске, путь — в БД) ----------
+-- Сразу с user_id, чтобы не переделывать при добавлении реальных пользователей.
+CREATE TABLE IF NOT EXISTS uploaded_files (
+  id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id    INT UNSIGNED NOT NULL,
+  module     VARCHAR(40)  NOT NULL DEFAULT 'wishlist',
+  item_id    BIGINT UNSIGNED DEFAULT NULL,
+  path       VARCHAR(255) NOT NULL,               -- напр. uploads/users/1/wishlist/abc.jpg
+  mime       VARCHAR(60)  DEFAULT NULL,
+  size       INT UNSIGNED DEFAULT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted_at DATETIME DEFAULT NULL,
+  PRIMARY KEY (id),
+  KEY idx_user (user_id),
+  KEY idx_item (item_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ---------- Дефолтные пользователи ----------
+-- ВРЕМЕННЫЙ однопользовательский режим: всё принадлежит Артёму (id 1).
+-- В коде текущий пользователь определяется одной функцией rt_user_id() (см. _bootstrap.php).
 -- Артём (ребёнок) — id 1. Родитель — id 2 (пригодится позже).
 INSERT INTO users (id, name, role) VALUES
   (1, 'Артём',   'child'),

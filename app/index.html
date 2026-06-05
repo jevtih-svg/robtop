@@ -211,6 +211,7 @@
   .photo-pick .pp-edit{position:absolute;right:10px;bottom:10px;background:rgba(8,8,22,.8);color:#ffd0e8;
     font-size:13px;font-weight:800;padding:7px 12px;border-radius:999px;display:none;border:1px solid rgba(255,61,176,.5)}
   .photo-pick.has-photo .pp-edit{display:block}
+  .photo-pick.uploading::before{content:"Загрузка фото…";position:absolute;inset:0;display:grid;place-items:center;background:rgba(8,8,22,.6);color:#fff;font-weight:800;font-size:14px;z-index:3}
   .field{margin-top:14px}
   .field label{display:block;font-weight:800;font-size:14px;color:#c3d2f2;margin-bottom:6px;padding-left:4px}
   .field .opt{color:#8aa0c8;font-weight:700;font-size:12.5px}
@@ -847,7 +848,12 @@ var Confetti=(function(){
   var overlay=document.getElementById("overlay"),photoPick=document.getElementById("photoPick"),ppreview=document.getElementById("ppreview"),
       photoInput=document.getElementById("photoInput"),titleInput=document.getElementById("titleInput"),linkInput=document.getElementById("linkInput"),
       noteInput=document.getElementById("noteInput"),sheetTitle=document.getElementById("sheetTitle");
-  function setFormPhoto(d){ formPhoto=d||null; if(formPhoto){ photoPick.classList.add("has-photo"); ppreview.style.backgroundImage="url('"+formPhoto+"')"; } else { photoPick.classList.remove("has-photo"); ppreview.style.backgroundImage=""; } }
+  function showPreview(src){ if(src){ photoPick.classList.add("has-photo"); ppreview.style.backgroundImage="url('"+src+"')"; } else { photoPick.classList.remove("has-photo"); ppreview.style.backgroundImage=""; } }
+  function setFormPhoto(d){ formPhoto=d||null; showPreview(formPhoto); }
+  function uploadPhoto(dataUrl){
+    photoPick.classList.add("uploading");
+    API.post("upload.php",{dataUrl:dataUrl,kind:"wishlist"}).then(function(res){ photoPick.classList.remove("uploading"); if(res&&res.path){ formPhoto=res.path; } else { formPhoto=null; toast("Не удалось загрузить фото"); } }).catch(function(){ photoPick.classList.remove("uploading"); formPhoto=null; toast("Не удалось загрузить фото (нет связи)"); });
+  }
   function openAdd(){ editingId=null; sheetTitle.textContent="Новое желание"; titleInput.value=""; linkInput.value=""; noteInput.value=""; setFormPhoto(null); overlay.classList.add("show"); setTimeout(function(){ titleInput.focus(); },250); }
   function openEdit(id){ var it=findItem(id); if(!it) return; closeDetail(); editingId=id; sheetTitle.textContent="Изменить желание"; titleInput.value=it.title||""; linkInput.value=it.link||""; noteInput.value=it.note||""; setFormPhoto(it.photo||null); overlay.classList.add("show"); }
   function closeSheet(){ overlay.classList.remove("show"); }
@@ -874,8 +880,9 @@ var Confetti=(function(){
     if(!file) return; var reader=new FileReader();
     reader.onload=function(ev){ var img=new Image();
       img.onload=function(){ var max=900,w=img.width,h=img.height; if(w>h&&w>max){ h=Math.round(h*max/w); w=max; } else if(h>=w&&h>max){ w=Math.round(w*max/h); h=max; }
-        try{ var cv=document.createElement("canvas"); cv.width=w; cv.height=h; cv.getContext("2d").drawImage(img,0,0,w,h); setFormPhoto(cv.toDataURL("image/jpeg",0.82)); }catch(e){ setFormPhoto(ev.target.result); } };
-      img.onerror=function(){ setFormPhoto(ev.target.result); }; img.src=ev.target.result; };
+        var dataUrl; try{ var cv=document.createElement("canvas"); cv.width=w; cv.height=h; cv.getContext("2d").drawImage(img,0,0,w,h); dataUrl=cv.toDataURL("image/jpeg",0.82); }catch(e){ dataUrl=ev.target.result; }
+        showPreview(dataUrl); if(demo){ formPhoto=dataUrl; } else { uploadPhoto(dataUrl); } };
+      img.onerror=function(){ var du=ev.target.result; showPreview(du); if(demo){ formPhoto=du; } else { uploadPhoto(du); } }; img.src=ev.target.result; };
     reader.readAsDataURL(file);
   }
 
