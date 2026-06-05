@@ -2,6 +2,8 @@
 /** RobTop — общие помощники API. */
 
 require __DIR__ . '/_db.php';
+require_once __DIR__ . '/_mail.php';
+require_once __DIR__ . '/_accounts.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
@@ -31,16 +33,24 @@ function rt_guard() {
 }
 
 /**
- * ВРЕМЕННЫЙ ОДНОПОЛЬЗОВАТЕЛЬСКИЙ РЕЖИМ.
- * Пока вход по PIN не сделан, все данные принадлежат одному пользователю — Артём (id 1).
- * Это ЕДИНСТВЕННОЕ место, где определяется текущий пользователь.
- * Когда добавим вход по PIN — менять только эту функцию (вернуть id залогиненного),
- * остальное приложение трогать не нужно.
+ * Текущий пользователь — ЕДИНСТВЕННОЕ место определения личности.
+ * Приоритет: валидная сессия (кто-то вошёл) → её user_id.
+ * Иначе, если single_user=true (по умолчанию) — Артём (id 1), как раньше (ничего не ломается).
+ * Иначе (single_user=false и нет сессии) — 0 (аноним); защищённые эндпоинты требуют вход сами.
  */
 if (!defined('RT_DEFAULT_USER_ID')) define('RT_DEFAULT_USER_ID', 1);
 
 function rt_user_id() {
-    return RT_DEFAULT_USER_ID;
+    static $uid = null;
+    if ($uid !== null) return $uid;
+    try {
+        $sid = rt_session_user_id();
+        if ($sid) { $uid = (int)$sid; return $uid; }
+    } catch (Throwable $e) { /* нет таблиц/сессии — падаем в фолбэк ниже */ }
+    $c = rt_config();
+    $single = !array_key_exists('single_user', $c) || !empty($c['single_user']);
+    $uid = $single ? RT_DEFAULT_USER_ID : 0;
+    return $uid;
 }
 
 /** Запись события в общий аналитический журнал. */

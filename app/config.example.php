@@ -29,4 +29,22 @@ return [
     'storage_driver' => 'local',              // на будущее: 's3' / 'r2' / 'spaces'
     'upload_dir'     => __DIR__ . '/uploads',  // папка на сервере (рядом с index.html)
     'upload_url'     => 'uploads',             // относительный URL-префикс для картинок
+
+    // ===== Аккаунты и приглашения =====
+    // single_user=true: вход не требуется, всё принадлежит Артёму (id 1) — текущее поведение.
+    // Если есть валидная сессия (кто-то вошёл) — она имеет приоритет даже при true.
+    // Переключи в false, когда экран входа готов и протестирован.
+    'single_user'  => true,
+    // Базовый URL приложения — для ссылок-приглашений и сброса пароля (со слешем в конце).
+    'app_base_url' => 'https://apps.tilley.live/robtop/',
+    // Отправка писем (только родителям: сброс пароля, приглашение второго родителя).
+    // 'log'  — письма не шлются, ссылка пишется в журнал (events) на сервере (для прототипа).
+    // 'smtp' — реальная отправка через PHPMailer (позже; заполни mail_smtp + DNS SPF/DKIM/DMARC).
+    'mail_driver'  => 'log',
+    'mail_from'    => 'noreply@tilley.live',
+    'mail_from_name' => 'RobTop',
+    'mail_smtp'    => [
+        // Заполняется при mail_driver=smtp. Лучше транзакционный провайдер (SES/Postmark/Brevo/Mailgun).
+        'host' => '', 'port' => 587, 'user' => '', 'pass' => '', 'secure' => 'tls',
+    ],
 ];
