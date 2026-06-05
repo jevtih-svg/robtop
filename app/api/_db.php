@@ -33,6 +33,10 @@ function rt_db() {
             echo json_encode(['error' => 'Не удалось подключиться к базе данных'], JSON_UNESCAPED_UNICODE);
             exit;
         }
+        // Авто-миграции: при первом подключении создаём/обновляем таблицы из api/migrations/.
+        // Идемпотентно и без phpMyAdmin. Не ломает API при ошибке.
+        require_once __DIR__ . '/_migrate.php';
+        rt_migrate($pdo);
     }
     return $pdo;
 }
