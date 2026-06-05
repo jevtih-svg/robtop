@@ -114,6 +114,10 @@ body{
   background:rgba(255,210,59,.16);color:#ffd23b;border:1px solid rgba(255,210,59,.5);
   font-weight:800;font-size:11px;letter-spacing:.5px;text-transform:uppercase;padding:4px 9px;border-radius:999px}
 body.demo .demo-badge{display:block}
+/* индикатор версии (слева внизу) — маркер деплоя */
+.appver{position:fixed;left:calc(10px + env(safe-area-inset-left));bottom:calc(5px + env(safe-area-inset-bottom));z-index:15;
+  font-family:'Rubik',sans-serif;font-size:10px;font-weight:700;letter-spacing:.4px;color:rgba(147,166,207,.45);
+  pointer-events:none;user-select:none}
 .sheet h2{font-family:'Russo One',sans-serif;font-weight:400;font-size:21px;margin:0 0 14px;text-align:center;color:#fff;
   text-shadow:0 0 12px rgba(255,61,176,.6)}
 .field{margin-top:14px}
