@@ -14,6 +14,8 @@ window.RobTop = window.RobTop || {};
 
   function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
   RT.uid = uid;
+  /* i18n-ключ: "common.*" и "err.*" — общий словарь; остальное — в неймспейсе модуля */
+  function absKey(mod,key){ return /^(common|err)\./.test(String(key))?String(key):(mod+"."+key); }
   RT.isDemo = function(){ return !!(RT._shell && RT._shell.demo); };
 
   /* ---- демо-хранилище универсального стора (localStorage с неймспейсом модуля) ---- */
@@ -92,9 +94,9 @@ window.RobTop = window.RobTop || {};
         get:function(){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },
         set:function(v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
       }; } },
-      /* ---- i18n: ключ по умолчанию в неймспейсе модуля; "common.*" — общий словарь ---- */
-      t: function(key,p){ var k=(String(key).indexOf("common.")===0)?key:(mod+"."+key); return RT.i18n.t(k,p); },
-      plural: function(n,key,p){ var k=(String(key).indexOf("common.")===0)?key:(mod+"."+key); return RT.i18n.plural(n,k,p); },
+      /* ---- i18n: ключ по умолчанию в неймспейсе модуля; "common.*"/"err.*" — общий словарь ---- */
+      t: function(key,p){ return RT.i18n.t(absKey(mod,key),p); },
+      plural: function(n,key,p){ return RT.i18n.plural(n,absKey(mod,key),p); },
       formatDate: function(v,o){ return RT.i18n.formatDate(v,o); },
       i18n: {
         get: function(){ return RT.i18n.get(); },
