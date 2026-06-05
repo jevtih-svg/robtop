@@ -1,15 +1,25 @@
-/* RobTop — оболочка (shell): главный экран, общие UI-сервисы, роутер, магазин приложений.
+/* RobTop — оболочка (shell): главный экран, общие UI-сервисы, роутер, настройки, магазин приложений.
    Модули монтируются в #module-view через loader. Источник правды по модулям — registry.php
-   (на сервере) либо встроенный список + localStorage (демо/офлайн). */
+   (на сервере) либо встроенный список + localStorage (демо/офлайн).
+   Все тексты — через RobTop.i18n (язык: en/ru/lv). Имена плиток: ключи tile.<id>. */
 window.RobTop = window.RobTop || {};
 (function(RT){
   "use strict";
+  var I=RT.i18n;
+  function t(k,p){ return I.t(k,p); }
   var SERVER=(location.protocol==="http:"||location.protocol==="https:");
   var demo=!SERVER;
   var ADMIN_DEMO_PIN="1234";
   var adminPin=null; // валидированный PIN администратора (в памяти сессии)
 
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
+  /* локализованное имя плитки/модуля (нативные — из tile.<id>, установленные — из манифеста) */
+  function modName(m){ return t("tile."+m.id, {fallback:m.name||m.id}); }
+  /* текст ошибки из ответа сервера: переводим по коду err.<code>, иначе message/фолбэк */
+  function errMsg(r, fallbackKey){
+    if(r&&r.error) return t("err."+r.error, {fallback:(r.message||r.error), name:r.name});
+    return t(fallbackKey||"common.failed");
+  }
 
   /* ---- иконки плиток (по id модуля) ---- */
   var ICONS={
@@ -30,20 +40,20 @@ window.RobTop = window.RobTop || {};
   };
   var TILE_ICON={ wishlist:"cherry", reverse:"reverse", mood:"smile", teeth:"tooth", guess:"quiz", names:"tag", days:"calendar", find:"search", museum:"museum", rating:"star", lost:"gem", bank:"bank" };
 
-  /* ---- встроенный список модулей (демо/фолбэк) ---- */
+  /* ---- встроенный список модулей (демо/фолбэк). name — фолбэк, отображается tile.<id> ---- */
   var DEFAULTS=[
-    {id:"wishlist",name:"Виш-лист",color:"#ff3db0",status:"active",source:"native",server:true,sort:10},
-    {id:"reverse",name:"Слова наоборот",color:"#ff7a3d",status:"active",source:"native",server:false,sort:20},
-    {id:"mood",name:"Настроение дня",color:"#ffd23b",status:"soon",source:"native",sort:30},
-    {id:"teeth",name:"Таймер чистки зубов",color:"#19e3ff",status:"active",source:"native",sort:40},
-    {id:"guess",name:"Угадай число",color:"#a64bff",status:"soon",source:"native",sort:50},
-    {id:"names",name:"Смешные имена",color:"#38e8a0",status:"soon",source:"native",sort:60},
-    {id:"days",name:"Счётчик дней",color:"#3b6bff",status:"soon",source:"native",sort:70},
-    {id:"find",name:"Найти предмет",color:"#19e3ff",status:"soon",source:"native",sort:80},
-    {id:"museum",name:"Домашний музей",color:"#c0a0ff",status:"soon",source:"native",sort:90},
-    {id:"rating",name:"Оценка дня",color:"#ffd23b",status:"soon",source:"native",sort:100},
-    {id:"lost",name:"Бюро находок",color:"#2bf0c0",status:"soon",source:"native",sort:110},
-    {id:"bank",name:"Копилка",color:"#ff4d6d",status:"soon",source:"native",wide:true,sort:120}
+    {id:"wishlist",name:"Wishlist",color:"#ff3db0",status:"active",source:"native",server:true,sort:10},
+    {id:"reverse",name:"Words Backwards",color:"#ff7a3d",status:"active",source:"native",server:false,sort:20},
+    {id:"mood",name:"Mood of the Day",color:"#ffd23b",status:"soon",source:"native",sort:30},
+    {id:"teeth",name:"Toothbrushing Timer",color:"#19e3ff",status:"active",source:"native",sort:40},
+    {id:"guess",name:"Guess the Number",color:"#a64bff",status:"soon",source:"native",sort:50},
+    {id:"names",name:"Funny Names",color:"#38e8a0",status:"soon",source:"native",sort:60},
+    {id:"days",name:"Day Counter",color:"#3b6bff",status:"soon",source:"native",sort:70},
+    {id:"find",name:"Find the Object",color:"#19e3ff",status:"soon",source:"native",sort:80},
+    {id:"museum",name:"Home Museum",color:"#c0a0ff",status:"soon",source:"native",sort:90},
+    {id:"rating",name:"Day Rating",color:"#ffd23b",status:"soon",source:"native",sort:100},
+    {id:"lost",name:"Lost & Found",color:"#2bf0c0",status:"soon",source:"native",sort:110},
+    {id:"bank",name:"Piggy Bank",color:"#ff4d6d",status:"soon",source:"native",wide:true,sort:120}
   ];
 
   /* ---- localStorage помощники (демо) ---- */
@@ -56,7 +66,8 @@ window.RobTop = window.RobTop || {};
 
   /* ---- DOM ---- */
   var body, appsEl, homeView, moduleView, fabEl, toastEl, demoBadge,
-      hudL,hudCnum,hudClbl,hudRnum,hudRlbl, storeOverlay, storeBody, gearBtn;
+      hudL,hudCnum,hudClbl,hudRnum,hudRlbl, settingsOverlay, settingsBody,
+      storeOverlay, storeBody, gearBtn;
 
   /* ================= общие UI-сервисы ================= */
   function buzz(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
@@ -91,6 +102,7 @@ window.RobTop = window.RobTop || {};
   function hud(o){ o=o||{}; if(o.left!=null) hudL.innerHTML=o.left; if(o.cNum!=null) hudCnum.textContent=o.cNum; if(o.cLbl!=null) hudClbl.textContent=o.cLbl; if(o.rNum!=null) hudRnum.textContent=o.rNum; if(o.rLbl!=null) hudRlbl.textContent=o.rLbl; }
   function fab(label,onClick){
     fabEl.innerHTML='<span class="plus">+</span> '+esc(label||"");
+    fabEl.setAttribute("aria-label", label||"");
     fabEl.classList.add("show"); fabEl.onclick=function(){ try{ if(onClick) onClick(); }catch(e){} };
     return { show:function(){ fabEl.classList.add("show"); }, hide:function(){ fabEl.classList.remove("show"); }, destroy:fabDestroy };
   }
@@ -99,7 +111,7 @@ window.RobTop = window.RobTop || {};
     opts=opts||{};
     return new Promise(function(resolve){
       var ov=document.createElement("div"); ov.className="overlay show";
-      ov.innerHTML='<div class="sheet" role="dialog"><div class="grip"></div><h2>'+esc(opts.title||"Подтвердить?")+'</h2>'+(opts.text?'<p style="text-align:center;color:#cfe0ff;font-weight:600;margin:0 0 6px">'+esc(opts.text)+'</p>':'')+'<div class="sheet-actions"><button class="btn btn-cancel" data-no>'+esc(opts.cancel||"Отмена")+'</button><button class="btn btn-primary" data-yes>'+esc(opts.ok||"Да")+'</button></div></div>';
+      ov.innerHTML='<div class="sheet" role="dialog"><div class="grip"></div><h2>'+esc(opts.title||t("common.confirmTitle"))+'</h2>'+(opts.text?'<p style="text-align:center;color:#cfe0ff;font-weight:600;margin:0 0 6px">'+esc(opts.text)+'</p>':'')+'<div class="sheet-actions"><button class="btn btn-cancel" data-no>'+esc(opts.cancel||t("common.cancel"))+'</button><button class="btn btn-primary" data-yes>'+esc(opts.ok||t("common.yes"))+'</button></div></div>';
       document.body.appendChild(ov);
       function done(v){ ov.classList.remove("show"); setTimeout(function(){ if(ov.parentNode) ov.parentNode.removeChild(ov); },200); resolve(v); }
       ov.querySelector("[data-yes]").onclick=function(){ done(true); };
@@ -132,7 +144,7 @@ window.RobTop = window.RobTop || {};
   function homeHud(){
     var total=RT._registry.length, active=0;
     RT._registry.forEach(function(m){ if(m.status==="active") active++; });
-    hud({ left:'RobTop · <b>beta</b>', cNum:total, cLbl:"приложений", rNum:active, rLbl:"доступно" });
+    hud({ left:'RobTop · <b>beta</b>', cNum:total, cLbl:t("hud.apps"), rNum:active, rLbl:t("hud.available") });
   }
   function renderHome(){
     appsEl.innerHTML=RT._registry.map(function(m){
@@ -140,7 +152,7 @@ window.RobTop = window.RobTop || {};
       return '<button class="tile'+(soon?' soon':' active')+(m.wide?' wide':'')+'" style="--c:'+(m.color||"#19e3ff")+'" data-mod="'+esc(m.id)+'">'
         +(soon?'<span class="lock">'+ICONS.lock+'</span>':'<span class="ring"></span>')
         +'<span class="ic">'+iconHtml(m)+'</span>'
-        +'<span class="txt"><span class="nm">'+esc(m.name)+'</span><span class="st">'+(soon?'Скоро':'Открыть')+'</span></span>'
+        +'<span class="txt"><span class="nm">'+esc(modName(m))+'</span><span class="st">'+(soon?esc(t("tile.status.soon")):esc(t("tile.status.open")))+'</span></span>'
         +'</button>';
     }).join("");
     homeHud();
@@ -173,6 +185,28 @@ window.RobTop = window.RobTop || {};
     }).catch(function(){ RT.setRegistry(visible(DEFAULTS.map(function(m){return Object.assign({},m);}))); renderHome(); });
   }
 
+  /* ================= НАСТРОЙКИ (язык — всем; «приложения» — за PIN) ================= */
+  function openSettings(){ renderSettings(); settingsOverlay.classList.add("show"); }
+  function closeSettings(){ settingsOverlay.classList.remove("show"); }
+  function renderSettings(){
+    var cur=I.get();
+    var langBtns=I.supported.map(function(code){
+      return '<button class="lang-opt'+(code===cur?" on":"")+'" data-lang="'+code+'">'+esc(I.native(code))+'</button>';
+    }).join("");
+    settingsBody.innerHTML='<h2>'+esc(t("settings.title"))+'</h2>'
+      +'<div class="store-section">'+esc(t("settings.language"))+'</div>'
+      +'<div class="lang-row">'+langBtns+'</div>'
+      +'<div class="store-section">'+esc(t("settings.manageApps"))+'</div>'
+      +'<div class="store-install" id="settingsManage">⚙ '+esc(t("settings.manageApps"))+'</div>'
+      +'<div class="sheet-actions"><button class="btn btn-cancel" id="settingsClose" style="flex:1">'+esc(t("common.close"))+'</button></div>';
+    settingsBody.querySelector(".lang-row").addEventListener("click",function(e){
+      var b=e.target.closest("[data-lang]"); if(!b) return;
+      I.set(b.getAttribute("data-lang")); buzz(6);
+    });
+    settingsBody.querySelector("#settingsManage").onclick=function(){ closeSettings(); openStore(); };
+    settingsBody.querySelector("#settingsClose").onclick=closeSettings;
+  }
+
   /* ================= МАГАЗИН / АДМИН ================= */
   function allModules(){
     if(demo) return Promise.resolve(allModulesDemo());
@@ -187,14 +221,14 @@ window.RobTop = window.RobTop || {};
 
   function renderStore(){
     if(!adminPin){
-      storeBody.innerHTML='<h2>Приложения</h2>'
-        +'<p style="text-align:center;color:#cfe0ff;font-weight:600;margin:0 0 4px">Управление приложениями — для родителя.</p>'
-        +'<div class="pin-row"><input id="adminPinIn" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off"><button class="btn btn-primary" id="adminPinBtn" style="flex:0 0 40%">Войти</button></div>';
+      storeBody.innerHTML='<h2>'+esc(t("store.title"))+'</h2>'
+        +'<p style="text-align:center;color:#cfe0ff;font-weight:600;margin:0 0 4px">'+esc(t("store.adminNote"))+'</p>'
+        +'<div class="pin-row"><input id="adminPinIn" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off"><button class="btn btn-primary" id="adminPinBtn" style="flex:0 0 40%">'+esc(t("common.enter"))+'</button></div>';
       var inp=document.getElementById("adminPinIn"), btn=document.getElementById("adminPinBtn");
       function tryUnlock(){
         var v=(inp.value||"").trim(); if(!v) return;
-        if(demo){ if(v===ADMIN_DEMO_PIN){ adminPin=v; renderStore(); } else toast("Неверный PIN"); return; }
-        RT.API.post("store/enable.php",{pin:v,verify:1}).then(function(r){ if(r&&r.ok){ adminPin=v; renderStore(); } else toast("Неверный PIN"); }).catch(function(){ toast("Неверный PIN"); });
+        if(demo){ if(v===ADMIN_DEMO_PIN){ adminPin=v; renderStore(); } else toast(t("err.bad_pin")); return; }
+        RT.API.post("store/enable.php",{pin:v,verify:1}).then(function(r){ if(r&&r.ok){ adminPin=v; renderStore(); } else toast(t("err.bad_pin")); }).catch(function(){ toast(t("err.bad_pin")); });
       }
       btn.onclick=tryUnlock; inp.addEventListener("keydown",function(e){ if(e.key==="Enter") tryUnlock(); });
       setTimeout(function(){ inp.focus(); },200);
@@ -204,23 +238,23 @@ window.RobTop = window.RobTop || {};
       list.sort(function(a,b){ return (a.sort||0)-(b.sort||0); });
       var rows=list.map(function(m,i){
         var ic=iconHtml(m);
-        var sub=(m.source==="installed"?"установлено":"встроено")+(m.status==="soon"?" · скоро":"")+(m.version?" · v"+esc(m.version):"");
+        var sub=(m.source==="installed"?t("store.srcInstalled"):t("store.srcBuiltin"))+(m.status==="soon"?t("store.soonSuffix"):"")+(m.version?" · v"+esc(m.version):"");
         return '<div class="store-row" style="--c:'+(m.color||"#19e3ff")+'" data-id="'+esc(m.id)+'">'
           +'<span class="si">'+ic+'</span>'
-          +'<span class="smeta"><div class="snm">'+esc(m.name)+'</div><div class="ssub">'+sub+'</div></span>'
-          +'<button class="hbtn" data-act="up" aria-label="Выше" style="width:36px;height:36px">▲</button>'
-          +'<button class="hbtn" data-act="down" aria-label="Ниже" style="width:36px;height:36px">▼</button>'
-          +(m.source==="installed"?'<button class="hbtn" data-act="uninstall" aria-label="Удалить" style="width:36px;height:36px;color:#ffb3c0">✕</button>':'')
-          +'<button class="toggle'+(m.enabled!==0?" on":"")+'" data-act="toggle" aria-label="Вкл/выкл"></button>'
+          +'<span class="smeta"><div class="snm">'+esc(modName(m))+'</div><div class="ssub">'+sub+'</div></span>'
+          +'<button class="hbtn" data-act="up" aria-label="'+esc(t("store.up"))+'" style="width:36px;height:36px">▲</button>'
+          +'<button class="hbtn" data-act="down" aria-label="'+esc(t("store.down"))+'" style="width:36px;height:36px">▼</button>'
+          +(m.source==="installed"?'<button class="hbtn" data-act="uninstall" aria-label="'+esc(t("store.remove"))+'" style="width:36px;height:36px;color:#ffb3c0">✕</button>':'')
+          +'<button class="toggle'+(m.enabled!==0?" on":"")+'" data-act="toggle" aria-label="'+esc(t("store.toggle"))+'"></button>'
           +'</div>';
       }).join("");
-      storeBody.innerHTML='<h2>Приложения</h2>'
-        +'<div class="store-section">Установленные</div>'
+      storeBody.innerHTML='<h2>'+esc(t("store.title"))+'</h2>'
+        +'<div class="store-section">'+esc(t("store.installed"))+'</div>'
         +'<div class="store-list" id="storeList">'+rows+'</div>'
-        +'<div class="store-section">Установить приложение</div>'
-        +'<div class="store-install" id="storeInstall">📦 Выбрать бандл (.robtop.json)</div>'
+        +'<div class="store-section">'+esc(t("store.installApp"))+'</div>'
+        +'<div class="store-install" id="storeInstall">'+esc(t("store.pickBundle"))+'</div>'
         +'<input type="file" id="bundleInput" accept=".json,application/json" hidden>'
-        +'<div class="sheet-actions"><button class="btn btn-cancel" id="storeCloseBtn" style="flex:1">Закрыть</button></div>';
+        +'<div class="sheet-actions"><button class="btn btn-cancel" id="storeCloseBtn" style="flex:1">'+esc(t("common.close"))+'</button></div>';
       document.getElementById("storeCloseBtn").onclick=closeStore;
       var listEl=document.getElementById("storeList");
       listEl.addEventListener("click",function(e){
@@ -240,7 +274,7 @@ window.RobTop = window.RobTop || {};
 
   function storeToggle(id, on){
     if(demo){ var ov=getOverrides(); ov[id]=Object.assign({},ov[id],{enabled:on?1:0}); setOverrides(ov); refreshAfterAdmin(); return; }
-    adminCall("store/enable.php",{id:id,enabled:on?1:0}).then(function(r){ if(r&&r.ok) refreshAfterAdmin(); else toast("Не удалось (PIN?)"); });
+    adminCall("store/enable.php",{id:id,enabled:on?1:0}).then(function(r){ if(r&&r.ok) refreshAfterAdmin(); else toast(t("store.failPin")); });
   }
   function storeReorder(id, dir){
     if(demo){
@@ -251,25 +285,25 @@ window.RobTop = window.RobTop || {};
     adminCall("store/reorder.php",{id:id,dir:dir}).then(function(r){ if(r&&r.ok) refreshAfterAdmin(); });
   }
   function storeUninstall(id){
-    confirm({title:"Удалить приложение?",text:"Данные и события сохранятся.",ok:"Удалить",cancel:"Отмена"}).then(function(ok){
+    confirm({title:t("store.uninstallTitle"),text:t("store.uninstallText"),ok:t("common.delete"),cancel:t("common.cancel")}).then(function(ok){
       if(!ok) return;
-      if(demo){ var inst=getInstalled(); delete inst[id]; setInstalled(inst); var ov=getOverrides(); delete ov[id]; setOverrides(ov); refreshAfterAdmin(); toast("Удалено"); return; }
-      adminCall("store/uninstall.php",{id:id}).then(function(r){ if(r&&r.ok){ refreshAfterAdmin(); toast("Удалено"); } else toast("Не удалось"); });
+      if(demo){ var inst=getInstalled(); delete inst[id]; setInstalled(inst); var ov=getOverrides(); delete ov[id]; setOverrides(ov); refreshAfterAdmin(); toast(t("common.removed")); return; }
+      adminCall("store/uninstall.php",{id:id}).then(function(r){ if(r&&r.ok){ refreshAfterAdmin(); toast(t("common.removed")); } else toast(errMsg(r,"common.failed")); });
     });
   }
   function readBundle(file){
     var fr=new FileReader();
     fr.onload=function(){
-      var bundle; try{ bundle=JSON.parse(fr.result); }catch(e){ toast("Битый бандл (не JSON)"); return; }
-      if(!bundle.manifest||!bundle.manifest.id||!bundle.files){ toast("В бандле нет manifest/files"); return; }
-      if(!/^[a-z0-9_-]{2,40}$/.test(bundle.manifest.id)){ toast("Неверный id приложения"); return; }
+      var bundle; try{ bundle=JSON.parse(fr.result); }catch(e){ toast(t("err.bundle_not_json")); return; }
+      if(!bundle.manifest||!bundle.manifest.id||!bundle.files){ toast(t("err.bundle_no_manifest")); return; }
+      if(!/^[a-z0-9_-]{2,40}$/.test(bundle.manifest.id)){ toast(t("err.bad_id")); return; }
       var bad=Object.keys(bundle.files).some(function(n){ return /\.(php|phtml|phar|cgi|pl|py|sh)$/i.test(n); });
-      if(bad){ toast("Серверный код в бандле запрещён"); return; }
+      if(bad){ toast(t("err.server_code_denied")); return; }
       if(demo){
         var inst=getInstalled(); inst[bundle.manifest.id]={manifest:bundle.manifest, files:bundle.files}; setInstalled(inst);
-        refreshAfterAdmin(); toast("Установлено: "+(bundle.manifest.name||bundle.manifest.id)); return;
+        refreshAfterAdmin(); toast(t("store.installedToast",{name:(bundle.manifest.name||bundle.manifest.id)})); return;
       }
-      adminCall("store/install.php",{manifest:bundle.manifest, files:bundle.files}).then(function(r){ if(r&&r.ok){ refreshAfterAdmin(); toast("Установлено"); } else toast((r&&r.error)||"Не удалось установить"); }).catch(function(){ toast("Ошибка установки"); });
+      adminCall("store/install.php",{manifest:bundle.manifest, files:bundle.files}).then(function(r){ if(r&&r.ok){ refreshAfterAdmin(); toast(t("store.installedToast",{name:(bundle.manifest.name||bundle.manifest.id)})); } else toast(errMsg(r,"err.install_failed")); }).catch(function(){ toast(t("err.install_error")); });
     };
     fr.readAsText(file);
   }
@@ -285,15 +319,27 @@ window.RobTop = window.RobTop || {};
     toastEl=document.getElementById("toast");
     demoBadge=document.getElementById("demoBadge");
     hudL=document.getElementById("hudL"); hudCnum=document.getElementById("hudCnum"); hudClbl=document.getElementById("hudClbl"); hudRnum=document.getElementById("hudRnum"); hudRlbl=document.getElementById("hudRlbl");
+    settingsOverlay=document.getElementById("settingsOverlay"); settingsBody=document.getElementById("settingsBody");
     storeOverlay=document.getElementById("storeOverlay"); storeBody=document.getElementById("storeBody"); gearBtn=document.getElementById("gearBtn");
   }
   function wire(){
     appsEl.addEventListener("click",function(e){ var t=e.target.closest("[data-mod]"); if(t) RT.open(t.getAttribute("data-mod")); });
-    gearBtn.addEventListener("click",openStore);
+    gearBtn.addEventListener("click",openSettings);
+    settingsOverlay.addEventListener("click",function(e){ if(e.target===settingsOverlay) closeSettings(); });
+    var setg=settingsOverlay.querySelector(".grip"); if(setg) setg.addEventListener("click",closeSettings);
+    enableDrag(settingsOverlay.querySelector(".sheet"), closeSettings);
     storeOverlay.addEventListener("click",function(e){ if(e.target===storeOverlay) closeStore(); });
     var sg=storeOverlay.querySelector(".grip"); if(sg) sg.addEventListener("click",closeStore);
     enableDrag(storeOverlay.querySelector(".sheet"), closeStore);
-    document.addEventListener("keydown",function(e){ if(e.key==="Escape"){ closeStore(); if(RT.current()) RT.close(); } });
+    document.addEventListener("keydown",function(e){ if(e.key==="Escape"){ closeSettings(); closeStore(); if(RT.current()) RT.close(); } });
+  }
+
+  /* смена языка: перевести статический DOM, перерисовать главный экран и открытые шторки */
+  function onLocaleChange(){
+    I.apply(document);
+    renderHome();
+    if(settingsOverlay && settingsOverlay.classList.contains("show")) renderSettings();
+    if(storeOverlay && storeOverlay.classList.contains("show")) renderStore();
   }
 
   RT._shell={
@@ -306,6 +352,8 @@ window.RobTop = window.RobTop || {};
 
   function boot(){
     cacheDom(); wire();
+    I.apply(document);                 // перевести статический DOM под активный язык
+    I.onChange(onLocaleChange);        // реагировать на смену языка
     RT._shell.demo=demo; body.classList.toggle("demo",demo);
     showHome();
     loadRegistry();

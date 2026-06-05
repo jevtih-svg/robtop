@@ -1,7 +1,7 @@
 {
   "id": "reverse",
   "name": "Слова наоборот",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "color": "#ff7a3d",
   "status": "active",
   "wide": false,

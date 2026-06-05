@@ -65,7 +65,7 @@ window.RobTop = window.RobTop || {};
       media:  { upload:function(dataUrl,kind){ return API.post("upload.php",{dataUrl:dataUrl, kind:kind||mod}); } },
       ui: {
         toast:    function(m,a,f){ return shell.toast(m,a,f); },
-        undo:     function(label,fn){ return shell.toast("Готово", label||"Отменить", fn); },
+        undo:     function(label,fn){ return shell.toast(RT.i18n.t("common.done"), label||RT.i18n.t("common.undo"), fn); },
         confirm:  function(opts){ return shell.confirm(opts); },
         sheet:    function(node){ return shell.sheet(node); },
         confetti: function(){ if(window.Confetti) window.Confetti.launch(); },
@@ -92,6 +92,17 @@ window.RobTop = window.RobTop || {};
         get:function(){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },
         set:function(v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
       }; } },
+      /* ---- i18n: ключ по умолчанию в неймспейсе модуля; "common.*" — общий словарь ---- */
+      t: function(key,p){ var k=(String(key).indexOf("common.")===0)?key:(mod+"."+key); return RT.i18n.t(k,p); },
+      plural: function(n,key,p){ var k=(String(key).indexOf("common.")===0)?key:(mod+"."+key); return RT.i18n.plural(n,k,p); },
+      formatDate: function(v,o){ return RT.i18n.formatDate(v,o); },
+      i18n: {
+        get: function(){ return RT.i18n.get(); },
+        tag: function(){ return RT.i18n.tag(); },
+        speechLang: function(){ return RT.i18n.speechLang(); },
+        formatDate: function(v,o){ return RT.i18n.formatDate(v,o); },
+        t: function(k,p){ return RT.i18n.t(k,p); }
+      },
       uid: uid,
       isDemo: function(){ return RT.isDemo(); }
     };

@@ -9,7 +9,8 @@ window.RobTop = window.RobTop || {};
   RT._registry = RT._registry || []; // мета всех видимых модулей
   RT._current = null;
 
-  RT.register = function(def){ if(def && def.id) RT._defs[def.id] = def; };
+  /* register({id,mount,unmount[,messages]}) — messages:{en,ru,lv} вливаются в i18n */
+  RT.register = function(def){ if(def && def.id){ RT._defs[def.id] = def; if(def.messages && RT.i18n) RT.i18n.add(def.messages); } };
 
   RT.setRegistry = function(list){ RT._registry = list || []; };
   RT.metaFor = function(id){ for(var i=0;i<RT._registry.length;i++){ if(RT._registry[i].id===id) return RT._registry[i]; } return null; };
@@ -38,7 +39,8 @@ window.RobTop = window.RobTop || {};
 
   RT.open = function(id){
     var meta=RT.metaFor(id); if(!meta) return;
-    if(meta.status==="soon"){ RT._shell.toast(meta.name+": скоро!"); return; }
+    var nm=(RT.i18n?RT.i18n.t("tile."+id,{fallback:meta.name}):meta.name);
+    if(meta.status==="soon"){ RT._shell.toast(RT.i18n?RT.i18n.t("tile.soonToast",{name:nm}):(nm+": soon!")); return; }
     var dir=folder(meta);
     var bundle = (meta.source==="installed" && RT.isDemo() && RT._shell.demoBundle) ? RT._shell.demoBundle(id) : null;
     var styles=meta.styles||"module.css", entry=meta.entry||"module.js";
@@ -47,16 +49,16 @@ window.RobTop = window.RobTop || {};
     var jsText = bundle ? bundle.files[entry] : null;
     injectJs(jsText!=null ? dir+entry : bust(dir+entry), jsText).then(function(){
       var def=RT._defs[id];
-      if(!def){ RT._shell.toast("Модуль не загрузился"); return; }
+      if(!def){ RT._shell.toast(RT.i18n?RT.i18n.t("err.module_load"):"Module didn't load"); return; }
       var view=RT._shell.moduleView();
       view.innerHTML=""; view.setAttribute("data-mod",id);
       var sdk=RT.createSdk(meta);
       RT.modules[id]={def:def, sdk:sdk};
       RT._current=id;
       RT._shell.showModule();
-      try{ def.mount(view, sdk); }catch(e){ RT._shell.toast("Ошибка модуля"); }
+      try{ def.mount(view, sdk); }catch(e){ RT._shell.toast(RT.i18n?RT.i18n.t("err.module_error"):"Module error"); }
       sdk.events.track("opened_module",{module:id});
-    }).catch(function(){ RT._shell.toast("Не удалось открыть «"+meta.name+"»"); });
+    }).catch(function(){ RT._shell.toast(RT.i18n?RT.i18n.t("err.module_open",{name:nm}):("Couldn't open “"+nm+"”")); });
   };
 
   RT.close = function(){

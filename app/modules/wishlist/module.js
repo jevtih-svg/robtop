@@ -1,8 +1,100 @@
 /* RobTop — модуль «Виш-лист» (родной, серверный: своя таблица wishlist_items + api.php).
    Поведение 1:1 с прежним прототипом. Сервер — через sdk.api (action.php → диспетчер → modules/wishlist/api.php),
-   офлайн/демо — localStorage. UI монтируется в root; шторки добавляются в body и снимаются при unmount. */
+   офлайн/демо — localStorage. UI монтируется в root; шторки добавляются в body и снимаются при unmount.
+   Тексты — через sdk.t/sdk.plural/sdk.formatDate (язык en/ru/lv); словарь — в MESSAGES ниже. */
 (function(){
   "use strict";
+
+  /* =================== ЛОКАЛИЗАЦИЯ (en/ru/lv) =================== */
+  var MESSAGES={
+    en:{ wishlist:{
+      title:"Wishlist", subtitle:"My wish list",
+      hud:{ cLbl:"wishes", rLbl:"bought" },
+      tab:{ want:"Want", thinking:"Thinking", bought:"Bought" },
+      empty:{ want:{h:"Empty so far",p:"Tap “Want!” below and add your first wish."},
+        thinking:{h:"“Thinking” section",p:"Wishes you're unsure about go here. Tap “Changed mind” on a card."},
+        bought:{h:"“Bought” section",p:"Bought wishes go here. Tap “Bought” on a card."} },
+      hist:{ created:"Added", changed_mind:"Changed mind", purchased:"Bought", back_to_want:"Want again", edited:"Edited" },
+      btn:{ bought:"Bought", thinking:"Changed mind", want:"Want!", backWant:"Want again" },
+      chip:{ changedMind:"changed ×{n}", purchased:"bought ×{n}", days:{one:"in {n} day", other:"in {n} days"} },
+      aria:{ fav:"Really want", stats:"Stats" },
+      badge:{ bought:"Bought" }, link:{ open:"Open link" },
+      detail:{ changedMind:"times changed mind", purchased:"times bought", returned:"times returned", edited:"times edited",
+        note:"Why I want it", favOn:"Really want", favOff:"Mark", edit:"Edit", historyTitle:"Wish history" },
+      purchase:{ q:"Really bought?", qAgain:"Confirm the purchase again", no:"Not yet", yes:"Yes, bought it! 🎉", yesAgain:"Sure? Tap again ✅" },
+      stats:{ title:"Wish stats", total:"wishes total", boughtNow:"fulfilled now", purchases:"purchases total",
+        changedMind:"times changed mind", favorites:"★ really want", avgDays:"avg days to buy",
+        fickle:"Most fickle wish: <b>{name}</b> (changed ×{n})" },
+      form:{ newWish:"New wish", editWish:"Edit wish", addPhoto:"Add photo", replacePhoto:"Replace photo",
+        titleLabel:"Title", titlePh:"e.g. LEGO set", noteLabel:"Why do you want it?", optional:"(optional)",
+        notePh:"e.g. I'll build robots", linkLabel:"Link" },
+      toast:{ saved:"Saved", needTitle:"Enter a wish title", added:"Wish added! 🍒", addFailed:"Couldn't add",
+        addFailedOffline:"Couldn't add (offline)", movedThinking:"Moved to “Thinking”", movedWant:"Back to “Want”!",
+        deleted:"Wish deleted", congrats:"Congrats! Wish fulfilled 🎉", photoFailed:"Couldn't upload photo",
+        photoFailedOffline:"Couldn't upload photo (offline)", noServer:"No server connection — change not saved",
+        demoMode:"Demo mode: server unavailable" },
+      seed:{ lego:{title:"LEGO Technic set",note:"I'll build robots and cars"}, scooter:{title:"Stunt scooter"},
+        book:{title:"Dinosaur book"}, headphones:{title:"Wireless headphones",note:"Listen to music outside"}, ball:{title:"Football"} }
+    }},
+    ru:{ wishlist:{
+      title:"Виш-лист", subtitle:"Список моих желаний",
+      hud:{ cLbl:"желаний", rLbl:"куплено" },
+      tab:{ want:"Хочу", thinking:"Думаю", bought:"Купил" },
+      empty:{ want:{h:"Пока пусто",p:"Нажми «Хочу!» внизу и добавь своё первое желание."},
+        thinking:{h:"Раздел «Думаю»",p:"Сюда попадают желания, в которых ты не уверен. Нажми «Передумал» на карточке."},
+        bought:{h:"Раздел «Купил»",p:"Сюда попадают купленные желания. Отметь «Куплено» на карточке."} },
+      hist:{ created:"Добавлено", changed_mind:"Передумал", purchased:"Куплено", back_to_want:"Снова хочу", edited:"Изменено" },
+      btn:{ bought:"Куплено", thinking:"Передумал", want:"Хочу!", backWant:"Снова хочу" },
+      chip:{ changedMind:"передумал ×{n}", purchased:"куплено ×{n}", days:{one:"за {n} день", few:"за {n} дня", many:"за {n} дней"} },
+      aria:{ fav:"Очень хочу", stats:"Статистика" },
+      badge:{ bought:"Куплено" }, link:{ open:"Открыть ссылку" },
+      detail:{ changedMind:"раз передумал", purchased:"раз куплено", returned:"раз вернул", edited:"раз менял",
+        note:"Почему хочу", favOn:"Очень хочу", favOff:"Отметить", edit:"Изменить", historyTitle:"История желания" },
+      purchase:{ q:"Точно купили?", qAgain:"Подтверди покупку ещё раз", no:"Ещё нет", yes:"Да, купили! 🎉", yesAgain:"Точно? Нажми ещё раз ✅" },
+      stats:{ title:"Статистика желаний", total:"всего желаний", boughtNow:"исполнено сейчас", purchases:"всего покупок",
+        changedMind:"раз передумал", favorites:"★ очень хочу", avgDays:"ср. дней до покупки",
+        fickle:"Самое непостоянное желание: <b>{name}</b> (передумал ×{n})" },
+      form:{ newWish:"Новое желание", editWish:"Изменить желание", addPhoto:"Добавить фото", replacePhoto:"Заменить фото",
+        titleLabel:"Название", titlePh:"Например: Конструктор LEGO", noteLabel:"Почему хочешь?", optional:"(необязательно)",
+        notePh:"Например: буду строить роботов", linkLabel:"Ссылка" },
+      toast:{ saved:"Сохранено", needTitle:"Напиши название желания", added:"Желание добавлено! 🍒", addFailed:"Не удалось добавить",
+        addFailedOffline:"Не удалось добавить (нет связи)", movedThinking:"Перенесено в «Думаю»", movedWant:"Снова в «Хочу»!",
+        deleted:"Желание удалено", congrats:"Поздравляю! Желание исполнилось 🎉", photoFailed:"Не удалось загрузить фото",
+        photoFailedOffline:"Не удалось загрузить фото (нет связи)", noServer:"Нет связи с сервером — изменение не сохранено",
+        demoMode:"Демо-режим: сервер недоступен" },
+      seed:{ lego:{title:"Конструктор LEGO Технік",note:"Буду строить роботов и машины"}, scooter:{title:"Самокат трюковой"},
+        book:{title:"Книга про динозавров"}, headphones:{title:"Беспроводные наушники",note:"Слушать музыку на улице"}, ball:{title:"Футбольный мяч"} }
+    }},
+    lv:{ wishlist:{
+      title:"Vēlmju saraksts", subtitle:"Mans vēlmju saraksts",
+      hud:{ cLbl:"vēlmes", rLbl:"nopirkts" },
+      tab:{ want:"Gribu", thinking:"Domāju", bought:"Nopirku" },
+      empty:{ want:{h:"Pagaidām tukšs",p:"Nospied “Gribu!” lejā un pievieno savu pirmo vēlmi."},
+        thinking:{h:"Sadaļa “Domāju”",p:"Šeit nonāk vēlmes, par kurām neesi pārliecināts. Nospied “Pārdomāju” uz kartītes."},
+        bought:{h:"Sadaļa “Nopirku”",p:"Šeit nonāk nopirktās vēlmes. Atzīmē “Nopirkts” uz kartītes."} },
+      hist:{ created:"Pievienots", changed_mind:"Pārdomāju", purchased:"Nopirkts", back_to_want:"Atkal gribu", edited:"Mainīts" },
+      btn:{ bought:"Nopirkts", thinking:"Pārdomāju", want:"Gribu!", backWant:"Atkal gribu" },
+      chip:{ changedMind:"pārdomāju ×{n}", purchased:"nopirkts ×{n}", days:{zero:"{n} dienās", one:"{n} dienā", other:"{n} dienās"} },
+      aria:{ fav:"Ļoti gribu", stats:"Statistika" },
+      badge:{ bought:"Nopirkts" }, link:{ open:"Atvērt saiti" },
+      detail:{ changedMind:"reizes pārdomāju", purchased:"reizes nopirkts", returned:"reizes atgriezu", edited:"reizes mainīju",
+        note:"Kāpēc gribu", favOn:"Ļoti gribu", favOff:"Atzīmēt", edit:"Mainīt", historyTitle:"Vēlmes vēsture" },
+      purchase:{ q:"Tiešām nopirkts?", qAgain:"Apstiprini pirkumu vēlreiz", no:"Vēl nē", yes:"Jā, nopirku! 🎉", yesAgain:"Tiešām? Nospied vēlreiz ✅" },
+      stats:{ title:"Vēlmju statistika", total:"vēlmes kopā", boughtNow:"izpildīts tagad", purchases:"pirkumi kopā",
+        changedMind:"reizes pārdomāju", favorites:"★ ļoti gribu", avgDays:"vid. dienas līdz pirkumam",
+        fickle:"Nepastāvīgākā vēlme: <b>{name}</b> (pārdomāju ×{n})" },
+      form:{ newWish:"Jauna vēlme", editWish:"Mainīt vēlmi", addPhoto:"Pievienot foto", replacePhoto:"Nomainīt foto",
+        titleLabel:"Nosaukums", titlePh:"Piem.: LEGO komplekts", noteLabel:"Kāpēc to gribi?", optional:"(neobligāti)",
+        notePh:"Piem.: būvēšu robotus", linkLabel:"Saite" },
+      toast:{ saved:"Saglabāts", needTitle:"Ieraksti vēlmes nosaukumu", added:"Vēlme pievienota! 🍒", addFailed:"Neizdevās pievienot",
+        addFailedOffline:"Neizdevās pievienot (nav savienojuma)", movedThinking:"Pārvietots uz “Domāju”", movedWant:"Atkal “Gribu”!",
+        deleted:"Vēlme izdzēsta", congrats:"Apsveicu! Vēlme piepildīta 🎉", photoFailed:"Neizdevās augšupielādēt foto",
+        photoFailedOffline:"Neizdevās augšupielādēt foto (nav savienojuma)", noServer:"Nav savienojuma ar serveri — izmaiņas nesaglabātas",
+        demoMode:"Demo režīms: serveris nav pieejams" },
+      seed:{ lego:{title:"LEGO Technic komplekts",note:"Būvēšu robotus un mašīnas"}, scooter:{title:"Triku skrejritenis"},
+        book:{title:"Grāmata par dinozauriem"}, headphones:{title:"Bezvadu austiņas",note:"Klausīties mūziku ārā"}, ball:{title:"Futbola bumba"} }
+    }}
+  };
 
   var IC={
     cherry:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="7.5" cy="17" r="3.6"/><circle cx="15.7" cy="17.6" r="3.6"/><path d="M8 14.4C9 8.4 13 5 18.4 3.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16.1 14.6C16.7 9.4 15 6 12 3.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M18.4 3.8c1-1.1 2.7-1.1 3.6.3-1.5.5-2.5.4-3.6-.3z"/></svg>',
@@ -22,12 +114,8 @@
   var STATS_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>';
   var TITLE_CHERRY='<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="7.5" cy="17" r="3.6"/><circle cx="15.7" cy="17.6" r="3.6"/><path d="M8 14.4C9 8.4 13 5 18.4 3.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16.1 14.6C16.7 9.4 15 6 12 3.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M18.4 3.8c1-1.1 2.7-1.1 3.6.3-1.5.5-2.5.4-3.6-.3z"/></svg>';
 
-  var EMPTY={
-    want:{h:"Пока пусто",p:"Нажми «Хочу!» внизу и добавь своё первое желание."},
-    thinking:{h:"Раздел «Думаю»",p:"Сюда попадают желания, в которых ты не уверен. Нажми «Передумал» на карточке."},
-    bought:{h:"Раздел «Купил»",p:"Сюда попадают купленные желания. Отметь «Куплено» на карточке."}
-  };
-  var HL={ created:{t:"Добавлено",e:"➕"}, changed_mind:{t:"Передумал",e:"🤔"}, purchased:{t:"Куплено",e:"🎉"}, back_to_want:{t:"Снова хочу",e:"↩️"}, edited:{t:"Изменено",e:"✏️"} };
+  /* эмодзи событий истории (язык-нейтральны); тексты — sdk.t("hist.<type>") */
+  var HL_EMOJI={ created:"➕", changed_mind:"🤔", purchased:"🎉", back_to_want:"↩️", edited:"✏️" };
 
   var STORAGE_KEY="robtop_wishlist_v1";
   var sdk=null, root=null, demo=true, fabCtl=null, ovWrap=null, onKey=null;
@@ -38,10 +126,10 @@
   /* ----- helpers ----- */
   function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
+  function t(k,p){ return sdk.t(k,p); }
   function normUrl(u){ u=(u||"").trim(); if(!u) return ""; if(!/^https?:\/\//i.test(u)) u="https://"+u; return u; }
-  function fmtDate(ts){ try{ return new Intl.DateTimeFormat("ru-RU",{day:"numeric",month:"long"}).format(new Date(ts)); }catch(e){ return ""; } }
+  function fmtDate(ts){ return sdk.formatDate(ts); }
   function daysBetween(a,b){ return Math.max(0,Math.round((b-a)/86400000)); }
-  function plural(n,one,few,many){ var m=Math.abs(n)%100,m1=m%10; if(m>10&&m<20) return many; if(m1>1&&m1<5) return few; if(m1===1) return one; return many; }
   function findItem(id){ for(var i=0;i<state.items.length;i++){ if(state.items[i].id===id) return state.items[i]; } return null; }
   function findIdx(id){ for(var i=0;i<state.items.length;i++){ if(state.items[i].id===id) return i; } return -1; }
 
@@ -65,15 +153,15 @@
   function seed(){
     var now=Date.now(),d=86400000,h=3600000;
     return { version:2, items:[
-      {id:uid(),title:"Конструктор LEGO Технік",link:"https://www.lego.com",photo:null,icon:"🧱",note:"Буду строить роботов и машины",favorite:false,status:"want",createdAt:now-6*d,updatedAt:now-3*d,boughtAt:null,
+      {id:uid(),title:t("seed.lego.title"),link:"https://www.lego.com",photo:null,icon:"🧱",note:t("seed.lego.note"),favorite:false,status:"want",createdAt:now-6*d,updatedAt:now-3*d,boughtAt:null,
         history:[{type:"created",at:now-6*d},{type:"changed_mind",at:now-4*d},{type:"back_to_want",at:now-3*d}]},
-      {id:uid(),title:"Самокат трюковой",link:"",photo:null,icon:"🛴",note:"",favorite:true,status:"want",createdAt:now-1*d,updatedAt:now-1*d,boughtAt:null,
+      {id:uid(),title:t("seed.scooter.title"),link:"",photo:null,icon:"🛴",note:"",favorite:true,status:"want",createdAt:now-1*d,updatedAt:now-1*d,boughtAt:null,
         history:[{type:"created",at:now-1*d}]},
-      {id:uid(),title:"Книга про динозавров",link:"",photo:null,icon:"🦕",note:"",favorite:false,status:"want",createdAt:now-5*h,updatedAt:now-5*h,boughtAt:null,
+      {id:uid(),title:t("seed.book.title"),link:"",photo:null,icon:"🦕",note:"",favorite:false,status:"want",createdAt:now-5*h,updatedAt:now-5*h,boughtAt:null,
         history:[{type:"created",at:now-5*h}]},
-      {id:uid(),title:"Беспроводные наушники",link:"",photo:null,icon:"🎧",note:"Слушать музыку на улице",favorite:false,status:"thinking",createdAt:now-3*d,updatedAt:now-12*h,boughtAt:null,
+      {id:uid(),title:t("seed.headphones.title"),link:"",photo:null,icon:"🎧",note:t("seed.headphones.note"),favorite:false,status:"thinking",createdAt:now-3*d,updatedAt:now-12*h,boughtAt:null,
         history:[{type:"created",at:now-3*d},{type:"changed_mind",at:now-12*h}]},
-      {id:uid(),title:"Футбольный мяч",link:"",photo:null,icon:"⚽",note:"",favorite:false,status:"bought",createdAt:now-9*d,updatedAt:now-4*d,boughtAt:now-4*d,
+      {id:uid(),title:t("seed.ball.title"),link:"",photo:null,icon:"⚽",note:"",favorite:false,status:"bought",createdAt:now-9*d,updatedAt:now-4*d,boughtAt:now-4*d,
         history:[{type:"created",at:now-9*d},{type:"purchased",at:now-6*d},{type:"back_to_want",at:now-5*d},{type:"purchased",at:now-4*d}]}
     ], events:[] };
   }
@@ -91,13 +179,13 @@
   }
 
   /* ----- server bridge (через sdk) ----- */
-  function commit(action){ if(demo){ save(); return; } sdk.api.post("action.php",action).catch(function(){ sdk.ui.toast("Нет связи с сервером — изменение не сохранено"); }); }
+  function commit(action){ if(demo){ save(); return; } sdk.api.post("action.php",action).catch(function(){ sdk.ui.toast(t("toast.noServer")); }); }
   function undoCommit(snap,undoType){ if(demo){ save(); return; } var it=snap.data; sdk.api.post("action.php",{type:"undo",itemId:it.id,data:{undoType:undoType,status:it.status,favorite:!!it.favorite,boughtAt:it.boughtAt||null,deleted:false}}).catch(function(){}); }
   function track(type,itemId,data){ if(demo) return; sdk.api.post("action.php",{type:type,itemId:itemId||null,data:data||null}).catch(function(){}); }
 
   /* ----- counts & hud ----- */
   function counts(){ var c={want:0,thinking:0,bought:0}; state.items.forEach(function(i){ if(c[i.status]!=null) c[i.status]++; }); return c; }
-  function updateHud(){ var c=counts(),total=c.want+c.thinking+c.bought; sdk.ui.hud({left:'хочу: <b>'+c.want+'</b>', cNum:total, cLbl:"желаний", rNum:c.bought, rLbl:"куплено"}); }
+  function updateHud(){ var c=counts(),total=c.want+c.thinking+c.bought; sdk.ui.hud({left:t("tab.want").toLowerCase()+': <b>'+c.want+'</b>', cNum:total, cLbl:t("hud.cLbl"), rNum:c.bought, rLbl:t("hud.rLbl")}); }
 
   /* ----- cards ----- */
   function cardImage(item){
@@ -107,39 +195,39 @@
   }
   function actionsFor(item){
     var id=item.id;
-    if(item.status==="want") return '<button class="btn btn-bought" data-action="bought" data-id="'+id+'">'+IC.check+' Куплено</button><button class="btn btn-think" data-action="thinking" data-id="'+id+'">'+IC.think+' Передумал</button>';
-    if(item.status==="thinking") return '<button class="btn btn-want" data-action="want" data-id="'+id+'">'+IC.heart+' Хочу!</button><button class="btn btn-bought" data-action="bought" data-id="'+id+'">'+IC.check+' Куплено</button>';
-    return '<button class="btn btn-ghost" data-action="want" data-id="'+id+'">'+IC.back2+' Снова хочу</button>';
+    if(item.status==="want") return '<button class="btn btn-bought" data-action="bought" data-id="'+id+'">'+IC.check+' '+esc(t("btn.bought"))+'</button><button class="btn btn-think" data-action="thinking" data-id="'+id+'">'+IC.think+' '+esc(t("btn.thinking"))+'</button>';
+    if(item.status==="thinking") return '<button class="btn btn-want" data-action="want" data-id="'+id+'">'+IC.heart+' '+esc(t("btn.want"))+'</button><button class="btn btn-bought" data-action="bought" data-id="'+id+'">'+IC.check+' '+esc(t("btn.bought"))+'</button>';
+    return '<button class="btn btn-ghost" data-action="want" data-id="'+id+'">'+IC.back2+' '+esc(t("btn.backWant"))+'</button>';
   }
   function cardHTML(item){
     var co=itemCounts(item),chips="";
-    if(co.changedMind>0) chips+='<span class="chip mind">'+IC.think+' передумал ×'+co.changedMind+'</span>';
-    if(co.purchased>0) chips+='<span class="chip buy">'+IC.check+' куплено ×'+co.purchased+'</span>';
-    if(item.status==="bought"&&item.boughtAt){ var dd=daysBetween(item.createdAt,item.boughtAt); chips+='<span class="chip time">'+IC.clock+' за '+dd+' '+plural(dd,"день","дня","дней")+'</span>'; }
+    if(co.changedMind>0) chips+='<span class="chip mind">'+IC.think+' '+esc(t("chip.changedMind",{n:co.changedMind}))+'</span>';
+    if(co.purchased>0) chips+='<span class="chip buy">'+IC.check+' '+esc(t("chip.purchased",{n:co.purchased}))+'</span>';
+    if(item.status==="bought"&&item.boughtAt){ var dd=daysBetween(item.createdAt,item.boughtAt); chips+='<span class="chip time">'+IC.clock+' '+esc(sdk.plural(dd,"chip.days"))+'</span>'; }
     var chipsHTML=chips?'<div class="chips">'+chips+'</div>':"";
     var notePrev=item.note?'<div class="note-prev">'+esc(item.note)+'</div>':"";
     var link=normUrl(item.link);
-    var linkHTML=link?'<a class="card-link" href="'+esc(link)+'" target="_blank" rel="noopener">'+IC.link+' Открыть ссылку</a>':"";
-    var boughtBadge=item.status==="bought"?'<div class="bought-badge">'+IC.badge+' Куплено</div>':"";
+    var linkHTML=link?'<a class="card-link" href="'+esc(link)+'" target="_blank" rel="noopener">'+IC.link+' '+esc(t("link.open"))+'</a>':"";
+    var boughtBadge=item.status==="bought"?'<div class="bought-badge">'+IC.badge+' '+esc(t("badge.bought"))+'</div>':"";
     return '<article class="card'+(item.status==="bought"?" shine":"")+'" data-id="'+item.id+'">'
       +cardImage(item)+boughtBadge
-      +'<button class="fav-btn'+(item.favorite?" on":"")+'" data-action="fav" data-id="'+item.id+'" aria-label="Очень хочу">'+(item.favorite?IC.star:IC.starO)+'</button>'
+      +'<button class="fav-btn'+(item.favorite?" on":"")+'" data-action="fav" data-id="'+item.id+'" aria-label="'+esc(t("aria.fav"))+'">'+(item.favorite?IC.star:IC.starO)+'</button>'
       +'<div class="card-body"><h3 class="card-title">'+esc(item.title)+'</h3>'+chipsHTML+notePrev+linkHTML
       +'<div class="card-actions">'+actionsFor(item)+'</div></div></article>';
   }
   function render(){
     var c=counts();
     ["want","thinking","bought"].forEach(function(k){ var b=E.tabs.querySelector('[data-count="'+k+'"]'); if(b) b.textContent=c[k]; });
-    Array.prototype.forEach.call(E.tabs.querySelectorAll(".tab"),function(t){ t.classList.toggle("active",t.getAttribute("data-tab")===currentTab); });
+    Array.prototype.forEach.call(E.tabs.querySelectorAll(".tab"),function(tb){ tb.classList.toggle("active",tb.getAttribute("data-tab")===currentTab); });
     var items=state.items.filter(function(i){ return i.status===currentTab; });
     if(currentTab==="want") items.sort(function(a,b){ if((b.favorite?1:0)!==(a.favorite?1:0)) return (b.favorite?1:0)-(a.favorite?1:0); return b.updatedAt-a.updatedAt; });
     else if(currentTab==="bought") items.sort(function(a,b){ return (b.boughtAt||b.updatedAt)-(a.boughtAt||a.updatedAt); });
     else items.sort(function(a,b){ return b.updatedAt-a.updatedAt; });
-    if(!items.length){ var e=EMPTY[currentTab]; E.list.innerHTML='<div class="empty"><div class="empty-ic">'+IC.cherry+'</div><h3>'+e.h+'</h3><p>'+e.p+'</p></div>'; }
+    if(!items.length){ E.list.innerHTML='<div class="empty"><div class="empty-ic">'+IC.cherry+'</div><h3>'+esc(t("empty."+currentTab+".h"))+'</h3><p>'+esc(t("empty."+currentTab+".p"))+'</p></div>'; }
     else E.list.innerHTML=items.map(cardHTML).join("");
     updateHud();
   }
-  function setTab(t){ currentTab=t; E.wl.setAttribute("data-tab",t); render(); }
+  function setTab(tb){ currentTab=tb; E.wl.setAttribute("data-tab",tb); render(); }
 
   /* ----- actions ----- */
   function handleAction(action,id){
@@ -164,15 +252,15 @@
     var act=(to==="thinking"?"changed_mind":"back_to_want");
     pushHistory(item, act);
     commit({type:act,itemId:id}); if(detailId===id) closeDetail(); render();
-    var msg=to==="thinking"?"Перенесено в «Думаю»":"Снова в «Хочу»!";
-    undoFn=function(){ restore(snap); undoCommit(snap,act); }; sdk.ui.toast(msg,"Отменить",undoFn); sdk.ui.haptics(8);
+    var msg=to==="thinking"?t("toast.movedThinking"):t("toast.movedWant");
+    undoFn=function(){ restore(snap); undoCommit(snap,act); }; sdk.ui.toast(msg,t("common.undo"),undoFn); sdk.ui.haptics(8);
   }
   function deleteItem(id){
     var idx=findIdx(id); if(idx<0) return; var item=state.items[idx];
     var snap={idx:idx,data:JSON.parse(JSON.stringify(item))};
     state.items.splice(idx,1);
     commit({type:"delete",itemId:id}); if(detailId===id) closeDetail(); render();
-    undoFn=function(){ restore(snap); undoCommit(snap,"deleted"); }; sdk.ui.toast("Желание удалено","Отменить",undoFn); sdk.ui.haptics(12);
+    undoFn=function(){ restore(snap); undoCommit(snap,"deleted"); }; sdk.ui.toast(t("toast.deleted"),t("common.undo"),undoFn); sdk.ui.haptics(12);
   }
 
   /* ----- purchase (double confirm + celebration) ----- */
@@ -181,15 +269,15 @@
     var pb=E.purchaseBody;
     var media=item.photo?'<div style="width:64px;height:64px;border-radius:16px;background-size:cover;background-position:center;margin:0 auto 6px;background-image:url(\''+item.photo+'\')"></div>':'<div class="pc-emoji">'+(item.icon||"🎉")+'</div>';
     pb.innerHTML=media
-      +'<div class="pc-q">Точно купили?</div>'
+      +'<div class="pc-q">'+esc(t("purchase.q"))+'</div>'
       +'<div class="pc-name">'+esc(item.title)+'</div>'
-      +'<div class="sheet-actions"><button class="btn btn-cancel" id="wlPcNo">Ещё нет</button><button class="btn btn-celebrate" id="wlPcYes">Да, купили! 🎉</button></div>';
+      +'<div class="sheet-actions"><button class="btn btn-cancel" id="wlPcNo">'+esc(t("purchase.no"))+'</button><button class="btn btn-celebrate" id="wlPcYes">'+esc(t("purchase.yes"))+'</button></div>';
     E.purchaseOverlay.classList.add("show");
     var armed=false,armT=null,yes=pb.querySelector("#wlPcYes"),q=pb.querySelector(".pc-q");
     pb.querySelector("#wlPcNo").onclick=closePurchase;
     yes.onclick=function(){
-      if(!armed){ armed=true; yes.textContent="Точно? Нажми ещё раз ✅"; yes.classList.add("armed"); q.textContent="Подтверди покупку ещё раз"; sdk.ui.haptics(12);
-        clearTimeout(armT); armT=setTimeout(function(){ armed=false; yes.textContent="Да, купили! 🎉"; yes.classList.remove("armed"); q.textContent="Точно купили?"; },4000); return; }
+      if(!armed){ armed=true; yes.textContent=t("purchase.yesAgain"); yes.classList.add("armed"); q.textContent=t("purchase.qAgain"); sdk.ui.haptics(12);
+        clearTimeout(armT); armT=setTimeout(function(){ armed=false; yes.textContent=t("purchase.yes"); yes.classList.remove("armed"); q.textContent=t("purchase.q"); },4000); return; }
       clearTimeout(armT); doPurchase(pendingPurchaseId);
     };
   }
@@ -200,7 +288,7 @@
     pushHistory(item,"purchased");
     commit({type:"purchased",itemId:id}); closePurchase(); closeDetail(); setTab("bought");
     sdk.ui.confetti(); sdk.ui.chime(); sdk.ui.haptics([25,40,25,40,70]);
-    sdk.ui.toast("Поздравляю! Желание исполнилось 🎉");
+    sdk.ui.toast(t("toast.congrats"));
   }
 
   /* ----- detail sheet ----- */
@@ -209,55 +297,55 @@
     var co=itemCounts(item);
     var link=normUrl(item.link);
     var counts4=''
-      +'<div class="dstat mind'+(co.changedMind?'':' zero')+'"><div class="n">'+co.changedMind+'</div><div class="l">раз передумал</div></div>'
-      +'<div class="dstat buy'+(co.purchased?'':' zero')+'"><div class="n">'+co.purchased+'</div><div class="l">раз куплено</div></div>'
-      +'<div class="dstat ret'+(co.returned?'':' zero')+'"><div class="n">'+co.returned+'</div><div class="l">раз вернул</div></div>'
-      +'<div class="dstat edit'+(co.edited?'':' zero')+'"><div class="n">'+co.edited+'</div><div class="l">раз менял</div></div>';
+      +'<div class="dstat mind'+(co.changedMind?'':' zero')+'"><div class="n">'+co.changedMind+'</div><div class="l">'+esc(t("detail.changedMind"))+'</div></div>'
+      +'<div class="dstat buy'+(co.purchased?'':' zero')+'"><div class="n">'+co.purchased+'</div><div class="l">'+esc(t("detail.purchased"))+'</div></div>'
+      +'<div class="dstat ret'+(co.returned?'':' zero')+'"><div class="n">'+co.returned+'</div><div class="l">'+esc(t("detail.returned"))+'</div></div>'
+      +'<div class="dstat edit'+(co.edited?'':' zero')+'"><div class="n">'+co.edited+'</div><div class="l">'+esc(t("detail.edited"))+'</div></div>';
     var hist=(item.history||[]).slice().sort(function(a,b){ return b.at-a.at; });
-    var tl=hist.map(function(h){ var m=HL[h.type]||{t:h.type,e:"•"}; return '<div class="tl-row"><span class="tl-ic">'+m.e+'</span><span class="tl-tx">'+m.t+'</span><span class="tl-dt">'+fmtDate(h.at)+'</span></div>'; }).join("");
-    var noteHTML=item.note?'<div class="d-note"><span class="lab">Почему хочу</span>'+esc(item.note)+'</div>':"";
-    var linkHTML=link?'<a class="card-link" href="'+esc(link)+'" target="_blank" rel="noopener" style="margin-top:12px">'+IC.link+' Открыть ссылку</a>':"";
+    var tl=hist.map(function(h){ var em=HL_EMOJI[h.type]||"•"; var label=t("hist."+h.type,{fallback:h.type}); return '<div class="tl-row"><span class="tl-ic">'+em+'</span><span class="tl-tx">'+esc(label)+'</span><span class="tl-dt">'+fmtDate(h.at)+'</span></div>'; }).join("");
+    var noteHTML=item.note?'<div class="d-note"><span class="lab">'+esc(t("detail.note"))+'</span>'+esc(item.note)+'</div>':"";
+    var linkHTML=link?'<a class="card-link" href="'+esc(link)+'" target="_blank" rel="noopener" style="margin-top:12px">'+IC.link+' '+esc(t("link.open"))+'</a>':"";
     E.detailBody.innerHTML=
-      '<div class="d-media">'+cardImage(item)+(item.status==="bought"?'<div class="bought-badge">'+IC.badge+' Куплено</div>':"")+'</div>'
+      '<div class="d-media">'+cardImage(item)+(item.status==="bought"?'<div class="bought-badge">'+IC.badge+' '+esc(t("badge.bought"))+'</div>':"")+'</div>'
       +'<h2 class="d-title">'+esc(item.title)+'</h2>'
       +'<div class="d-row">'
-      +'<button class="d-fav'+(item.favorite?" on":"")+'" data-action="fav" data-id="'+item.id+'">'+(item.favorite?IC.star:IC.starO)+(item.favorite?" Очень хочу":" Отметить")+'</button>'
-      +'<button class="d-fav" data-action="edit" data-id="'+item.id+'">'+IC.edit+' Изменить</button>'
+      +'<button class="d-fav'+(item.favorite?" on":"")+'" data-action="fav" data-id="'+item.id+'">'+(item.favorite?IC.star:IC.starO)+' '+esc(item.favorite?t("detail.favOn"):t("detail.favOff"))+'</button>'
+      +'<button class="d-fav" data-action="edit" data-id="'+item.id+'">'+IC.edit+' '+esc(t("detail.edit"))+'</button>'
       +'</div>'
       +noteHTML+linkHTML
-      +'<div class="d-sec-title">'+IC.clock+' История желания</div>'
+      +'<div class="d-sec-title">'+IC.clock+' '+esc(t("detail.historyTitle"))+'</div>'
       +'<div class="dgrid">'+counts4+'</div>'
       +'<div class="tl" style="margin-top:12px">'+tl+'</div>'
       +'<div class="card-actions" style="margin-top:18px">'+actionsFor(item)+'</div>'
-      +'<div class="sheet-actions" style="margin-top:10px"><button class="btn btn-danger" data-action="delete" data-id="'+item.id+'">'+IC.trash+' Удалить</button></div>';
+      +'<div class="sheet-actions" style="margin-top:10px"><button class="btn btn-danger" data-action="delete" data-id="'+item.id+'">'+IC.trash+' '+esc(t("common.delete"))+'</button></div>';
   }
   function openDetail(id){ detailId=id; renderDetail(id); E.detailOverlay.classList.add("show"); track("viewed_detail",id,null); }
   function closeDetail(){ E.detailOverlay.classList.remove("show"); detailId=null; }
 
   /* ----- stats sheet ----- */
   function aggregate(){
-    var t={total:state.items.length,boughtNow:0,purchases:0,changedMind:0,favorites:0,sumDays:0,nDays:0,fickle:null};
+    var ag={total:state.items.length,boughtNow:0,purchases:0,changedMind:0,favorites:0,sumDays:0,nDays:0,fickle:null};
     state.items.forEach(function(it){
       var c=itemCounts(it);
-      if(it.status==="bought") t.boughtNow++;
-      t.purchases+=c.purchased; t.changedMind+=c.changedMind; if(it.favorite) t.favorites++;
-      if(it.status==="bought"&&it.boughtAt){ t.sumDays+=daysBetween(it.createdAt,it.boughtAt); t.nDays++; }
-      if(c.changedMind>0&&(!t.fickle||c.changedMind>t.fickle.n)) t.fickle={name:it.title,n:c.changedMind};
+      if(it.status==="bought") ag.boughtNow++;
+      ag.purchases+=c.purchased; ag.changedMind+=c.changedMind; if(it.favorite) ag.favorites++;
+      if(it.status==="bought"&&it.boughtAt){ ag.sumDays+=daysBetween(it.createdAt,it.boughtAt); ag.nDays++; }
+      if(c.changedMind>0&&(!ag.fickle||c.changedMind>ag.fickle.n)) ag.fickle={name:it.title,n:c.changedMind};
     });
-    t.avgDays=t.nDays?Math.round(t.sumDays/t.nDays):null; return t;
+    ag.avgDays=ag.nDays?Math.round(ag.sumDays/ag.nDays):null; return ag;
   }
   function openStats(){
     track("viewed_stats",null,null);
     var a=aggregate();
     var html='<div class="sgrid">'
-      +'<div class="scard c1"><div class="n">'+a.total+'</div><div class="l">всего желаний</div></div>'
-      +'<div class="scard c2"><div class="n">'+a.boughtNow+'</div><div class="l">исполнено сейчас</div></div>'
-      +'<div class="scard c2"><div class="n">'+a.purchases+'</div><div class="l">всего покупок</div></div>'
-      +'<div class="scard c3"><div class="n">'+a.changedMind+'</div><div class="l">раз передумал</div></div>'
-      +'<div class="scard c4"><div class="n">'+a.favorites+'</div><div class="l">★ очень хочу</div></div>'
-      +'<div class="scard c2"><div class="n">'+(a.avgDays==null?"—":a.avgDays)+'</div><div class="l">ср. дней до покупки</div></div>'
+      +'<div class="scard c1"><div class="n">'+a.total+'</div><div class="l">'+esc(t("stats.total"))+'</div></div>'
+      +'<div class="scard c2"><div class="n">'+a.boughtNow+'</div><div class="l">'+esc(t("stats.boughtNow"))+'</div></div>'
+      +'<div class="scard c2"><div class="n">'+a.purchases+'</div><div class="l">'+esc(t("stats.purchases"))+'</div></div>'
+      +'<div class="scard c3"><div class="n">'+a.changedMind+'</div><div class="l">'+esc(t("stats.changedMind"))+'</div></div>'
+      +'<div class="scard c4"><div class="n">'+a.favorites+'</div><div class="l">'+esc(t("stats.favorites"))+'</div></div>'
+      +'<div class="scard c2"><div class="n">'+(a.avgDays==null?"—":a.avgDays)+'</div><div class="l">'+esc(t("stats.avgDays"))+'</div></div>'
       +'</div>';
-    if(a.fickle) html+='<div class="sline">Самое непостоянное желание: <b>'+esc(a.fickle.name)+'</b> (передумал ×'+a.fickle.n+')</div>';
+    if(a.fickle) html+='<div class="sline">'+t("stats.fickle",{name:esc(a.fickle.name),n:a.fickle.n})+'</div>';
     E.statsBody.innerHTML=html;
     E.statsOverlay.classList.add("show");
   }
@@ -267,28 +355,28 @@
   function setFormPhoto(d){ formPhoto=d||null; showPreview(formPhoto); }
   function uploadPhoto(dataUrl){
     E.photoPick.classList.add("uploading");
-    sdk.media.upload(dataUrl,"wishlist").then(function(res){ E.photoPick.classList.remove("uploading"); if(res&&res.path){ formPhoto=res.path; } else { formPhoto=null; sdk.ui.toast("Не удалось загрузить фото"); } }).catch(function(){ E.photoPick.classList.remove("uploading"); formPhoto=null; sdk.ui.toast("Не удалось загрузить фото (нет связи)"); });
+    sdk.media.upload(dataUrl,"wishlist").then(function(res){ E.photoPick.classList.remove("uploading"); if(res&&res.path){ formPhoto=res.path; } else { formPhoto=null; sdk.ui.toast(t("toast.photoFailed")); } }).catch(function(){ E.photoPick.classList.remove("uploading"); formPhoto=null; sdk.ui.toast(t("toast.photoFailedOffline")); });
   }
-  function openAdd(){ editingId=null; E.sheetTitle.textContent="Новое желание"; E.title.value=""; E.link.value=""; E.note.value=""; setFormPhoto(null); E.overlay.classList.add("show"); setTimeout(function(){ E.title.focus(); },250); }
-  function openEdit(id){ var it=findItem(id); if(!it) return; closeDetail(); editingId=id; E.sheetTitle.textContent="Изменить желание"; E.title.value=it.title||""; E.link.value=it.link||""; E.note.value=it.note||""; setFormPhoto(it.photo||null); E.overlay.classList.add("show"); }
+  function openAdd(){ editingId=null; E.sheetTitle.textContent=t("form.newWish"); E.title.value=""; E.link.value=""; E.note.value=""; setFormPhoto(null); E.overlay.classList.add("show"); setTimeout(function(){ E.title.focus(); },250); }
+  function openEdit(id){ var it=findItem(id); if(!it) return; closeDetail(); editingId=id; E.sheetTitle.textContent=t("form.editWish"); E.title.value=it.title||""; E.link.value=it.link||""; E.note.value=it.note||""; setFormPhoto(it.photo||null); E.overlay.classList.add("show"); }
   function closeSheet(){ E.overlay.classList.remove("show"); }
   function saveSheet(){
     var title=E.title.value.trim();
-    if(!title){ E.title.focus(); E.title.style.borderColor="#ff3db0"; sdk.ui.toast("Напиши название желания"); return; }
+    if(!title){ E.title.focus(); E.title.style.borderColor="#ff3db0"; sdk.ui.toast(t("toast.needTitle")); return; }
     var link=E.link.value.trim(),note=E.note.value.trim();
     if(editingId){
       var it=findItem(editingId);
       if(it){ it.title=title; it.link=link; it.note=note; it.photo=formPhoto; if(formPhoto) it.icon=null; it.updatedAt=Date.now(); pushHistory(it,"edited"); commit({type:"edited",itemId:editingId,data:{title:title,note:note,link:link,photo:formPhoto,icon:it.icon}}); }
-      render(); closeSheet(); sdk.ui.toast("Сохранено");
+      render(); closeSheet(); sdk.ui.toast(t("toast.saved"));
     }else if(demo){
       var now=Date.now(),neu={id:uid(),title:title,link:link,note:note,photo:formPhoto,icon:null,favorite:false,status:"want",createdAt:now,updatedAt:now,boughtAt:null,history:[{type:"created",at:now}]};
       state.items.push(neu); logEvent("created",{itemId:neu.id,title:title});
-      save(); closeSheet(); setTab("want"); sdk.ui.toast("Желание добавлено! 🍒");
+      save(); closeSheet(); setTab("want"); sdk.ui.toast(t("toast.added"));
     }else{
       closeSheet();
       sdk.api.post("action.php",{type:"create",data:{title:title,note:note,link:link,photo:formPhoto,icon:null}})
-        .then(function(res){ if(res&&res.item){ state.items.push(res.item); setTab("want"); sdk.ui.toast("Желание добавлено! 🍒"); } else sdk.ui.toast("Не удалось добавить"); })
-        .catch(function(){ sdk.ui.toast("Не удалось добавить (нет связи)"); });
+        .then(function(res){ if(res&&res.item){ state.items.push(res.item); setTab("want"); sdk.ui.toast(t("toast.added")); } else sdk.ui.toast(t("toast.addFailed")); })
+        .catch(function(){ sdk.ui.toast(t("toast.addFailedOffline")); });
     }
   }
   function handleFile(file){
@@ -305,14 +393,14 @@
   function rootHTML(){
     return '<div class="wl" data-tab="want">'
       +'<div class="wl-header">'
-        +'<button class="back" id="wlBack" aria-label="Назад">'+BACK_IC+'</button>'
-        +'<div class="wl-head-main"><div class="wl-title"><span class="cic">'+TITLE_CHERRY+'</span> Виш-лист</div><div class="wl-sub">Список моих желаний</div></div>'
-        +'<button class="hbtn" id="wlStats" aria-label="Статистика">'+STATS_IC+'</button>'
+        +'<button class="back" id="wlBack" aria-label="'+esc(t("common.back"))+'">'+BACK_IC+'</button>'
+        +'<div class="wl-head-main"><div class="wl-title"><span class="cic">'+TITLE_CHERRY+'</span> '+esc(t("title"))+'</div><div class="wl-sub">'+esc(t("subtitle"))+'</div></div>'
+        +'<button class="hbtn" id="wlStats" aria-label="'+esc(t("aria.stats"))+'">'+STATS_IC+'</button>'
       +'</div>'
       +'<nav class="tabs" id="wlTabs">'
-        +'<button class="tab active" data-tab="want"><span class="t-label"><span class="dot"></span>Хочу</span><span class="badge" data-count="want">0</span></button>'
-        +'<button class="tab" data-tab="thinking"><span class="t-label"><span class="dot"></span>Думаю</span><span class="badge" data-count="thinking">0</span></button>'
-        +'<button class="tab" data-tab="bought"><span class="t-label"><span class="dot"></span>Купил</span><span class="badge" data-count="bought">0</span></button>'
+        +'<button class="tab active" data-tab="want"><span class="t-label"><span class="dot"></span>'+esc(t("tab.want"))+'</span><span class="badge" data-count="want">0</span></button>'
+        +'<button class="tab" data-tab="thinking"><span class="t-label"><span class="dot"></span>'+esc(t("tab.thinking"))+'</span><span class="badge" data-count="thinking">0</span></button>'
+        +'<button class="tab" data-tab="bought"><span class="t-label"><span class="dot"></span>'+esc(t("tab.bought"))+'</span><span class="badge" data-count="bought">0</span></button>'
       +'</nav>'
       +'<main class="list" id="wlList" aria-live="polite"></main>'
     +'</div>';
@@ -320,19 +408,19 @@
   function overlaysHTML(){
     return ''
     +'<div class="overlay" id="wlOverlay"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="wlSheetTitle">'
-      +'<div class="grip"></div><h2 id="wlSheetTitle">Новое желание</h2>'
+      +'<div class="grip"></div><h2 id="wlSheetTitle">'+esc(t("form.newWish"))+'</h2>'
       +'<div class="photo-pick" id="wlPhotoPick"><div class="ppreview" id="wlPpreview"></div>'
         +'<svg viewBox="0 0 24 24" fill="none" stroke="#ff7ab8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h3l2-3h8l2 3h3v13H3z"/><circle cx="12" cy="13" r="4"/></svg>'
-        +'<span>Добавить фото</span><span class="pp-edit">Заменить фото</span></div>'
+        +'<span>'+esc(t("form.addPhoto"))+'</span><span class="pp-edit">'+esc(t("form.replacePhoto"))+'</span></div>'
       +'<input type="file" id="wlPhotoInput" accept="image/*" hidden>'
-      +'<div class="field"><label for="wlTitle">Название</label><input id="wlTitle" type="text" maxlength="60" placeholder="Например: Конструктор LEGO" autocomplete="off"></div>'
-      +'<div class="field"><label for="wlNote">Почему хочешь? <span class="opt">(необязательно)</span></label><textarea id="wlNote" maxlength="200" placeholder="Например: буду строить роботов"></textarea></div>'
-      +'<div class="field"><label for="wlLink">Ссылка <span class="opt">(необязательно)</span></label><input id="wlLink" type="text" inputmode="url" placeholder="https://..." autocomplete="off"></div>'
-      +'<div class="sheet-actions"><button class="btn btn-cancel" id="wlCancel">Отмена</button><button class="btn btn-primary" id="wlSave">Сохранить</button></div>'
+      +'<div class="field"><label for="wlTitle">'+esc(t("form.titleLabel"))+'</label><input id="wlTitle" type="text" maxlength="60" placeholder="'+esc(t("form.titlePh"))+'" autocomplete="off"></div>'
+      +'<div class="field"><label for="wlNote">'+esc(t("form.noteLabel"))+' <span class="opt">'+esc(t("form.optional"))+'</span></label><textarea id="wlNote" maxlength="200" placeholder="'+esc(t("form.notePh"))+'"></textarea></div>'
+      +'<div class="field"><label for="wlLink">'+esc(t("form.linkLabel"))+' <span class="opt">'+esc(t("form.optional"))+'</span></label><input id="wlLink" type="text" inputmode="url" placeholder="https://..." autocomplete="off"></div>'
+      +'<div class="sheet-actions"><button class="btn btn-cancel" id="wlCancel">'+esc(t("common.cancel"))+'</button><button class="btn btn-primary" id="wlSave">'+esc(t("common.save"))+'</button></div>'
     +'</div></div>'
     +'<div class="overlay" id="wlDetailOverlay"><div class="sheet detail" role="dialog" aria-modal="true"><div class="grip"></div><div id="wlDetailBody"></div></div></div>'
     +'<div class="overlay" id="wlPurchaseOverlay"><div class="sheet purchase" role="dialog" aria-modal="true"><div class="grip"></div><div id="wlPurchaseBody"></div></div></div>'
-    +'<div class="overlay" id="wlStatsOverlay"><div class="sheet stats" role="dialog" aria-modal="true"><div class="grip"></div><h2>Статистика желаний</h2><div id="wlStatsBody"></div><div class="sheet-actions"><button class="btn btn-cancel" id="wlStatsClose" style="flex:1">Закрыть</button></div></div></div>';
+    +'<div class="overlay" id="wlStatsOverlay"><div class="sheet stats" role="dialog" aria-modal="true"><div class="grip"></div><h2>'+esc(t("stats.title"))+'</h2><div id="wlStatsBody"></div><div class="sheet-actions"><button class="btn btn-cancel" id="wlStatsClose" style="flex:1">'+esc(t("common.close"))+'</button></div></div></div>';
   }
 
   function grab(){
@@ -357,7 +445,7 @@
   function wire(){
     root.querySelector("#wlBack").addEventListener("click",function(){ sdk.ui.back(); });
     root.querySelector("#wlStats").addEventListener("click",openStats);
-    E.tabs.addEventListener("click",function(e){ var t=e.target.closest(".tab"); if(t) setTab(t.getAttribute("data-tab")); });
+    E.tabs.addEventListener("click",function(e){ var tb=e.target.closest(".tab"); if(tb) setTab(tb.getAttribute("data-tab")); });
     E.list.addEventListener("click",function(e){
       var btn=e.target.closest("[data-action]");
       if(btn){ handleAction(btn.getAttribute("data-action"),btn.getAttribute("data-id")); return; }
@@ -388,7 +476,7 @@
   function boot(){
     if(sdk.isDemo()){ demoBoot(); return; }
     sdk.api.get("state.php").then(function(res){ demo=false; state.items=(res&&res.items)||[]; state.events=[]; render(); track("opened_app",null,null); })
-      .catch(function(){ if(window.RobTop&&window.RobTop._shell&&window.RobTop._shell.setDemo) window.RobTop._shell.setDemo(true); demoBoot("Демо-режим: сервер недоступен"); });
+      .catch(function(){ if(window.RobTop&&window.RobTop._shell&&window.RobTop._shell.setDemo) window.RobTop._shell.setDemo(true); demoBoot(t("toast.demoMode")); });
   }
 
   function mount(rootEl, theSdk){
@@ -397,7 +485,7 @@
     root.innerHTML=rootHTML();
     ovWrap=document.createElement("div"); ovWrap.className="wl-overlays"; ovWrap.innerHTML=overlaysHTML(); document.body.appendChild(ovWrap);
     grab(); wire();
-    fabCtl=sdk.ui.fab("Хочу!", openAdd);
+    fabCtl=sdk.ui.fab(t("btn.want"), openAdd);
     boot();
   }
   function unmount(){
@@ -406,5 +494,5 @@
     E={}; state={items:[],events:[]};
   }
 
-  RobTop.register({ id:"wishlist", mount:mount, unmount:unmount });
+  RobTop.register({ id:"wishlist", mount:mount, unmount:unmount, messages:MESSAGES });
 })();
