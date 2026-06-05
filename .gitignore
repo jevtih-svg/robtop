@@ -3,6 +3,14 @@ config.php
 app/config.php
 **/config.php
 
+# Пользовательские файлы (медиа) — НИКОГДА не в Git, живут на сервере и переживают деплой
+uploads/
+app/uploads/
+**/uploads/
+storage/
+cache/
+logs/
+
 # Системное
 .DS_Store
 Thumbs.db
