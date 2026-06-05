@@ -1,8 +1,8 @@
-# Боевой конфиг с паролями БД — НИКОГДА не коммитим
+# Production configuration
 config.php
-app/config.php
 **/config.php
 
+<<<<<<< HEAD
 # Пользовательские файлы (медиа) — НИКОГДА не в Git, живут на сервере и переживают деплой
 uploads/
 app/uploads/
@@ -16,6 +16,25 @@ logs/
 Thumbs.db
 *.log
 node_modules/
+=======
+# User-generated files
+uploads/
+storage/
+cache/
+logs/
+>>>>>>> a6e3a3d8380084d352ccf5b5faf4cb883519e80f
 
-# Состояние FTP-деплоя (создаётся экшеном на сервере)
+# Deployment files
 .ftp-deploy-sync-state.json
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Logs
+*.log
+
+# Node
+node_modules/
