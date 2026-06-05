@@ -2,7 +2,6 @@
 config.php
 **/config.php
 
-<<<<<<< HEAD
 # Медиа вне Git — живут на сервере, заливаются по FTP, переживают деплой.
 # Графика приложения (иконки, логотипы, иллюстрации):
 media/
@@ -16,30 +15,18 @@ storage/
 cache/
 logs/
 
-# Системное
-.DS_Store
-Thumbs.db
-*.log
-node_modules/
-=======
-# User-generated files
-uploads/
-storage/
-cache/
-logs/
->>>>>>> a6e3a3d8380084d352ccf5b5faf4cb883519e80f
+# Приложения, установленные в РАНТАЙМЕ через магазин — вне Git, переживают деплой.
+# Версионируем только защиту папки и образцы каталога.
+app/apps/*
+!app/apps/.htaccess
+!app/apps/_catalog/
+!app/apps/_catalog/**
 
-# Deployment files
+# Deployment
 .ftp-deploy-sync-state.json
 
-# macOS
+# System
 .DS_Store
-
-# Windows
 Thumbs.db
-
-# Logs
 *.log
-
-# Node
 node_modules/

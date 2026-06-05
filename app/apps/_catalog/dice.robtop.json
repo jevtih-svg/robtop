@@ -1,0 +1,29 @@
+{
+  "manifest": {
+    "id": "dice",
+    "name": "Кубик",
+    "version": "1.0.0",
+    "color": "#19e3ff",
+    "status": "active",
+    "entry": "module.js",
+    "styles": "module.css",
+    "roles": {
+      "edit": [
+        "child"
+      ],
+      "read": [
+        "child",
+        "parent"
+      ]
+    },
+    "data": {
+      "store": "generic"
+    },
+    "server": false,
+    "min_shell": "2.0.0"
+  },
+  "files": {
+    "module.js": "(function(){var sdk,root;function roll(){return 1+Math.floor(Math.random()*6);}function mount(r,s){sdk=s;root=r;root.innerHTML='<div class=\"dice\"><div class=\"dice-h\"><button class=\"back\" id=\"dBack\">‹</button><div class=\"dice-t\">Кубик</div></div><div class=\"dice-face\" id=\"dFace\">🎲</div><button class=\"btn btn-primary\" id=\"dRoll\" style=\"width:100%;margin-top:16px\">Бросить кубик</button></div>';root.querySelector(\"#dBack\").onclick=function(){sdk.ui.back();};var face=root.querySelector(\"#dFace\");root.querySelector(\"#dRoll\").onclick=function(){var v=roll();face.textContent=[\"⚀\",\"⚁\",\"⚂\",\"⚃\",\"⚄\",\"⚅\"][v-1];sdk.ui.haptics(10);sdk.ui.toast(\"Выпало: \"+v);sdk.events.track(\"rolled\",{v:v});};sdk.ui.hud({left:\"Кубик\",cNum:6,cLbl:\"граней\",rNum:6,rLbl:\"бросай\"});}function unmount(){}RobTop.register({id:\"dice\",mount:mount,unmount:unmount});})();",
+    "module.css": ".dice{padding-bottom:140px;text-align:center}.dice-h{display:flex;align-items:center;gap:12px;padding:calc(20px + env(safe-area-inset-top)) 2px 8px;text-align:left}.dice-t{font-family:'Russo One',sans-serif;font-size:24px;color:#fff;text-shadow:0 0 12px rgba(25,227,255,.6)}.dice-face{font-size:120px;margin:40px 0;filter:drop-shadow(0 0 24px rgba(25,227,255,.6))}"
+  }
+}

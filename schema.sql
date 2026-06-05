@@ -101,3 +101,62 @@ ON DUPLICATE KEY UPDATE name = VALUES(name), role = VALUES(role);
 -- Среднее время от добавления до покупки (дни):
 --   SELECT AVG(DATEDIFF(bought_at, created_at)) FROM wishlist_items WHERE bought_at IS NOT NULL;
 -- ============================================================
+
+-- ============================================================
+-- АРХИТЕКТУРА СУБПРИЛОЖЕНИЙ (добавлено 2026-06): реестр модулей + универсальное хранилище.
+-- Аддитивно: существующие таблицы выше НЕ меняются.
+-- ============================================================
+
+-- ---------- Реестр модулей (источник главного экрана и магазина) ----------
+CREATE TABLE IF NOT EXISTS modules (
+  id          VARCHAR(40)  NOT NULL,                 -- slug, напр. 'wishlist'
+  name        VARCHAR(80)  NOT NULL,
+  version     VARCHAR(20)  NOT NULL DEFAULT '1.0.0',
+  manifest    JSON         DEFAULT NULL,             -- копия module.json (color/icon/status/roles/wide…)
+  source      ENUM('native','installed') NOT NULL DEFAULT 'native',
+  trusted     TINYINT(1)   NOT NULL DEFAULT 0,
+  server      TINYINT(1)   NOT NULL DEFAULT 0,       -- есть ли серверный api.php
+  enabled     TINYINT(1)   NOT NULL DEFAULT 0,
+  sort_order  INT          NOT NULL DEFAULT 100,
+  installed_at DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted_at  DATETIME     DEFAULT NULL,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------- Универсальное хранилище данных модулей ----------
+-- Новому приложению (generic) не нужна отдельная таблица: данные лежат здесь как JSON.
+CREATE TABLE IF NOT EXISTS module_data (
+  id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id     INT UNSIGNED NOT NULL,
+  module      VARCHAR(40)  NOT NULL,
+  collection  VARCHAR(40)  NOT NULL DEFAULT 'default',
+  status      VARCHAR(24)  NOT NULL DEFAULT '',
+  favorite    TINYINT(1)   NOT NULL DEFAULT 0,
+  sort        INT          NOT NULL DEFAULT 0,
+  data        JSON         DEFAULT NULL,
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted_at  DATETIME     DEFAULT NULL,
+  PRIMARY KEY (id),
+  KEY idx_scope  (user_id, module, collection, deleted_at),
+  KEY idx_status (user_id, module, status),
+  CONSTRAINT fk_md_user FOREIGN KEY (user_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------- Заполнение реестра родными модулями ----------
+INSERT INTO modules (id, name, version, manifest, source, trusted, server, enabled, sort_order) VALUES
+ ('wishlist','Виш-лист','2.0.0','{"color":"#ff3db0","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,1,1,10),
+ ('reverse','Слова наоборот','1.0.0','{"color":"#ff7a3d","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,20),
+ ('mood','Настроение дня','1.0.0','{"color":"#ffd23b","status":"soon"}','native',1,0,1,30),
+ ('teeth','Таймер зубов','1.0.0','{"color":"#19e3ff","status":"soon"}','native',1,0,1,40),
+ ('guess','Угадай число','1.0.0','{"color":"#a64bff","status":"soon"}','native',1,0,1,50),
+ ('names','Смешные имена','1.0.0','{"color":"#38e8a0","status":"soon"}','native',1,0,1,60),
+ ('days','Счётчик дней','1.0.0','{"color":"#3b6bff","status":"soon"}','native',1,0,1,70),
+ ('find','Найти предмет','1.0.0','{"color":"#19e3ff","status":"soon"}','native',1,0,1,80),
+ ('museum','Домашний музей','1.0.0','{"color":"#c0a0ff","status":"soon"}','native',1,0,1,90),
+ ('rating','Оценка дня','1.0.0','{"color":"#ffd23b","status":"soon"}','native',1,0,1,100),
+ ('lost','Бюро находок','1.0.0','{"color":"#2bf0c0","status":"soon"}','native',1,0,1,110),
+ ('bank','Копилка','1.0.0','{"color":"#ff4d6d","status":"soon","wide":true}','native',1,0,1,120)
+ON DUPLICATE KEY UPDATE name=VALUES(name), manifest=VALUES(manifest), server=VALUES(server), updated_at=NOW();
+-- ============================================================

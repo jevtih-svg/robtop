@@ -1,31 +1,40 @@
 # RobTop
 
-Детское приложение Артёма: единое приложение с мини-функциями. Первая функция — **Виш-лист**. Неоновый стиль, всё на русском.
+Детское приложение Артёма: **оболочка + модули (субприложения)**, как мини «магазин приложений». Активные модули — **Виш-лист** и **Слова наоборот**. Неоновый стиль, всё на русском.
 
-- **Стек:** статический HTML/CSS/JS + PHP API + MySQL. Хостинг — Hostinger.
+- **Стек:** HTML/CSS/JS (оболочка + модули) + PHP API + MySQL. Хостинг — Hostinger.
 - **Адрес:** apps.tilley.live/robtop
 - **Релиз:** коммит в `main` → авто-деплой на Hostinger через GitHub Actions (или кнопка «Run workflow»).
+- **Архитектура:** оболочка (`core/`) строит главный экран из реестра модулей и монтирует модуль в общий контейнер через SDK. Родные модули — в `modules/<id>/` (могут иметь серверный `api.php`). Приложения, установленные в рантайме через магазин, — в `apps/<id>/` (только статика). Подробности — `КОНТЕКСТ.md` и `ПЛАН-миграции-субприложения.md`.
 
 ## Структура
 
 ```
 app/                     ← то, что публикуется на сервер (папка robtop/)
-  index.html             ← клиент (SPA: главный экран + Виш-лист)
+  index.html             ← тонкий хост (подключает core/*)
+  core/                  ← оболочка: ui.css, bg.js, sdk.js, loader.js, shell.js
+  modules/               ← родные модули (wishlist, reverse) — module.json/js/css [+ api.php]
+  apps/                  ← установленные в рантайме (вне Git; .htaccess запрещает PHP)
   manifest.webmanifest   ← PWA-манифест (в Git)
   media/                 ← графика приложения (иконки) — ВНЕ Git, по FTP
   .htaccess
-  config.example.php     ← шаблон конфига (боевой config.php создаётся на сервере)
+  config.example.php     ← шаблон конфига (db + api_token + admin_pin)
   api/
     _db.php, _bootstrap.php, _storage.php
-    state.php            ← GET: пользователь + желания
-    action.php           ← POST: все действия + запись событий
-    stats.php            ← GET: агрегаты для дашбордов
+    registry.php         ← GET: включённые модули (плитки)
+    modules.php          ← GET ?all=1: все модули (админ-экран магазина)
+    data.php             ← POST: универсальный CRUD по module_data
+    action.php           ← POST: диспетчер (события + делегирование modules/<id>/api.php)
+    state.php, stats.php ← Виш-лист: данные и агрегаты
     upload.php           ← POST: загрузка фото на диск (в БД только путь)
+    store/               ← магазин (только админ): install/uninstall/enable/reorder
   uploads/               ← медиа на сервере (вне Git, создаётся автоматически)
-schema.sql               ← импортировать один раз в MySQL
+migrations/2026-06-subapps.sql ← аддитивная миграция БД для старых баз
+schema.sql               ← импортировать один раз в MySQL (включает modules/module_data)
 .github/workflows/deploy.yml
 РЕЛИЗ.md                 ← пошаговая настройка и релиз
 КОНТЕКСТ.md              ← полный контекст проекта
+ПЛАН-миграции-субприложения.md ← план/спецификация архитектуры
 ```
 
 ## Медиа и пользователи

@@ -54,3 +54,63 @@ function rt_log($module, $type, $itemId = null, $itemTitle = null, $from = null,
         $meta !== null ? json_encode($meta, JSON_UNESCAPED_UNICODE) : null,
     ]);
 }
+
+/** Роль текущего пользователя (для проверки прав модулей). */
+function rt_user_role() {
+    static $role = null;
+    if ($role === null) {
+        try {
+            $s = rt_db()->prepare("SELECT role FROM users WHERE id = ?");
+            $s->execute([rt_user_id()]);
+            $r = $s->fetch();
+            $role = ($r && isset($r['role'])) ? $r['role'] : 'child';
+        } catch (Throwable $e) { $role = 'child'; }
+    }
+    return $role;
+}
+
+/**
+ * Проверка PIN администратора (родитель/разработчик).
+ * PIN задаётся в config.php (admin_pin). Если не задан — админ-операции запрещены.
+ */
+function rt_admin_ok($pin) {
+    $c = rt_config();
+    $set = isset($c['admin_pin']) ? (string)$c['admin_pin'] : '';
+    if ($set === '') return false;
+    return is_string($pin) && hash_equals($set, (string)$pin);
+}
+
+/* ---------- Реестр модулей ---------- */
+function rt_modules_all($db) {
+    return $db->query(
+        "SELECT id,name,version,manifest,source,trusted,server,enabled,sort_order
+         FROM modules WHERE deleted_at IS NULL ORDER BY sort_order ASC, id ASC"
+    )->fetchAll();
+}
+function rt_module_row($db, $id) {
+    $s = $db->prepare("SELECT * FROM modules WHERE id = ? AND deleted_at IS NULL");
+    $s->execute([$id]);
+    return $s->fetch();
+}
+function rt_module_meta($r) {
+    $man = (!empty($r['manifest'])) ? json_decode($r['manifest'], true) : [];
+    if (!is_array($man)) $man = [];
+    return [
+        'id'      => $r['id'],
+        'name'    => $r['name'],
+        'version' => $r['version'],
+        'color'   => isset($man['color']) ? $man['color'] : '#19e3ff',
+        'icon'    => isset($man['icon']) ? $man['icon'] : null,
+        'wide'    => !empty($man['wide']),
+        'status'  => isset($man['status']) ? $man['status'] : 'active',
+        'source'  => $r['source'],
+        'server'  => ((int)$r['server'] === 1),
+    ];
+}
+function rt_role_can($mod, $action, $role) {
+    $man = (!empty($mod['manifest'])) ? json_decode($mod['manifest'], true) : [];
+    $roles = (is_array($man) && isset($man['roles'][$action]) && is_array($man['roles'][$action]))
+        ? $man['roles'][$action]
+        : ($action === 'read' ? ['child','parent'] : ['child']);
+    return in_array($role, $roles, true);
+}

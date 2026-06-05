@@ -1,0 +1,175 @@
+/* RobTop — общая дизайн-система оболочки (shell).
+   Токены, базовые компоненты (плитки, HUD, шторки, поля, кнопки, тост, FAB),
+   экран магазина приложений. Модуль-специфичные стили — в modules/<id>/module.css. */
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --cyan:#19e3ff; --magenta:#ff2bd6; --pink:#ff3db0; --purple:#a64bff;
+  --blue:#3b6bff; --green:#2bf0c0; --mint:#38e8a0; --gold:#ffd23b; --red:#ff4d6d;
+  --ink:#eaf2ff; --muted:#93a6cf;
+  --accent:#ff3db0; --accent-2:#a64bff;
+}
+html{background:#05050f}
+html,body{margin:0;padding:0;min-height:100%;overscroll-behavior:none}
+body{
+  font-family:'Rubik',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  color:var(--ink); background:#05050f; min-height:100vh; overflow-x:hidden;
+  background-image:
+    radial-gradient(820px 600px at 14% 8%, rgba(166,75,255,.20), transparent 60%),
+    radial-gradient(820px 680px at 88% 22%, rgba(25,227,255,.15), transparent 60%),
+    radial-gradient(900px 800px at 50% 108%, rgba(255,43,214,.18), transparent 60%),
+    linear-gradient(180deg,#070617 0%, #05040f 60%, #07041a 100%);
+}
+#bg{position:fixed;inset:0;z-index:0;display:block}
+#root{position:relative;z-index:1;max-width:480px;margin:0 auto;min-height:100vh}
+
+.view{display:none;padding:0 16px}
+.view.active{display:block;animation:viewin .32s ease both}
+@keyframes viewin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ===================== HOME ===================== */
+#home{padding-bottom:130px}
+.hometop{padding:calc(30px + env(safe-area-inset-top)) 6px 14px;position:relative}
+.brand{font-family:'Russo One',sans-serif;font-size:40px;letter-spacing:1px;line-height:1;margin:0;color:#fff;
+  text-shadow:0 0 12px rgba(25,227,255,.7), 0 0 28px rgba(255,43,214,.6)}
+.brand b{color:var(--pink);font-weight:400}
+.tagline{margin:8px 2px 0;color:var(--muted);font-weight:600;font-size:15px;letter-spacing:.2px}
+.tagline .spark{color:var(--cyan)}
+.gear{position:absolute;top:calc(30px + env(safe-area-inset-top));right:6px;width:42px;height:42px;border-radius:13px;
+  display:grid;place-items:center;cursor:pointer;font-size:20px;color:#bfe9ff;
+  background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14);box-shadow:0 0 18px -7px var(--cyan)}
+.gear:active{transform:scale(.93)}
+
+.apps{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:18px}
+.tile{position:relative;display:flex;flex-direction:column;gap:11px;align-items:flex-start;
+  border-radius:20px;padding:17px 15px;cursor:pointer;text-align:left;font-family:inherit;color:var(--ink);
+  background:linear-gradient(162deg, rgba(26,23,56,.72), rgba(11,10,28,.74));
+  border:1.5px solid color-mix(in srgb, var(--c) 50%, transparent);
+  box-shadow:0 8px 26px rgba(0,0,0,.46), 0 0 26px -10px var(--c), inset 0 1px 0 rgba(255,255,255,.04);
+  transition:transform .14s ease, box-shadow .22s ease}
+.tile:active{transform:scale(.965)}
+.tile .ic{width:52px;height:52px;border-radius:15px;display:grid;place-items:center;color:var(--c);
+  background:radial-gradient(circle at 50% 38%, color-mix(in srgb,var(--c) 32%, transparent), transparent 72%);
+  filter:drop-shadow(0 0 7px var(--c))}
+.tile .ic svg{width:30px;height:30px}
+.tile .ic img{width:34px;height:34px;border-radius:9px}
+.tile .txt{display:flex;flex-direction:column;gap:2px}
+.tile .nm{font-weight:700;font-size:15px;color:#eef4ff;line-height:1.15}
+.tile .st{font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--c);opacity:.92}
+.tile.soon{opacity:.52;filter:saturate(.65)}
+.tile.soon .st{color:#90a2c6}
+.tile.soon .lock{position:absolute;top:13px;right:13px;color:#90a2c6;opacity:.8}
+.tile.soon .lock svg{width:15px;height:15px}
+.tile.wide{grid-column:1 / -1;flex-direction:row;align-items:center;gap:16px;padding:18px 18px}
+.tile.wide .ic{width:56px;height:56px}
+.tile.active{box-shadow:0 8px 26px rgba(0,0,0,.5), 0 0 32px -6px var(--c), inset 0 1px 0 rgba(255,255,255,.06)}
+.tile.active .ring{content:"";position:absolute;inset:-1.5px;border-radius:21px;border:1.6px solid var(--c);
+  pointer-events:none;animation:ring 2.3s ease-in-out infinite}
+@keyframes ring{0%,100%{opacity:.15;box-shadow:0 0 0 var(--c)}50%{opacity:.85;box-shadow:0 0 22px -2px var(--c)}}
+
+/* generic header buttons (used by module headers) */
+.back,.hbtn{flex:none;width:46px;height:46px;border-radius:15px;display:grid;place-items:center;cursor:pointer;
+  background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14);color:#bfe9ff;
+  box-shadow:0 0 18px -7px var(--cyan)}
+.back:active,.hbtn:active{transform:scale(.93)}
+.back svg,.hbtn svg{width:22px;height:22px}
+
+/* ===================== HUD ===================== */
+.hud{position:fixed;left:0;right:0;bottom:0;z-index:14;pointer-events:none;
+  max-width:480px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;
+  padding:0 22px calc(16px + env(safe-area-inset-bottom));
+  background:linear-gradient(0deg, rgba(5,4,15,.86), transparent)}
+.hud .big{font-family:'Russo One',sans-serif;font-size:34px;color:#fff;line-height:.95;text-shadow:0 0 14px rgba(255,255,255,.22)}
+.hud .lbl{font-weight:700;font-size:13px;letter-spacing:.4px;margin-top:3px}
+.hud-l{font-weight:800;font-size:14px;color:var(--mint);text-shadow:0 0 12px rgba(56,232,160,.5);padding-bottom:3px}
+.hud-l b{color:#dffaef}
+.hud-c{text-align:center}.hud-c .lbl{color:var(--cyan)}
+.hud-r{text-align:right}.hud-r .lbl{color:var(--pink)}
+
+/* ===================== FAB (общий, управляется через sdk.ui.fab) ===================== */
+.fab{position:fixed;z-index:20;display:none;align-items:center;gap:10px;
+  bottom:calc(70px + env(safe-area-inset-bottom));right:max(18px, calc(50vw - 222px));
+  height:58px;padding:0 22px 0 18px;border:none;border-radius:30px;cursor:pointer;color:#fff;
+  font-family:'Russo One',sans-serif;font-size:15px;letter-spacing:.3px;
+  background:linear-gradient(180deg,#ff5db0,#d51a82);
+  box-shadow:0 0 28px -3px var(--pink), 0 12px 26px rgba(0,0,0,.5)}
+.fab.show{display:flex}
+.fab:active{transform:scale(.95)}
+.fab .plus{width:26px;height:26px;display:grid;place-items:center;background:rgba(255,255,255,.24);border-radius:50%;font-size:21px;line-height:1}
+
+/* ===================== SHEETS (базовые) ===================== */
+.overlay{position:fixed;inset:0;z-index:30;background:rgba(4,3,14,.62);backdrop-filter:blur(3px);
+  display:none;align-items:flex-end;justify-content:center}
+.overlay.show{display:flex;animation:fade .2s both}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.sheet{width:100%;max-width:480px;border-radius:26px 26px 0 0;padding:10px 18px calc(22px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg, rgba(24,21,52,.97), rgba(10,9,26,.99));
+  border-top:1.5px solid color-mix(in srgb,var(--pink) 55%, transparent);
+  box-shadow:0 -12px 50px rgba(255,43,214,.18);max-height:92vh;overflow:auto;
+  animation:slideup .26s cubic-bezier(.2,.8,.2,1) both;color:var(--ink)}
+@keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
+.grip{width:44px;height:5px;border-radius:3px;background:rgba(255,255,255,.28);margin:6px auto 12px;cursor:grab}
+.grip-hit{padding:6px 0 2px;margin:-6px 0 0;touch-action:none}
+.demo-badge{position:fixed;left:12px;bottom:calc(120px + env(safe-area-inset-bottom));z-index:16;display:none;
+  background:rgba(255,210,59,.16);color:#ffd23b;border:1px solid rgba(255,210,59,.5);
+  font-weight:800;font-size:11px;letter-spacing:.5px;text-transform:uppercase;padding:4px 9px;border-radius:999px}
+body.demo .demo-badge{display:block}
+.sheet h2{font-family:'Russo One',sans-serif;font-weight:400;font-size:21px;margin:0 0 14px;text-align:center;color:#fff;
+  text-shadow:0 0 12px rgba(255,61,176,.6)}
+.field{margin-top:14px}
+.field label{display:block;font-weight:800;font-size:14px;color:#c3d2f2;margin-bottom:6px;padding-left:4px}
+.field .opt{color:#8aa0c8;font-weight:700;font-size:12.5px}
+.field input,.field textarea{width:100%;border:1.6px solid rgba(255,255,255,.14);border-radius:14px;padding:13px 14px;
+  font-family:inherit;font-size:16px;font-weight:600;color:var(--ink);background:rgba(255,255,255,.04);outline:none;transition:border-color .15s, box-shadow .15s}
+.field textarea{resize:none;min-height:70px;line-height:1.4}
+.field input::placeholder,.field textarea::placeholder{color:#6f80a6}
+.field input:focus,.field textarea:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,61,176,.16)}
+.sheet-actions{display:flex;gap:10px;margin-top:20px}
+.sheet-actions .btn{padding:14px}
+
+/* ===================== BUTTONS (базовые) ===================== */
+.btn{flex:1;min-width:120px;border:1.5px solid rgba(255,255,255,.12);border-radius:14px;padding:12px 10px;cursor:pointer;
+  font-family:inherit;font-weight:800;font-size:14.5px;display:flex;align-items:center;justify-content:center;gap:7px;
+  background:rgba(255,255,255,.05);color:#e7eeff;transition:transform .1s, filter .15s}
+.btn:active{transform:scale(.96)}
+.btn svg{width:17px;height:17px}
+.btn-primary{background:linear-gradient(180deg,#ff5db0,#d51a82);color:#fff;font-size:16px;border-color:transparent;box-shadow:0 0 20px -5px var(--pink)}
+.btn-cancel{background:rgba(255,255,255,.06);color:#aab8d6;flex:0 0 38%}
+.btn-danger{background:rgba(255,77,109,.14);color:#ffb3c0;border-color:rgba(255,77,109,.5)}
+
+/* ===================== TOAST ===================== */
+.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);
+  bottom:calc(120px + env(safe-area-inset-bottom));z-index:50;max-width:90%;
+  display:flex;align-items:center;gap:12px;
+  background:rgba(10,10,28,.95);color:#eaf6ff;padding:11px 14px 11px 18px;border-radius:999px;font-weight:700;font-size:14.5px;
+  border:1.5px solid rgba(25,227,255,.5);box-shadow:0 0 24px -6px var(--cyan), 0 10px 30px rgba(0,0,0,.5);
+  opacity:0;pointer-events:none;transition:opacity .25s, transform .25s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.has-act{pointer-events:auto}
+.toast-act{border:none;cursor:pointer;font-family:inherit;font-weight:800;font-size:14px;color:#04121a;
+  background:linear-gradient(180deg,#5af0d0,#16b893);padding:8px 14px;border-radius:999px;box-shadow:0 0 14px -3px var(--green)}
+
+/* ===================== STORE / ADMIN (магазин приложений) ===================== */
+.sheet.store{border-top-color:rgba(25,227,255,.55)}
+.store-list{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.store-row{display:flex;align-items:center;gap:12px;border-radius:16px;padding:12px 13px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)}
+.store-row .si{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:var(--c,#19e3ff);flex:none;
+  background:radial-gradient(circle at 50% 38%, color-mix(in srgb,var(--c,#19e3ff) 30%, transparent), transparent 72%)}
+.store-row .si svg{width:24px;height:24px}.store-row .si img{width:28px;height:28px;border-radius:7px}
+.store-row .smeta{flex:1;min-width:0}
+.store-row .snm{font-weight:800;font-size:15px;color:#eef4ff}
+.store-row .ssub{font-size:12px;color:#9fb0d6;margin-top:2px}
+.store-row .stag{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8aa0c8}
+.toggle{flex:none;width:52px;height:30px;border-radius:999px;border:none;cursor:pointer;position:relative;
+  background:rgba(255,255,255,.14);transition:background .2s}
+.toggle.on{background:linear-gradient(180deg,#2bf0c0,#10ad85)}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s}
+.toggle.on::after{transform:translateX(22px)}
+.store-section{font-weight:800;font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:#9fb0d6;margin:16px 0 8px;padding-left:2px}
+.store-install{border:2px dashed rgba(25,227,255,.45);border-radius:16px;padding:16px;text-align:center;color:#bdeeff;font-weight:700;cursor:pointer;margin-top:6px}
+.store-install:active{transform:scale(.99)}
+.pin-row{display:flex;gap:10px;margin-top:8px}
+.pin-row input{flex:1}
+
+@media (max-width:360px){ .tile .nm{font-size:14px} .brand{font-size:34px} }

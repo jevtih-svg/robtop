@@ -40,6 +40,7 @@ jobs:
             **/.DS_Store
             **/Thumbs.db
             **/uploads/**
+            **/apps/**
             **/storage/**
             **/cache/**
             **/logs/**

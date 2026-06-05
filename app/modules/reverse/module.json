@@ -1,0 +1,16 @@
+{
+  "id": "reverse",
+  "name": "Слова наоборот",
+  "version": "1.0.0",
+  "color": "#ff7a3d",
+  "status": "active",
+  "wide": false,
+  "entry": "module.js",
+  "styles": "module.css",
+  "roles": { "edit": ["child"], "read": ["child", "parent"] },
+  "data": { "store": "generic", "collections": ["history"] },
+  "server": false,
+  "permissions": [],
+  "min_shell": "2.0.0",
+  "sort": 20
+}
