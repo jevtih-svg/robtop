@@ -80,6 +80,13 @@ window.RobTop = window.RobTop || {};
         add: function(n,reason){ if(RT.isDemo()) return Promise.resolve(); return API.post("data.php",{op:"create",module:"bank",collection:"points",data:{n:n,reason:reason||""}}).catch(function(){}); },
         get: function(){ return Promise.resolve(0); }
       },
+      admin: {
+        // Проверка PIN родителя/администратора. Демо: '1234'. Сервер: сверяет admin_pin.
+        verify: function(pin){
+          if(RT.isDemo()) return Promise.resolve(pin==="1234");
+          return API.post("store/enable.php",{pin:pin,verify:1}).then(function(r){ return !!(r&&r.ok); }).catch(function(){ return false; });
+        }
+      },
       theme: { tokens: shell.tokens || {} },
       storage: { local:function(key){ var k="robtop_"+mod+"_"+key; return {
         get:function(){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },

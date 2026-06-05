@@ -1,0 +1,16 @@
+{
+  "id": "teeth",
+  "name": "Таймер чистки зубов",
+  "version": "1.0.0",
+  "color": "#19e3ff",
+  "status": "active",
+  "wide": false,
+  "entry": "module.js",
+  "styles": "module.css",
+  "roles": { "edit": ["child"], "read": ["child", "parent"] },
+  "data": { "store": "generic", "collections": ["sessions", "meta"] },
+  "server": false,
+  "permissions": ["notifications", "points"],
+  "min_shell": "2.0.0",
+  "sort": 40
+}

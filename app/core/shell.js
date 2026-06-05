@@ -35,7 +35,7 @@ window.RobTop = window.RobTop || {};
     {id:"wishlist",name:"Виш-лист",color:"#ff3db0",status:"active",source:"native",server:true,sort:10},
     {id:"reverse",name:"Слова наоборот",color:"#ff7a3d",status:"active",source:"native",server:false,sort:20},
     {id:"mood",name:"Настроение дня",color:"#ffd23b",status:"soon",source:"native",sort:30},
-    {id:"teeth",name:"Таймер зубов",color:"#19e3ff",status:"soon",source:"native",sort:40},
+    {id:"teeth",name:"Таймер чистки зубов",color:"#19e3ff",status:"active",source:"native",sort:40},
     {id:"guess",name:"Угадай число",color:"#a64bff",status:"soon",source:"native",sort:50},
     {id:"names",name:"Смешные имена",color:"#38e8a0",status:"soon",source:"native",sort:60},
     {id:"days",name:"Счётчик дней",color:"#3b6bff",status:"soon",source:"native",sort:70},
