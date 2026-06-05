@@ -1,7 +1,7 @@
 {
   "id": "teeth",
   "name": "Таймер чистки зубов",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "color": "#19e3ff",
   "status": "active",
   "wide": false,

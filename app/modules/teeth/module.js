@@ -10,8 +10,49 @@
   var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
   var PARENT_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>';
 
+  /* ----- плейлист (награда после чистки) -----
+     Файлы лежат на сервере в media/music/ (вне Git, заливаются по FTP).
+     Здесь хранятся только имена (код в Git). Порядок = порядок в массиве. */
+  var MUSIC_DIR="media/music/";
+  var PLAYLIST=[
+    "ES_100 Times - Jones Meadow",
+    "ES_And Then I Met You... - Matt Large",
+    "ES_Beneath Quiet Stars - nothanks",
+    "ES_Big Spoon (Instrumental Version) - Roof",
+    "ES_Blood Eye - Cospe",
+    "ES_Bright Future - Killrude",
+    "ES_Close To Water - Ealot",
+    "ES_Gatinha (Molife Remix) - Cornelio",
+    "ES_Granular Details - Nebulae ",
+    "ES_Guru Meditation - Bitwraith",
+    "ES_It Happens Sometimes - Ceen",
+    "ES_Melting Sun - Ealot",
+    "ES_Moorlands - Ealot",
+    "ES_Not Leaving without You - Matt Large",
+    "ES_Only in Dreams - Ealot",
+    "ES_Powerlines - Jones Meadow",
+    "ES_Reap - Bjurman",
+    "ES_Rhythmania 2 - August Wilhelmsson",
+    "ES_Sippin - Cospe",
+    "ES_Some Downtime - Paisley Pink",
+    "ES_Spellbinding - Ealot",
+    "ES_Squeezing Lime (Instrumental Version) - Sandro",
+    "ES_Swerve - Molife",
+    "ES_The Farmhouse - Silver Maple",
+    "ES_Vale - dreem",
+    "ES_When I Get Sober (Instrumental Version) - waykap",
+    "ES_linne - bomull"
+  ];
+  function trackSrc(i){ return MUSIC_DIR+encodeURIComponent(PLAYLIST[i]+".mp3"); }
+  function trackTitle(i){ return String(PLAYLIST[i]||"").replace(/^ES_/,"").replace(/\s+$/,"").trim() || ("Трек "+(i+1)); }
+
+  var PLAY_IC='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>';
+  var PAUSE_IC='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>';
+  var SKIP_IC='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5.5v13l9-6.5zM16.5 5H19v14h-2.5z"/></svg>';
+
   var sdk=null, root=null, E={}, sessions=[], meta=null, metaId=null;
   var running=false, remaining=DURATION, timerId=null, audio=null, reminderTimers=[], curSheet=null;
+  var player=null, playing=false, curTrack=0;
 
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
   function pad2(n){ return (n<10?"0":"")+n; }
@@ -48,6 +89,45 @@
   }
   function stopAudio(){ try{ if(audio){ if(audio._osc) audio._osc.forEach(function(o){ try{o.stop();}catch(e){} }); audio.close(); audio=null; } }catch(e){} }
 
+  /* ----- музыка-награда (нативный HTML5 Audio, дружелюбно к мобильным) ----- */
+  function ensurePlayer(){
+    if(!player){ player=new Audio(); player.preload="none"; player.addEventListener("ended", onTrackEnded); }
+    return player;
+  }
+  function onTrackEnded(){ playing=false; updatePlayBtn(); }
+  function stopMusic(){ try{ if(player){ player.pause(); } }catch(e){} playing=false; }
+  function updatePlayBtn(){ if(E.playBtn){ E.playBtn.innerHTML=playing?PAUSE_IC:PLAY_IC; E.playBtn.setAttribute("aria-label", playing?"Пауза":"Играть"); } }
+  function setTrack(i, autoplay){
+    curTrack=((i%PLAYLIST.length)+PLAYLIST.length)%PLAYLIST.length;
+    ensurePlayer(); player.src=trackSrc(curTrack); playing=false;
+    if(E.trackName) E.trackName.textContent=trackTitle(curTrack);
+    if(E.trackNum) E.trackNum.textContent="Трек "+(curTrack+1)+" из "+PLAYLIST.length;
+    if(autoplay) playTrack(); else updatePlayBtn();
+  }
+  function playTrack(){
+    ensurePlayer();
+    var pr=player.play();
+    if(pr&&pr.then){ pr.then(function(){ playing=true; updatePlayBtn(); }).catch(function(){ playing=false; updatePlayBtn(); sdk.ui.toast("Нажми ещё раз, чтобы включить музыку"); }); }
+    else { playing=true; updatePlayBtn(); }
+  }
+  function togglePlay(){ if(playing){ player.pause(); playing=false; updatePlayBtn(); } else { playTrack(); } sdk.ui.haptics(8); }
+  /* индекс трека для ЭТОЙ чистки + куда сдвинуть указатель для следующей */
+  function pickTrackForSession(){
+    var idx, len=PLAYLIST.length;
+    if(meta&&meta.shuffle){ idx=Math.floor(Math.random()*len); }
+    else { idx=((meta&&typeof meta.trackIndex==="number")?meta.trackIndex:0)%len; if(idx<0) idx=0; }
+    persistTrackIndex((idx+1)%len);
+    return idx;
+  }
+  function skipTrack(){
+    var len=PLAYLIST.length, next;
+    if(meta&&meta.shuffle){ next=len>1?(curTrack+1+Math.floor(Math.random()*(len-1)))%len:curTrack; }
+    else { next=(curTrack+1)%len; persistTrackIndex((next+1)%len); }
+    sdk.ui.haptics(8);
+    setTrack(next, true);
+  }
+  function persistTrackIndex(v){ if(meta){ meta.trackIndex=v; if(metaId) sdk.data.update("meta",metaId,{trackIndex:v}); } }
+
   /* ----- кольцо/таймер ----- */
   function ringSVG(progress){
     var off=C*(1-progress);
@@ -69,8 +149,26 @@
     E.prog=E.stage.querySelector("#ttProg"); E.count=E.stage.querySelector("#ttCount");
     E.stage.querySelector("#ttCancel").onclick=cancel;
   }
+  function renderStageReward(idx){
+    curTrack=((idx%PLAYLIST.length)+PLAYLIST.length)%PLAYLIST.length;
+    E.stage.innerHTML='<div class="tt-reward">'
+      +'<div class="tt-reward-emoji">🎉</div>'
+      +'<div class="tt-reward-title">Молодец! Чистка завершена</div>'
+      +'<div class="tt-reward-sub">Включи музыку — это твоя награда 🎵</div>'
+      +'<div class="tt-player">'
+        +'<button class="tt-play" id="ttPlay" aria-label="Играть">'+PLAY_IC+'</button>'
+        +'<div class="tt-player-info"><div class="tt-track-num" id="ttTrackNum"></div><div class="tt-track-name" id="ttTrackName"></div></div>'
+      +'</div>'
+      +'<button class="tt-skip" id="ttSkip">'+SKIP_IC+'<span>Другой трек</span></button>'
+      +'<button class="tt-done" id="ttDone">Готово</button>';
+    E.playBtn=E.stage.querySelector("#ttPlay"); E.trackName=E.stage.querySelector("#ttTrackName"); E.trackNum=E.stage.querySelector("#ttTrackNum");
+    E.playBtn.onclick=togglePlay;
+    E.stage.querySelector("#ttSkip").onclick=skipTrack;
+    E.stage.querySelector("#ttDone").onclick=function(){ stopMusic(); renderStageIdle(); };
+    setTrack(curTrack, false);
+  }
   function start(){
-    if(running) return; running=true; remaining=DURATION; renderStageRunning(); startAudio();
+    if(running) return; stopMusic(); running=true; remaining=DURATION; renderStageRunning(); startAudio();
     sdk.ui.haptics(10); sdk.events.track("started",{});
     var startMs=Date.now();
     timerId=setInterval(function(){
@@ -87,7 +185,7 @@
     sdk.ui.confetti(); sdk.ui.chime(); sdk.ui.haptics([25,40,25,40,70]);
     sdk.ui.toast("Отлично! Чистка завершена 🎉");
     sdk.points.add(10,"teeth");
-    sdk.data.create("sessions",{date:todayStr(),time:nowHM(),status:"done",points:10}).then(function(){ return reloadSessions(); }).then(function(){ renderStageIdle(); refresh(); });
+    sdk.data.create("sessions",{date:todayStr(),time:nowHM(),status:"done",points:10}).then(function(){ return reloadSessions(); }).then(function(){ renderStageReward(pickTrackForSession()); refresh(); });
   }
   function cancel(){
     if(!running) return;
@@ -98,10 +196,11 @@
 
   /* ----- данные ----- */
   function reloadSessions(){ return sdk.data.list("sessions").then(function(list){ sessions=(list||[]).slice().sort(function(a,b){ return (b.createdAt||0)-(a.createdAt||0); }); }); }
+  function metaDefaults(){ return {morning:"07:30",evening:"20:30",manualPoints:0,trackIndex:0,shuffle:false}; }
   function loadMeta(){
     return sdk.data.list("meta").then(function(list){
-      if(list&&list.length){ metaId=list[0].id; meta=Object.assign({morning:"07:30",evening:"20:30",manualPoints:0}, list[0].data||{}); return; }
-      return sdk.data.create("meta",{morning:"07:30",evening:"20:30",manualPoints:0}).then(function(it){ metaId=it&&it.id; meta={morning:"07:30",evening:"20:30",manualPoints:0}; });
+      if(list&&list.length){ metaId=list[0].id; meta=Object.assign(metaDefaults(), list[0].data||{}); return; }
+      return sdk.data.create("meta",metaDefaults()).then(function(it){ metaId=it&&it.id; meta=metaDefaults(); });
     });
   }
 
@@ -158,6 +257,8 @@
         +'<div class="tt-pstat"><div class="n">'+s.points+'</div><div class="l">очки</div></div></div>'
       +'<div class="store-section">Очки вручную</div>'
       +'<div class="tt-adjust"><button class="tt-pm" data-adj="-10">−</button><div class="pv" id="ttPV">'+s.points+'</div><button class="tt-pm" data-adj="10">+</button></div>'
+      +'<div class="store-section">Музыка-награда</div>'
+      +'<label class="tt-toggle"><span>Случайный порядок треков</span><input type="checkbox" id="ttShuffle"'+(meta.shuffle?' checked':'')+'><span class="tt-switch"></span></label>'
       +'<div class="store-section">Напоминания</div>'
       +'<div class="tt-times"><div class="field"><label>Утро</label><input type="time" id="ttMorning" value="'+esc(meta.morning)+'"></div>'
         +'<div class="field"><label>Вечер</label><input type="time" id="ttEvening" value="'+esc(meta.evening)+'"></div></div>'
@@ -168,6 +269,8 @@
     var mor=box.querySelector("#ttMorning"), eve=box.querySelector("#ttEvening");
     mor.onchange=function(){ setTime("morning",mor.value); };
     eve.onchange=function(){ setTime("evening",eve.value); };
+    var shuf=box.querySelector("#ttShuffle");
+    if(shuf) shuf.onchange=function(){ meta.shuffle=!!shuf.checked; if(metaId) sdk.data.update("meta",metaId,{shuffle:meta.shuffle}); sdk.ui.toast(meta.shuffle?"Случайный порядок включён":"Треки по очереди"); };
     box.querySelector("#ttRemind").onclick=enableReminders;
   }
   function adjust(delta){
@@ -195,13 +298,15 @@
   }
 
   function mount(rootEl, theSdk){
-    sdk=theSdk; root=rootEl; sessions=[]; meta={morning:"07:30",evening:"20:30",manualPoints:0}; metaId=null;
+    sdk=theSdk; root=rootEl; sessions=[]; meta=metaDefaults(); metaId=null;
     running=false; remaining=DURATION; reminderTimers=[]; curSheet=null;
+    player=null; playing=false; curTrack=0;
     buildSkeleton();
     Promise.resolve().then(loadMeta).then(reloadSessions).then(function(){ refresh(); applyReminders(); }).catch(function(){ refresh(); });
   }
   function unmount(){
-    stopTimer(); clearReminders();
+    stopTimer(); clearReminders(); stopMusic();
+    try{ if(player){ player.src=""; player=null; } }catch(e){} playing=false;
     if(curSheet&&curSheet.close){ try{ curSheet.close(); }catch(e){} } curSheet=null;
     E={}; sessions=[];
   }

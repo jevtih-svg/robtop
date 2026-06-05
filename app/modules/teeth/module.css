@@ -24,6 +24,45 @@
   font-family:inherit;font-weight:800;font-size:16px;color:#ffb3c0;border:1.5px solid rgba(255,77,109,.5);background:rgba(255,77,109,.12)}
 .tt-cancel:active{transform:scale(.97)}
 
+/* экран-награда с плеером */
+.tt-reward{display:flex;flex-direction:column;align-items:center;width:100%;max-width:340px;margin-top:6px}
+.tt-reward-emoji{font-size:54px;line-height:1;filter:drop-shadow(0 0 16px rgba(255,210,59,.6))}
+.tt-reward-title{font-family:'Russo One',sans-serif;font-size:22px;color:#fff;margin-top:8px;text-align:center;
+  text-shadow:0 0 14px rgba(43,240,192,.6)}
+.tt-reward-sub{color:var(--muted);font-weight:600;font-size:13.5px;margin-top:4px;text-align:center}
+.tt-player{display:flex;align-items:center;gap:14px;width:100%;margin-top:18px;padding:14px;border-radius:20px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(25,227,255,.28);box-shadow:0 0 22px -8px var(--cyan)}
+.tt-play{flex:0 0 auto;width:64px;height:64px;border:none;border-radius:50%;cursor:pointer;color:#04212b;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,#3df0c0,#19c7e0);box-shadow:0 0 26px -4px var(--cyan), 0 8px 20px rgba(0,0,0,.4)}
+.tt-play svg{width:30px;height:30px}
+.tt-play:active{transform:scale(.94)}
+.tt-player-info{flex:1;min-width:0;text-align:left}
+.tt-track-num{font-weight:800;font-size:12px;color:#9ff0d8;letter-spacing:.3px}
+.tt-track-name{font-weight:700;font-size:15px;color:#e7eeff;margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tt-skip{display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;width:100%;height:48px;
+  border-radius:24px;cursor:pointer;font-family:inherit;font-weight:800;font-size:15px;color:#bdeeff;
+  border:1.5px solid rgba(25,227,255,.4);background:rgba(25,227,255,.1)}
+.tt-skip svg{width:20px;height:20px}
+.tt-skip:active{transform:scale(.97)}
+.tt-done{margin-top:10px;width:100%;height:52px;border-radius:26px;cursor:pointer;color:#04212b;
+  font-family:'Russo One',sans-serif;font-size:17px;letter-spacing:.3px;
+  background:linear-gradient(180deg,#3df0c0,#19c7e0);box-shadow:0 0 22px -6px var(--cyan), 0 10px 22px rgba(0,0,0,.42)}
+.tt-done:active{transform:scale(.97)}
+
+/* тумблер случайного порядка (родительская панель) */
+.tt-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:6px;cursor:pointer;
+  padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  font-weight:700;font-size:14.5px;color:#e7eeff}
+.tt-toggle input{position:absolute;opacity:0;width:0;height:0}
+.tt-switch{flex:0 0 auto;position:relative;width:46px;height:26px;border-radius:999px;
+  background:rgba(255,255,255,.16);transition:background .2s}
+.tt-switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;
+  background:#fff;transition:transform .2s}
+.tt-toggle input:checked + .tt-switch{background:linear-gradient(180deg,#3df0c0,#19c7e0)}
+.tt-toggle input:checked + .tt-switch::after{transform:translateX(20px)}
+
 .tt-info{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin-top:18px}
 .tt-chip{display:inline-flex;align-items:center;gap:6px;font-weight:800;font-size:13.5px;padding:8px 13px;border-radius:999px;
   background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#cdd9f5}
