@@ -79,3 +79,55 @@
 .tt-times input[type="time"]{width:100%;border:1.6px solid rgba(255,255,255,.14);border-radius:14px;padding:12px;
   font-family:inherit;font-size:16px;font-weight:700;color:var(--ink);background:rgba(255,255,255,.04);outline:none}
 .tt-note{color:#8aa0c8;font-size:12.5px;font-weight:600;margin-top:8px;text-align:center;line-height:1.4}
+
+/* ===== вкладки: История | Музыка ===== */
+.tt-tabs{display:flex;gap:9px;margin-top:20px}
+.tt-tab{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;font-family:inherit;
+  border-radius:15px;padding:11px 6px;color:#cfe0ff;font-weight:800;font-size:14.5px;
+  background:rgba(255,255,255,.045);border:1.5px solid rgba(255,255,255,.1);
+  transition:transform .12s, box-shadow .2s, background .2s}
+.tt-tab svg{width:18px;height:18px;flex:0 0 auto}
+.tt-tab:active{transform:scale(.97)}
+.tt-tab.active{color:#04212b;border-color:transparent;transform:translateY(-1px);
+  background:linear-gradient(180deg,#3df0c0,#19c7e0);box-shadow:0 0 22px -4px var(--cyan)}
+.tt-panel{margin-top:14px}
+.tt-panel[hidden]{display:none}
+
+/* фильтр истории (Все / Выполнено / Пропущено) */
+.tt-filter{display:flex;gap:8px;margin-bottom:10px}
+.tt-fchip{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font-family:inherit;
+  border-radius:13px;padding:8px 6px;color:#cfe0ff;
+  background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);transition:background .2s, box-shadow .2s, transform .12s}
+.tt-fchip .t{font-weight:800;font-size:13px}
+.tt-fchip .n{font-family:'Russo One',sans-serif;font-size:15px;color:#fff}
+.tt-fchip:active{transform:scale(.97)}
+.tt-fchip.active{border-color:transparent;box-shadow:0 0 18px -6px var(--cyan);
+  background:linear-gradient(180deg, rgba(25,227,255,.30), rgba(25,227,255,.10))}
+.tt-fchip[data-f="done"].active{background:linear-gradient(180deg, rgba(43,240,192,.32), rgba(43,240,192,.10));box-shadow:0 0 18px -6px #2bf0c0}
+.tt-fchip[data-f="skipped"].active{background:linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.06));box-shadow:none}
+.tt-empty{color:#8aa0c8;font-weight:600;font-size:14px;text-align:center;padding:22px 12px;line-height:1.45}
+
+/* ===== вкладка «Музыка» ===== */
+.tt-mhint{display:flex;align-items:flex-start;gap:7px;color:#9fb0d6;font-weight:600;font-size:12.5px;line-height:1.4;margin-bottom:12px}
+.tt-mhint svg{width:16px;height:16px;flex:0 0 auto;margin-top:1px;color:#9ff0d8}
+.tt-music{display:flex;flex-direction:column;gap:8px}
+.tt-mrow{display:flex;align-items:center;gap:11px;border-radius:14px;padding:9px 11px;
+  background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);transition:border-color .2s, box-shadow .2s, background .2s}
+.tt-mrow.sel{border-color:transparent;box-shadow:0 0 18px -7px var(--cyan);
+  background:linear-gradient(180deg, rgba(25,227,255,.16), rgba(25,227,255,.05))}
+.tt-mplay{flex:0 0 auto;width:42px;height:42px;border:none;border-radius:50%;cursor:pointer;color:#04212b;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,#3df0c0,#19c7e0);box-shadow:0 0 16px -5px var(--cyan)}
+.tt-mplay svg{width:20px;height:20px}
+.tt-mplay:active{transform:scale(.92)}
+.tt-mplay.playing{background:linear-gradient(180deg,#ffe08a,#ffc23b)}
+.tt-minfo{flex:1;min-width:0}
+.tt-mnum{font-weight:800;font-size:11.5px;color:#9ff0d8;letter-spacing:.2px}
+.tt-mname{font-weight:700;font-size:14.5px;color:#e7eeff;margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tt-mpick{flex:0 0 auto;width:40px;height:40px;border-radius:12px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;color:#9fb0d6;
+  border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05)}
+.tt-mpick svg{width:20px;height:20px}
+.tt-mpick:active{transform:scale(.92)}
+.tt-mpick.on{color:#04212b;border-color:transparent;background:linear-gradient(180deg,#3df0c0,#19c7e0);box-shadow:0 0 14px -4px var(--cyan)}

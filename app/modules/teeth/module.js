@@ -47,10 +47,21 @@
   function trackTitle(i){ return String(PLAYLIST[i]||"").replace(/^ES_/,"").replace(/\s+$/,"").trim() || ("Трек "+(i+1)); }
 
   var SKIP_IC='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5.5v13l9-6.5zM16.5 5H19v14h-2.5z"/></svg>';
+  /* иконки для вкладок «История»/«Музыка» и списка треков */
+  var NOTE_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l10-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/></svg>';
+  var CLOCK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+  var CHECK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>';
+  var STAR_O_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.6l2.6 5.4 6 .8-4.4 4.2 1.1 6L12 17.4 6.7 20l1.1-6L3.4 9.8l6-.8z"/></svg>';
+  var PV_PLAY='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>';
+  var PV_PAUSE='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>';
 
   var sdk=null, root=null, E={}, sessions=[], meta=null, metaId=null;
   var running=false, remaining=DURATION, timerId=null, audio=null, reminderTimers=[], curSheet=null;
   var player=null, playing=false, curTrack=0;
+  /* вкладки (История | Музыка), фильтр истории и НЕЗАВИСИМЫЙ плеер-превью для вкладки «Музыка».
+     Превью не трогает звук во время чистки — это отдельная зона плеера (player/start/finish). */
+  var tab="history", histFilter="all";
+  var previewAudio=null, previewIdx=-1, previewPlaying=false;
 
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
   function pad2(n){ return (n<10?"0":"")+n; }
@@ -183,14 +194,86 @@
       +'<span class="tt-chip streak">Серия: <b>'+s.streak+'</b> '+plural(s.streak,"день","дня","дней")+'</span>'
       +'<span class="tt-chip points">Очки: <b>'+s.points+'</b></span>';
     sdk.ui.hud({ left:'🦷 <b>зубки</b>', cNum:s.streak, cLbl:"серия", rNum:s.points, rLbl:"очки" });
-    renderList();
+    renderHistory(); renderMusic();
   }
-  function renderList(){
-    if(!sessions.length){ E.list.innerHTML='<div style="color:#6f80a6;font-weight:600;font-size:14px;text-align:center;padding:14px">Пока нет чисток. Нажми «Начать чистку».</div>'; return; }
-    E.list.innerHTML=sessions.slice(0,30).map(function(it){
-      var d=it.data||{}; var ok=d.status==="done";
+
+  /* ----- вкладки: Таймер сверху, ниже История | Музыка ----- */
+  function setTab(t){
+    tab=t;
+    if(E.history) E.history.hidden=(t!=="history");
+    if(E.music) E.music.hidden=(t!=="music");
+    if(E.tabs) Array.prototype.forEach.call(E.tabs.querySelectorAll(".tt-tab"),function(b){ b.classList.toggle("active", b.getAttribute("data-tab")===t); });
+    if(t!=="music") stopPreview();
+    if(t==="history") renderHistory(); else renderMusic();
+    sdk.ui.haptics(6);
+  }
+
+  /* ----- История с фильтром (как вкладки в виш-листе: фильтруют список по статусу) ----- */
+  function histCounts(){
+    var c={all:sessions.length,done:0,skipped:0};
+    sessions.forEach(function(it){ var st=(it.data&&it.data.status)||it.status; if(st==="done")c.done++; else if(st==="skipped")c.skipped++; });
+    return c;
+  }
+  function histEmpty(){
+    if(histFilter==="done") return "Ещё нет выполненных чисток. Доведи таймер до конца — запись появится здесь.";
+    if(histFilter==="skipped") return "Нет пропущенных чисток. Так держать! 💪";
+    return "Пока нет чисток. Нажми «Начать чистку».";
+  }
+  function setHistFilter(f){ histFilter=f; renderHistory(); sdk.ui.haptics(6); }
+  function renderHistory(){
+    var c=histCounts(), map={all:c.all,done:c.done,skipped:c.skipped};
+    if(E.filter){
+      Array.prototype.forEach.call(E.filter.querySelectorAll(".tt-fchip"),function(b){
+        var f=b.getAttribute("data-f"), n=b.querySelector(".n"); if(n) n.textContent=map[f];
+        b.classList.toggle("active", f===histFilter);
+      });
+    }
+    if(!E.list) return;
+    var rows=sessions.filter(function(it){ if(histFilter==="all") return true; var st=(it.data&&it.data.status)||it.status; return st===histFilter; });
+    if(!rows.length){ E.list.innerHTML='<div class="tt-empty">'+histEmpty()+'</div>'; return; }
+    E.list.innerHTML=rows.slice(0,60).map(function(it){
+      var d=it.data||{}; var ok=(d.status||it.status)==="done";
       return '<div class="tt-row"><div class="when">'+esc(humanDate(d.date))+'<small>'+esc(d.time||"")+'</small></div>'
         +'<span class="tt-status '+(ok?"done":"skip")+'">'+(ok?"Выполнено":"Пропущено")+'</span></div>';
+    }).join("");
+  }
+
+  /* ----- Музыка: выбор трека (что заиграет следующим) + превью -----
+     Выбор пишется в СУЩЕСТВУЮЩИЙ указатель meta.trackIndex — его уже читает pickTrackForSession,
+     поэтому выбранный трек заиграет на следующей чистке. Логику плеера не трогаем.
+     Превью — отдельный Audio, полностью независим от плеера чистки. */
+  function selIdx(){ var i=(meta&&typeof meta.trackIndex==="number")?(meta.trackIndex%PLAYLIST.length):0; return i<0?0:i; }
+  function ensurePreview(){
+    if(!previewAudio){ previewAudio=new Audio(); previewAudio.preload="none";
+      previewAudio.addEventListener("ended",function(){ previewPlaying=false; previewIdx=-1; if(tab==="music") renderMusic(); }); }
+    return previewAudio;
+  }
+  function stopPreview(){ try{ if(previewAudio){ previewAudio.pause(); } }catch(e){} previewPlaying=false; previewIdx=-1; }
+  function previewToggle(i){
+    ensurePreview();
+    if(previewPlaying && previewIdx===i){ stopPreview(); renderMusic(); sdk.ui.haptics(6); return; }
+    previewIdx=i; previewAudio.src=trackSrc(i);
+    var pr=previewAudio.play();
+    if(pr&&pr.then){ pr.then(function(){ previewPlaying=true; renderMusic(); }).catch(function(){ previewPlaying=false; previewIdx=-1; renderMusic(); sdk.ui.toast("Нажми ещё раз, чтобы послушать"); }); }
+    else { previewPlaying=true; renderMusic(); }
+    sdk.ui.haptics(8);
+  }
+  function pickTrack(i){
+    if(meta){ meta.trackIndex=i; if(metaId) sdk.data.update("meta",metaId,{trackIndex:i}); }
+    renderMusic(); sdk.ui.haptics(10);
+    sdk.ui.toast((meta&&meta.shuffle) ? ("Отмечен трек: "+trackTitle(i)+" (выключи случайный порядок, чтобы он играл)") : ("Следующим заиграет: "+trackTitle(i)));
+  }
+  function renderMusic(){
+    if(!E.musicList) return;
+    var sel=selIdx(), shuffle=!!(meta&&meta.shuffle);
+    if(E.mhint) E.mhint.innerHTML=NOTE_IC+' '+(shuffle?'Сейчас случайный порядок треков. Выбор отметит трек, но играть он будет вразнобой.':'Выбери трек — он заиграет на следующей чистке. ▶ послушать.');
+    E.musicList.innerHTML=PLAYLIST.map(function(_,i){
+      var on=(i===sel && !shuffle), prev=(i===previewIdx&&previewPlaying);
+      return '<div class="tt-mrow'+(on?" sel":"")+'" data-i="'+i+'">'
+        +'<button class="tt-mplay'+(prev?" playing":"")+'" data-act="prev" data-i="'+i+'" aria-label="'+(prev?"Пауза":"Слушать")+'">'+(prev?PV_PAUSE:PV_PLAY)+'</button>'
+        +'<div class="tt-minfo"><div class="tt-mnum">Трек '+(i+1)+(on?' · играет следующим':'')+'</div><div class="tt-mname">'+esc(trackTitle(i))+'</div></div>'
+        +'<button class="tt-mpick'+(on?" on":"")+'" data-act="pick" data-i="'+i+'" aria-label="Выбрать">'+(on?CHECK_IC:STAR_O_IC)+'</button>'
+        +'</div>';
     }).join("");
   }
 
@@ -261,11 +344,34 @@
         +'<button class="hbtn" id="ttParent" aria-label="Родителям">'+PARENT_IC+'</button></div>'
       +'<div class="tt-stage" id="ttStage"></div>'
       +'<div class="tt-info" id="ttInfo"></div>'
-      +'<div class="store-section">История чисток</div><div class="tt-list" id="ttList"></div>'
+      +'<nav class="tt-tabs" id="ttTabs">'
+        +'<button class="tt-tab active" data-tab="history">'+CLOCK_IC+'<span>История</span></button>'
+        +'<button class="tt-tab" data-tab="music">'+NOTE_IC+'<span>Музыка</span></button>'
+      +'</nav>'
+      +'<section class="tt-panel" id="ttHistory">'
+        +'<div class="tt-filter" id="ttFilter">'
+          +'<button class="tt-fchip active" data-f="all"><span class="t">Все</span><span class="n">0</span></button>'
+          +'<button class="tt-fchip" data-f="done"><span class="t">Выполнено</span><span class="n">0</span></button>'
+          +'<button class="tt-fchip" data-f="skipped"><span class="t">Пропущено</span><span class="n">0</span></button>'
+        +'</div>'
+        +'<div class="tt-list" id="ttList"></div>'
+      +'</section>'
+      +'<section class="tt-panel" id="ttMusic" hidden>'
+        +'<div class="tt-mhint" id="ttMhint"></div>'
+        +'<div class="tt-music" id="ttMusicList"></div>'
+      +'</section>'
     +'</div>';
-    E.stage=root.querySelector("#ttStage"); E.info=root.querySelector("#ttInfo"); E.list=root.querySelector("#ttList");
+    E.stage=root.querySelector("#ttStage"); E.info=root.querySelector("#ttInfo");
+    E.tabs=root.querySelector("#ttTabs"); E.history=root.querySelector("#ttHistory"); E.music=root.querySelector("#ttMusic");
+    E.filter=root.querySelector("#ttFilter"); E.list=root.querySelector("#ttList");
+    E.mhint=root.querySelector("#ttMhint"); E.musicList=root.querySelector("#ttMusicList");
     root.querySelector("#ttBack").onclick=function(){ sdk.ui.back(); };
     root.querySelector("#ttParent").onclick=openParentGate;
+    E.tabs.addEventListener("click",function(e){ var t=e.target.closest(".tt-tab"); if(t) setTab(t.getAttribute("data-tab")); });
+    E.filter.addEventListener("click",function(e){ var b=e.target.closest(".tt-fchip"); if(b) setHistFilter(b.getAttribute("data-f")); });
+    E.music.addEventListener("click",function(e){ var b=e.target.closest("[data-act]"); if(!b) return; var i=parseInt(b.getAttribute("data-i"),10); if(isNaN(i)) return; if(b.getAttribute("data-act")==="prev") previewToggle(i); else pickTrack(i); });
+    E.stage.addEventListener("click", stopPreview, true);
+    setTab("history");
     renderStageIdle();
   }
 
@@ -273,12 +379,14 @@
     sdk=theSdk; root=rootEl; sessions=[]; meta=metaDefaults(); metaId=null;
     running=false; remaining=DURATION; reminderTimers=[]; curSheet=null;
     player=null; playing=false; curTrack=0;
+    tab="history"; histFilter="all"; previewAudio=null; previewIdx=-1; previewPlaying=false;
     buildSkeleton();
     Promise.resolve().then(loadMeta).then(reloadSessions).then(function(){ refresh(); applyReminders(); }).catch(function(){ refresh(); });
   }
   function unmount(){
-    stopTimer(); clearReminders(); stopMusic();
+    stopTimer(); clearReminders(); stopMusic(); stopPreview();
     try{ if(player){ player.src=""; player=null; } }catch(e){} playing=false;
+    try{ if(previewAudio){ previewAudio.src=""; previewAudio=null; } }catch(e){}
     if(curSheet&&curSheet.close){ try{ curSheet.close(); }catch(e){} } curSheet=null;
     E={}; sessions=[];
   }
