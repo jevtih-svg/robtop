@@ -371,8 +371,13 @@ button.pd-ev{cursor:pointer;transition:border-color .15s} button.pd-ev:active{bo
 .pd-tl .x{flex:1;font-size:12.5px;font-weight:700;color:#e8f0ff}
 .pd-tl .d{font-size:11px;font-weight:700;color:var(--muted)}
 .pd-ronote{display:flex;gap:7px;align-items:center;justify-content:center;margin-top:10px;font-size:10.5px;font-weight:700;color:var(--muted)}
-/* таббар родителя (вместо HUD) */
-.pd-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:14;max-width:480px;margin:0 auto;display:flex;gap:4px;
+/* таббар родителя (вместо HUD). Элемент #pdTabs живёт в <body> (index.html), НЕ в #parent:
+   заполненная анимация .view.active (transform) делает секцию containing block в Chrome,
+   и fixed внутри неё позиционировался от низа ДЛИННОГО списка, а не экрана. Виден только
+   на родительском виде. */
+.pd-tabbar{display:none}
+body[data-view="parent"] .pd-tabbar{display:flex}
+.pd-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:14;max-width:480px;margin:0 auto;gap:4px;
   padding:8px 14px calc(10px + env(safe-area-inset-bottom));
   background:linear-gradient(0deg, rgba(5,4,15,.94) 60%, transparent);border-top:1px solid rgba(255,255,255,.09);backdrop-filter:blur(8px)}
 .pd-tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;
@@ -380,3 +385,24 @@ button.pd-ev{cursor:pointer;transition:border-color .15s} button.pd-ev:active{bo
 .pd-tabbar button svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .pd-tabbar button.on{color:var(--cyan);text-shadow:0 0 10px rgba(25,227,255,.7)}
 .pd-tabbar button.on svg{filter:drop-shadow(0 0 5px rgba(25,227,255,.8))}
+/* экран приложения (контент ребёнка) */
+.pd-mhead .mic{width:40px;height:40px;border-radius:12px;flex:0 0 40px;display:grid;place-items:center;color:var(--mc,#19e3ff);
+  background:rgba(255,255,255,.05);border:1px solid var(--mc,rgba(255,255,255,.2));box-shadow:0 0 12px -4px var(--mc,transparent)}
+.pd-mhead .mic svg{width:22px;height:22px}.pd-mhead .mic img{width:24px;height:24px;border-radius:6px}
+.pd-mhead .mttl{flex:1;min-width:0;font-family:'Russo One',sans-serif;font-size:17px;color:#fff;line-height:1.15;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pd-crow{display:flex;gap:11px;align-items:flex-start;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);
+  border-radius:13px;padding:10px 12px;margin-bottom:7px}
+.pd-crow .ci{flex:0 0 auto;min-width:26px;text-align:center;font-style:normal}
+.pd-crow .ci .gold{color:var(--gold);text-shadow:0 0 8px rgba(255,210,59,.7);font-size:13px;letter-spacing:1px;white-space:nowrap}
+.pd-crow .ci .emo{font-size:20px}
+.pd-crow .ci .okc{color:#7df0c8}.pd-crow .ci .badc{color:#ffb3c0}.pd-crow .ci .dimc{color:#9fb0d6}
+.pd-crow .cx{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.pd-crow .c1{font-size:13px;font-weight:700;color:#eef4ff;line-height:1.35;overflow-wrap:anywhere}
+.pd-crow .c2{font-size:11px;font-weight:700;color:var(--muted)}
+.pd-crow .ct{flex:0 0 auto;font-size:10.5px;font-weight:700;color:var(--muted);margin-top:2px;white-space:nowrap}
+.pd-quote{display:block;font-size:11.5px;font-weight:600;color:#cdd9f2;line-height:1.4;overflow-wrap:anywhere}
+.pd-dim{font-size:11px;color:#6f80a6;font-weight:600}
+.pd-cphoto{display:block;width:44px;height:44px;border-radius:10px;background-size:cover;background-position:center;
+  border:1px solid rgba(255,255,255,.16);margin-top:2px}
+.pd-openj,.pd-morebtn{margin-top:10px}

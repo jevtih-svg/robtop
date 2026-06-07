@@ -153,18 +153,25 @@ foreach ($rows as $r) {
     ];
 }
 
-/* ---------- журнал событий за окно (DESC, лимит 600) ---------- */
-$evq = $db->prepare(
-    "SELECT id, module, type, item_id, item_title, from_status, to_status, meta,
+/* ---------- журнал событий за окно (DESC, страницами) ----------
+   Пагинация для бесконечной прокрутки: ?before=<id события> отдаёт следующую
+   страницу СТАРШЕ этого id в том же окне дней. eventsHasMore=true — есть ещё. */
+$pageSize = 300;
+$before   = isset($_GET['before']) ? (int)$_GET['before'] : 0;
+$evSql = "SELECT id, module, type, item_id, item_title, from_status, to_status, meta,
             UNIX_TIMESTAMP(created_at) * 1000 AS at
      FROM events
-     WHERE user_id = ? AND created_at >= (NOW() - INTERVAL " . (int)$days . " DAY)
-     ORDER BY created_at DESC, id DESC
-     LIMIT 600"
-);
+     WHERE user_id = ? AND created_at >= (NOW() - INTERVAL " . (int)$days . " DAY)"
+     . ($before > 0 ? " AND id < " . (int)$before : "")
+     . " ORDER BY created_at DESC, id DESC
+     LIMIT " . ($pageSize + 1);
+$evq = $db->prepare($evSql);
 $evq->execute([$childId]);
+$evRows = $evq->fetchAll();
+$evHasMore = count($evRows) > $pageSize;
+if ($evHasMore) array_pop($evRows);
 $events = [];
-foreach ($evq->fetchAll() as $r) {
+foreach ($evRows as $r) {
     $meta = null;
     if ($r['meta'] !== null && $r['meta'] !== '') {
         $meta = json_decode($r['meta'], true);
@@ -180,6 +187,44 @@ foreach ($evq->fetchAll() as $r) {
         'to'     => $r['to_status'],
         'meta'   => $meta,
         'at'     => (int)$r['at'],
+    ];
+}
+
+/* лёгкий режим пагинации: только следующая страница событий */
+if ($before > 0) {
+    rt_json(['ok' => true, 'events' => $events, 'eventsHasMore' => $evHasMore]);
+}
+
+/* ---------- контент модулей (то, что РЕАЛЬНО создал ребёнок) ----------
+   Свежие записи generic-стора по модулям: оценки/настроения с текстами, раунды
+   угадайки, слова, чистки. Технические коллекции meta и копилка не отдаются.
+   Фото внутри data — по тому же правилу приватности, что и виш-лист. */
+$cq = $db->prepare(
+    "SELECT id, module, collection, status, favorite, data,
+            UNIX_TIMESTAMP(created_at) * 1000 AS createdAt
+     FROM module_data
+     WHERE user_id = ? AND deleted_at IS NULL
+       AND module <> 'bank' AND collection <> 'meta'
+     ORDER BY id DESC
+     LIMIT 400"
+);
+$cq->execute([$childId]);
+$content = [];
+$perModCap = 30;
+foreach ($cq->fetchAll() as $r) {
+    $m = $r['module'];
+    if (!isset($content[$m])) $content[$m] = [];
+    if (count($content[$m]) >= $perModCap) continue;
+    $d = json_decode($r['data'], true);
+    if (!is_array($d)) $d = [];
+    if (!$canImages) { unset($d['photo'], $d['image'], $d['dataUrl']); }
+    $content[$m][] = [
+        'id'        => (string)$r['id'],
+        'collection'=> $r['collection'],
+        'status'    => $r['status'],
+        'favorite'  => ((int)$r['favorite'] === 1),
+        'data'      => $d,
+        'createdAt' => (int)$r['createdAt'],
     ];
 }
 
@@ -225,5 +270,7 @@ rt_json([
     'days'          => $days,
     'items'         => $items,
     'events'        => $events,
+    'eventsHasMore' => $evHasMore,
+    'content'       => $content,
     'lastActivityAt'=> $lastAt,
 ]);

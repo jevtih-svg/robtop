@@ -1,18 +1,26 @@
 /* RobTop — РОДИТЕЛЬСКИЙ ЭКРАН (read-only дашборд, ядро оболочки).
    Показывается ТОЛЬКО родительской сессии вместо детского главного экрана.
-   Три вкладки: Обзор (HUD, график активности, разбивка и сводка по приложениям,
-   заметки-инсайты) · Виш-лист ребёнка (только чтение, деталь с историей) ·
-   Журнал (лента событий с фильтрами по приложениям).
+
+   Поверхности: Обзор (HUD, график активности, карточки приложений, заметки) ·
+   ЭКРАН ПРИЛОЖЕНИЯ (тап по карточке: контент ребёнка + последние события, кнопка
+   «назад») · Виш-лист ребёнка (вкладка) · Журнал (бесконечная прокрутка).
+
+   Принципы (фидбек заказчика 2026-06-07):
+   - Метрики считают только ОСМЫСЛЕННЫЕ действия ребёнка (isDomain): без login'ов,
+     без viewed_ и opened_, без generic-дублей создания записей у модулей с
+     доменными событиями, без bank и accounts. Никаких «292 события» из шума.
+   - По тапу на приложение родитель видит КОНТЕНТ ребёнка (оценки с текстами,
+     настроения, раунды, слова, чистки), события — вторичны, внизу экрана.
+   - Таббар живёт в <body> (index.html #pdTabs), НЕ внутри #parent: у .view.active
+     заполненная анимация с transform, и Chrome делает секцию containing block —
+     fixed-таббар внутри неё прилипал к низу длинного списка, а не экрана.
+   - Журнал: человеческие формулировки, чанки по 80 + «Показать ещё»/автоподгрузка
+     при прокрутке; старше первой страницы — догрузка с сервера (?before=id).
 
    Данные: GET api/parent.php (скоуп ребёнка на сервере, гейт rt_require_parent).
-   Все агрегаты считаются на клиенте из массива events — как в прототипе
-   parent-prototype.html (единый источник, журнал согласован с графиками).
-
-   Контракт для НОВЫХ модулей (Шаг 4а гайда): красивый текст события журнала —
-   ключ parent.ev.<module>.<type> (en/ru/lv можно доложить через RobTop.i18n.add
-   из module.js); без ключа событие получает generic-текст, модуль в разбивке
-   и сводке появляется автоматически из реестра. Шум (opened_*, viewed_*) и
-   модуль bank в ленту не попадают; график считает все события. */
+   Контракт для НОВЫХ модулей (Шаг 4а гайда): журнальный текст — ключ
+   parent.ev.<module>.<type>; без ключа — generic. Неизвестный модуль автоматически
+   получает generic-сводку, generic-контент и место в фильтрах. */
 window.RobTop = window.RobTop || {};
 (function(RT){
   "use strict";
@@ -27,15 +35,18 @@ window.RobTop = window.RobTop || {};
     loadFail:"Couldn't load the data", retry:"Retry",
     tab:{ overview:"Overview", wishlist:"Wishlist", journal:"Log" },
     period:{ d7:"7 days", d30:"30 days" },
-    hud:{ events:{one:"event",other:"events"}, days:{one:"active day",other:"active days"}, points:"points total" },
-    sect:{ activity:"Activity by day", byApp:"By app", summary:"App summary", insights:"Notes" },
+    hud:{ acts:{one:"action",other:"actions"}, days:{one:"active day",other:"active days"}, points:"points total" },
+    sect:{ activity:"Activity by day", byApp:"Apps", insights:"Notes" },
     sum:{ wishlist:"{total} wishes · {want} want · {bought} bought",
       teeth:"streak: {n} 🔥 · {c} in period", rating:"average: {avg}★ · {c} rated",
       mood:"most often: {e} {name} ×{c}", reverse:"{c} words reversed", guess:"guessed {w} of {c}",
       bank:"{p} points total · streak {s} 🔥",
-      generic:{one:"{n} event in period",other:"{n} events in period"}, none:"no activity in period" },
+      generic:{one:"{n} action in period",other:"{n} actions in period"}, none:"no activity in period" },
     ins:{ streak:"Brushing streak: {n} days in a row", bought:"Wish fulfilled: “{t}” 🎉",
       peak:{ morning:"Most active in the morning (7–11)", day:"Most active in the daytime (11–17)", evening:"Most active in the evening (17–22)" } },
+    m:{ lastEvents:"Recent events", openJournal:"App log", empty:"Nothing here yet.",
+      noText:"no comment", liked:"Liked: {x}" },
+    g:{ win:"guessed it", wrong:"missed", timeout:"time ran out" },
     wl:{ banner:"View mode. Only {name} can make changes.",
       want:"Want", thinking:"Thinking", bought:"Bought", empty:"Nothing in this section.",
       chipChanged:"changed ×{n}", chipDays:{one:"in {n} day",other:"in {n} days"}, chipLink:"link",
@@ -44,9 +55,11 @@ window.RobTop = window.RobTop || {};
       cnt:{ changed:"changed mind", bought:"bought", returned:"returned" },
       ro:"View only — only {name} edits", close:"Close" },
     j:{ all:"All", count:{one:"{n} event in {d} days",other:"{n} events in {d} days"},
-      today:"Today", yesterday:"Yesterday", empty:"No events yet." },
+      today:"Today", yesterday:"Yesterday", empty:"No events yet.", more:"Show more", loading:"Loading…" },
     mood:{ happy:"Happy", mid:"So-so", sad:"Sad" },
+    acct:"sign-in",
     ev:{
+      accounts:{ login:"Signed in to the app" },
       wishlist:{ created:"Added a wish: “{t}”", changed_mind:"Changed mind: “{t}”", purchased:"“{t}” — bought! 🎉",
         back_to_want:"Wants “{t}” again", edited:"Edited the wish “{t}”", favorite:"Marked ★ “{t}”",
         unfavorite:"Removed ★ “{t}”", deleted:"Removed the wish “{t}”", restored:"Brought back “{t}”", undo:"Undid an action" },
@@ -66,15 +79,18 @@ window.RobTop = window.RobTop || {};
     loadFail:"Не удалось загрузить данные", retry:"Повторить",
     tab:{ overview:"Обзор", wishlist:"Виш-лист", journal:"Журнал" },
     period:{ d7:"7 дней", d30:"30 дней" },
-    hud:{ events:{one:"событие",few:"события",many:"событий"}, days:{one:"активный день",few:"активных дня",many:"активных дней"}, points:"очков всего" },
-    sect:{ activity:"Активность по дням", byApp:"По приложениям", summary:"Сводка приложений", insights:"Заметки" },
+    hud:{ acts:{one:"действие",few:"действия",many:"действий"}, days:{one:"активный день",few:"активных дня",many:"активных дней"}, points:"очков всего" },
+    sect:{ activity:"Активность по дням", byApp:"Приложения", insights:"Заметки" },
     sum:{ wishlist:"{total} желаний · {want} хочу · {bought} куплено",
       teeth:"серия: {n} 🔥 · {c} за период", rating:"средняя: {avg}★ · {c} оценок",
       mood:"чаще всего: {e} {name} ×{c}", reverse:"{c} слов перевёрнуто", guess:"угадано {w} из {c}",
       bank:"{p} пунктов всего · винстрик {s} 🔥",
-      generic:{one:"{n} событие за период",few:"{n} события за период",many:"{n} событий за период"}, none:"нет активности за период" },
+      generic:{one:"{n} действие за период",few:"{n} действия за период",many:"{n} действий за период"}, none:"нет активности за период" },
     ins:{ streak:"Серия чистки зубов: {n} дней подряд", bought:"Исполнено желание: «{t}» 🎉",
       peak:{ morning:"Самое активное время — утро (7–11)", day:"Самое активное время — день (11–17)", evening:"Самое активное время — вечер (17–22)" } },
+    m:{ lastEvents:"Последние события", openJournal:"Журнал приложения", empty:"Пока пусто.",
+      noText:"без комментария", liked:"Понравилось: {x}" },
+    g:{ win:"угадал", wrong:"не угадал", timeout:"время вышло" },
     wl:{ banner:"Режим просмотра. Изменения может вносить только {name}.",
       want:"Хочу", thinking:"Думаю", bought:"Купил", empty:"В этом разделе пусто.",
       chipChanged:"передумал ×{n}", chipDays:{one:"за {n} день",few:"за {n} дня",many:"за {n} дней"}, chipLink:"ссылка",
@@ -83,9 +99,11 @@ window.RobTop = window.RobTop || {};
       cnt:{ changed:"раз передумал", bought:"раз куплено", returned:"раз вернул" },
       ro:"Только просмотр — редактирует {name}", close:"Закрыть" },
     j:{ all:"Все", count:{one:"{n} событие за {d} дней",few:"{n} события за {d} дней",many:"{n} событий за {d} дней"},
-      today:"Сегодня", yesterday:"Вчера", empty:"Событий пока нет." },
+      today:"Сегодня", yesterday:"Вчера", empty:"Событий пока нет.", more:"Показать ещё", loading:"Загрузка…" },
     mood:{ happy:"Весёлое", mid:"Среднее", sad:"Грустное" },
+    acct:"вход",
     ev:{
+      accounts:{ login:"Вошёл в приложение" },
       wishlist:{ created:"Добавил желание «{t}»", changed_mind:"Передумал: «{t}»", purchased:"«{t}» — куплено! 🎉",
         back_to_want:"Снова хочет «{t}»", edited:"Изменил желание «{t}»", favorite:"Отметил ★ «{t}»",
         unfavorite:"Снял ★ «{t}»", deleted:"Удалил желание «{t}»", restored:"Вернул «{t}»", undo:"Отменил действие" },
@@ -105,15 +123,18 @@ window.RobTop = window.RobTop || {};
     loadFail:"Neizdevās ielādēt datus", retry:"Mēģināt vēlreiz",
     tab:{ overview:"Pārskats", wishlist:"Vēlmju saraksts", journal:"Žurnāls" },
     period:{ d7:"7 dienas", d30:"30 dienas" },
-    hud:{ events:{zero:"notikumu",one:"notikums",other:"notikumi"}, days:{zero:"aktīvu dienu",one:"aktīva diena",other:"aktīvas dienas"}, points:"punkti kopā" },
-    sect:{ activity:"Aktivitāte pa dienām", byApp:"Pa lietotnēm", summary:"Lietotņu kopsavilkums", insights:"Piezīmes" },
+    hud:{ acts:{zero:"darbību",one:"darbība",other:"darbības"}, days:{zero:"aktīvu dienu",one:"aktīva diena",other:"aktīvas dienas"}, points:"punkti kopā" },
+    sect:{ activity:"Aktivitāte pa dienām", byApp:"Lietotnes", insights:"Piezīmes" },
     sum:{ wishlist:"{total} vēlmes · {want} gribu · {bought} nopirkts",
       teeth:"sērija: {n} 🔥 · {c} periodā", rating:"vidēji: {avg}★ · {c} vērtējumi",
       mood:"visbiežāk: {e} {name} ×{c}", reverse:"{c} vārdi apgriezti", guess:"uzminēti {w} no {c}",
       bank:"{p} punkti kopā · sērija {s} 🔥",
-      generic:{zero:"{n} notikumu periodā",one:"{n} notikums periodā",other:"{n} notikumi periodā"}, none:"perioda aktivitātes nav" },
+      generic:{zero:"{n} darbību periodā",one:"{n} darbība periodā",other:"{n} darbības periodā"}, none:"perioda aktivitātes nav" },
     ins:{ streak:"Zobu tīrīšanas sērija: {n} dienas pēc kārtas", bought:"Vēlme piepildīta: “{t}” 🎉",
       peak:{ morning:"Aktīvākais laiks — rīts (7–11)", day:"Aktīvākais laiks — diena (11–17)", evening:"Aktīvākais laiks — vakars (17–22)" } },
+    m:{ lastEvents:"Pēdējie notikumi", openJournal:"Lietotnes žurnāls", empty:"Vēl nekā nav.",
+      noText:"bez komentāra", liked:"Patika: {x}" },
+    g:{ win:"uzminēja", wrong:"neuzminēja", timeout:"laiks beidzās" },
     wl:{ banner:"Skatīšanās režīms. Izmaiņas var veikt tikai {name}.",
       want:"Gribu", thinking:"Domāju", bought:"Nopirku", empty:"Šajā sadaļā nekā nav.",
       chipChanged:"pārdomāju ×{n}", chipDays:{zero:"{n} dienās",one:"{n} dienā",other:"{n} dienās"}, chipLink:"saite",
@@ -122,9 +143,11 @@ window.RobTop = window.RobTop || {};
       cnt:{ changed:"reizes pārdomāja", bought:"reizes nopirkts", returned:"reizes atgrieza" },
       ro:"Tikai skatīšanās — rediģē {name}", close:"Aizvērt" },
     j:{ all:"Visi", count:{zero:"{n} notikumu {d} dienās",one:"{n} notikums {d} dienās",other:"{n} notikumi {d} dienās"},
-      today:"Šodien", yesterday:"Vakar", empty:"Notikumu vēl nav." },
+      today:"Šodien", yesterday:"Vakar", empty:"Notikumu vēl nav.", more:"Rādīt vairāk", loading:"Ielādē…" },
     mood:{ happy:"Priecīgs", mid:"Vidējs", sad:"Skumjš" },
+    acct:"pieslēgšanās",
     ev:{
+      accounts:{ login:"Pieslēdzās lietotnei" },
       wishlist:{ created:"Pievienoja vēlmi “{t}”", changed_mind:"Pārdomāja: “{t}”", purchased:"“{t}” — nopirkts! 🎉",
         back_to_want:"Atkal grib “{t}”", edited:"Mainīja vēlmi “{t}”", favorite:"Atzīmēja ★ “{t}”",
         unfavorite:"Noņēma ★ “{t}”", deleted:"Dzēsa vēlmi “{t}”", restored:"Atgrieza “{t}”", undo:"Atcēla darbību" },
@@ -141,19 +164,24 @@ window.RobTop = window.RobTop || {};
 
   /* =================== состояние =================== */
   var S={ data:null, childId:null, loading:false, error:false,
-          tab:"overview", period:7, wseg:"want", jfilter:"all" };
+          tab:"overview", mod:null, period:7, wseg:"want", jfilter:"all",
+          jshown:80, jMoreBusy:false };
+  var PAGE=80;
 
   var NOISE={ opened_app:1, opened_module:1, viewed_detail:1, viewed_stats:1 };
-  var SKIP_MOD={ bank:1 };
+  var SKIP_MOD={ bank:1, admin:1 };
+  var WL_DOMAIN={ created:1, changed_mind:1, purchased:1, back_to_want:1, edited:1, favorite:1, unfavorite:1, deleted:1, restored:1 };
+  var GEN_DOMAIN={ created:1, edited:1, moved:1, favorite:1, unfavorite:1, deleted:1, restored:1 };
   var SECTC={ want:"#ff3db0", thinking:"#a64bff", bought:"#2bf0c0" };
   var HISTC={ created:"#19e3ff", changed_mind:"#a64bff", purchased:"#2bf0c0", back_to_want:"#ff3db0", edited:"#ffd23b" };
   var MOOD_E={ happy:"😀", mid:"😐", sad:"😢" };
+  var ACCT_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="8.4" r="3.6"/><path d="M5 19.5c1.4-3.2 4-4.8 7-4.8s5.6 1.6 7 4.8" stroke-linecap="round"/></svg>';
 
   function t(k,p){ return I.t(k,p); }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
-  /* перевод «если есть»: пустая строка, когда ключа нет (для цепочек фолбэков) */
   function tIf(k,p){ var o={}; if(p) for(var x in p) o[x]=p[x]; o.fallback=""; return I.t(k,o); }
   function el(){ return document.getElementById("parent"); }
+  function tabsEl(){ return document.getElementById("pdTabs"); }
   function active(){ return document.body.getAttribute("data-view")==="parent"; }
 
   /* ---- дни/время ---- */
@@ -168,18 +196,49 @@ window.RobTop = window.RobTop || {};
   function fmtDayShort(off){ return I.formatDate(dateForOff(off), {day:"numeric",month:"short"}); }
   function hhmm(ts){ var d=new Date(ts); var h=d.getHours(), m=d.getMinutes(); return (h<10?"0":"")+h+":"+(m<10?"0":"")+m; }
   function stars(n){ var s=""; for(var i=0;i<n;i++) s+="★"; return s; }
+  /* "YYYY-MM-DD" модулей rating/mood → локализованная дата */
+  function fmtDayStr(dayStr){
+    if(!dayStr) return "";
+    var p=String(dayStr).split("-");
+    if(p.length!==3) return String(dayStr);
+    return I.formatDate(new Date(+p[0], +p[1]-1, +p[2], 12), {day:"numeric",month:"short"});
+  }
 
   /* ---- модули: имя/цвет/иконка из реестра оболочки ---- */
   function meta(id){ return RT.metaFor(id) || {id:id, name:id, color:"#19e3ff"}; }
-  function modName(id){ var m=meta(id); return t("tile."+id,{fallback:m.name||id}); }
-  function modColor(id){ return meta(id).color||"#19e3ff"; }
+  function modName(id){ if(id==="accounts") return t("parent.acct"); var m=meta(id); return t("tile."+id,{fallback:m.name||id}); }
+  function modColor(id){ if(id==="accounts") return "#19e3ff"; return meta(id).color||"#19e3ff"; }
   function modIcon(id){
+    if(id==="accounts") return ACCT_ICON;
     var sh=RT._shell||{};
     if(sh.iconHtml && RT.metaFor(id)) return sh.iconHtml(RT.metaFor(id));
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/></svg>';
   }
   function activeMods(){
     return (RT._registry||[]).filter(function(m){ return m.status==="active" && !SKIP_MOD[m.id]; });
+  }
+
+  /* ---- ОСМЫСЛЕННОЕ действие ребёнка (для метрик): без шума и без дублей ----
+     У модулей с доменными событиями generic-дубли (created entries/rounds и т.п.)
+     не считаются. Неизвестный модуль считается по generic-записям (его сигнал). */
+  function isDomain(e){
+    if(SKIP_MOD[e.module] || e.module==="accounts") return false;
+    if(NOISE[e.type]) return false;
+    var coll=e.meta&&e.meta.collection;
+    switch(e.module){
+      case "wishlist": return WL_DOMAIN[e.type]===1;
+      case "teeth":    return e.type==="created" && coll==="sessions";
+      case "rating":   return e.type==="day_rated";
+      case "mood":     return e.type==="mood_set";
+      case "guess":    return e.type==="round_played";
+      case "reverse":  return e.type==="created" && coll==="history";
+      default:         return GEN_DOMAIN[e.type]===1 && coll!=="meta";
+    }
+  }
+  /* видимость в ленте журнала: домен + «Вошёл в приложение» */
+  function inJournal(e){
+    if(e.module==="accounts") return e.type==="login";
+    return isDomain(e);
   }
 
   /* ---- текст события журнала: parent.ev.<module>.<type> → generic → type ---- */
@@ -202,13 +261,15 @@ window.RobTop = window.RobTop || {};
     return s;
   }
 
-  /* =================== агрегаты из событий (как в прототипе) =================== */
+  /* =================== агрегаты (только домен-события) =================== */
   function agg(){
     var days=S.period;
     var evs=(S.data&&S.data.events)||[];
     var per=[], perDay={}, perMod={}, hours={};
     for(var i=0;i<evs.length;i++){
-      var e=evs[i], off=dayOff(e.at);
+      var e=evs[i];
+      if(!isDomain(e)) continue;
+      var off=dayOff(e.at);
       if(off>=days) continue;
       per.push(e);
       perDay[off]=(perDay[off]||0)+1;
@@ -219,7 +280,7 @@ window.RobTop = window.RobTop || {};
     /* серия зубов: дни с завершённой чисткой подряд, начиная с сегодня (или со вчера) */
     var td={};
     for(i=0;i<evs.length;i++){ var x=evs[i];
-      if(x.module==="teeth" && x.type==="created" && x.to!=="skipped") td[dayOff(x.at)]=1; }
+      if(x.module==="teeth" && x.type==="created" && x.to!=="skipped" && x.meta && x.meta.collection==="sessions") td[dayOff(x.at)]=1; }
     var streak=0, st=td[0]?0:1;
     if(td[st]){ for(var d=st; d<365 && td[d]; d++) streak++; }
     /* пик времени суток */
@@ -230,22 +291,20 @@ window.RobTop = window.RobTop || {};
     for(var pk in b){ if(b.hasOwnProperty(pk) && b[pk]>best){ best=b[pk]; peak=pk; } }
     /* оценка дня */
     var sum=0,cnt=0;
-    for(i=0;i<per.length;i++){ if(per[i].module==="rating"&&per[i].type==="day_rated"&&per[i].meta&&per[i].meta.stars){ sum+=+per[i].meta.stars; cnt++; } }
+    for(i=0;i<per.length;i++){ if(per[i].module==="rating"&&per[i].meta&&per[i].meta.stars){ sum+=+per[i].meta.stars; cnt++; } }
     /* настроение */
     var mc={},topMood=null;
-    for(i=0;i<per.length;i++){ if(per[i].module==="mood"&&per[i].type==="mood_set"&&per[i].meta&&per[i].meta.mood){ var mm=per[i].meta.mood; mc[mm]=(mc[mm]||0)+1; } }
+    for(i=0;i<per.length;i++){ if(per[i].module==="mood"&&per[i].meta&&per[i].meta.mood){ var mm=per[i].meta.mood; mc[mm]=(mc[mm]||0)+1; } }
     for(var mk in mc){ if(mc.hasOwnProperty(mk)&&(topMood===null||mc[mk]>mc[topMood])) topMood=mk; }
     /* последняя покупка в периоде (events отсортированы DESC) */
     var buy=null;
     for(i=0;i<per.length;i++){ if(per[i].module==="wishlist"&&per[i].type==="purchased"){ buy=per[i]; break; } }
-    /* слова и угадайка */
-    var words=0,gW=0,gC=0;
+    var words=0,gW=0,gC=0,teethN=0;
     for(i=0;i<per.length;i++){
-      if(per[i].module==="reverse"&&per[i].type==="created") words++;
-      if(per[i].module==="guess"&&per[i].type==="round_played"){ gC++; if(per[i].meta&&per[i].meta.result==="win") gW++; }
+      if(per[i].module==="reverse") words++;
+      if(per[i].module==="guess"){ gC++; if(per[i].meta&&per[i].meta.result==="win") gW++; }
+      if(per[i].module==="teeth"&&per[i].to!=="skipped") teethN++;
     }
-    var teethN=0;
-    for(i=0;i<per.length;i++){ if(per[i].module==="teeth"&&per[i].type==="created"&&per[i].to!=="skipped") teethN++; }
     return { per:per, perDay:perDay, perMod:perMod, activeDays:activeDays, streak:streak, peak:peak,
       avg:cnt?(sum/cnt).toFixed(1):null, rated:cnt, topMood:topMood, topMoodN:topMood?mc[topMood]:0,
       buy:buy, words:words, guessWin:gW, guessCnt:gC, teethN:teethN };
@@ -269,17 +328,29 @@ window.RobTop = window.RobTop || {};
       +'<button class="hbtn" id="pdGear" aria-label="'+esc(t("settings.open"))+'">⚙</button>'
       +'</div>';
   }
-  function tabbarHtml(){
+  /* шапка экрана приложения: назад + иконка + имя */
+  function modHeadHtml(id){
+    return '<div class="pd-top pd-mhead">'
+      +'<button class="back" id="pdBack" aria-label="'+esc(t("common.back"))+'">'
+      +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg></button>'
+      +'<span class="mic" style="--mc:'+esc(modColor(id))+'">'+modIcon(id)+'</span>'
+      +'<span class="mttl">'+esc(modName(id))+'</span>'
+      +'<span class="pd-badge">👁 '+esc(t("parent.badge"))+'</span>'
+      +'</div>';
+  }
+  /* таббар рисуется в #pdTabs на уровне <body> (см. шапку файла) */
+  function renderTabs(){
+    var bar=tabsEl(); if(!bar) return;
     function b(id,svg,label){
-      return '<button data-tab="'+id+'"'+(S.tab===id?' class="on"':'')+'>'+svg+'<span>'+esc(label)+'</span></button>';
+      var on=(S.tab===id && !S.mod);
+      return '<button data-tab="'+id+'"'+(on?' class="on"':'')+'>'+svg+'<span>'+esc(label)+'</span></button>';
     }
-    return '<nav class="pd-tabbar" id="pdTabs">'
-      +b("overview",'<svg viewBox="0 0 24 24"><path d="M4 19V10M10 19V5M16 19v-7M21 19H3"/></svg>',t("parent.tab.overview"))
+    bar.innerHTML=b("overview",'<svg viewBox="0 0 24 24"><path d="M4 19V10M10 19V5M16 19v-7M21 19H3"/></svg>',t("parent.tab.overview"))
       +b("wishlist",'<svg viewBox="0 0 24 24"><circle cx="9" cy="16" r="4"/><circle cx="17" cy="17" r="3.2"/><path d="M9 12c.5-4 2-6.5 5-8.5M17 13.8C17 9 15.5 6 14 3.5M14 3.5c2 .2 4-.3 5.5-1.5"/></svg>',t("parent.tab.wishlist"))
-      +b("journal",'<svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.3"/><circle cx="3.5" cy="12" r="1.3"/><circle cx="3.5" cy="18" r="1.3"/></svg>',t("parent.tab.journal"))
-      +'</nav>';
+      +b("journal",'<svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.3"/><circle cx="3.5" cy="12" r="1.3"/><circle cx="3.5" cy="18" r="1.3"/></svg>',t("parent.tab.journal"));
   }
 
+  /* ---------- ОБЗОР ---------- */
   function overviewHtml(){
     var a=agg();
     var data=S.data||{};
@@ -287,12 +358,10 @@ window.RobTop = window.RobTop || {};
       +'<button data-p="7"'+(S.period===7?' class="on"':'')+'>'+esc(t("parent.period.d7"))+'</button>'
       +'<button data-p="30"'+(S.period===30?' class="on"':'')+'>'+esc(t("parent.period.d30"))+'</button></div>';
     h+='<div class="pd-hud">'
-      +'<div class="h"><div class="n">'+a.per.length+'</div><div class="l">'+esc(I.plural(a.per.length,"parent.hud.events").replace(/\{n\}\s*/,"").replace(/^\d+\s*/,""))+'</div></div>'
+      +'<div class="h"><div class="n">'+a.per.length+'</div><div class="l">'+esc(I.plural(a.per.length,"parent.hud.acts").replace(/\{n\}\s*/,"").replace(/^\d+\s*/,""))+'</div></div>'
       +'<div class="h"><div class="n">'+a.activeDays+'</div><div class="l">'+esc(I.plural(a.activeDays,"parent.hud.days").replace(/\{n\}\s*/,"").replace(/^\d+\s*/,""))+'</div></div>'
       +'<div class="h"><div class="n">'+(data.points||0)+'</div><div class="l">'+esc(t("parent.hud.points"))+'</div></div></div>';
-    /* график: ряд баров (с базовой линией) + отдельный ряд подписей.
-       Нулевой день — точка на линии, не «чёрточка»: иначе при редких данных
-       нулевые бары сливались с подписями в ломаную пунктирную линию. */
+    /* график: ряд баров + отдельный ряд подписей; считаются только домен-события */
     var n=S.period, max=1, d, bars="", labels="";
     for(d=0;d<n;d++) if((a.perDay[d]||0)>max) max=a.perDay[d];
     for(d=n-1;d>=0;d--){
@@ -305,22 +374,11 @@ window.RobTop = window.RobTop || {};
     }
     h+='<div class="pd-sect">'+esc(t("parent.sect.activity"))+'</div><div class="pd-card">'
       +'<div class="pd-chart">'+bars+'</div><div class="pd-chart-x">'+labels+'</div></div>';
-    /* по приложениям */
-    var mods=activeMods(), mx=1;
-    mods.forEach(function(m){ if((a.perMod[m.id]||0)>mx) mx=a.perMod[m.id]; });
-    h+='<div class="pd-sect">'+esc(t("parent.sect.byApp"))+'</div><div class="pd-card">';
-    mods.forEach(function(m){
-      var c=a.perMod[m.id]||0;
-      h+='<div class="pd-mrow" style="--mc:'+esc(modColor(m.id))+'"><span class="ic">'+modIcon(m.id)+'</span>'
-        +'<span class="mn">'+esc(modName(m.id))+'</span>'
-        +'<span class="bar"><i style="width:'+Math.round(c/mx*100)+'%"></i></span><span class="ct">'+c+'</span></div>';
-    });
-    h+='</div>';
-    /* сводка приложений */
+    /* приложения: осмысленная строка по каждому (карточки = единственный блок) */
     var items=(data.items||[]), wWant=0,wBought=0;
     items.forEach(function(w){ if(w.status==="want")wWant++; if(w.status==="bought")wBought++; });
-    h+='<div class="pd-sect">'+esc(t("parent.sect.summary"))+'</div>';
-    mods.forEach(function(m){
+    h+='<div class="pd-sect">'+esc(t("parent.sect.byApp"))+'</div>';
+    activeMods().forEach(function(m){
       var line;
       if(m.id==="wishlist") line=t("parent.sum.wishlist",{total:items.length,want:wWant,bought:wBought});
       else if(m.id==="teeth") line=a.teethN?t("parent.sum.teeth",{n:a.streak,c:a.teethN}):t("parent.sum.none");
@@ -328,7 +386,6 @@ window.RobTop = window.RobTop || {};
       else if(m.id==="mood") line=a.topMood?t("parent.sum.mood",{e:MOOD_E[a.topMood]||"🙂",name:t("parent.mood."+a.topMood,{fallback:a.topMood}),c:a.topMoodN}):t("parent.sum.none");
       else if(m.id==="reverse") line=a.words?t("parent.sum.reverse",{c:a.words}):t("parent.sum.none");
       else if(m.id==="guess") line=a.guessCnt?t("parent.sum.guess",{w:a.guessWin,c:a.guessCnt}):t("parent.sum.none");
-      else if(m.id==="bank") line=t("parent.sum.bank",{p:(data.points||0),s:(data.streak||0)});
       else { var cc=a.perMod[m.id]||0; line=cc?I.plural(cc,"parent.sum.generic"):t("parent.sum.none"); }
       h+='<button class="pd-mcard" data-mod="'+esc(m.id)+'" style="--mc:'+esc(modColor(m.id))+'">'
         +'<span class="ic">'+modIcon(m.id)+'</span>'
@@ -349,6 +406,104 @@ window.RobTop = window.RobTop || {};
     return h;
   }
 
+  /* ---------- ЭКРАН ПРИЛОЖЕНИЯ: контент ребёнка + последние события ---------- */
+  function contentRows(modId){
+    var all=(S.data&&S.data.content&&S.data.content[modId])||[];
+    return all;
+  }
+  function quoteHtml(d){
+    var out="";
+    if(d.why) out+='<span class="pd-quote">«'+esc(d.why)+'»</span>';
+    if(d.liked) out+='<span class="pd-quote">'+esc(t("parent.m.liked",{x:d.liked}))+'</span>';
+    return out;
+  }
+  function photoHtml(d){
+    return d.photo?'<span class="pd-cphoto" style="background-image:url(\''+esc(d.photo)+'\')"></span>':"";
+  }
+  function crow(icon, main, sub, right, extra){
+    return '<div class="pd-crow"><span class="ci">'+icon+'</span>'
+      +'<span class="cx"><span class="c1">'+main+'</span>'+(sub?'<span class="c2">'+sub+'</span>':'')+(extra||'')+'</span>'
+      +(right?'<span class="ct">'+right+'</span>':'')+'</div>';
+  }
+  function moduleContentHtml(id){
+    var rows=contentRows(id), h="";
+    if(!rows.length) return '<div class="pd-empty">'+esc(t("parent.m.empty"))+'</div>';
+    if(id==="rating"){
+      rows.forEach(function(r){ var d=r.data||{};
+        h+=crow('<b class="gold">'+stars(+d.stars||0)+'</b>',
+          esc(fmtDayStr(d.day)), quoteHtml(d)?'':'<i class="pd-dim">'+esc(t("parent.m.noText"))+'</i>',
+          photoHtml(d), quoteHtml(d));
+      });
+      return h;
+    }
+    if(id==="mood"){
+      rows.forEach(function(r){ var d=r.data||{};
+        var mk=d.mood||"mid";
+        h+=crow('<b class="emo">'+(MOOD_E[mk]||"🙂")+'</b>',
+          esc(t("parent.mood."+mk,{fallback:mk}))+' · '+esc(fmtDayStr(d.day)),
+          quoteHtml(d)?'':'<i class="pd-dim">'+esc(t("parent.m.noText"))+'</i>',
+          photoHtml(d), quoteHtml(d));
+      });
+      return h;
+    }
+    if(id==="guess"){
+      rows.forEach(function(r){ var d=r.data||{};
+        var res=(d.result==="win")?"win":(d.result==="timeout"?"timeout":"wrong");
+        var ic=(res==="win")?'<b class="okc">✓</b>':(res==="timeout"?'<b class="dimc">⌛</b>':'<b class="badc">✗</b>');
+        h+=crow(ic, esc(String(d.expr||"?"))+' = '+esc(String(d.ans!=null?d.ans:"?")),
+          esc(t("parent.g."+res))+(d.picked!=null?' · '+esc(String(d.picked)):''),
+          esc((d.date||"")+(d.time?(" · "+d.time):"")) , '');
+      });
+      return h;
+    }
+    if(id==="reverse"){
+      rows.forEach(function(r){ var d=r.data||{};
+        h+=crow('<b class="dimc">⇄</b>', esc(d.text||"")+' → <b>'+esc(d.reversed||"")+'</b>', '', esc(I.formatDate(r.createdAt,{day:"numeric",month:"short"})), '');
+      });
+      return h;
+    }
+    if(id==="teeth"){
+      rows.forEach(function(r){ var d=r.data||{};
+        var done=(d.status!=="skipped");
+        h+=crow(done?'<b class="okc">✓</b>':'<b class="badc">—</b>',
+          esc(t(done?"parent.ev.teeth.done":"parent.ev.teeth.skipped")),
+          '', esc((d.date||"")+(d.time?(" · "+d.time):"")), '');
+      });
+      return h;
+    }
+    /* неизвестный модуль: первая строковая «суть» записи + дата */
+    rows.forEach(function(r){ var d=r.data||{}, txt="";
+      for(var k in d){ if(d.hasOwnProperty(k)&&typeof d[k]==="string"&&d[k].length&&d[k].length<=80&&k!=="photo"){ txt=d[k]; break; } }
+      h+=crow('<b class="dimc">•</b>', esc(txt||r.collection), '', esc(I.formatDate(r.createdAt,{day:"numeric",month:"short"})), '');
+    });
+    return h;
+  }
+  function moduleHtml(id){
+    var a=agg(), line;
+    if(id==="teeth") line=a.teethN?t("parent.sum.teeth",{n:a.streak,c:a.teethN}):"";
+    else if(id==="rating") line=a.rated?t("parent.sum.rating",{avg:a.avg,c:a.rated}):"";
+    else if(id==="mood") line=a.topMood?t("parent.sum.mood",{e:MOOD_E[a.topMood]||"🙂",name:t("parent.mood."+a.topMood,{fallback:a.topMood}),c:a.topMoodN}):"";
+    else if(id==="reverse") line=a.words?t("parent.sum.reverse",{c:a.words}):"";
+    else if(id==="guess") line=a.guessCnt?t("parent.sum.guess",{w:a.guessWin,c:a.guessCnt}):"";
+    else line="";
+    var h= line?'<div class="pd-robanner" style="margin-top:2px">'+esc(line)+'</div>':"";
+    h+=moduleContentHtml(id);
+    /* последние события модуля — вторичный блок */
+    var evs=((S.data&&S.data.events)||[]).filter(function(e){ return e.module===id && inJournal(e); }).slice(0,10);
+    if(evs.length){
+      h+='<div class="pd-sect">'+esc(t("parent.m.lastEvents"))+'</div>';
+      evs.forEach(function(e){
+        h+='<div class="pd-ev" style="--mc:'+esc(modColor(id))+'">'
+          +'<span class="ic">'+modIcon(id)+'</span>'
+          +'<span class="tx"><span class="t1">'+esc(evText(e))+'</span><span class="t2">'+esc(fmtDay(dayOff(e.at)))+'</span></span>'
+          +'<span class="tm">'+hhmm(e.at)+'</span></div>';
+      });
+      h+='<button class="btn btn-cancel pd-openj" id="pdOpenJournal" style="flex:none;width:100%">'+esc(t("parent.m.openJournal"))+'</button>';
+    }
+    return h;
+  }
+
+  /* ---------- ВИШ-ЛИСТ ---------- */
   function chipsFor(w){
     var cm=0,i;
     for(i=0;i<w.history.length;i++) if(w.history[i].type==="changed_mind") cm++;
@@ -388,10 +543,11 @@ window.RobTop = window.RobTop || {};
     return h;
   }
 
-  function journalRows(){
+  /* ---------- ЖУРНАЛ (чанки + автоподгрузка) ---------- */
+  function journalAll(){
     var evs=(S.data&&S.data.events)||[];
     return evs.filter(function(e){
-      if(NOISE[e.type]||SKIP_MOD[e.module]) return false;
+      if(!inJournal(e)) return false;
       if(S.jfilter!=="all"&&e.module!==S.jfilter) return false;
       return true;
     });
@@ -404,11 +560,13 @@ window.RobTop = window.RobTop || {};
         +'<span class="dot"></span>'+esc(modName(m.id))+'</button>';
     });
     h+='</div>';
-    var list=journalRows();
-    h+='<div class="pd-jcount">'+esc(I.plural(list.length,"parent.j.count",{d:(S.data&&S.data.days)||30}))+'</div>';
+    var list=journalAll();
+    var nTxt=I.plural(list.length,"parent.j.count",{d:(S.data&&S.data.days)||30});
+    if(S.data&&S.data.eventsHasMore) nTxt+=" +";
+    h+='<div class="pd-jcount">'+esc(nTxt)+'</div>';
     if(!list.length) h+='<div class="pd-empty">'+esc(t("parent.j.empty"))+'</div>';
-    var lastD=-1;
-    list.forEach(function(e){
+    var shown=list.slice(0,S.jshown), lastD=-1;
+    shown.forEach(function(e){
       var off=dayOff(e.at);
       if(off!==lastD){ h+='<div class="pd-dayhdr">'+esc(fmtDay(off))+'</div>'; lastD=off; }
       var clickable=(e.module==="wishlist"&&e.itemId!=null);
@@ -418,10 +576,46 @@ window.RobTop = window.RobTop || {};
         +'<span class="tx"><span class="t1">'+esc(evText(e))+'</span><span class="t2">'+esc(modName(e.module))+'</span></span>'
         +'<span class="tm">'+hhmm(e.at)+'</span></'+tag+'>';
     });
+    var moreLocal=list.length>S.jshown, moreServer=!!(S.data&&S.data.eventsHasMore);
+    if(moreLocal||moreServer){
+      h+='<button class="btn btn-cancel pd-morebtn" id="pdMore" style="flex:none;width:100%">'
+        +esc(S.jMoreBusy?t("parent.j.loading"):t("parent.j.more"))+'</button>';
+    }
     return h;
   }
+  /* догрузка журнала: сначала локальные чанки, затем сервер (?before=) */
+  function moreJournal(){
+    if(S.jMoreBusy) return;
+    var list=journalAll();
+    if(list.length>S.jshown){ S.jshown+=PAGE; render(); return; }
+    if(!(S.data&&S.data.eventsHasMore)) return;
+    var evs=S.data.events||[];
+    var last=evs.length?evs[evs.length-1].id:0;
+    if(!last){ S.data.eventsHasMore=false; render(); return; }
+    S.jMoreBusy=true; render();
+    var url="parent.php?days=30&before="+encodeURIComponent(last)+(S.childId?("&child="+encodeURIComponent(S.childId)):"");
+    RT.API.get(url).then(function(r){
+      S.jMoreBusy=false;
+      if(r&&r.ok&&r.events){
+        S.data.events=evs.concat(r.events);
+        S.data.eventsHasMore=!!r.eventsHasMore;
+        S.jshown+=PAGE;
+      } else { S.data.eventsHasMore=false; }
+      render();
+    }).catch(function(){ S.jMoreBusy=false; render(); });
+  }
+  /* автоподгрузка при прокрутке к низу (журнал, без открытого экрана модуля) */
+  function onScroll(){
+    if(!active()||S.tab!=="journal"||S.mod||S.jMoreBusy) return;
+    var doc=document.documentElement;
+    var bottom=(window.scrollY||doc.scrollTop||0)+window.innerHeight;
+    if(doc.scrollHeight-bottom<400){
+      var list=journalAll();
+      if(list.length>S.jshown || (S.data&&S.data.eventsHasMore)) moreJournal();
+    }
+  }
 
-  /* ---- деталь желания (read-only, через общий sheet оболочки) ---- */
+  /* ---------- деталь желания (read-only, через общий sheet оболочки) ---------- */
   function openDetail(id){
     var items=(S.data&&S.data.items)||[], w=null, i;
     for(i=0;i<items.length;i++) if(String(items[i].id)===String(id)) w=items[i];
@@ -480,6 +674,7 @@ window.RobTop = window.RobTop || {};
   /* =================== сборка экрана =================== */
   function render(){
     var root=el(); if(!root) return;
+    renderTabs();
     if(S.loading){
       root.innerHTML='<div class="pd-wrap"><div class="pd-empty" style="padding-top:80px">…</div></div>';
       return;
@@ -496,12 +691,17 @@ window.RobTop = window.RobTop || {};
         +esc(t("parent.noChild.p"))+'</div>'
         +'<div style="text-align:center;margin-top:14px"><button class="btn btn-primary" id="pdSet" style="max-width:260px;margin:0 auto">'+esc(t("parent.noChild.btn"))+'</button></div></div>';
       var sb=root.querySelector("#pdSet"); if(sb) sb.onclick=function(){ if(RT._shell.openSettings) RT._shell.openSettings(); };
-      var g2=root.querySelector("#pdGear2"); if(g2) g2.onclick=function(){ if(RT._shell.openSettings) RT._shell.openSettings(); }; // шестерёнка работала только при полном рендере
+      var g2=root.querySelector("#pdGear2"); if(g2) g2.onclick=function(){ if(RT._shell.openSettings) RT._shell.openSettings(); };
       return;
     }
     if(!S.data){ root.innerHTML=""; return; }
-    var body= S.tab==="overview" ? overviewHtml() : (S.tab==="wishlist" ? wishlistHtml() : journalHtml());
-    root.innerHTML='<div class="pd-wrap">'+topbarHtml()+'<div class="pd-body">'+body+'</div></div>'+tabbarHtml();
+    var head, body;
+    if(S.mod){ head=modHeadHtml(S.mod); body=moduleHtml(S.mod); }
+    else {
+      head=topbarHtml();
+      body= S.tab==="overview" ? overviewHtml() : (S.tab==="wishlist" ? wishlistHtml() : journalHtml());
+    }
+    root.innerHTML='<div class="pd-wrap">'+head+'<div class="pd-body">'+body+'</div></div>';
     wire(root);
   }
   function topbarNoChild(){
@@ -509,11 +709,11 @@ window.RobTop = window.RobTop || {};
       +'<button class="hbtn" id="pdGear2" aria-label="'+esc(t("settings.open"))+'" style="margin-left:auto">⚙</button></div>';
   }
   function wire(root){
-    var tabs=root.querySelector("#pdTabs");
-    if(tabs) Array.prototype.forEach.call(tabs.querySelectorAll("[data-tab]"),function(b){
-      b.onclick=function(){ S.tab=b.getAttribute("data-tab"); render(); window.scrollTo(0,0); };
-    });
-    var g=root.querySelector("#pdGear")||root.querySelector("#pdGear2");
+    var back=root.querySelector("#pdBack");
+    if(back) back.onclick=function(){ S.mod=null; render(); window.scrollTo(0,0); };
+    var oj=root.querySelector("#pdOpenJournal");
+    if(oj) oj.onclick=function(){ S.jfilter=S.mod; S.mod=null; S.tab="journal"; S.jshown=PAGE; render(); window.scrollTo(0,0); };
+    var g=root.querySelector("#pdGear");
     if(g) g.onclick=function(){ if(RT._shell.openSettings) RT._shell.openSettings(); };
     var rf=root.querySelector("#pdRefresh"); if(rf) rf.onclick=function(){ fetchData(S.childId); };
     var kid=root.querySelector("#pdKid"); if(kid&&!kid.disabled) kid.onclick=openChildSwitch;
@@ -522,7 +722,12 @@ window.RobTop = window.RobTop || {};
       b.onclick=function(){ S.period=parseInt(b.getAttribute("data-p"),10)||7; render(); };
     });
     Array.prototype.forEach.call(root.querySelectorAll(".pd-mcard"),function(b){
-      b.onclick=function(){ S.jfilter=b.getAttribute("data-mod"); S.tab="journal"; render(); window.scrollTo(0,0); };
+      b.onclick=function(){
+        var id=b.getAttribute("data-mod");
+        if(id==="wishlist"){ S.tab="wishlist"; render(); }
+        else { S.mod=id; render(); }
+        window.scrollTo(0,0);
+      };
     });
     var ws=root.querySelector("#pdWseg");
     if(ws) Array.prototype.forEach.call(ws.querySelectorAll("[data-s]"),function(b){
@@ -533,10 +738,22 @@ window.RobTop = window.RobTop || {};
     });
     var jf=root.querySelector("#pdJf");
     if(jf) Array.prototype.forEach.call(jf.querySelectorAll("[data-f]"),function(b){
-      b.onclick=function(){ S.jfilter=b.getAttribute("data-f"); render(); window.scrollTo(0,0); };
+      b.onclick=function(){ S.jfilter=b.getAttribute("data-f"); S.jshown=PAGE; render(); window.scrollTo(0,0); };
     });
     Array.prototype.forEach.call(root.querySelectorAll("button.pd-ev"),function(b){
       b.onclick=function(){ openDetail(b.getAttribute("data-w")); };
+    });
+    var mr=root.querySelector("#pdMore"); if(mr) mr.onclick=moreJournal;
+  }
+
+  /* таббар: делегированный клик вешается один раз (элемент живёт в <body>) */
+  function wireTabs(){
+    var bar=tabsEl(); if(!bar||bar.__pdWired) return;
+    bar.__pdWired=true;
+    bar.addEventListener("click",function(e){
+      var b=e.target.closest("[data-tab]"); if(!b) return;
+      S.mod=null; S.tab=b.getAttribute("data-tab"); S.jshown=PAGE;
+      render(); window.scrollTo(0,0);
     });
   }
 
@@ -549,19 +766,24 @@ window.RobTop = window.RobTop || {};
       if(!(r&&r.ok)){ S.error=true; render(); return; }
       if(r.events&&r.events.sort) r.events.sort(function(a,b){ return b.at-a.at; }); // не полагаемся на порядок сервера
       S.data=r; S.childId=r.child?r.child.id:null;
+      S.jshown=PAGE;
       render();
     }).catch(function(){ S.loading=false; S.error=true; render(); });
   }
+
+  window.addEventListener("scroll", onScroll, {passive:true});
 
   /* =================== публичный интерфейс =================== */
   RT.Parent={
     /* показать дашборд (вызывает shell.showParent после переключения вида) */
     show: function(){
+      wireTabs();
       if(!S.data && !S.loading) fetchData(null);
       else render();
     },
     render: render,
     refresh: function(){ fetchData(S.childId); },
+    moreJournal: moreJournal,
     active: active
   };
 })(window.RobTop);
