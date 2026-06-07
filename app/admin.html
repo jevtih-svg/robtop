@@ -131,7 +131,8 @@ function screenLogin(){
     '<p class="lead" style="margin-top:12px">Права выдаёт действующий админ в разделе «Пользователи». Самый первый админ назначается один раз через SQL (см. ПЛАН-мастер-админка.md).</p></div></div>';
   var go=function(){
     post('accounts.php',{op:'login',login:document.getElementById('lg').value.trim(),password:document.getElementById('ps').value})
-      .then(function(){ boot(); }).catch(function(){ toast('Неправильный логин или пароль'); });
+      .then(function(){ location.reload(); /* перезагрузка = менеджер паролей предлагает сохранение ОДИН раз, здесь и сейчас */ })
+      .catch(function(){ toast('Неправильный логин или пароль'); });
   };
   document.getElementById('go').onclick=go;
   document.getElementById('ps').addEventListener('keydown',function(e){ if(e.key==='Enter') go(); });
@@ -151,6 +152,22 @@ var SECTIONS=[
   ['Система',[['apps','Приложения'],['mail','Письма'],['admins','Админы и баны'],['policy','Доступ и политика']]]
 ];
 var view='dash';
+/* Менеджеры паролей (1Password/LastPass/Bitwarden/Dashlane) не должны срабатывать ВНУТРИ панели:
+   все поля вне экрана входа помечаем «это не логин-форма», кнопкам даём type=button.
+   На экране входа атрибуты autocomplete оставлены как есть — там менеджер ДОЛЖЕН работать. */
+function pmGuard(root){
+  Array.prototype.forEach.call(root.querySelectorAll('input,select,textarea'),function(el){
+    el.setAttribute('autocomplete','off');
+    el.setAttribute('data-1p-ignore','');
+    el.setAttribute('data-lpignore','true');
+    el.setAttribute('data-bwignore','');
+    el.setAttribute('data-form-type','other');
+  });
+  Array.prototype.forEach.call(root.querySelectorAll('button'),function(el){
+    if(!el.getAttribute('type')) el.setAttribute('type','button');
+  });
+}
+
 function screenPanel(){
   var side='';
   SECTIONS.forEach(function(g){
@@ -165,7 +182,7 @@ function screenPanel(){
   });
   VIEWS[view]();
 }
-function V(html){ document.getElementById('view').innerHTML=html; }
+function V(html){ var el=document.getElementById('view'); el.innerHTML=html; pmGuard(el); }
 function on(sel,fn){ Array.prototype.forEach.call(document.getElementById('view').querySelectorAll(sel),fn); }
 
 /* ================= разделы ================= */

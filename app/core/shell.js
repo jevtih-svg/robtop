@@ -9,8 +9,6 @@ window.RobTop = window.RobTop || {};
   function t(k,p){ return I.t(k,p); }
   var SERVER=(location.protocol==="http:"||location.protocol==="https:");
   var demo=!SERVER;
-  var ADMIN_DEMO_PIN="1234";
-  var adminPin=null; // валидированный PIN администратора (в памяти сессии)
 
   /* ---- аккаунт (сессия accounts.php). null = ещё не проверяли. ---- */
   var acct=null;
@@ -187,13 +185,35 @@ window.RobTop = window.RobTop || {};
       +'<input class="set-in" id="lockPass" type="password" placeholder="'+esc(t("account.passPh"))+'" autocomplete="current-password">'
       +'<button class="btn btn-primary" id="lockIn">'+esc(t("account.signIn"))+'</button>'
       +'<button class="btn btn-cancel" id="lockReg" style="flex:none">'+esc(t("reg.link"))+'</button>'
+      +'<button class="lock-link" id="lockForgot">'+esc(t("account.forgot"))+'</button>'
       +'</div>';
     var lg=lockView.querySelector("#lockLogin"), ps=lockView.querySelector("#lockPass");
     var go=function(){ loginFlow((lg.value||"").trim(), ps.value||"", lockView.querySelector(".lockform")); };
     lockView.querySelector("#lockIn").onclick=go;
     lockView.querySelector("#lockReg").onclick=renderLockRegister;
+    lockView.querySelector("#lockForgot").onclick=renderLockForgot;
     ps.addEventListener("keydown",function(e){ if(e.key==="Enter") go(); });
     setTimeout(function(){ lg.focus(); },150);
+  }
+  /* «Забыли пароль?» прямо на lock-экране (раньше только в family.html).
+     Только для родителя: детям пароль сбрасывает родитель. Op forgot всегда отвечает ok. */
+  function renderLockForgot(){
+    lockView.innerHTML='<div class="hometop"><h1 class="brand">Rob<b>Top</b></h1>'
+      +'<div class="tagline">'+esc(t("account.forgot"))+'</div></div>'
+      +'<div class="lockform">'
+      +'<p class="set-note">'+esc(t("account.forgotHint"))+'</p>'
+      +'<input class="set-in" id="fpEmail" type="email" placeholder="Email" autocomplete="email">'
+      +'<button class="btn btn-primary" id="fpGo">'+esc(t("account.forgotSend"))+'</button>'
+      +'<button class="btn btn-cancel" id="fpBack" style="flex:none">'+esc(t("common.back"))+'</button>'
+      +'</div>';
+    lockView.querySelector("#fpBack").onclick=function(){ renderLock(false); };
+    lockView.querySelector("#fpGo").onclick=function(){
+      var em=(lockView.querySelector("#fpEmail").value||"").trim(); if(!em) return;
+      RT.API.post("accounts.php",{op:"forgot",email:em,lang:I.get()}).catch(function(){}).then(function(){
+        toast(t("account.forgotSent")); renderLock(false);
+      });
+    };
+    setTimeout(function(){ lockView.querySelector("#fpEmail").focus(); },150);
   }
   /* регистрация нового родителя прямо с lock-экрана (создаёт НОВУЮ семью) */
   function renderLockRegister(){
@@ -289,7 +309,7 @@ window.RobTop = window.RobTop || {};
     }).catch(function(){ RT.setRegistry(visible(DEFAULTS.map(function(m){return Object.assign({},m);}))); renderHome(); refreshParentIfActive(); });
   }
 
-  /* ================= НАСТРОЙКИ (отдельный экран; «приложения» — родителю, PIN как fallback) ================= */
+  /* ================= НАСТРОЙКИ (отдельный экран; «приложения» — только родителю) ================= */
   function authKey(){ return demo?"demo":(acct===null?"loading":(acct.authenticated?("in:"+(acct.user&&acct.user.id)):"out")); }
   function isSettingsOpen(){ return body.getAttribute("data-view")==="settings"; }
   function openSettings(){
@@ -415,7 +435,7 @@ window.RobTop = window.RobTop || {};
     var node=document.createElement("div");
     node.innerHTML='<h2>'+esc(t("family.addChild"))+'</h2>'
       +'<p class="set-note">'+esc(t("family.addHint"))+'</p>'
-      +'<input class="set-in" id="kidNick" type="text" placeholder="'+esc(t("family.nickPh"))+'">'
+      +'<input class="set-in" id="kidNick" type="text" placeholder="'+esc(t("family.nickPh"))+'" autocomplete="off" data-1p-ignore data-lpignore="true" data-bwignore>'
       +'<div class="sheet-actions"><button class="btn btn-cancel" id="kidCancel" style="flex:0 0 38%">'+esc(t("common.cancel"))+'</button>'
       +'<button class="btn btn-primary" id="kidGo" style="flex:1">'+esc(t("family.addBtn"))+'</button></div>'
       +'<div id="kidOut"></div>';
@@ -434,7 +454,7 @@ window.RobTop = window.RobTop || {};
     var node=document.createElement("div");
     node.innerHTML='<h2>'+esc(t("family.invite"))+'</h2>'
       +'<p class="set-note">'+esc(t("family.inviteHint"))+'</p>'
-      +'<input class="set-in" id="invEmail" type="email" placeholder="Email">'
+      +'<input class="set-in" id="invEmail" type="email" placeholder="Email" autocomplete="off" data-1p-ignore data-lpignore="true" data-bwignore>'
       +'<div class="sheet-actions"><button class="btn btn-cancel" id="invCancel" style="flex:0 0 38%">'+esc(t("common.cancel"))+'</button>'
       +'<button class="btn btn-primary" id="invGo" style="flex:1">'+esc(t("family.inviteBtn"))+'</button></div>'
       +'<div id="invOut"></div>';
@@ -529,27 +549,21 @@ window.RobTop = window.RobTop || {};
     if(demo) return Promise.resolve(allModulesDemo());
     return RT.API.get("modules.php?all=1").then(function(r){ return (r&&r.modules)||[]; }).catch(function(){ return allModulesDemo(); });
   }
+  /* PIN-система упразднена (2026-06-07): право управлять приложениями даёт ТОЛЬКО
+     родительская сессия (бэкенд rt_admin_gate); демо открыто как песочница. */
   function adminCall(path, bodyObj){
     if(demo) return Promise.resolve({ok:true,demo:true});
-    // родительская сессия авторизует сама (бэкенд rt_admin_gate); PIN шлём только если вводили (fallback)
-    return RT.API.post(path, Object.assign(adminPin?{pin:adminPin}:{}, bodyObj||{}));
+    return RT.API.post(path, bodyObj||{});
   }
-  function openStore(){ adminPin=null; renderStore(); storeOverlay.classList.add("show"); }
+  function openStore(){ renderStore(); storeOverlay.classList.add("show"); }
   function closeStore(){ storeOverlay.classList.remove("show"); }
 
   function renderStore(){
-    if(!adminPin && !isParent()){
+    if(!demo && !isParent()){ // защитная ветка: ребёнок сюда не попадает из UI
       storeBody.innerHTML='<h2>'+esc(t("store.title"))+'</h2>'
         +'<p style="text-align:center;color:#cfe0ff;font-weight:600;margin:0 0 4px">'+esc(t("store.adminNote"))+'</p>'
-        +'<div class="pin-row"><input id="adminPinIn" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off"><button class="btn btn-primary" id="adminPinBtn" style="flex:0 0 40%">'+esc(t("common.enter"))+'</button></div>';
-      var inp=document.getElementById("adminPinIn"), btn=document.getElementById("adminPinBtn");
-      function tryUnlock(){
-        var v=(inp.value||"").trim(); if(!v) return;
-        if(demo){ if(v===ADMIN_DEMO_PIN){ adminPin=v; renderStore(); } else toast(t("err.bad_pin")); return; }
-        RT.API.post("store/enable.php",{pin:v,verify:1}).then(function(r){ if(r&&r.ok){ adminPin=v; renderStore(); } else toast(t("err.bad_pin")); }).catch(function(){ toast(t("err.bad_pin")); });
-      }
-      btn.onclick=tryUnlock; inp.addEventListener("keydown",function(e){ if(e.key==="Enter") tryUnlock(); });
-      setTimeout(function(){ inp.focus(); },200);
+        +'<div class="sheet-actions"><button class="btn btn-cancel" id="storeCloseBtn2" style="flex:1">'+esc(t("common.close"))+'</button></div>';
+      document.getElementById("storeCloseBtn2").onclick=closeStore;
       return;
     }
     allModules().then(function(list){
@@ -592,7 +606,7 @@ window.RobTop = window.RobTop || {};
 
   function storeToggle(id, on){
     if(demo){ var ov=getOverrides(); ov[id]=Object.assign({},ov[id],{enabled:on?1:0}); setOverrides(ov); refreshAfterAdmin(); return; }
-    adminCall("store/enable.php",{id:id,enabled:on?1:0}).then(function(r){ if(r&&r.ok) refreshAfterAdmin(); else toast(t("store.failPin")); });
+    adminCall("store/enable.php",{id:id,enabled:on?1:0}).then(function(r){ if(r&&r.ok) refreshAfterAdmin(); else toast(errMsg(r,"common.failed")); });
   }
   function storeReorder(id, dir){
     if(demo){

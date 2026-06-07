@@ -142,7 +142,7 @@ function screenAuth(tab){
       if(!login||!pass){ qs('msg').innerHTML=errBox('Введите логин и пароль'); return; }
       api('login',{login:login,password:pass}).then(function(r){
         if(r.user && r.user.mustChangePassword){ return screenChangePassword(r.user,true); }
-        boot();
+        location.reload(); // менеджер паролей предлагает сохранение один раз — при входе
       }).catch(function(e){ qs('msg').innerHTML=errBox(e.message); });
     };
     qs('forgot').onclick=function(){ screenForgot(); };
@@ -156,7 +156,7 @@ function screenAuth(tab){
     qs('go').onclick=function(){
       var nick=qs('nick').value.trim(), email=qs('email').value.trim(), pass=qs('pass').value;
       if(!nick||!email||!pass){ qs('msg').innerHTML=errBox('Заполните все поля'); return; }
-      api('register_parent',{nickname:nick,email:email,password:pass}).then(function(){ boot(); })
+      api('register_parent',{nickname:nick,email:email,password:pass}).then(function(){ location.reload(); })
         .catch(function(e){ qs('msg').innerHTML=errBox(e.message); });
     };
   }
@@ -294,7 +294,7 @@ function screenDashboard(me){
         });
       } else { html += '<div class="muted">Детей пока нет. Добавьте ниже.</div>'; }
       html += '<div class="sep"></div>'+
-        '<label>Никнейм нового ребёнка</label><input id="childNick">'+
+        '<label>Никнейм нового ребёнка</label><input id="childNick" autocomplete="off" data-1p-ignore data-lpignore="true" data-bwignore>'+
         '<button class="btn" id="addChild">Добавить ребёнка</button><div id="childMsg"></div></div>';
     }
 
@@ -302,7 +302,7 @@ function screenDashboard(me){
     html += '<div class="card"><h2>Приглашения</h2>';
     if(isParent){
       html += '<div class="muted small">Пригласить второго родителя по email (он получит права в семье).</div>'+
-        '<label>Email второго родителя</label><input id="coEmail" type="email">'+
+        '<label>Email второго родителя</label><input id="coEmail" type="email" autocomplete="off" data-1p-ignore data-lpignore="true" data-bwignore>'+
         '<button class="btn sec" id="inviteCo">Создать приглашение</button>';
     } else {
       html += '<div class="muted small">Позови друга. Он создаст аккаунт и временно попадёт под опеку твоего родителя.</div>'+
@@ -357,7 +357,7 @@ function showInvite(link){
   var out = qs('inviteOut');
   if(!out) return;
   out.innerHTML = '<div class="note">Ссылка-приглашение (отправьте её):</div>'+
-    '<div class="linkrow"><input id="invLink" readonly value="'+esc(link)+'"><button class="btn sec sm" id="copy">Копир.</button></div>';
+    '<div class="linkrow"><input id="invLink" readonly autocomplete="off" data-1p-ignore data-lpignore="true" data-bwignore value="'+esc(link)+'"><button class="btn sec sm" id="copy">Копир.</button></div>';
   qs('copy').onclick=function(){ qs('invLink').select(); try{ document.execCommand('copy'); }catch(e){} };
   loadSent();
 }
