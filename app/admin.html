@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07061a">
+<meta name="robots" content="noindex">
+<title>RobTop — Админ</title>
+<link rel="icon" type="image/svg+xml" href="media/icon/icon.svg">
+<style>
+  *{box-sizing:border-box}
+  :root{--cyan:#19e3ff;--pink:#ff3db0;--mint:#38e8a0;--gold:#ffd23b;--red:#ff4d6d;--ink:#eaf2ff;--muted:#93a6cf}
+  html,body{margin:0;min-height:100%}
+  body{font-family:'Rubik',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink);background:#05050f;
+    background-image:radial-gradient(900px 600px at 12% 6%,rgba(166,75,255,.18),transparent 60%),
+      radial-gradient(900px 700px at 90% 18%,rgba(25,227,255,.13),transparent 60%),
+      linear-gradient(180deg,#070617,#05040f 60%,#07041a);min-height:100vh}
+  .head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 22px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .head h1{font-family:'Russo One','Rubik',sans-serif;font-size:19px;margin:0;color:#fff;text-shadow:0 0 12px rgba(25,227,255,.6)}
+  .head h1 b{color:var(--pink);font-weight:400}
+  .head .sub{color:var(--muted);font-size:12px;font-weight:600;margin-top:2px}
+  .tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .nopii{font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#bfeaff;
+    background:rgba(25,227,255,.12);border:1px solid rgba(25,227,255,.5);padding:4px 9px;border-radius:999px}
+  .layout{display:flex;gap:18px;align-items:flex-start;padding:18px 22px 60px;max-width:1240px;margin:0 auto}
+  .side{flex:0 0 218px;position:sticky;top:14px}
+  .grp{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:10px 6px 4px}
+  .nav{display:block;width:100%;text-align:left;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);
+    color:#dbe6ff;font-family:inherit;font-weight:700;font-size:13.5px;padding:9px 12px;border-radius:11px;margin:5px 0;cursor:pointer}
+  .nav:hover{border-color:rgba(25,227,255,.5)}
+  .nav.on{color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0);border-color:transparent}
+  .main{flex:1;min-width:0}
+  .card{background:rgba(10,12,30,.6);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:18px;margin-bottom:16px}
+  .card h2{font-family:'Russo One','Rubik',sans-serif;font-weight:400;font-size:19px;margin:0 0 4px;color:#fff}
+  .lead{color:var(--muted);font-size:13px;font-weight:600;margin:0 0 13px;line-height:1.5}
+  .bar{display:flex;align-items:flex-start;gap:10px;background:rgba(25,227,255,.09);border:1px solid rgba(25,227,255,.4);
+    border-left:4px solid var(--cyan);border-radius:13px;padding:10px 13px;margin-bottom:14px;font-size:12.5px;font-weight:600;color:#d6f3ff;line-height:1.5}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{text-align:left;font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.12)}
+  tbody td{padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.07);font-weight:600;color:#e7eeff;vertical-align:middle}
+  .pill{display:inline-block;font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:999px;background:rgba(25,227,255,.14);color:#bdeeff;border:1px solid rgba(25,227,255,.4);white-space:nowrap}
+  .pill.ok{background:rgba(43,240,192,.14);color:var(--mint);border-color:rgba(43,240,192,.45)}
+  .pill.warn{background:rgba(255,77,109,.14);color:#ffb3c0;border-color:rgba(255,77,109,.45)}
+  .pill.g{background:rgba(255,210,59,.14);color:var(--gold);border-color:rgba(255,210,59,.45)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:10px;cursor:pointer;
+    font-family:inherit;font-weight:800;font-size:12px;padding:8px 12px;color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0)}
+  .btn:active{transform:scale(.98)}
+  .btn.ghost{background:rgba(255,255,255,.06);color:#cfe0ff;border:1.5px solid rgba(255,255,255,.16)}
+  .btn.danger{background:rgba(255,77,109,.14);color:#ffb3c0;border:1.5px solid rgba(255,77,109,.5)}
+  .btn.pink{background:linear-gradient(180deg,#ff5db0,#d51a82);color:#fff}
+  .btn.xs{padding:5px 8px;font-size:11px;border-radius:8px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  input,select,textarea{border:1.6px solid rgba(255,255,255,.16);border-radius:11px;padding:10px 12px;font-family:inherit;font-size:14px;
+    font-weight:600;color:var(--ink);background:rgba(255,255,255,.05);outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--cyan)}
+  select option{background:#0c1330}
+  .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .stat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:13px;padding:12px}
+  .stat .n{font-family:'Russo One','Rubik',sans-serif;font-size:24px;color:#fff}
+  .stat .l{font-size:11px;font-weight:700;color:var(--muted);margin-top:2px}
+  .spark{display:flex;align-items:flex-end;gap:4px;height:64px;margin-top:8px}
+  .spark i{flex:1;background:linear-gradient(180deg,#3df0c0,#19c7e0);border-radius:3px 3px 0 0;min-height:2px}
+  .lock{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.05);border:1px dashed rgba(255,255,255,.28);
+    border-radius:9px;padding:4px 8px;font-size:11px;font-weight:700;color:#cdd8f5;white-space:nowrap}
+  .fam{border:1px solid rgba(255,255,255,.1);border-radius:13px;padding:12px;margin-top:10px;background:rgba(255,255,255,.03)}
+  .fam.banned{border-color:rgba(255,77,109,.5);background:rgba(255,77,109,.05)}
+  .fam .fh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-weight:800}
+  .mrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 0;border-top:1px solid rgba(255,255,255,.06);font-size:13px;font-weight:600}
+  .mrow .nm{min-width:130px}
+  pre{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:9px 11px;font-size:11.5px;
+    color:#cfe0ff;overflow:auto;max-width:480px;margin:0;white-space:pre-wrap;word-break:break-all}
+  code{background:rgba(255,255,255,.07);border-radius:6px;padding:2px 6px;font-size:12px}
+  .log{display:flex;gap:10px;align-items:flex-start;padding:8px 4px;border-bottom:1px solid rgba(255,255,255,.07);font-size:12.5px}
+  .log .t{color:var(--muted);font-weight:700;font-size:11px;flex:0 0 122px}
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;transition:.2s;
+    background:#0c1330;border:1px solid rgba(43,240,192,.5);color:#dffaf0;font-size:13px;font-weight:700;
+    padding:11px 16px;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.5);z-index:60;pointer-events:none;max-width:84vw;text-align:center}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .auth{max-width:420px;margin:8vh auto;padding:0 16px}
+  .auth input{width:100%;margin-top:10px}
+  .auth .btn{width:100%;height:48px;font-size:15px;margin-top:14px;border-radius:24px}
+  @media(max-width:860px){ .layout{flex-direction:column} .side{position:static;display:flex;flex-wrap:wrap;gap:6px;width:100%}
+    .grp{width:100%} .nav{width:auto;margin:0} }
+</style>
+</head>
+<body>
+<div class="head">
+  <div><h1>Rob<b>Top</b> · Админ</h1><div class="sub">Мастер-консоль всего приложения</div></div>
+  <div class="tools">
+    <span class="nopii">🔒 содержимое картинок скрыто</span>
+    <span id="who" class="pill g" style="display:none"></span>
+    <button id="logout" class="btn ghost xs" style="display:none">Выйти</button>
+  </div>
+</div>
+<div id="app"></div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+var APP=document.getElementById('app');
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function toast(m){ var el=document.getElementById('toast'); el.textContent=m; el.classList.add('show');
+  clearTimeout(toast._t); toast._t=setTimeout(function(){ el.classList.remove('show'); },2400); }
+function post(file,body){
+  return fetch('api/'+file,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify(body)})
+    .then(function(r){ return r.json().catch(function(){return {};}).then(function(j){
+      if(!r.ok){ var e=new Error(j&&j.error?j.error:('Ошибка '+r.status)); e.status=r.status; throw e; } return j; }); });
+}
+function api(op,body){ body=body||{}; body.op=op; return post('admin.php',body); }
+function fail(e){ toast('⚠ '+(e&&e.message||'не получилось')); }
+function dt(s){ return s?String(s).replace('T',' ').slice(0,16):''; }
+
+/* ================= вход / гейт ================= */
+document.getElementById('logout').onclick=function(){ post('accounts.php',{op:'logout'}).then(function(){ location.reload(); }); };
+function boot(){
+  api('me').then(function(me){
+    if(!me.authenticated) return screenLogin();
+    if(!me.isAdmin) return screenNoAccess(me);
+    document.getElementById('who').style.display='';
+    document.getElementById('who').textContent='админ · '+me.user.nickname;
+    document.getElementById('logout').style.display='';
+    screenPanel();
+  }).catch(function(){ screenLogin(); });
+}
+function screenLogin(){
+  APP.innerHTML='<div class="auth"><div class="card"><h2>Вход для администратора</h2>'+
+    '<p class="lead">Это служебная консоль. Войдите родительским аккаунтом, у которого есть права админа.</p>'+
+    '<input id="lg" type="email" placeholder="Email родителя" autocomplete="username">'+
+    '<input id="ps" type="password" placeholder="Пароль" autocomplete="current-password">'+
+    '<button class="btn" id="go">Войти</button>'+
+    '<p class="lead" style="margin-top:12px">Права выдаёт действующий админ в разделе «Пользователи». Самый первый админ назначается один раз через SQL (см. ПЛАН-мастер-админка.md).</p></div></div>';
+  var go=function(){
+    post('accounts.php',{op:'login',login:document.getElementById('lg').value.trim(),password:document.getElementById('ps').value})
+      .then(function(){ boot(); }).catch(function(){ toast('Неправильный логин или пароль'); });
+  };
+  document.getElementById('go').onclick=go;
+  document.getElementById('ps').addEventListener('keydown',function(e){ if(e.key==='Enter') go(); });
+}
+function screenNoAccess(me){
+  APP.innerHTML='<div class="auth"><div class="card"><h2>Нет прав администратора</h2>'+
+    '<p class="lead">Вы вошли как <b>'+esc(me.user&&me.user.nickname||'')+'</b>, но у этого аккаунта нет флага админа. '+
+    'Попросите действующего администратора выдать права (Пользователи → «Сделать админом»).</p>'+
+    '<button class="btn ghost" onclick="document.getElementById(\'logout\').click()">Выйти и войти другим аккаунтом</button></div></div>';
+  document.getElementById('logout').style.display='';
+}
+
+/* ================= каркас панели ================= */
+var SECTIONS=[
+  ['Консоль',[['dash','Дашборд'],['users','Пользователи'],['families','Семьи'],['invites','Приглашения']]],
+  ['Данные',[['content','Контент модулей'],['points','Очки'],['logs','Журнал']]],
+  ['Система',[['apps','Приложения'],['mail','Письма'],['admins','Админы и баны'],['policy','Доступ и политика']]]
+];
+var view='dash';
+function screenPanel(){
+  var side='';
+  SECTIONS.forEach(function(g){
+    side+='<div class="grp">'+g[0]+'</div>';
+    g[1].forEach(function(v){ side+='<button class="nav'+(v[0]===view?' on':'')+'" data-v="'+v[0]+'">'+v[1]+'</button>'; });
+  });
+  APP.innerHTML='<div class="layout"><div class="side">'+side+'</div><div class="main">'+
+    '<div class="bar">🔒 <div><b>Политика картинок.</b> Админ видит только факт картинки (имя, размер, дату) и может её удалить. Содержимое не отдаётся никогда — его видят только ребёнок и его прямой родитель.</div></div>'+
+    '<div id="view"><div class="card lead">Загрузка…</div></div></div></div>';
+  Array.prototype.forEach.call(APP.querySelectorAll('[data-v]'),function(b){
+    b.onclick=function(){ view=b.getAttribute('data-v'); screenPanel(); };
+  });
+  VIEWS[view]();
+}
+function V(html){ document.getElementById('view').innerHTML=html; }
+function on(sel,fn){ Array.prototype.forEach.call(document.getElementById('view').querySelectorAll(sel),fn); }
+
+/* ================= разделы ================= */
+var VIEWS={
+
+dash:function(){
+  api('overview').then(function(r){
+    var s=r.stats;
+    var tiles=[['Семьи',s.families],['Родители',s.parents],['Дети',s.children],['Заблокированы',s.blocked],
+      ['Админы',s.admins],['Баны',s.bans],['Приглашения ждут',s.invitesPending],['Сессии',s.sessions],
+      ['Желания',s.wishes],['Записи модулей',s.records],['Картинки 🔒',s.images],['Очки всего',s.pointsTotal],['Событий за 7 дней',s.events7d]];
+    var grid=tiles.map(function(t){ return '<div class="stat"><div class="n">'+t[1]+'</div><div class="l">'+t[0]+'</div></div>'; }).join('');
+    var mx=1; s.activity14d.forEach(function(d){ if(d.n>mx) mx=d.n; });
+    var spark=s.activity14d.map(function(d){ return '<i style="height:'+Math.max(3,Math.round(d.n/mx*100))+'%" title="'+d.day+': '+d.n+'"></i>'; }).join('');
+    var byMod=s.recordsByModule.map(function(m){ return '<tr><td>'+esc(m.module)+'</td><td>'+m.n+'</td></tr>'; }).join('');
+    V('<div class="card"><h2>Дашборд</h2><p class="lead">Живая статистика по всей системе.</p><div class="stats">'+grid+'</div>'+
+      '<div class="grp" style="margin-top:14px">Активность за 14 дней (событий в день)</div><div class="spark">'+spark+'</div></div>'+
+      '<div class="card"><h2>Записи по модулям</h2><table><thead><tr><th>Модуль</th><th>Записей</th></tr></thead><tbody>'+byMod+'</tbody></table></div>');
+  }).catch(fail);
+},
+
+users:function(){
+  api('users').then(function(r){ renderUsers(r.users,''); }).catch(fail);
+  function renderUsers(users,q){
+    var rows=users.map(function(u){
+      var role=u.kind==='parent'?'<span class="pill">родитель</span>':'<span class="pill g">ребёнок</span>';
+      var st=u.status==='active'?'<span class="pill ok">активен</span>':'<span class="pill warn">заблокирован</span>';
+      var adm=u.isAdmin?' <span class="pill warn">АДМИН</span>':'';
+      var imgs=u.images?'<span class="lock">🔒 '+u.images+' шт.</span>':'<span class="lock" style="border-style:solid;color:var(--muted)">нет</span>';
+      var acts='<button class="btn ghost xs" data-a="rename" data-id="'+u.id+'" data-n="'+esc(u.nickname)+'">✏️</button> '+
+        '<button class="btn ghost xs" data-a="reset" data-id="'+u.id+'" data-n="'+esc(u.nickname)+'" title="Сбросить пароль → 1234">🔑</button> '+
+        (u.status==='active'
+          ?'<button class="btn danger xs" data-a="block" data-id="'+u.id+'" data-n="'+esc(u.nickname)+'">⛔</button> '
+          :'<button class="btn xs" data-a="unblock" data-id="'+u.id+'" data-n="'+esc(u.nickname)+'">✅</button> ')+
+        (u.kind==='parent'
+          ?(u.isAdmin
+            ?'<button class="btn danger xs" data-a="revoke" data-id="'+u.id+'" data-n="'+esc(u.nickname)+'" title="Снять права админа">👑✕</button> '
+            :'<button class="btn ghost xs" data-a="grant" data-id="'+u.id+'" data-n="'+esc(u.nickname)+'" title="Сделать админом">👑</button> ')
+          :'<button class="btn ghost xs" data-a="pts" data-id="'+u.id+'" data-n="'+esc(u.nickname)+'" title="Начислить очки">💎</button> ')+
+        '<button class="btn danger xs" data-a="del" data-id="'+u.id+'" data-n="'+esc(u.nickname)+'" title="Удалить аккаунт">🗑</button>';
+      return '<tr><td><b>'+esc(u.nickname)+'</b>'+adm+(u.email?'<br><small style="color:var(--muted)">'+esc(u.email)+'</small>':'')+'</td>'+
+        '<td>'+role+'</td><td>'+esc(u.familyLabel||('#'+(u.familyId||'—')))+'</td><td>'+st+'</td>'+
+        '<td>'+u.records+'</td><td>'+imgs+'</td><td>'+dt(u.lastLogin)+'</td><td class="row">'+acts+'</td></tr>';
+    }).join('');
+    V('<div class="card"><h2>Все пользователи</h2><p class="lead">Каждый аккаунт во всех семьях. ✏️ переименовать · 🔑 пароль→1234 · ⛔/✅ блок · 👑 права админа (родителям) · 💎 очки (детям) · 🗑 удалить.</p>'+
+      '<div class="row" style="margin-bottom:10px"><input id="q" placeholder="Поиск: имя, email, семья…" value="'+esc(q)+'" style="flex:1"><button class="btn ghost" id="search">Найти</button></div>'+
+      '<table><thead><tr><th>Имя</th><th>Роль</th><th>Семья</th><th>Статус</th><th>Записи</th><th>Картинки</th><th>Был(а)</th><th>Действия</th></tr></thead><tbody>'+rows+'</tbody></table></div>');
+    var doSearch=function(){ var v=document.getElementById('q').value.trim(); api('users',{q:v}).then(function(r){ renderUsers(r.users,v); }).catch(fail); };
+    document.getElementById('search').onclick=doSearch;
+    document.getElementById('q').addEventListener('keydown',function(e){ if(e.key==='Enter') doSearch(); });
+    on('[data-a]',function(btn){
+      btn.onclick=function(){
+        var id=parseInt(btn.getAttribute('data-id'),10), n=btn.getAttribute('data-n'), a=btn.getAttribute('data-a');
+        var done=function(){ toast('Готово'); doSearch(); };
+        if(a==='rename'){ var nn=prompt('Новый никнейм для '+n+':',n); if(nn&&nn.trim()) api('user_update',{user_id:id,nickname:nn.trim()}).then(done).catch(fail); }
+        if(a==='reset'&&confirm('Сбросить пароль «'+n+'» на одноразовый 1234?')) api('user_reset_pass',{user_id:id}).then(function(){ toast(n+': пароль 1234, сменит при входе'); }).catch(fail);
+        if(a==='block'&&confirm('Заблокировать «'+n+'»? Сессии будут разорваны.')) api('user_block',{user_id:id}).then(done).catch(fail);
+        if(a==='unblock') api('user_unblock',{user_id:id}).then(done).catch(fail);
+        if(a==='grant'&&confirm('Выдать «'+n+'» ПОЛНЫЕ права администратора?')) api('admin_grant',{user_id:id}).then(done).catch(fail);
+        if(a==='revoke'&&confirm('Снять с «'+n+'» права администратора?')) api('admin_revoke',{user_id:id}).then(done).catch(fail);
+        if(a==='pts'){ var v=prompt('Сколько очков начислить «'+n+'»? (можно отрицательное)','10');
+          if(v&&parseInt(v,10)){ var why=prompt('Причина:','подарок от админа')||''; api('points_grant',{user_id:id,n:parseInt(v,10),reason:why}).then(function(){ toast('Очки начислены'); }).catch(fail); } }
+        if(a==='del'&&confirm('Удалить аккаунт «'+n+'»? Вход закроется навсегда, данные и логи останутся в базе.')) api('user_delete',{user_id:id}).then(done).catch(fail);
+      };
+    });
+  }
+},
+
+families:function(){
+  api('families').then(function(r){
+    var html=r.families.map(function(f){
+      var members=f.members.map(function(m){
+        var role=m.role==='child'?'ребёнок':(m.role==='owner'?'родитель (владелец)':'родитель');
+        var st=m.status==='active'?'':' <span class="pill warn">блок</span>';
+        var acts='';
+        if(m.kind==='parent'&&m.role!=='owner') acts+='<button class="btn danger xs" data-a="detach" data-f="'+f.id+'" data-u="'+m.id+'" data-n="'+esc(m.nickname)+'">Отвязать</button>';
+        if(m.kind==='child') acts+='<button class="btn ghost xs" data-a="move" data-u="'+m.id+'" data-n="'+esc(m.nickname)+'">Перенести →</button>';
+        return '<div class="mrow"><span class="nm"><b>'+esc(m.nickname)+'</b>'+st+'</span><span class="pill">'+role+'</span>'+
+          (m.email?'<span style="color:var(--muted)">'+esc(m.email)+'</span>':'')+'<span style="flex:1"></span>'+acts+'</div>';
+      }).join('');
+      var banBtn=f.banned
+        ?'<button class="btn xs" data-a="unban" data-f="'+f.id+'">Снять бан</button>'
+        :'<button class="btn danger xs" data-a="ban" data-f="'+f.id+'" data-n="'+esc(f.label||('#'+f.id))+'">🚫 Забанить семью</button>';
+      return '<div class="fam'+(f.banned?' banned':'')+'"><div class="fh">#'+f.id+' · '+esc(f.label||'Семья')+
+        (f.banned?' <span class="pill warn">ЗАБАНЕНА</span>':'')+'<span style="flex:1"></span>'+
+        '<button class="btn ghost xs" data-a="rename" data-f="'+f.id+'" data-n="'+esc(f.label||'')+'">✏️ Название</button>'+
+        '<button class="btn ghost xs" data-a="attach" data-f="'+f.id+'">＋ Привязать родителя</button>'+banBtn+'</div>'+members+'</div>';
+    }).join('');
+    V('<div class="card"><h2>Семьи</h2><p class="lead">Состав семей, привязка и отвязка родителей, перенос детей, полный бан. '+
+      'Бан блокирует все аккаунты семьи и заносит email каждого родителя в стоп-лист — повторная регистрация невозможна до снятия бана.</p>'+html+'</div>');
+    on('[data-a]',function(btn){
+      btn.onclick=function(){
+        var a=btn.getAttribute('data-a'), f=parseInt(btn.getAttribute('data-f')||'0',10),
+            u=parseInt(btn.getAttribute('data-u')||'0',10), n=btn.getAttribute('data-n')||'';
+        var done=function(){ toast('Готово'); VIEWS.families(); };
+        if(a==='rename'){ var v=prompt('Название семьи:',n); if(v&&v.trim()) api('family_rename',{family_id:f,label:v.trim()}).then(done).catch(fail); }
+        if(a==='attach'){ var id=prompt('ID существующего РОДИТЕЛЬСКОГО аккаунта (см. раздел «Пользователи»):');
+          if(id&&parseInt(id,10)) api('parent_attach',{family_id:f,user_id:parseInt(id,10)}).then(done).catch(fail); }
+        if(a==='detach'&&confirm('Отвязать родителя «'+n+'» от этой семьи? Его опекунства над детьми семьи будут разорваны (с логом).'))
+          api('parent_detach',{family_id:f,user_id:u}).then(done).catch(fail);
+        if(a==='move'){ var fid=prompt('Перенести «'+n+'» в семью с ID (владелец станет его основным родителем):');
+          if(fid&&parseInt(fid,10)&&confirm('Точно перенести «'+n+'» в семью #'+fid+'? Старые опекунства будут разорваны.'))
+            api('child_move',{child_id:u,to_family_id:parseInt(fid,10)}).then(done).catch(fail); }
+        if(a==='ban'){ var why=prompt('Причина бана семьи «'+n+'» (увидите её в журнале и списке банов):','по просьбе семьи');
+          if(why!==null&&confirm('ЗАБАНИТЬ семью «'+n+'» полностью? Все аккаунты блокируются, email родителей попадают в стоп-лист.'))
+            api('family_ban',{family_id:f,reason:why||''}).then(done).catch(fail); }
+        if(a==='unban'&&confirm('Снять бан с семьи? Аккаунты снова станут активными.')) api('family_unban',{family_id:f}).then(done).catch(fail);
+      };
+    });
+  }).catch(fail);
+},
+
+invites:function(){
+  api('invites').then(function(r){
+    var T={add_child:'ребёнок',co_parent:'второй родитель',transfer_child:'передача ребёнка',child_to_child:'друг от ребёнка'};
+    var rows=r.invites.map(function(i){
+      var st=i.status==='pending'?'<span class="pill g">ждёт</span>':(i.status==='accepted'?'<span class="pill ok">принято</span>':'<span class="pill warn">'+esc(i.status)+'</span>');
+      var act=i.status==='pending'?'<button class="btn danger xs" data-id="'+i.id+'">Отозвать</button>':'';
+      return '<tr><td>#'+i.id+'</td><td>'+esc(T[i.type]||i.type)+'</td><td>'+esc(i.inviter)+'</td><td>'+esc(i.email||'—')+'</td><td>'+st+'</td><td>'+dt(i.expires)+'</td><td>'+act+'</td></tr>';
+    }).join('');
+    V('<div class="card"><h2>Приглашения</h2><p class="lead">Все приглашения системы. Действующие можно отозвать.</p>'+
+      '<table><thead><tr><th>№</th><th>Тип</th><th>Кто позвал</th><th>Email</th><th>Статус</th><th>До</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>');
+    on('[data-id]',function(b){ b.onclick=function(){ if(confirm('Отозвать приглашение #'+b.getAttribute('data-id')+'?'))
+      api('invite_revoke',{id:parseInt(b.getAttribute('data-id'),10)}).then(function(){ toast('Отозвано'); VIEWS.invites(); }).catch(fail); }; });
+  }).catch(fail);
+},
+
+content:function(){
+  api('collections').then(function(r){
+    var rows=r.collections.map(function(c){
+      return '<tr><td>'+esc(c.module)+'</td><td>'+esc(c.collection)+'</td><td>'+c.n+'</td>'+
+        '<td><button class="btn ghost xs" data-m="'+esc(c.module)+'" data-c="'+esc(c.collection)+'">Открыть</button></td></tr>';
+    }).join('');
+    rows='<tr><td>wishlist</td><td>items</td><td>'+r.wishlist+'</td><td><button class="btn ghost xs" data-m="wishlist" data-c="">Открыть</button></td></tr>'+rows;
+    V('<div class="card"><h2>Контент модулей</h2><p class="lead">Универсальный браузер данных всех субприложений: смотреть, добавлять, править и удалять записи. '+
+      'Новые модули попадают сюда автоматически (см. админ-контракт в гайде субприложений).</p>'+
+      '<table><thead><tr><th>Модуль</th><th>Коллекция</th><th>Записей</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>');
+    on('[data-m]',function(b){ b.onclick=function(){ openRecords(b.getAttribute('data-m'),b.getAttribute('data-c')); }; });
+  }).catch(fail);
+  function openRecords(mod,col){
+    api('records',{module:mod,collection:col}).then(function(r){
+      var rows=r.records.map(function(rec){
+        if(mod==='wishlist'){
+          var img=rec.hasImage?'<span class="lock">🔒 есть</span> <button class="btn danger xs" data-a="delimg" data-id="'+rec.id+'">убрать</button>':'<span style="color:var(--muted)">нет</span>';
+          return '<tr><td>#'+rec.id+'</td><td>'+esc(rec.owner)+'</td><td><b>'+esc(rec.title)+'</b><br><small style="color:var(--muted)">'+esc(rec.note||'')+'</small></td>'+
+            '<td>'+esc(rec.status)+'</td><td>'+img+'</td><td><button class="btn danger xs" data-a="del" data-id="'+rec.id+'">🗑</button></td></tr>';
+        }
+        return '<tr><td>#'+rec.id+'</td><td>'+esc(rec.owner)+'</td><td><pre>'+esc(JSON.stringify(rec.data))+'</pre></td><td>'+esc(rec.status||'')+'</td>'+
+          '<td><button class="btn ghost xs" data-a="edit" data-id="'+rec.id+'" data-json="'+esc(JSON.stringify(rec.data))+'">✏️</button> '+
+          '<button class="btn danger xs" data-a="del" data-id="'+rec.id+'">🗑</button></td></tr>';
+      }).join('');
+      var head=mod==='wishlist'?'<th>№</th><th>Чьё</th><th>Желание</th><th>Статус</th><th>Картинка</th><th></th>':'<th>№</th><th>Чьё</th><th>Данные (JSON)</th><th>Статус</th><th></th>';
+      V('<div class="card"><button class="btn ghost xs" id="back">‹ Все коллекции</button> '+
+        (mod!=='wishlist'?'<button class="btn xs" id="add">＋ Добавить запись</button>':'')+
+        '<h2 style="margin-top:10px">'+esc(mod)+(col?' / '+esc(col):'')+'</h2>'+
+        '<table><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table></div>');
+      document.getElementById('back').onclick=VIEWS.content;
+      var add=document.getElementById('add');
+      if(add) add.onclick=function(){
+        var uid=prompt('ID пользователя-владельца записи:'); if(!uid||!parseInt(uid,10)) return;
+        var js=prompt('Данные записи (JSON), например {"n":5,"reason":"тест"}:','{}');
+        try{ var data=JSON.parse(js||'{}'); }catch(e){ toast('Некорректный JSON'); return; }
+        api('record_add',{module:mod,collection:col||'default',user_id:parseInt(uid,10),data:data})
+          .then(function(){ toast('Добавлено'); openRecords(mod,col); }).catch(fail);
+      };
+      on('[data-a]',function(b){
+        b.onclick=function(){
+          var id=parseInt(b.getAttribute('data-id'),10), a=b.getAttribute('data-a');
+          if(a==='del'&&confirm('Удалить запись #'+id+'? (мягкое удаление, останется в базе)'))
+            api('record_delete',{id:id,module:mod}).then(function(){ toast('Удалено'); openRecords(mod,col); }).catch(fail);
+          if(a==='delimg'&&confirm('Убрать картинку у записи #'+id+'? Файл будет удалён с диска.'))
+            api('image_delete',{id:id}).then(function(){ toast('Картинка удалена'); openRecords(mod,col); }).catch(fail);
+          if(a==='edit'){ var js=prompt('Новый JSON записи #'+id+':',b.getAttribute('data-json'));
+            if(js===null) return;
+            try{ var data=JSON.parse(js); }catch(e){ toast('Некорректный JSON'); return; }
+            api('record_update',{id:id,data:data}).then(function(){ toast('Сохранено'); openRecords(mod,col); }).catch(fail); }
+        };
+      });
+    }).catch(fail);
+  }
+},
+
+points:function(){
+  api('points').then(function(r){
+    var bal=r.balances.map(function(x){ return '<tr><td>'+esc(x.owner)+'</td><td><b>'+x.balance+'</b></td>'+
+      '<td><button class="btn ghost xs" data-grant="'+x.userId+'" data-n="'+esc(x.owner)+'">＋ начислить</button></td></tr>'; }).join('');
+    var rows=r.txns.map(function(t){
+      var n=t.n>=0?'<span class="pill ok">+'+t.n+'</span>':'<span class="pill warn">'+t.n+'</span>';
+      return '<tr><td>#'+t.id+'</td><td>'+esc(t.owner)+'</td><td>'+n+'</td><td>'+esc(t.reason)+'</td><td>'+dt(t.created)+'</td>'+
+        '<td><button class="btn ghost xs" data-a="edit" data-id="'+t.id+'" data-vn="'+t.n+'" data-vr="'+esc(t.reason)+'">✏️</button> '+
+        '<button class="btn danger xs" data-a="del" data-id="'+t.id+'">🗑</button></td></tr>';
+    }).join('');
+    V('<div class="card"><h2>Очки · балансы</h2><p class="lead">Система очков (модуль «Копилка», леджер bank/points). Начисление может быть и отрицательным — это списание.</p>'+
+      '<table><thead><tr><th>Кто</th><th>Баланс</th><th></th></tr></thead><tbody>'+(bal||'<tr><td colspan="3" class="lead">пока пусто</td></tr>')+'</tbody></table></div>'+
+      '<div class="card"><h2>Транзакции</h2><table><thead><tr><th>№</th><th>Кто</th><th>Очки</th><th>Причина</th><th>Когда</th><th></th></tr></thead><tbody>'+
+      (rows||'<tr><td colspan="6" class="lead">пока пусто</td></tr>')+'</tbody></table></div>');
+    on('[data-grant]',function(b){ b.onclick=function(){
+      var v=prompt('Сколько очков «'+b.getAttribute('data-n')+'»? (отрицательное = списать)','10');
+      if(!v||!parseInt(v,10)) return;
+      var why=prompt('Причина:','от админа')||'';
+      api('points_grant',{user_id:parseInt(b.getAttribute('data-grant'),10),n:parseInt(v,10),reason:why})
+        .then(function(){ toast('Готово'); VIEWS.points(); }).catch(fail); }; });
+    on('[data-a]',function(b){ b.onclick=function(){
+      var id=parseInt(b.getAttribute('data-id'),10);
+      if(b.getAttribute('data-a')==='del'&&confirm('Удалить транзакцию #'+id+'? Баланс пересчитается.'))
+        api('points_delete',{id:id}).then(function(){ toast('Удалено'); VIEWS.points(); }).catch(fail);
+      if(b.getAttribute('data-a')==='edit'){
+        var n=prompt('Сумма:',b.getAttribute('data-vn')); if(!n||!parseInt(n,10)) return;
+        var why=prompt('Причина:',b.getAttribute('data-vr'))||'';
+        api('points_update',{id:id,n:parseInt(n,10),reason:why}).then(function(){ toast('Сохранено'); VIEWS.points(); }).catch(fail);
+      } }; });
+  }).catch(fail);
+},
+
+mail:function(){
+  Promise.all([api('mail_templates'),api('users'),api('mail_log')]).then(function(rr){
+    var tpl=rr[0], parents=rr[1].users.filter(function(u){ return u.kind==='parent'&&u.email; }), log=rr[2];
+    var drv=tpl.driver==='log'?'<span class="pill warn">драйвер log — письма НЕ уходят, только журнал</span>':'<span class="pill ok">драйвер '+esc(tpl.driver)+'</span>';
+    var trows=tpl.templates.map(function(t){ return '<tr><td><code>'+esc(t.action)+'</code></td><td>'+esc(t.desc)+'</td><td>'+esc((t.placeholders||[]).join(' '))+'</td></tr>'; }).join('');
+    var opts=parents.map(function(p){ return '<option value="'+p.id+'">'+esc(p.nickname)+' · '+esc(p.email)+'</option>'; }).join('');
+    var lrows=log.mails.map(function(m){
+      var meta=m.meta||{}; var ok=meta.log_only?'<span class="pill g">журнал</span>':(meta.ok?'<span class="pill ok">ушло</span>':'<span class="pill warn">ошибка</span>');
+      return '<div class="log"><div class="t">'+dt(m.created)+'</div><div>'+esc(m.type)+' · '+esc(meta.to||'')+' '+ok+(m.title?' · '+esc(m.title):'')+'</div></div>';
+    }).join('');
+    V('<div class="card"><h2>Письма</h2><p class="lead">Стандартные триггеры шлются автоматически на языке получателя. Здесь — произвольное письмо родителю. У детей почты нет. '+drv+'</p>'+
+      '<div class="row"><select id="mto" style="min-width:240px">'+(opts||'<option value="">нет родителей с email</option>')+'</select>'+
+      '<input id="msub" placeholder="Тема" style="flex:1;min-width:180px"></div>'+
+      '<textarea id="mtxt" rows="5" placeholder="Текст письма…" style="width:100%;margin-top:10px"></textarea>'+
+      '<div class="row" style="margin-top:10px"><button class="btn" id="msend">Отправить</button></div></div>'+
+      '<div class="card"><h2>Стандартные триггеры</h2><p class="lead">Реестр api/mail/registry.php, шаблоны en/ru/lv. Новые письма добавляются файлами шаблонов + записью в реестр.</p>'+
+      '<table><thead><tr><th>Действие</th><th>Когда уходит</th><th>Подстановки</th></tr></thead><tbody>'+trows+'</tbody></table></div>'+
+      '<div class="card"><h2>Журнал почты</h2>'+(lrows||'<p class="lead">пока пусто</p>')+'</div>');
+    document.getElementById('msend').onclick=function(){
+      var uid=parseInt(document.getElementById('mto').value||'0',10);
+      var sub=document.getElementById('msub').value.trim(), txt=document.getElementById('mtxt').value.trim();
+      if(!uid||!sub||!txt){ toast('Заполните получателя, тему и текст'); return; }
+      api('mail_send',{user_id:uid,subject:sub,text:txt}).then(function(r){
+        toast(r.logOnly?'Записано в журнал (драйвер log)':'Письмо отправлено');
+        document.getElementById('msub').value=''; document.getElementById('mtxt').value='';
+      }).catch(fail);
+    };
+  }).catch(fail);
+},
+
+apps:function(){
+  api('modules').then(function(r){
+    var list=r.modules;
+    var rows=list.map(function(m,i){
+      var en=m.enabled?'<span class="pill ok">включён</span>':'<span class="pill warn">выключен</span>';
+      var contract=m.admin?'<span class="pill" title="Модуль описал свои данные для админки">админ-контракт</span>':'';
+      return '<tr><td><b style="color:'+esc(m.color)+'">'+esc(m.name)+'</b><br><small style="color:var(--muted)">'+esc(m.id)+' · v'+esc(m.version)+' · '+esc(m.source)+'</small></td>'+
+        '<td>'+en+' '+contract+'</td>'+
+        '<td class="row"><button class="btn ghost xs" data-a="up" data-i="'+i+'">▲</button><button class="btn ghost xs" data-a="down" data-i="'+i+'">▼</button>'+
+        '<button class="btn '+(m.enabled?'danger':'')+' xs" data-a="toggle" data-id="'+esc(m.id)+'" data-en="'+(m.enabled?0:1)+'">'+(m.enabled?'Выключить':'Включить')+'</button></td></tr>';
+    }).join('');
+    V('<div class="card"><h2>Приложения (глобальный реестр)</h2><p class="lead">То же, что видят родители в «Управлении приложениями», но для всей системы: вкл/выкл и порядок плиток в меню. Порядок сохраняется кнопкой после перестановки.</p>'+
+      '<table><thead><tr><th>Модуль</th><th>Статус</th><th>Действия</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<div class="row" style="margin-top:12px"><button class="btn" id="saveOrder">Сохранить порядок</button></div></div>');
+    on('[data-a="toggle"]',function(b){ b.onclick=function(){
+      api('module_toggle',{id:b.getAttribute('data-id'),enabled:parseInt(b.getAttribute('data-en'),10)})
+        .then(function(){ toast('Готово'); VIEWS.apps(); }).catch(fail); }; });
+    on('[data-a="up"],[data-a="down"]',function(b){ b.onclick=function(){
+      var i=parseInt(b.getAttribute('data-i'),10), j=b.getAttribute('data-a')==='up'?i-1:i+1;
+      if(j<0||j>=list.length) return;
+      var t=list[i]; list[i]=list[j]; list[j]=t;
+      var tb=b.closest('tbody'), trs=tb.querySelectorAll('tr');
+      if(b.getAttribute('data-a')==='up') tb.insertBefore(trs[i],trs[j]); else tb.insertBefore(trs[j],trs[i]);
+      Array.prototype.forEach.call(tb.querySelectorAll('tr'),function(tr,k){
+        Array.prototype.forEach.call(tr.querySelectorAll('[data-i]'),function(x){ x.setAttribute('data-i',k); });
+      });
+    }; });
+    document.getElementById('saveOrder').onclick=function(){
+      api('module_reorder',{order:list.map(function(m){ return m.id; })}).then(function(){ toast('Порядок сохранён'); }).catch(fail);
+    };
+  }).catch(fail);
+},
+
+logs:function(){ renderLogs('',0);
+  function renderLogs(mod,uid){
+    api('logs',{module:mod,user_id:uid}).then(function(r){
+      var opts='<option value="">все модули</option>'+r.modules.map(function(m){ return '<option value="'+esc(m)+'"'+(m===mod?' selected':'')+'>'+esc(m)+'</option>'; }).join('');
+      var rows=r.logs.map(function(l){
+        return '<div class="log"><div class="t">'+dt(l.created)+'</div><div><span class="pill">'+esc(l.module)+'</span> <b>'+esc(l.type)+'</b>'+
+          (l.who?' · '+esc(l.who):'')+(l.title?' · '+esc(l.title):'')+(l.itemId?' · #'+l.itemId:'')+
+          (l.meta?' <small style="color:var(--muted)">'+esc(JSON.stringify(l.meta))+'</small>':'')+'</div></div>';
+      }).join('');
+      V('<div class="card"><h2>Журнал</h2><p class="lead">Последние события всей системы (включая каждое действие админа). Детская система — логи хранятся всегда.</p>'+
+        '<div class="row" style="margin-bottom:10px"><select id="fmod">'+opts+'</select>'+
+        '<input id="fuid" type="number" placeholder="ID пользователя" style="width:150px" value="'+(uid||'')+'">'+
+        '<button class="btn ghost" id="apply">Фильтр</button></div>'+(rows||'<p class="lead">пусто</p>')+'</div>');
+      document.getElementById('apply').onclick=function(){
+        renderLogs(document.getElementById('fmod').value,parseInt(document.getElementById('fuid').value||'0',10));
+      };
+    }).catch(fail);
+  }
+},
+
+admins:function(){
+  Promise.all([api('admins'),api('bans')]).then(function(rr){
+    var arows=rr[0].admins.map(function(a){
+      var st=a.status==='active'?'<span class="pill ok">активен</span>':'<span class="pill warn">снят</span>';
+      return '<tr><td><b>'+esc(a.nickname)+'</b></td><td>'+esc(a.email||'')+'</td><td>'+st+'</td><td>'+dt(a.granted)+'</td>'+
+        '<td>'+(a.status==='active'?'<button class="btn danger xs" data-id="'+a.id+'" data-n="'+esc(a.nickname)+'">Снять права</button>':'')+'</td></tr>';
+    }).join('');
+    var brows=rr[1].bans.map(function(b){
+      var what=b.kind==='family'?('семья #'+b.familyId+(b.familyLabel?' · '+esc(b.familyLabel):'')):('email '+esc(b.emailHash||''));
+      var st=b.lifted?'<span class="pill ok">снят '+dt(b.lifted)+'</span>':'<span class="pill warn">действует</span>';
+      return '<tr><td>#'+b.id+'</td><td>'+what+'</td><td>'+esc(b.reason||'')+'</td><td>'+dt(b.created)+'</td><td>'+st+'</td></tr>';
+    }).join('');
+    V('<div class="card"><h2>Администраторы</h2><p class="lead">Права выдаются родителям в разделе «Пользователи» (кнопка 👑). Последний активный админ не может снять права сам с себя.</p>'+
+      '<table><thead><tr><th>Кто</th><th>Email</th><th>Статус</th><th>Выдано</th><th></th></tr></thead><tbody>'+arows+'</tbody></table></div>'+
+      '<div class="card"><h2>Баны</h2><p class="lead">Стоп-лист семей и email (хранится только хэш адреса). Снять бан семьи — в разделе «Семьи».</p>'+
+      '<table><thead><tr><th>№</th><th>Что</th><th>Причина</th><th>Когда</th><th>Статус</th></tr></thead><tbody>'+(brows||'<tr><td colspan="5" class="lead">банов нет</td></tr>')+'</tbody></table></div>');
+    on('[data-id]',function(b){ b.onclick=function(){
+      if(confirm('Снять права администратора с «'+b.getAttribute('data-n')+'»?'))
+        api('admin_revoke',{user_id:parseInt(b.getAttribute('data-id'),10)}).then(function(){ toast('Снято'); VIEWS.admins(); }).catch(fail); }; });
+  }).catch(fail);
+},
+
+policy:function(){
+  V('<div class="card"><h2>Как устроен доступ</h2>'+
+    '<p class="lead">Адрес консоли: <code>…/robtop/app/admin.html</code>. Вход — обычным родительским аккаунтом (email + пароль). '+
+    'Право даёт флаг в таблице <code>admins</code>: его выдаёт и забирает действующий админ из раздела «Пользователи» (кнопка 👑, только родителям). '+
+    'Каждое действие админа пишется в журнал. Сервер проверяет флаг на каждой операции (rt_require_admin).</p>'+
+    '<div class="grp">Первый админ (один раз, через phpMyAdmin)</div>'+
+    '<pre>INSERT INTO admins (user_id, status, granted_by)\nSELECT a.user_id, \'active\', a.user_id\nFROM accounts a\nWHERE a.email = \'ВАШ_EMAIL\' AND a.kind = \'parent\'\nON DUPLICATE KEY UPDATE status=\'active\', revoked_at=NULL;</pre>'+
+    '<p class="lead" style="margin-top:8px">Дальше все права — только из панели.</p></div>'+
+    '<div class="card"><h2>Политика картинок</h2>'+
+    '<p class="lead">Содержимое детских картинок не видит никто, кроме ребёнка и его прямого родителя. Админ видит ФАКТ картинки (имя, размер, дату), может удалить её, но сервер никогда не отдаёт админу ни байты, ни путь к файлу. Это закреплено в api/admin.php и в плане аккаунтов (§4.7/§8).</p></div>'+
+    '<div class="card"><h2>Пайплайн новых субприложений</h2>'+
+    '<p class="lead">Каждый новый модуль автоматически появляется в «Контенте модулей» (его коллекции в module_data) и в «Приложениях» (реестр). '+
+    'Дополнительно модуль может объявить в module.json блок <code>"admin"</code> — описание коллекций и полей для красивого редактора (например, уравнения «Угадай число»). Шаг закреплён в ГАЙД-новое-субприложение.md.</p></div>');
+}
+};
+
+boot();
+</script>
+</body>
+</html>
