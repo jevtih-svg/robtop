@@ -53,9 +53,10 @@ window.RobTop = window.RobTop || {};
     lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="5" y="11" width="14" height="9" rx="2.2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
     paw:'<svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="6.4" cy="10" rx="1.7" ry="2.3"/><ellipse cx="9.9" cy="7.3" rx="1.7" ry="2.4"/><ellipse cx="14.1" cy="7.3" rx="1.7" ry="2.4"/><ellipse cx="17.6" cy="10" rx="1.7" ry="2.3"/><path d="M12 11.2c2.9 0 5.3 2.1 5.7 4.8.3 1.9-1.1 3.4-3 3.4-1.3 0-1.9-.6-2.7-.6s-1.4.6-2.7.6c-1.9 0-3.3-1.5-3-3.4.4-2.7 2.8-4.8 5.7-4.8z"/></svg>',
     snake:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.6 5.6h9.9a3.2 3.2 0 0 1 0 6.4H7.4a3.2 3.2 0 0 0 0 6.4h7.2"/><circle cx="16.8" cy="18.4" r="2.5" fill="currentColor" stroke="none"/><path d="M19.6 18.4l2.2-1.1M19.6 18.4l2.2 1.1" stroke-width="1.6"/></svg>',
-    cube:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>'
+    cube:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>',
+    gift:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="1.6"/><path d="M4 12.5h16M12 9v11"/><path d="M12 9c-4 0-5.4-2-4.6-3.6C8.2 3.8 11 4.6 12 9zM12 9c4 0 5.4-2 4.6-3.6C15.8 3.8 13 4.6 12 9z"/></svg>'
   };
-  var TILE_ICON={ wishlist:"cherry", reverse:"reverse", mood:"smile", teeth:"tooth", guess:"quiz", names:"tag", days:"calendar", find:"search", museum:"museum", rating:"star", lost:"gem", walk:"paw", snake:"snake", bank:"bank" };
+  var TILE_ICON={ wishlist:"cherry", reverse:"reverse", mood:"smile", teeth:"tooth", guess:"quiz", names:"tag", days:"calendar", find:"search", museum:"museum", rating:"star", lost:"gem", walk:"paw", snake:"snake", bank:"bank", shop:"gift" };
   var BACK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg>';
 
   /* ---- встроенный список модулей (демо/фолбэк). name — фолбэк, отображается tile.<id> ---- */
@@ -73,7 +74,8 @@ window.RobTop = window.RobTop || {};
     {id:"lost",name:"Lost & Found",color:"#2bf0c0",status:"soon",source:"native",sort:110},
     {id:"walk",name:"Dog Walk",color:"#38e8a0",status:"active",source:"native",sort:115},
     {id:"snake",name:"Snake",color:"#19e3ff",status:"active",source:"native",sort:117},
-    {id:"bank",name:"Piggy Bank",color:"#ff4d6d",status:"active",source:"native",wide:true,sort:120}
+    {id:"bank",name:"Piggy Bank",color:"#ff4d6d",status:"active",source:"native",wide:true,sort:120},
+    {id:"shop",name:"Shop",color:"#ff2bd6",status:"active",source:"native",sort:130}
   ];
 
   /* ---- localStorage помощники (демо) ---- */
@@ -124,7 +126,7 @@ window.RobTop = window.RobTop || {};
   }
   /* hud({hidden:true}) прячет HUD на время полноэкранных сцен модуля (игра в змейке);
      ЛЮБОЙ обычный вызов hud(values) снимает скрытие — чужой модуль не унаследует спрятанный HUD. */
-  function hud(o){ o=o||{}; if(hudEl) hudEl.classList.toggle("hud-off", o.hidden===true); if(o.left!=null) hudL.innerHTML=o.left; if(o.cNum!=null) hudCnum.textContent=o.cNum; if(o.cLbl!=null) hudClbl.textContent=o.cLbl; if(o.rNum!=null) hudRnum.textContent=o.rNum; if(o.rLbl!=null) hudRlbl.textContent=o.rLbl; }
+  function hud(o){ o=o||{}; if(hudEl) hudEl.classList.toggle("hud-off", o.hidden===true); if(RT.Notify) RT.Notify.hide(o.hidden===true); if(o.left!=null) hudL.innerHTML=o.left; if(o.cNum!=null) hudCnum.textContent=o.cNum; if(o.cLbl!=null) hudClbl.textContent=o.cLbl; if(o.rNum!=null) hudRnum.textContent=o.rNum; if(o.rLbl!=null) hudRlbl.textContent=o.rLbl; }
   /* ---- скрытый реордер (long-press ~0.55с → jiggle + drag): главный экран и дашборд ----
      Никакого видимого UI до жеста: удержал элемент — режим «дрожания», тащишь — порядок
      меняется, отпустил — onCommit(ids) сохраняет. Выход — плавающая кнопка ✓ или навигация
@@ -426,6 +428,7 @@ window.RobTop = window.RobTop || {};
     lockView.querySelector("#lockForgot").onclick=renderLockForgot;
     ps.addEventListener("keydown",function(e){ if(e.key==="Enter") go(); });
     wireDevRows(lockView,function(){ renderLock(false); },false); // на локе без ✕ — убирают в настройках
+    if(RT.Notify) RT.Notify.decorateAccounts(lockView); // бейджи непрочитанного у аккаунтов (op peek)
     if(!saved) setTimeout(function(){ lg.focus(); },150);
   }
   /* «Забыли пароль?» прямо на lock-экране (раньше только в family.html).
@@ -626,6 +629,7 @@ window.RobTop = window.RobTop || {};
     }
     // мульти-аккаунты: переключение, ✕ с устройства, тумблер формы «добавить»
     wireDevRows(settingsBody,function(){ renderSettings(); },true);
+    if(RT.Notify) RT.Notify.decorateAccounts(settingsBody); // бейджи непрочитанного (op peek)
     var addBtn=settingsBody.querySelector("#acctAdd");
     if(addBtn) addBtn.onclick=function(){
       var box=settingsBody.querySelector("#acctAddBox");
@@ -1049,7 +1053,7 @@ window.RobTop = window.RobTop || {};
   /* кнопка «Сообщить о проблеме» ПОД КАЖДОЙ кнопкой «Добавить фото» (заказ Джеффа):
      shell дорисовывает её после известных фото-кнопок модулей (wishlist/mood/rating/walk) —
      сами модули не трогаем; вставка идемпотентна, повторные рендеры переживает MutationObserver. */
-  var TK_PHOTO_SEL="#wlPhotoPick,#mdPhotoPick,#rdPhotoPick,#wkAddPhoto";
+  var TK_PHOTO_SEL="#wlPhotoPick,#mdPhotoPick,#rdPhotoPick,#wkAddPhoto,#shPhotoPick";
   function injectReportBtns(){
     if(demo || !(acct && acct.authenticated)) return;
     var picks=document.querySelectorAll(TK_PHOTO_SEL);
@@ -1332,6 +1336,8 @@ window.RobTop = window.RobTop || {};
       .then(function(r){
         syncBusy=false;
         if(!(r && r.ok)) return;
+        /* оповещения — ДО гейта формы: баннер/бейдж ничего не трогают под руками пользователя */
+        if(r.ntf && RT.Notify) RT.Notify.sync(r.ntf);
         if(r.ver && window.RT_VER && r.ver!==window.RT_VER && syncVerShown!==r.ver){
           syncVerShown=r.ver;
           toast(t("sync.newVer"), t("sync.reload"), function(){ location.reload(); });
@@ -1411,6 +1417,8 @@ window.RobTop = window.RobTop || {};
        скрытый реордер (makeJiggle) + сохранение личного порядка (applyTileOrder) */
     openSettings:openSettings, iconHtml:iconHtml, isParent:isParent,
     makeJiggle:makeJiggle, applyTileOrder:applyTileOrder,
+    /* для оповещений (core/notify.js): открыть переписку тикета из ссылки {view:"ticket",id} */
+    openTicket:function(id){ openSettings(); openTicketThread(id); },
     demoBundle:function(id){ return RT._shell_demoBundle(id); }
   };
 
@@ -1442,6 +1450,7 @@ window.RobTop = window.RobTop || {};
       if(a && a.authenticated){
         if(a.user && a.user.mustChangePassword){ showLock(true); renderForcePass(lockView); return; }
         showHome(); loadRegistry().then(function(){ restoreScreen(savedSt); }); syncStart(); // живое обновление — только для вошедших
+        if(RT.Notify) RT.Notify.boot(); // оповещения: колокольчик, бейдж, баннеры
       } else {
         renderLock(false); // форма входа
       }

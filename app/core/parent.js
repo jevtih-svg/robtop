@@ -41,6 +41,7 @@ window.RobTop = window.RobTop || {};
       teeth:"streak: {n} 🔥 · {c} in period", rating:"average: {avg}★ · {c} rated",
       mood:"most often: {e} {name} ×{c}", reverse:"{c} words reversed", guess:"guessed {w} of {c}",
       bank:"{p} points total · streak {s} 🔥 · pluses {ps} ⚡", bankTasks:"⏳ waiting for check: {n}",
+      shop:"{n} prizes in the shop", shopOrders:"🛍 waiting for approval: {n}",
       generic:{one:"{n} action in period",other:"{n} actions in period"}, none:"no activity in period" },
     ins:{ streak:"Brushing streak: {n} days in a row", bought:"Wish fulfilled: “{t}” 🎉",
       peak:{ morning:"Most active in the morning (7–11)", day:"Most active in the daytime (11–17)", evening:"Most active in the evening (17–22)" } },
@@ -91,6 +92,7 @@ window.RobTop = window.RobTop || {};
       teeth:"серия: {n} 🔥 · {c} за период", rating:"средняя: {avg}★ · {c} оценок",
       mood:"чаще всего: {e} {name} ×{c}", reverse:"{c} слов перевёрнуто", guess:"угадано {w} из {c}",
       bank:"{p} пунктов всего · винстрик {s} 🔥 · плюсы {ps} ⚡", bankTasks:"⏳ ждут проверки: {n}",
+      shop:"{n} призов в магазине", shopOrders:"🛍 ждут подтверждения: {n}",
       generic:{one:"{n} действие за период",few:"{n} действия за период",many:"{n} действий за период"}, none:"нет активности за период" },
     ins:{ streak:"Серия чистки зубов: {n} дней подряд", bought:"Исполнено желание: «{t}» 🎉",
       peak:{ morning:"Самое активное время — утро (7–11)", day:"Самое активное время — день (11–17)", evening:"Самое активное время — вечер (17–22)" } },
@@ -141,6 +143,7 @@ window.RobTop = window.RobTop || {};
       teeth:"sērija: {n} 🔥 · {c} periodā", rating:"vidēji: {avg}★ · {c} vērtējumi",
       mood:"visbiežāk: {e} {name} ×{c}", reverse:"{c} vārdi apgriezti", guess:"uzminēti {w} no {c}",
       bank:"{p} punkti kopā · sērija {s} 🔥 · plusi {ps} ⚡", bankTasks:"⏳ gaida pārbaudi: {n}",
+      shop:"{n} balvas veikalā", shopOrders:"🛍 gaida apstiprinājumu: {n}",
       generic:{zero:"{n} darbību periodā",one:"{n} darbība periodā",other:"{n} darbības periodā"}, none:"perioda aktivitātes nav" },
     ins:{ streak:"Zobu tīrīšanas sērija: {n} dienas pēc kārtas", bought:"Vēlme piepildīta: “{t}” 🎉",
       peak:{ morning:"Aktīvākais laiks — rīts (7–11)", day:"Aktīvākais laiks — diena (11–17)", evening:"Aktīvākais laiks — vakars (17–22)" } },
@@ -347,6 +350,15 @@ window.RobTop = window.RobTop || {};
     for(i=0;i<rows.length;i++) if(rows[i].collection==="tasks" && rows[i].status==="pending") n++;
     return n;
   }
+  /* магазин: заказы ребёнка, ждущие подтверждения (shop/orders, status=pending) и число призов */
+  function shopStats(){
+    var rows=(S.data&&S.data.content&&S.data.content.shop)||[], pend=0, items=0, i;
+    for(i=0;i<rows.length;i++){
+      if(rows[i].collection==="orders" && rows[i].status==="pending") pend++;
+      if(rows[i].collection==="items") items++;
+    }
+    return { pend:pend, items:items };
+  }
 
   function topbarHtml(){
     var last=S.data&&S.data.lastActivityAt;
@@ -429,6 +441,10 @@ window.RobTop = window.RobTop || {};
         var pend=bankPending();
         line=pend>0 ? t("parent.sum.bankTasks",{n:pend})
                     : t("parent.sum.bank",{p:(data.points||0),s:(data.streak||0),ps:(data.plusStreak||0)});
+      }
+      else if(m.id==="shop"){
+        var sst=shopStats();
+        line=sst.pend>0 ? t("parent.sum.shopOrders",{n:sst.pend}) : t("parent.sum.shop",{n:sst.items});
       }
       else if(m.id==="wishlist") line=t("parent.sum.wishlist",{total:items.length,want:wWant,bought:wBought});
       else if(m.id==="teeth") line=a.teethN?t("parent.sum.teeth",{n:a.streak,c:a.teethN}):t("parent.sum.none");
@@ -778,6 +794,9 @@ window.RobTop = window.RobTop || {};
         if(!out || !out.ok){ RT._shell.toast(t("parent.give.fail")); return; }
         ctl.close();
         RT._shell.toast(t("parent.give.done",{n:n}));
+        /* оповещение ребёнку о начислении (ГАЙД-оповещения.md; src=bank — иконка Копилки) */
+        RT.API.post("notify.php",{op:"send",to:"child",child:S.childId||0,src:"bank",
+          type:"points_given",params:{n:n,note:note},link:{module:"bank"}}).catch(function(){});
         fetchData(S.childId); /* обновить HUD очков */
       });
     };
@@ -866,6 +885,7 @@ window.RobTop = window.RobTop || {};
       b.onclick=function(){
         var id=b.getAttribute("data-mod");
         if(id==="bank"){ if(RT.open) RT.open("bank"); return; } /* модуль с заданиями, как walk */
+        if(id==="shop"){ if(RT.open) RT.open("shop"); return; } /* призы и подтверждение покупок — в самом модуле */
         if(id==="wishlist"){ S.tab="wishlist"; render(); }
         else { S.mod=id; render(); }
         window.scrollTo(0,0);

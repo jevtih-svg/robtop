@@ -145,6 +145,40 @@ CREATE TABLE IF NOT EXISTS module_data (
   CONSTRAINT fk_md_user FOREIGN KEY (user_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ---------- Оповещения (ядро; миграция 020, ГАЙД-оповещения.md) ----------
+-- Одна строка = одно оповещение одному получателю; текст собирает клиент
+-- (ntf.ev.<src>.<type> в core/notify.js), кап 100/получателя держит rt_notify().
+CREATE TABLE IF NOT EXISTS notifications (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id INT UNSIGNED NOT NULL,
+  actor_id INT UNSIGNED NULL,
+  src VARCHAR(40) NOT NULL DEFAULT 'system',
+  type VARCHAR(40) NOT NULL,
+  params TEXT NULL,
+  link VARCHAR(255) NULL,
+  read_at DATETIME NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_user (user_id, id),
+  KEY idx_unread (user_id, read_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------- Подписки Web Push (PWA; миграция 021) ----------
+CREATE TABLE IF NOT EXISTS push_subs (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id INT UNSIGNED NOT NULL,
+  endpoint VARCHAR(500) NOT NULL,
+  endpoint_hash CHAR(64) NOT NULL,
+  p256dh VARCHAR(120) NULL,
+  auth VARCHAR(40) NULL,
+  lang VARCHAR(5) NOT NULL DEFAULT 'en',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_endpoint (endpoint_hash),
+  KEY idx_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ---------- Заполнение реестра родными модулями ----------
 INSERT INTO modules (id, name, version, manifest, source, trusted, server, enabled, sort_order) VALUES
  ('wishlist','Виш-лист','2.0.0','{"color":"#ff3db0","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,1,1,10),
@@ -160,6 +194,7 @@ INSERT INTO modules (id, name, version, manifest, source, trusted, server, enabl
  ('lost','Бюро находок','1.0.0','{"color":"#2bf0c0","status":"soon"}','native',1,0,1,110),
  ('walk','Прогулка','1.2.0','{"color":"#38e8a0","status":"active","wide":false,"familyPool":true,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,0,1,115),
  ('snake','Змейка','1.0.0','{"color":"#19e3ff","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,117),
- ('bank','Копилка','1.0.0','{"color":"#ff4d6d","status":"active","wide":true,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,0,1,120)
+ ('bank','Копилка','1.0.0','{"color":"#ff4d6d","status":"active","wide":true,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,0,1,120),
+ ('shop','Магазин','1.0.0','{"color":"#ff2bd6","status":"active","wide":false,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,0,1,130)
 ON DUPLICATE KEY UPDATE name=VALUES(name), manifest=VALUES(manifest), server=VALUES(server), updated_at=NOW();
 -- ============================================================

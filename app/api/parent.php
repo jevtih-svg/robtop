@@ -244,7 +244,11 @@ $signs    = []; // знаки транзакций в хронологии (id A
 foreach ($pq->fetchAll() as $r) {
     $d = json_decode($r['data'], true);
     if (!is_array($d)) continue;
-    if (isset($d['n'])) { $points += (int)$d['n']; $signs[] = (int)$d['n']; }
+    if (isset($d['n'])) {
+        $points += (int)$d['n'];
+        /* kind=spend (Магазин) исключён из пунктстрика — то же правило, что в движке */
+        if (!isset($d['kind']) || $d['kind'] !== 'spend') $signs[] = (int)$d['n'];
+    }
     if (isset($d['kind']) && $d['kind'] === 'task_done' && !empty($r['created_at'])) {
         $taskDays[substr((string)$r['created_at'], 0, 10)] = true;
     }

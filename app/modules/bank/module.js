@@ -31,7 +31,8 @@
       r_guess_timeout:"Guess the Number — out of time",
       r_streak_bonus:"Streak bonus 🔥", r_parent_give:"From parents", r_parent_take:"Taken by parents",
       r_task_done:"Parent task done", r_task_fail:"Task not done", r_daily_bonus:"All tasks of the day!",
-      r_spend:"Shop", r_other:"Points",
+      r_spend:"Shop", r_spend_refund:"Shop — points returned", r_other:"Points",
+      earnedAll:"earned all time: {n}",
       parentTitle:"Parent panel", parentOnly:"Only for a signed-in parent.",
       balanceNow:"in the bank", streakNow:"win streak",
       secBonus:"Bonus", btnDailyBonus:"★ All tasks today +5",
@@ -90,7 +91,8 @@
       r_guess_timeout:"Угадай число — не успел",
       r_streak_bonus:"Бонус серии 🔥", r_parent_give:"От родителей", r_parent_take:"Снято родителями",
       r_task_done:"Задание выполнено", r_task_fail:"Задание не выполнено", r_daily_bonus:"Все задания дня!",
-      r_spend:"Магазин", r_other:"Пункты",
+      r_spend:"Магазин", r_spend_refund:"Магазин — возврат пунктов", r_other:"Пункты",
+      earnedAll:"заработано за всё время: {n}",
       parentTitle:"Панель родителя", parentOnly:"Доступно родителю после входа в свой аккаунт.",
       balanceNow:"в копилке", streakNow:"винстрик",
       secBonus:"Бонус", btnDailyBonus:"★ Все задания дня +5",
@@ -149,7 +151,8 @@
       r_guess_timeout:"Uzmini skaitli — laiks beidzās",
       r_streak_bonus:"Sērijas bonuss 🔥", r_parent_give:"No vecākiem", r_parent_take:"Vecāki noņēma",
       r_task_done:"Uzdevums izpildīts", r_task_fail:"Uzdevums nav izpildīts", r_daily_bonus:"Visi dienas uzdevumi!",
-      r_spend:"Veikals", r_other:"Punkti",
+      r_spend:"Veikals", r_spend_refund:"Veikals — punkti atgriezti", r_other:"Punkti",
+      earnedAll:"nopelnīts pavisam: {n}",
       parentTitle:"Vecāku panelis", parentOnly:"Pieejams vecākam pēc pieslēgšanās savā kontā.",
       balanceNow:"krājkasē", streakNow:"uzvaru sērija",
       secBonus:"Bonuss", btnDailyBonus:"★ Visi dienas uzdevumi +5",
@@ -221,7 +224,7 @@
   var S={ balance:0, streak:0, items:[], tasks:[], tab:"apps", loaded:false, err:false };
   var PARENT_KINDS={ parent:1, task_done:1, task_fail:1, daily_bonus:1, manual:1, bonus:1 };
   var KNOWN_R={ teeth:1, teeth_manual:1, guess_win:1, guess_wrong:1, guess_timeout:1, streak_bonus:1,
-                parent_give:1, parent_take:1, task_done:1, task_fail:1, daily_bonus:1, spend:1 };
+                parent_give:1, parent_take:1, task_done:1, task_fail:1, daily_bonus:1, spend:1, spend_refund:1 };
   var LIST_CAP=60;
   var TASK_W={ pending:0, active:1, done:2 };
 
@@ -255,6 +258,15 @@
       if(!alive) return;
       var s=rr[0];
       S.balance=s.balance; S.streak=s.streak; S.plus=s.plusStreak||0; S.loaded=true; S.err=false;
+      /* заработано за всё время = сумма всех ПЛЮСОВ леджера КРОМЕ kind=spend:
+         траты Магазина баланс уменьшают, но заработанное не прячут (решение Джеффа
+         2026-06-07); возврат покупки (spend_refund, kind=spend) — не заработок */
+      var earned=0, ei, ed;
+      for(ei=0;ei<s.items.length;ei++){
+        ed=s.items[ei].data||{}; var ev=parseInt(ed.n,10)||0;
+        if(ev>0 && ed.kind!=="spend") earned+=ev;
+      }
+      S.earned=earned;
       S.items=s.items.slice().sort(function(a,b){ return (b.createdAt||0)-(a.createdAt||0); });
       S.tasks=rr[1]||[];
       render();
@@ -298,6 +310,8 @@
           else if(out.streak!=null) sdk.ui.toast(t("streakToast",{n:out.streak}));
           else sdk.ui.toast(t("doneToast"));
           sdk.ui.confetti(); sdk.ui.haptics("light");
+          /* оповещение родителям: одноразовое выполнено, очки уже начислены (ГАЙД-оповещения.md) */
+          if(sdk.notify) sdk.notify.send("parents","task_done",{params:{name:sdk.user.name,title:title,n:pts},link:{module:"bank"}});
           load();
         });
       });
@@ -307,7 +321,10 @@
     sdk.data.move("tasks",tk.id,"pending").then(function(){
       return sdk.data.update("tasks",tk.id,{claimedAt:Date.now()});
     }).then(function(){
-      busy=false; sdk.ui.toast(t("claimToast")); sdk.ui.haptics("light"); load();
+      busy=false; sdk.ui.toast(t("claimToast")); sdk.ui.haptics("light");
+      /* оповещение родителям: «сделал, проверь» */
+      if(sdk.notify) sdk.notify.send("parents","task_claim",{params:{name:sdk.user.name,title:title,n:pts},link:{module:"bank"}});
+      load();
     }).catch(function(){ busy=false; sdk.ui.toast(t("loadFail")); load(); });
   }
 
@@ -330,6 +347,8 @@
         else if(out.streak!=null) sdk.ui.toast(t("streakToast",{n:out.streak}));
         else sdk.ui.toast(t("doneToast"));
         sdk.ui.haptics("light");
+        /* оповещение ребёнку: задание подтверждено, очки получены (требование Джеффа 2026-06-07) */
+        if(sdk.notify) sdk.notify.send("child","task_approved",{params:{title:title,n:pts},link:{module:"bank"}});
         load();
       });
     });
@@ -390,7 +409,10 @@
         ? sdk.data.update("tasks",tk.id,{title:title,points:pts,type:typ})
         : sdk.data.create("tasks",{title:title,points:pts,type:typ,status:"active"});
       op.then(function(){
-        busy=false; ctl.close(); sdk.ui.toast(t("doneToast")); load();
+        busy=false; ctl.close(); sdk.ui.toast(t("doneToast"));
+        /* НОВОЕ задание — оповещение ребёнку (правки не шумят) */
+        if(!tk && sdk.notify) sdk.notify.send("child","task_new",{params:{title:title,n:pts},link:{module:"bank"}});
+        load();
       }).catch(function(){ busy=false; sdk.ui.toast(t("loadFail")); });
     };
     var del=box.querySelector("#bkTDel");
@@ -453,6 +475,10 @@
   function render(){
     if(!alive) return;
     E.pts.textContent = S.err ? "…" : S.balance;
+    if(E.earned){
+      E.earned.textContent = S.err ? "" : t("earnedAll",{n:S.earned||0});
+      E.earned.hidden = !!S.err;
+    }
     E.flameN.textContent = S.streak;
     E.flame.classList.toggle("off", !(S.streak>0));
     E.plusN.textContent = S.plus;
@@ -584,6 +610,12 @@
           else if(out.streak!=null) sdk.ui.toast(t("streakToast",{n:out.streak}));
           else sdk.ui.toast(t("doneToast"));
           sdk.ui.haptics("light");
+          /* оповещение ребёнку о начислении/снятии с панели (ГАЙД-оповещения.md) */
+          if(sdk.notify){
+            if(op==="daily") sdk.notify.send("child","daily_bonus",{link:{module:"bank"}});
+            else sdk.notify.send("child", op==="give"?"points_given":"points_taken",
+                  {params:{n:Math.abs(n[0]),note:n[2].note||""},link:{module:"bank"}});
+          }
           load();
         });
       };
@@ -606,7 +638,8 @@
           +'<span class="bk-flame-n" id="bkPlusN">0</span><span class="bk-flame-l">'+esc(t("plusLabel"))+'</span>'
           +'<span class="bk-flame-i" aria-hidden="true">i</span></button>'
         +'<div class="bk-pig" id="bkPig">'+PIG_IC
-          +'<div class="bk-pig-label">'+esc(t("ptsWord"))+': <b id="bkPts">…</b></div></div></div>'
+          +'<div class="bk-pig-label">'+esc(t("ptsWord"))+': <b id="bkPts">…</b></div></div>'
+        +'<div class="bk-earned" id="bkEarned" hidden></div></div>'
       +'<nav class="bk-tabs" id="bkTabs">'
         +'<button class="bk-tab active" data-tab="apps">'+esc(t("tabApps"))+'</button>'
         +'<button class="bk-tab" data-tab="parents">'+esc(t("tabParents"))
@@ -617,7 +650,7 @@
     E={ pts:el.querySelector("#bkPts"), flame:el.querySelector("#bkFlame"), flameN:el.querySelector("#bkFlameN"),
         plus:el.querySelector("#bkPlus"), plusN:el.querySelector("#bkPlusN"),
         pig:el.querySelector("#bkPig"), tabs:el.querySelector("#bkTabs"), list:el.querySelector("#bkList"),
-        tabN:el.querySelector("#bkTabN") };
+        tabN:el.querySelector("#bkTabN"), earned:el.querySelector("#bkEarned") };
     el.querySelector("#bkBack").onclick=function(){ sdk.ui.back(); };
     E.flame.onclick=openStreakInfo;
     E.plus.onclick=openPlusInfo;

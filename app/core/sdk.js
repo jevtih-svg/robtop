@@ -112,9 +112,11 @@ window.RobTop = window.RobTop || {};
       var t=(a.createdAt||0)-(b.createdAt||0); if(t) return t;
       return (parseInt(a.id,10)||0)-(parseInt(b.id,10)||0);
     });
-    var n=0, i, v;
+    var n=0, i, v, d;
     for(i=arr.length-1;i>=0;i--){
-      v=parseInt(arr[i].data && arr[i].data.n,10)||0;
+      d=arr[i].data||{};
+      if(d.kind==="spend") continue; /* Магазин (2026-06-07): покупка/возврат — не ошибка и не заслуга, пунктстрик не трогают (ГАЙД-очки.md §3) */
+      v=parseInt(d.n,10)||0;
       if(v>0) n++;
       else if(v<0) break;
     }
@@ -196,6 +198,22 @@ window.RobTop = window.RobTop || {};
         summary: function(){ return bankSummary(); }
         /* streakReset упразднён 2026-06-07: винстрик выводится из леджера и гаснет сам
            (день без задания); хранимого счётчика больше нет. */
+      },
+      /* ---- оповещения (ядро core/notify.js + api/notify.php; канон — ГАЙД-оповещения.md) ----
+         send(to, type, opts?) — fire-and-forget, никогда не reject. to: "parents"|"child"|"family"
+         (родитель в модуле шлёт "child" ребёнку, выбранному на дашборде — child добавляется сам,
+         как в dataOp). opts: { params:{…} для шаблона ntf.ev.<модуль>.<type>, link:{module,item}
+         либо {view,id} }. Текст обязан иметь ключ ntf.ev.<модуль>.<type> в core/notify.js
+         (en/ru/lv) либо params.text-фолбэк. В демо — no-op. */
+      notify: {
+        send: function(to,type,opts){
+          opts=opts||{};
+          if(RT.isDemo()) return Promise.resolve({ok:true,demo:true});
+          var b={op:"send",to:String(to||"parents"),src:mod,type:String(type||""),
+                 params:opts.params||null,link:opts.link||null};
+          var pc=parentChild(); if(pc) b.child=pc;
+          return API.post("notify.php",b).catch(function(){ return {ok:false}; });
+        }
       },
       /* sdk.admin.verify (PIN) упразднён 2026-06-07: роль даёт сессия аккаунта — модулям достаточно sdk.role / sdk.isDemo() */
       theme: { tokens: shell.tokens || {} },

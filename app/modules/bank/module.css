@@ -54,6 +54,8 @@
 [data-mod="bank"] .bk-pig-label{position:absolute;left:17%;top:48%;width:48%;text-align:center;
   color:#fff;font-weight:800;font-size:14px;text-shadow:0 0 10px color-mix(in srgb,var(--red) 80%,transparent)}
 [data-mod="bank"] .bk-pig-label b{font-family:var(--font-display);font-size:24px;display:block;line-height:1.1}
+/* «заработано за всё время» — сумма всех плюсов леджера (траты Магазина её не уменьшают) */
+[data-mod="bank"] .bk-earned{margin-top:10px;text-align:center;color:var(--muted);font-weight:700;font-size:12.5px}
 [data-mod="bank"] .bk-pig.wobble{animation:bk-wobble .5s ease}
 @keyframes bk-wobble{0%{transform:rotate(0)}25%{transform:rotate(-3deg) scale(1.02)}60%{transform:rotate(2.4deg)}100%{transform:rotate(0)}}
 @keyframes bk-coin{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
