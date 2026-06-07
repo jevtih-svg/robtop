@@ -79,7 +79,7 @@ window.RobTop = window.RobTop || {};
   function setInstalled(o){ lsSet("robtop_installed",o); }
 
   /* ---- DOM ---- */
-  var body, appsEl, homeView, moduleView, fabEl, toastEl, demoBadge,
+  var body, appsEl, homeView, moduleView, lockView, fabEl, toastEl, demoBadge,
       hudL,hudCnum,hudClbl,hudRnum,hudRlbl, settingsOverlay, settingsBody,
       storeOverlay, storeBody, gearBtn;
 
@@ -148,8 +148,44 @@ window.RobTop = window.RobTop || {};
 
   /* ================= ВИДЫ ================= */
   function moduleViewEl(){ return moduleView; }
-  function showHome(){ body.setAttribute("data-view","home"); moduleView.classList.remove("active"); homeView.classList.add("active"); window.scrollTo(0,0); fabDestroy(); homeHud(); }
-  function showModule(){ body.setAttribute("data-view","module"); homeView.classList.remove("active"); moduleView.classList.add("active"); window.scrollTo(0,0); }
+  function showHome(){ body.setAttribute("data-view","home"); if(lockView) lockView.classList.remove("active"); moduleView.classList.remove("active"); homeView.classList.add("active"); window.scrollTo(0,0); fabDestroy(); homeHud(); }
+  function showModule(){ body.setAttribute("data-view","module"); if(lockView) lockView.classList.remove("active"); homeView.classList.remove("active"); moduleView.classList.add("active"); window.scrollTo(0,0); }
+
+  /* ---- экран входа (lock): на сервере без сессии приложение закрыто ---- */
+  function showLock(loading){
+    body.setAttribute("data-view","lock");
+    homeView.classList.remove("active"); moduleView.classList.remove("active");
+    lockView.classList.add("active");
+    renderLock(loading);
+    window.scrollTo(0,0);
+  }
+  function renderLock(loading){
+    var head='<div class="hometop"><h1 class="brand">Rob<b>Top</b></h1>'
+      +'<div class="tagline">'+esc(t("lock.hint"))+'</div></div>';
+    if(loading){ lockView.innerHTML=head+'<p class="set-note" style="text-align:center">'+esc(t("account.loading"))+'</p>'; return; }
+    lockView.innerHTML=head
+      +'<div class="lockform">'
+      +'<p class="set-note">'+esc(t("account.loginHint"))+'</p>'
+      +'<input class="set-in" id="lockLogin" type="text" placeholder="'+esc(t("account.loginPh"))+'" autocomplete="username">'
+      +'<input class="set-in" id="lockPass" type="password" placeholder="'+esc(t("account.passPh"))+'" autocomplete="current-password">'
+      +'<button class="btn btn-primary" id="lockIn">'+esc(t("account.signIn"))+'</button>'
+      +'</div>';
+    var lg=lockView.querySelector("#lockLogin"), ps=lockView.querySelector("#lockPass");
+    var go=function(){ loginFlow((lg.value||"").trim(), ps.value||"", lockView.querySelector(".lockform")); };
+    lockView.querySelector("#lockIn").onclick=go;
+    ps.addEventListener("keydown",function(e){ if(e.key==="Enter") go(); });
+    setTimeout(function(){ lg.focus(); },150);
+  }
+  /* общий поток входа: успех → reload (меняется rt_user_id); 1234 → обязательная смена в target */
+  function loginFlow(loginV, passV, forceTarget){
+    if(!loginV||!passV){ toast(t("account.badLogin")); return; }
+    RT.API.post("accounts.php",{op:"login",login:loginV,password:passV}).then(function(r){
+      if(!(r&&r.ok&&r.user)){ toast(t("account.badLogin")); return; }
+      if(r.user.mustChangePassword){ renderForcePass(forceTarget); return; }
+      toast(t("account.welcome",{name:r.user.nickname}));
+      setTimeout(function(){ location.reload(); },500);
+    }).catch(function(){ toast(t("account.badLogin")); });
+  }
 
   function iconHtml(m){
     if(m.source==="installed" && m.icon && /\.(svg|png|jpe?g|webp|gif)$/i.test(m.icon)) return '<img src="apps/'+esc(m.id)+'/'+esc(m.icon)+'" alt="">';
@@ -237,28 +273,20 @@ window.RobTop = window.RobTop || {};
     var inBtn=settingsBody.querySelector("#acctIn");
     if(inBtn){
       var lg=settingsBody.querySelector("#acctLogin"), ps=settingsBody.querySelector("#acctPass");
-      var doLogin=function(){
-        var l=(lg.value||"").trim(), p=ps.value||"";
-        if(!l||!p){ toast(t("account.badLogin")); return; }
-        RT.API.post("accounts.php",{op:"login",login:l,password:p}).then(function(r){
-          if(!(r&&r.ok&&r.user)){ toast(t("account.badLogin")); return; }
-          if(r.user.mustChangePassword){ renderForcePass(); return; }
-          toast(t("account.welcome",{name:r.user.nickname}));
-          setTimeout(function(){ location.reload(); },500);
-        }).catch(function(){ toast(t("account.badLogin")); });
-      };
+      var doLogin=function(){ loginFlow((lg.value||"").trim(), ps.value||"", settingsBody); };
       inBtn.onclick=doLogin;
       ps.addEventListener("keydown",function(e){ if(e.key==="Enter") doLogin(); });
     }
   }
-  /* обязательная смена одноразового 1234: до смены сервер не пускает дальше */
-  function renderForcePass(){
-    settingsBody.innerHTML='<h2>'+esc(t("account.changeTitle"))+'</h2>'
+  /* обязательная смена одноразового 1234 (target: settingsBody или форма на lock-экране) */
+  function renderForcePass(target){
+    target=target||settingsBody;
+    target.innerHTML='<h2>'+esc(t("account.changeTitle"))+'</h2>'
       +'<p class="set-note">'+esc(t("account.changeHint"))+'</p>'
       +'<input class="set-in" id="npIn" type="password" placeholder="'+esc(t("account.newPassPh"))+'" autocomplete="new-password">'
       +'<div class="sheet-actions"><button class="btn btn-primary" id="npSave" style="flex:1">'+esc(t("account.saveCont"))+'</button></div>';
-    var inp=settingsBody.querySelector("#npIn");
-    settingsBody.querySelector("#npSave").onclick=function(){
+    var inp=target.querySelector("#npIn");
+    target.querySelector("#npSave").onclick=function(){
       var v=inp.value||"";
       if(v.length<4||v==="1234"){ toast(t("account.weakPass")); return; }
       RT.API.post("accounts.php",{op:"set_password",new_password:v}).then(function(){
@@ -398,6 +426,7 @@ window.RobTop = window.RobTop || {};
     appsEl=document.getElementById("apps");
     homeView=document.getElementById("home");
     moduleView=document.getElementById("module-view");
+    lockView=document.getElementById("lock");
     fabEl=document.getElementById("fab");
     toastEl=document.getElementById("toast");
     demoBadge=document.getElementById("demoBadge");
@@ -421,6 +450,7 @@ window.RobTop = window.RobTop || {};
   function onLocaleChange(){
     I.apply(document);
     renderHome();
+    if(lockView && lockView.classList.contains("active")) renderLock(false);
     if(settingsOverlay && settingsOverlay.classList.contains("show")) renderSettings();
     if(storeOverlay && storeOverlay.classList.contains("show")) renderStore();
   }
@@ -438,9 +468,17 @@ window.RobTop = window.RobTop || {};
     I.apply(document);                 // перевести статический DOM под активный язык
     I.onChange(onLocaleChange);        // реагировать на смену языка
     RT._shell.demo=demo; body.classList.toggle("demo",demo);
-    showHome();
-    loadRegistry();
-    loadAccount(); // кто вошёл: обновит RT._shell.user (роль для модулей) и блок «Аккаунт» в настройках
+    if(demo){ showHome(); loadRegistry(); loadAccount(); return; } // file:// — демо без входа
+    // СЕРВЕР: приложение закрыто до входа. Сначала проверяем сессию, плитки не показываем.
+    showLock(true);
+    loadAccount().then(function(a){
+      if(a && a.authenticated){
+        if(a.user && a.user.mustChangePassword){ showLock(true); renderForcePass(lockView); return; }
+        showHome(); loadRegistry();
+      } else {
+        renderLock(false); // форма входа
+      }
+    });
   }
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",boot); else boot();
 })(window.RobTop);

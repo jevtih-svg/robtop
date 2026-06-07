@@ -30,6 +30,7 @@
         open: "Settings", title: "Settings", language: "Language",
         manageApps: "Manage apps"
       },
+      lock: { hint: "Sign in to continue", title: "Who is signing in?" },
       account: {
         title: "Account",
         loading: "Checking who is signed in…",
@@ -106,6 +107,7 @@
         open: "Настройки", title: "Настройки", language: "Язык",
         manageApps: "Управление приложениями"
       },
+      lock: { hint: "Войдите, чтобы продолжить", title: "Кто входит?" },
       account: {
         title: "Аккаунт",
         loading: "Проверяем, кто вошёл…",
@@ -182,6 +184,7 @@
         open: "Iestatījumi", title: "Iestatījumi", language: "Valoda",
         manageApps: "Pārvaldīt lietotnes"
       },
+      lock: { hint: "Pieslēdzies, lai turpinātu", title: "Kurš pieslēdzas?" },
       account: {
         title: "Konts",
         loading: "Pārbaudām, kurš ir pieslēdzies…",

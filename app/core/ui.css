@@ -190,6 +190,12 @@ body.demo .demo-badge{display:block}
 .lang-opt.on{border-color:var(--cyan);color:#fff;box-shadow:0 0 0 3px rgba(25,227,255,.16), 0 0 18px -6px var(--cyan)}
 .lang-opt.on::after{content:"✓";color:var(--cyan);font-weight:800;font-size:18px}
 
+/* ===================== ЭКРАН ВХОДА (lock) ===================== */
+#lock{padding-bottom:60px}
+#lock .hometop{text-align:center}
+.lockform{max-width:340px;margin:14px auto 0}
+.lockform .btn{width:100%;margin-top:12px}
+
 /* ===================== АККАУНТ (настройки) ===================== */
 .set-note{color:#9fb0d6;font-size:12.5px;font-weight:600;margin:2px 2px 8px;line-height:1.45}
 .set-in{width:100%;margin-top:8px;border:1.6px solid rgba(255,255,255,.16);border-radius:14px;padding:13px 14px;
