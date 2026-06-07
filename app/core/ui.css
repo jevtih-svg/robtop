@@ -61,7 +61,7 @@ body[data-theme="tilley"] .store-row{--c:#E8440A !important}
 body[data-theme="tilley"] #bg{opacity:.85}
 
 html{background:var(--bg0)}
-html,body{margin:0;padding:0;min-height:100%;overscroll-behavior:none}
+html,body{margin:0;padding:0;min-height:100%;overscroll-behavior:none;touch-action:manipulation}
 body{
   font-family:var(--font-body);
   color:var(--ink); background:var(--bg0); min-height:100vh; overflow-x:hidden;
@@ -78,12 +78,12 @@ body{
 #home{padding-bottom:46px}
 .hometop{padding:calc(30px + env(safe-area-inset-top)) 6px 14px;position:relative}
 .brand{font-family:var(--font-display);font-size:40px;letter-spacing:1px;line-height:1;margin:0;color:#fff;
-  text-shadow:0 0 12px rgba(25,227,255,.7), 0 0 28px rgba(255,43,214,.6)}
+  text-shadow:var(--brand-glow)}
 .brand b{color:var(--pink);font-weight:400}
 .tagline{margin:8px 2px 0;color:var(--muted);font-weight:600;font-size:15px;letter-spacing:.2px}
 .tagline .spark{color:var(--cyan)}
 .gear{position:absolute;top:calc(30px + env(safe-area-inset-top));right:6px;width:42px;height:42px;border-radius:13px;
-  display:grid;place-items:center;cursor:pointer;font-size:20px;color:#bfe9ff;
+  display:grid;place-items:center;cursor:pointer;font-size:20px;color:var(--chrome-ink);
   background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14);box-shadow:0 0 18px -7px var(--cyan)}
 .gear:active{transform:scale(.93)}
 
@@ -94,7 +94,7 @@ body{
 .apps-sep::before,.apps-sep::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.1)}
 .tile{position:relative;display:flex;flex-direction:column;gap:11px;align-items:flex-start;
   border-radius:20px;padding:17px 15px;cursor:pointer;text-align:left;font-family:inherit;color:var(--ink);
-  background:linear-gradient(162deg, rgba(26,23,56,.72), rgba(11,10,28,.74));
+  background:var(--tile-bg);
   border:1.5px solid color-mix(in srgb, var(--c) 50%, transparent);
   box-shadow:0 8px 26px rgba(0,0,0,.46), 0 0 26px -10px var(--c), inset 0 1px 0 rgba(255,255,255,.04);
   transition:transform .14s ease, box-shadow .22s ease}
@@ -120,7 +120,7 @@ body{
 
 /* generic header buttons (used by module headers) */
 .back,.hbtn{flex:none;width:46px;height:46px;border-radius:15px;display:grid;place-items:center;cursor:pointer;
-  background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14);color:#bfe9ff;
+  background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14);color:var(--chrome-ink);
   box-shadow:0 0 18px -7px var(--cyan)}
 .back:active,.hbtn:active{transform:scale(.93)}
 .back svg,.hbtn svg{width:22px;height:22px}
@@ -133,7 +133,7 @@ body[data-view="settings"] .fab{display:none}
 .hud{position:fixed;left:0;right:0;bottom:0;z-index:14;pointer-events:none;
   max-width:480px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;
   padding:0 22px calc(16px + env(safe-area-inset-bottom));
-  background:linear-gradient(0deg, rgba(5,4,15,.86), transparent)}
+  background:var(--hud-grad)}
 .hud .big{font-family:var(--font-display);font-size:34px;color:#fff;line-height:.95;text-shadow:0 0 14px rgba(255,255,255,.22)}
 .hud .lbl{font-weight:700;font-size:13px;letter-spacing:.4px;margin-top:3px}
 .hud-l{font-weight:800;font-size:14px;color:var(--mint);text-shadow:0 0 12px rgba(56,232,160,.5);padding-bottom:3px}
@@ -146,8 +146,8 @@ body[data-view="settings"] .fab{display:none}
   bottom:calc(70px + env(safe-area-inset-bottom));right:max(18px, calc(50vw - 222px));
   height:58px;padding:0 22px 0 18px;border:none;border-radius:30px;cursor:pointer;color:#fff;
   font-family:var(--font-display);font-size:15px;letter-spacing:.3px;
-  background:linear-gradient(180deg,#ff5db0,#d51a82);
-  box-shadow:0 0 28px -3px var(--pink), 0 12px 26px rgba(0,0,0,.5)}
+  background:var(--accent-grad);
+  box-shadow:0 0 28px -3px var(--accent), 0 12px 26px rgba(0,0,0,.5)}
 .fab.show{display:flex}
 .fab:active{transform:scale(.95)}
 .fab .plus{width:26px;height:26px;display:grid;place-items:center;background:rgba(255,255,255,.24);border-radius:50%;font-size:21px;line-height:1}
@@ -158,9 +158,9 @@ body[data-view="settings"] .fab{display:none}
 .overlay.show{display:flex;animation:fade .2s both}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 .sheet{width:100%;max-width:480px;border-radius:26px 26px 0 0;padding:10px 18px calc(22px + env(safe-area-inset-bottom));
-  background:linear-gradient(180deg, rgba(24,21,52,.97), rgba(10,9,26,.99));
-  border-top:1.5px solid color-mix(in srgb,var(--pink) 55%, transparent);
-  box-shadow:0 -12px 50px rgba(255,43,214,.18);max-height:92vh;overflow:auto;
+  background:var(--sheet-bg);
+  border-top:1.5px solid color-mix(in srgb,var(--accent) 55%, transparent);
+  box-shadow:0 -12px 50px color-mix(in srgb,var(--accent) 18%, transparent);max-height:92vh;overflow:auto;
   animation:slideup .26s cubic-bezier(.2,.8,.2,1) both;color:var(--ink)}
 @keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
 .grip{width:44px;height:5px;border-radius:3px;background:rgba(255,255,255,.28);margin:6px auto 12px;cursor:grab}
@@ -177,7 +177,7 @@ body.demo .demo-badge{display:block}
   pointer-events:none;user-select:none}
 .set-ver{margin-top:18px;text-align:center;font-size:11px;font-weight:600;letter-spacing:.4px;color:rgba(147,166,207,.55)}
 .sheet h2{font-family:var(--font-display);font-weight:400;font-size:21px;margin:0 0 14px;text-align:center;color:#fff;
-  text-shadow:0 0 12px rgba(255,61,176,.6)}
+  text-shadow:0 0 12px color-mix(in srgb,var(--accent) 60%, transparent)}
 .field{margin-top:14px}
 .field label{display:block;font-weight:800;font-size:14px;color:#c3d2f2;margin-bottom:6px;padding-left:4px}
 .field .opt{color:#8aa0c8;font-weight:700;font-size:12.5px}
@@ -185,7 +185,7 @@ body.demo .demo-badge{display:block}
   font-family:inherit;font-size:16px;font-weight:600;color:var(--ink);background:rgba(255,255,255,.04);outline:none;transition:border-color .15s, box-shadow .15s}
 .field textarea{resize:none;min-height:70px;line-height:1.4}
 .field input::placeholder,.field textarea::placeholder{color:#6f80a6}
-.field input:focus,.field textarea:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,61,176,.16)}
+.field input:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%, transparent)}
 .sheet-actions{display:flex;gap:10px;margin-top:20px}
 .sheet-actions .btn{padding:14px}
 
@@ -195,7 +195,7 @@ body.demo .demo-badge{display:block}
   background:rgba(255,255,255,.05);color:#e7eeff;transition:transform .1s, filter .15s}
 .btn:active{transform:scale(.96)}
 .btn svg{width:17px;height:17px}
-.btn-primary{background:linear-gradient(180deg,#ff5db0,#d51a82);color:#fff;font-size:16px;border-color:transparent;box-shadow:0 0 20px -5px var(--pink)}
+.btn-primary{background:var(--accent-grad);color:#fff;font-size:16px;border-color:transparent;box-shadow:0 0 20px -5px var(--accent)}
 .btn-cancel{background:rgba(255,255,255,.06);color:#aab8d6;flex:0 0 38%}
 .btn-danger{background:rgba(255,77,109,.14);color:#ffb3c0;border-color:rgba(255,77,109,.5)}
 
@@ -236,7 +236,7 @@ body.demo .demo-badge{display:block}
 #settings{padding-bottom:46px}
 .set-top{display:flex;align-items:center;gap:12px;padding:calc(26px + env(safe-area-inset-top)) 0 8px}
 .set-top h1{font-family:var(--font-display);font-weight:400;font-size:23px;margin:0;color:#fff;
-  text-shadow:0 0 12px rgba(255,61,176,.6)}
+  text-shadow:0 0 12px color-mix(in srgb,var(--accent) 60%, transparent)}
 /* язык: сегмент-контрол в одну строку вместо стопки кнопок */
 .lang-seg{display:flex;gap:6px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.12);
   border-radius:16px;padding:5px;margin-top:6px}
@@ -439,7 +439,7 @@ button.pd-ev{cursor:pointer;transition:border-color .15s} button.pd-ev:active{bo
 body[data-view="parent"] .pd-tabbar{display:flex}
 .pd-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:14;max-width:480px;margin:0 auto;gap:4px;
   padding:8px 14px calc(10px + env(safe-area-inset-bottom));
-  background:linear-gradient(0deg, rgba(5,4,15,.94) 60%, transparent);border-top:1px solid rgba(255,255,255,.09);backdrop-filter:blur(8px)}
+  background:var(--tabbar-grad);border-top:1px solid rgba(255,255,255,.09);backdrop-filter:blur(8px)}
 .pd-tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;
   font-family:inherit;font-size:10px;font-weight:800;letter-spacing:.3px;color:var(--muted);padding:6px 4px;border-radius:12px;transition:.15s}
 .pd-tabbar button svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
@@ -513,3 +513,19 @@ body[data-view="parent"] .pd-tabbar{display:flex}
 .tk-msg .who{font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#93a6cf;margin-bottom:3px}
 .tk-msg .body{font-size:13.5px;font-weight:600;color:#eaf2ff;line-height:1.45;white-space:pre-wrap;word-break:break-word}
 .tk-msg .when{font-size:9.5px;font-weight:700;color:#93a6cf;margin-top:3px;text-align:right}
+
+/* ===== выбор темы в Настройках (секция «Оформление», 2026-06-07) =====
+   Карточки строит shell.renderSettings из RTTheme.list(); превью — инлайн-фон из реестра. */
+.theme-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.theme-card{position:relative;border-radius:16px;padding:11px;cursor:pointer;text-align:left;font-family:inherit;
+  border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:var(--ink);
+  transition:transform .12s, border-color .15s, box-shadow .15s}
+.theme-card:active{transform:scale(.97)}
+.theme-card .prev{height:54px;border-radius:11px;margin-bottom:8px;border:1px solid rgba(255,255,255,.14);
+  position:relative;overflow:hidden}
+.theme-card .prev i{position:absolute;width:11px;height:11px;border-radius:50%;box-shadow:0 0 8px currentColor}
+.theme-card .nm{font-weight:800;font-size:13.5px;color:#fff}
+.theme-card .mark{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;display:none;
+  place-items:center;font-size:13px;font-weight:800;color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0)}
+.theme-card.on{border-color:var(--cyan);box-shadow:0 0 18px -6px var(--cyan)}
+.theme-card.on .mark{display:grid}

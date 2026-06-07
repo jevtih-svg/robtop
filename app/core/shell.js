@@ -20,6 +20,8 @@ window.RobTop = window.RobTop || {};
       if(acct.authenticated && acct.user){
         RT._shell.user={ name:acct.user.nickname, role:(acct.user.kind==="parent"?"parent":"child") };
         ensureDeviceToken(acct.user); // самолечение: текущий аккаунт всегда в списке устройства
+        // тема аккаунта (users.theme): применить визуально (RTTheme сам кэширует в rt_theme)
+        if(acct.user.theme && window.RTTheme) RTTheme.set(acct.user.theme);
       }
       return acct;
     }).catch(function(){ acct={authenticated:false}; return acct; });
