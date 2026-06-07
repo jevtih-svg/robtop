@@ -155,7 +155,7 @@ INSERT INTO modules (id, name, version, manifest, source, trusted, server, enabl
  ('days','Счётчик дней','1.0.0','{"color":"#3b6bff","status":"soon"}','native',1,0,1,70),
  ('find','Найти предмет','1.0.0','{"color":"#19e3ff","status":"soon"}','native',1,0,1,80),
  ('museum','Домашний музей','1.0.0','{"color":"#c0a0ff","status":"soon"}','native',1,0,1,90),
- ('rating','Оценка дня','1.0.0','{"color":"#ffd23b","status":"soon"}','native',1,0,1,100),
+ ('rating','Оценка дня','1.0.0','{"color":"#ffd23b","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,100),
  ('lost','Бюро находок','1.0.0','{"color":"#2bf0c0","status":"soon"}','native',1,0,1,110),
  ('bank','Копилка','1.0.0','{"color":"#ff4d6d","status":"soon","wide":true}','native',1,0,1,120)
 ON DUPLICATE KEY UPDATE name=VALUES(name), manifest=VALUES(manifest), server=VALUES(server), updated_at=NOW();

@@ -113,7 +113,8 @@ switch ($op) {
                 $tok = rt_token();
                 $db->prepare("INSERT INTO password_resets (user_id, token_hash, created_at, expires_at) VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 1 HOUR))")
                    ->execute([(int)$acc['id'], rt_token_hash($tok)]);
-                rt_mail_send(rt_norm_email($email), 'RobTop: сброс пароля', 'Ссылка для сброса пароля.', rt_app_url('?reset=' . $tok));
+                // посадочная family.html — index.html параметр ?reset= не обрабатывает
+                rt_mail_send_tpl(rt_norm_email($email), 'password_reset', rt_mail_lang($b), ['link' => rt_app_url('family.html?reset=' . $tok)]);
                 rt_log('accounts', 'password_reset_requested', (int)$acc['id']);
             }
         }
@@ -207,8 +208,8 @@ switch ($op) {
              VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY))"
         )->execute([$type, (int)$u['id'], $fid, $targetChild, $email, rt_token_hash($tok)]);
         $invId = (int)$db->lastInsertId();
-        $link = rt_app_url('?invite=' . $tok);
-        if ($email) rt_mail_send($email, 'Приглашение в RobTop', 'Вас пригласили в RobTop.', $link);
+        $link = rt_app_url('family.html?invite=' . $tok); // посадочная family.html, index ?invite= не понимает
+        rt_invite_mail($db, $type, $email, (int)$u['id'], $targetChild, $link, rt_mail_lang($b));
         rt_log('accounts', 'invite_sent', $invId, $type, null, null, ['type' => $type, 'to' => $email]);
         rt_json(['ok' => true, 'invitation_id' => $invId, 'link' => $link, 'type' => $type]);
     }
@@ -352,8 +353,9 @@ switch ($op) {
                  VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY))"
             )->execute([$inv['type'], (int)$u['id'], $inv['family_id'], $inv['target_child_id'], $inv['email'], rt_token_hash($tok)]);
             $newId = (int)$db->lastInsertId();
-            $link = rt_app_url('?invite=' . $tok);
-            if (!empty($inv['email'])) rt_mail_send($inv['email'], 'Приглашение в RobTop', 'Вас пригласили в RobTop.', $link);
+            $link = rt_app_url('family.html?invite=' . $tok);
+            rt_invite_mail($db, (string)$inv['type'], !empty($inv['email']) ? (string)$inv['email'] : null,
+                (int)$u['id'], !empty($inv['target_child_id']) ? (int)$inv['target_child_id'] : null, $link, rt_mail_lang($b));
             rt_log('accounts', 'invite_sent', $newId, $inv['type'], null, null, ['resend_of' => $id]);
             rt_json(['ok' => true, 'invitation_id' => $newId, 'link' => $link]);
         }
@@ -385,6 +387,22 @@ switch ($op) {
 
     default:
         rt_json(['error' => 'unknown op'], 400);
+}
+
+/** Письмо-приглашение по трёхъязычному шаблону (api/mail/registry.php). У child_to_child почты нет — тихо выходим. */
+function rt_invite_mail($db, $type, $email, $inviterId, $targetChildId, $link, $lang) {
+    if (!$email) return;
+    $nick = function ($id) use ($db) {
+        if (!$id) return '';
+        $s = $db->prepare("SELECT name FROM users WHERE id = ? LIMIT 1");
+        $s->execute([(int)$id]);
+        $r = $s->fetch();
+        return $r ? (string)$r['name'] : '';
+    };
+    $action = ($type === 'transfer_child') ? 'transfer_child' : 'invite_co_parent';
+    $data = ['link' => $link, 'inviter' => $nick($inviterId)];
+    if ($type === 'transfer_child') $data['child'] = $nick($targetChildId);
+    rt_mail_send_tpl($email, $action, $lang, $data);
 }
 
 /** Дети под опекой пользователя (для дашборда родителя). */

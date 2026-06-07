@@ -49,6 +49,14 @@
         blockDone: "{name} is blocked", unblockDone: "{name} can sign in again",
         blocked: "blocked"
       },
+      friend: {
+        title: "Friends",
+        hint: "You can invite a friend — they'll get their own RobTop.",
+        invite: "Invite a friend",
+        sheetHint: "Your friend will pick a nickname (never a real name!) and get their own RobTop. Until their parent joins, your parent looks after their account.",
+        makeLink: "Create link",
+        sendHint: "Send this link to your friend. It works for 7 days."
+      },
       reg: {
         link: "I am a new parent — create a family",
         nickPh: "Your nickname",
@@ -153,6 +161,14 @@
         blockDone: "{name} заблокирован", unblockDone: "{name} снова может войти",
         blocked: "заблокирован"
       },
+      friend: {
+        title: "Друзья",
+        hint: "Можно позвать друга — у него появится свой RobTop.",
+        invite: "Позвать друга",
+        sheetHint: "Друг придумает себе никнейм (не настоящее имя!) и получит свой RobTop. Пока его родитель не присоединился, за его аккаунтом присматривает твой родитель.",
+        makeLink: "Создать ссылку",
+        sendHint: "Отправь эту ссылку другу. Она работает 7 дней."
+      },
       reg: {
         link: "Я новый родитель — создать семью",
         nickPh: "Ваш никнейм",
@@ -256,6 +272,14 @@
         unblockConfirm: "Atbloķēt {name}?",
         blockDone: "{name} ir bloķēts", unblockDone: "{name} atkal var pieslēgties",
         blocked: "bloķēts"
+      },
+      friend: {
+        title: "Draugi",
+        hint: "Vari uzaicināt draugu — viņam būs savs RobTop.",
+        invite: "Uzaicināt draugu",
+        sheetHint: "Draugs izdomās sev segvārdu (ne īsto vārdu!) un saņems savu RobTop. Kamēr viņa vecāks nav pievienojies, par viņa kontu rūpējas tavs vecāks.",
+        makeLink: "Izveidot saiti",
+        sendHint: "Nosūti šo saiti draugam. Tā darbojas 7 dienas."
       },
       reg: {
         link: "Esmu jauns vecāks — izveidot ģimeni",

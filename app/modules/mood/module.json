@@ -1,0 +1,16 @@
+{
+  "id": "mood",
+  "name": "Настроение дня",
+  "version": "1.0.0",
+  "color": "#ffd23b",
+  "status": "active",
+  "wide": false,
+  "entry": "module.js",
+  "styles": "module.css",
+  "roles": { "edit": ["child"], "read": ["child", "parent"] },
+  "data": { "store": "generic", "collections": ["entries"] },
+  "server": false,
+  "permissions": ["camera"],
+  "min_shell": "2.0.0",
+  "sort": 30
+}

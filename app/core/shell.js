@@ -65,7 +65,7 @@ window.RobTop = window.RobTop || {};
     {id:"days",name:"Day Counter",color:"#3b6bff",status:"soon",source:"native",sort:70},
     {id:"find",name:"Find the Object",color:"#19e3ff",status:"soon",source:"native",sort:80},
     {id:"museum",name:"Home Museum",color:"#c0a0ff",status:"soon",source:"native",sort:90},
-    {id:"rating",name:"Day Rating",color:"#ffd23b",status:"soon",source:"native",sort:100},
+    {id:"rating",name:"Day Rating",color:"#ffd23b",status:"active",source:"native",sort:100},
     {id:"lost",name:"Lost & Found",color:"#2bf0c0",status:"soon",source:"native",sort:110},
     {id:"bank",name:"Piggy Bank",color:"#ff4d6d",status:"soon",source:"native",wide:true,sort:120}
   ];
@@ -422,6 +422,35 @@ window.RobTop = window.RobTop || {};
     setTimeout(function(){ node.querySelector("#invEmail").focus(); },150);
   }
 
+  /* ===== ДРУЗЬЯ в настройках (только ребёнок): пригласить друга по ссылке (без email) ===== */
+  function friendSectionHtml(){
+    if(demo || !acct || !acct.authenticated || !acct.user || acct.user.kind!=="child") return '';
+    return '<div class="store-section">'+esc(t("friend.title"))+'</div>'
+      +'<p class="set-note">'+esc(t("friend.hint"))+'</p>'
+      +'<div class="store-install" id="friendInvite">🎈 '+esc(t("friend.invite"))+'</div>';
+  }
+  function openInviteFriend(){
+    var node=document.createElement("div");
+    node.innerHTML='<h2>'+esc(t("friend.invite"))+'</h2>'
+      +'<p class="set-note">'+esc(t("friend.sheetHint"))+'</p>'
+      +'<div class="sheet-actions"><button class="btn btn-cancel" id="frCancel" style="flex:0 0 38%">'+esc(t("common.cancel"))+'</button>'
+      +'<button class="btn btn-primary" id="frGo" style="flex:1">'+esc(t("friend.makeLink"))+'</button></div>'
+      +'<div id="frOut"></div>';
+    var ctl=sheet(node);
+    node.querySelector("#frCancel").onclick=ctl.close;
+    node.querySelector("#frGo").onclick=function(){
+      famApi({op:"invite",type:"child_to_child",lang:I.get()}).then(function(r){
+        node.querySelector("#frOut").innerHTML='<p class="set-note">'+esc(t("friend.sendHint"))+'</p>'
+          +'<div class="invlink">'+esc(r.link||"")+'</div>'
+          +'<button class="btn btn-primary" id="frCopy" style="width:100%;margin-top:10px">'+esc(t("family.copy"))+'</button>';
+        node.querySelector("#frCopy").onclick=function(){
+          try{ if(navigator.clipboard) navigator.clipboard.writeText(r.link||""); }catch(e){}
+          toast(t("family.copied"));
+        };
+      }).catch(function(){ toast(t("common.failed")); });
+    };
+  }
+
   function renderSettings(){
     var cur=I.get();
     var langBtns=I.supported.map(function(code){
@@ -431,6 +460,7 @@ window.RobTop = window.RobTop || {};
     settingsBody.innerHTML='<h2>'+esc(t("settings.title"))+'</h2>'
       +accountSectionHtml()
       +famSectionHtml()
+      +friendSectionHtml()
       +'<div class="store-section">'+esc(t("settings.language"))+'</div>'
       +'<div class="lang-row">'+langBtns+'</div>'
       +(showManage
@@ -440,6 +470,8 @@ window.RobTop = window.RobTop || {};
       +'<div class="sheet-actions"><button class="btn btn-cancel" id="settingsClose" style="flex:1">'+esc(t("common.close"))+'</button></div>';
     wireAccountSection();
     if(settingsBody.querySelector("#famBox")) loadFamily();
+    var fr=settingsBody.querySelector("#friendInvite");
+    if(fr) fr.onclick=openInviteFriend;
     settingsBody.querySelector(".lang-row").addEventListener("click",function(e){
       var b=e.target.closest("[data-lang]"); if(!b) return;
       I.set(b.getAttribute("data-lang")); buzz(6);
