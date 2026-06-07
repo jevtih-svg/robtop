@@ -190,4 +190,15 @@ body.demo .demo-badge{display:block}
 .lang-opt.on{border-color:var(--cyan);color:#fff;box-shadow:0 0 0 3px rgba(25,227,255,.16), 0 0 18px -6px var(--cyan)}
 .lang-opt.on::after{content:"✓";color:var(--cyan);font-weight:800;font-size:18px}
 
+/* ===================== АККАУНТ (настройки) ===================== */
+.set-note{color:#9fb0d6;font-size:12.5px;font-weight:600;margin:2px 2px 8px;line-height:1.45}
+.set-in{width:100%;margin-top:8px;border:1.6px solid rgba(255,255,255,.16);border-radius:14px;padding:13px 14px;
+  font-family:inherit;font-size:16px;font-weight:700;color:var(--ink);background:rgba(255,255,255,.04);outline:none}
+.set-in:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(25,227,255,.18)}
+.acct-row{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12)}
+.acct-row .nm{flex:1;min-width:0;font-weight:800;font-size:15px;color:#eef4ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acct-row .rl{flex:0 0 auto;font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;
+  background:rgba(43,240,192,.14);color:#9ff0d8;border:1px solid rgba(43,240,192,.45)}
+
 @media (max-width:360px){ .tile .nm{font-size:14px} .brand{font-size:34px} }

@@ -90,6 +90,22 @@ function rt_admin_ok($pin) {
     return is_string($pin) && hash_equals($set, (string)$pin);
 }
 
+/**
+ * Админ-гейт (решение 2026-06-05, §4.10 плана аккаунтов): управление приложениями
+ * доступно РОДИТЕЛЬСКОЙ СЕССИИ. PIN (admin_pin) остаётся только как fallback на
+ * переходный период (вход без аккаунта). Используется эндпоинтами store/*.
+ */
+function rt_admin_gate($b) {
+    try {
+        $uid = rt_session_user_id();
+        if ($uid) {
+            $a = rt_account(rt_db(), $uid);
+            if ($a && $a['kind'] === 'parent' && $a['status'] === 'active') return true;
+        }
+    } catch (Throwable $e) { /* нет таблиц/сессии — проверим PIN ниже */ }
+    return rt_admin_ok(isset($b['pin']) ? $b['pin'] : '');
+}
+
 /* ---------- Реестр модулей ---------- */
 function rt_modules_all($db) {
     return $db->query(

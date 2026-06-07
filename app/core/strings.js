@@ -30,6 +30,22 @@
         open: "Settings", title: "Settings", language: "Language",
         manageApps: "Manage apps"
       },
+      account: {
+        title: "Account",
+        loading: "Checking who is signed in…",
+        loginHint: "Parents sign in with email, children with a nickname.",
+        loginPh: "Email or nickname", passPh: "Password",
+        signIn: "Sign in", signOut: "Sign out",
+        roleParent: "parent/guardian", roleChild: "child",
+        badLogin: "Wrong login or password",
+        changeTitle: "Set a new password",
+        changeHint: "You signed in with the one-time 1234. Set your own password to continue.",
+        newPassPh: "New password (not 1234)", saveCont: "Save and continue",
+        weakPass: "At least 4 characters, and not 1234",
+        demoNote: "Sign-in works in the server version of the app.",
+        welcome: "Welcome, {name}!", signedOut: "Signed out",
+        guestNote: "Without sign-in the app runs in family mode."
+      },
       store: {
         title: "Apps", adminNote: "App management is for a parent.",
         installed: "Installed", installApp: "Install an app",
@@ -90,6 +106,22 @@
         open: "Настройки", title: "Настройки", language: "Язык",
         manageApps: "Управление приложениями"
       },
+      account: {
+        title: "Аккаунт",
+        loading: "Проверяем, кто вошёл…",
+        loginHint: "Родители входят по email, дети по никнейму.",
+        loginPh: "Email или никнейм", passPh: "Пароль",
+        signIn: "Войти", signOut: "Выйти",
+        roleParent: "родитель/опекун", roleChild: "ребёнок",
+        badLogin: "Неверный логин или пароль",
+        changeTitle: "Задай новый пароль",
+        changeHint: "Вход был по одноразовому 1234. Придумай свой пароль, чтобы продолжить.",
+        newPassPh: "Новый пароль (не 1234)", saveCont: "Сохранить и продолжить",
+        weakPass: "Минимум 4 символа, и не 1234",
+        demoNote: "Вход работает в серверной версии приложения.",
+        welcome: "Привет, {name}!", signedOut: "Вы вышли",
+        guestNote: "Без входа приложение работает в семейном режиме."
+      },
       store: {
         title: "Приложения", adminNote: "Управление приложениями — для родителя.",
         installed: "Установленные", installApp: "Установить приложение",
@@ -149,6 +181,22 @@
       settings: {
         open: "Iestatījumi", title: "Iestatījumi", language: "Valoda",
         manageApps: "Pārvaldīt lietotnes"
+      },
+      account: {
+        title: "Konts",
+        loading: "Pārbaudām, kurš ir pieslēdzies…",
+        loginHint: "Vecāki pieslēdzas ar e-pastu, bērni ar segvārdu.",
+        loginPh: "E-pasts vai segvārds", passPh: "Parole",
+        signIn: "Pieslēgties", signOut: "Iziet",
+        roleParent: "vecāks/aizbildnis", roleChild: "bērns",
+        badLogin: "Nepareizs lietotājvārds vai parole",
+        changeTitle: "Iestati jaunu paroli",
+        changeHint: "Pieslēgšanās notika ar vienreizējo 1234. Iestati savu paroli, lai turpinātu.",
+        newPassPh: "Jauna parole (ne 1234)", saveCont: "Saglabāt un turpināt",
+        weakPass: "Vismaz 4 rakstzīmes, un ne 1234",
+        demoNote: "Pieslēgšanās darbojas lietotnes servera versijā.",
+        welcome: "Sveiks, {name}!", signedOut: "Jūs izgājāt",
+        guestNote: "Bez pieslēgšanās lietotne darbojas ģimenes režīmā."
       },
       store: {
         title: "Lietotnes", adminNote: "Lietotņu pārvaldība ir vecākiem.",

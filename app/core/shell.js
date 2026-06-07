@@ -12,6 +12,20 @@ window.RobTop = window.RobTop || {};
   var ADMIN_DEMO_PIN="1234";
   var adminPin=null; // валидированный PIN администратора (в памяти сессии)
 
+  /* ---- аккаунт (сессия accounts.php). null = ещё не проверяли. ---- */
+  var acct=null;
+  function isParent(){ return !!(acct && acct.authenticated && acct.user && acct.user.kind==="parent"); }
+  function loadAccount(){
+    if(demo){ acct={authenticated:false}; return Promise.resolve(acct); }
+    return RT.API.post("accounts.php",{op:"me"}).then(function(r){
+      acct=(r&&r.ok)?r:{authenticated:false};
+      if(acct.authenticated && acct.user){
+        RT._shell.user={ name:acct.user.nickname, role:(acct.user.kind==="parent"?"parent":"child") };
+      }
+      return acct;
+    }).catch(function(){ acct={authenticated:false}; return acct; });
+  }
+
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
   /* локализованное имя плитки/модуля (нативные — из tile.<id>, установленные — из манифеста) */
   function modName(m){ return t("tile."+m.id, {fallback:m.name||m.id}); }
@@ -185,20 +199,88 @@ window.RobTop = window.RobTop || {};
     }).catch(function(){ RT.setRegistry(visible(DEFAULTS.map(function(m){return Object.assign({},m);}))); renderHome(); });
   }
 
-  /* ================= НАСТРОЙКИ (язык — всем; «приложения» — за PIN) ================= */
-  function openSettings(){ renderSettings(); settingsOverlay.classList.add("show"); }
+  /* ================= НАСТРОЙКИ (аккаунт + язык; «приложения» — родителю, PIN как fallback) ================= */
+  function authKey(){ return demo?"demo":(acct===null?"loading":(acct.authenticated?("in:"+(acct.user&&acct.user.id)):"out")); }
+  function openSettings(){
+    renderSettings(); settingsOverlay.classList.add("show");
+    if(!demo){ var k=authKey(); loadAccount().then(function(){
+      if(settingsOverlay.classList.contains("show") && authKey()!==k) renderSettings();
+    }); }
+  }
   function closeSettings(){ settingsOverlay.classList.remove("show"); }
+
+  /* блок «Аккаунт» в настройках: статус + вход/выход (вход меняет rt_user_id на сервере, поэтому после
+     успеха перезагружаем страницу — чистое состояние реестра и данных, без частичных перерисовок) */
+  function accountSectionHtml(){
+    var out='<div class="store-section">'+esc(t("account.title"))+'</div>';
+    if(demo) return out+'<p class="set-note">'+esc(t("account.demoNote"))+'</p>';
+    if(acct===null) return out+'<p class="set-note">'+esc(t("account.loading"))+'</p>';
+    if(acct.authenticated && acct.user){
+      var u=acct.user, role=(u.kind==="parent")?t("account.roleParent"):t("account.roleChild");
+      return out
+        +'<div class="acct-row"><span class="nm">'+esc(u.nickname)+'</span><span class="rl">'+esc(role)+'</span></div>'
+        +'<div class="sheet-actions"><button class="btn btn-cancel" id="acctOut" style="flex:1">'+esc(t("account.signOut"))+'</button></div>';
+    }
+    return out
+      +'<p class="set-note">'+esc(t("account.loginHint"))+' '+esc(t("account.guestNote"))+'</p>'
+      +'<input class="set-in" id="acctLogin" type="text" placeholder="'+esc(t("account.loginPh"))+'" autocomplete="username">'
+      +'<input class="set-in" id="acctPass" type="password" placeholder="'+esc(t("account.passPh"))+'" autocomplete="current-password">'
+      +'<div class="sheet-actions"><button class="btn btn-primary" id="acctIn" style="flex:1">'+esc(t("account.signIn"))+'</button></div>';
+  }
+  function wireAccountSection(){
+    var outBtn=settingsBody.querySelector("#acctOut");
+    if(outBtn) outBtn.onclick=function(){
+      RT.API.post("accounts.php",{op:"logout"}).catch(function(){}).then(function(){
+        toast(t("account.signedOut")); setTimeout(function(){ location.reload(); },400);
+      });
+    };
+    var inBtn=settingsBody.querySelector("#acctIn");
+    if(inBtn){
+      var lg=settingsBody.querySelector("#acctLogin"), ps=settingsBody.querySelector("#acctPass");
+      var doLogin=function(){
+        var l=(lg.value||"").trim(), p=ps.value||"";
+        if(!l||!p){ toast(t("account.badLogin")); return; }
+        RT.API.post("accounts.php",{op:"login",login:l,password:p}).then(function(r){
+          if(!(r&&r.ok&&r.user)){ toast(t("account.badLogin")); return; }
+          if(r.user.mustChangePassword){ renderForcePass(); return; }
+          toast(t("account.welcome",{name:r.user.nickname}));
+          setTimeout(function(){ location.reload(); },500);
+        }).catch(function(){ toast(t("account.badLogin")); });
+      };
+      inBtn.onclick=doLogin;
+      ps.addEventListener("keydown",function(e){ if(e.key==="Enter") doLogin(); });
+    }
+  }
+  /* обязательная смена одноразового 1234: до смены сервер не пускает дальше */
+  function renderForcePass(){
+    settingsBody.innerHTML='<h2>'+esc(t("account.changeTitle"))+'</h2>'
+      +'<p class="set-note">'+esc(t("account.changeHint"))+'</p>'
+      +'<input class="set-in" id="npIn" type="password" placeholder="'+esc(t("account.newPassPh"))+'" autocomplete="new-password">'
+      +'<div class="sheet-actions"><button class="btn btn-primary" id="npSave" style="flex:1">'+esc(t("account.saveCont"))+'</button></div>';
+    var inp=settingsBody.querySelector("#npIn");
+    settingsBody.querySelector("#npSave").onclick=function(){
+      var v=inp.value||"";
+      if(v.length<4||v==="1234"){ toast(t("account.weakPass")); return; }
+      RT.API.post("accounts.php",{op:"set_password",new_password:v}).then(function(){
+        location.reload();
+      }).catch(function(){ toast(t("common.failed")); });
+    };
+    setTimeout(function(){ inp.focus(); },150);
+  }
+
   function renderSettings(){
     var cur=I.get();
     var langBtns=I.supported.map(function(code){
       return '<button class="lang-opt'+(code===cur?" on":"")+'" data-lang="'+code+'">'+esc(I.native(code))+'</button>';
     }).join("");
     settingsBody.innerHTML='<h2>'+esc(t("settings.title"))+'</h2>'
+      +accountSectionHtml()
       +'<div class="store-section">'+esc(t("settings.language"))+'</div>'
       +'<div class="lang-row">'+langBtns+'</div>'
       +'<div class="store-section">'+esc(t("settings.manageApps"))+'</div>'
       +'<div class="store-install" id="settingsManage">⚙ '+esc(t("settings.manageApps"))+'</div>'
       +'<div class="sheet-actions"><button class="btn btn-cancel" id="settingsClose" style="flex:1">'+esc(t("common.close"))+'</button></div>';
+    wireAccountSection();
     settingsBody.querySelector(".lang-row").addEventListener("click",function(e){
       var b=e.target.closest("[data-lang]"); if(!b) return;
       I.set(b.getAttribute("data-lang")); buzz(6);
@@ -214,13 +296,14 @@ window.RobTop = window.RobTop || {};
   }
   function adminCall(path, bodyObj){
     if(demo) return Promise.resolve({ok:true,demo:true});
-    return RT.API.post(path, Object.assign({pin:adminPin}, bodyObj||{}));
+    // родительская сессия авторизует сама (бэкенд rt_admin_gate); PIN шлём только если вводили (fallback)
+    return RT.API.post(path, Object.assign(adminPin?{pin:adminPin}:{}, bodyObj||{}));
   }
   function openStore(){ adminPin=null; renderStore(); storeOverlay.classList.add("show"); }
   function closeStore(){ storeOverlay.classList.remove("show"); }
 
   function renderStore(){
-    if(!adminPin){
+    if(!adminPin && !isParent()){
       storeBody.innerHTML='<h2>'+esc(t("store.title"))+'</h2>'
         +'<p style="text-align:center;color:#cfe0ff;font-weight:600;margin:0 0 4px">'+esc(t("store.adminNote"))+'</p>'
         +'<div class="pin-row"><input id="adminPinIn" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off"><button class="btn btn-primary" id="adminPinBtn" style="flex:0 0 40%">'+esc(t("common.enter"))+'</button></div>';
@@ -357,6 +440,7 @@ window.RobTop = window.RobTop || {};
     RT._shell.demo=demo; body.classList.toggle("demo",demo);
     showHome();
     loadRegistry();
+    loadAccount(); // кто вошёл: обновит RT._shell.user (роль для модулей) и блок «Аккаунт» в настройках
   }
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",boot); else boot();
 })(window.RobTop);

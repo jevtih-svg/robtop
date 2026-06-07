@@ -402,6 +402,7 @@
 
   /* ----- родительская панель ----- */
   function openParentGate(){
+    if(sdk.role==="parent"){ openParent(); return; } // родительская сессия: панель без PIN (§4.10)
     var box=document.createElement("div");
     box.innerHTML='<h2>'+esc(t("parentTitle"))+'</h2><p style="text-align:center;color:#cfe0ff;font-weight:600;margin:0 0 4px">'+esc(t("parentGateNote"))+'</p>'
       +'<div class="pin-row"><input id="ttPin" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off"><button class="btn btn-primary" id="ttPinBtn" style="flex:0 0 40%">'+esc(t("common.enter"))+'</button></div>';

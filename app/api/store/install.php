@@ -15,7 +15,7 @@ rt_guard();
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') rt_json(['error' => 'method'], 405);
 
 $b = rt_body();
-if (!rt_admin_ok(isset($b['pin']) ? $b['pin'] : '')) rt_json(['error' => 'unauthorized'], 401);
+if (!rt_admin_gate($b)) rt_json(['error' => 'unauthorized'], 401); // родительская сессия ИЛИ PIN (fallback), §4.10
 
 $man   = isset($b['manifest']) && is_array($b['manifest']) ? $b['manifest'] : null;
 $files = isset($b['files']) && is_array($b['files']) ? $b['files'] : null;

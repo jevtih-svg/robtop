@@ -6,7 +6,7 @@ rt_guard();
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') rt_json(['error' => 'method'], 405);
 
 $b = rt_body();
-if (!rt_admin_ok(isset($b['pin']) ? $b['pin'] : '')) rt_json(['error' => 'unauthorized'], 401);
+if (!rt_admin_gate($b)) rt_json(['error' => 'unauthorized'], 401); // родительская сессия ИЛИ PIN (fallback), §4.10
 if (!empty($b['verify'])) rt_json(['ok' => true]); // только проверка PIN (для разблокировки UI)
 
 $id = isset($b['id']) ? (string)$b['id'] : '';
