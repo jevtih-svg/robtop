@@ -72,6 +72,10 @@ window.RobTop = window.RobTop || {};
      ВЫВОДИТСЯ из леджера (нечему рассинхронизироваться): идём от сегодня (или вчера,
      если сегодня заданий ещё не было) назад по календарным дням устройства, пока дни
      «с заданиями»; день без заданий гасит огонёк в 0. Кап 21 (бонус максимум 20).
+     ПУНКТСТРИК (2026-06-07, поверх винстрика, фича Джеффа «PointsStreak»): сколько
+     ПОЛОЖИТЕЛЬНЫХ транзакций подряд (любой kind, n>0; бонусы тоже считаются),
+     считая от самой свежей назад; первый же МИНУС (n<0, любой kind) сбрасывает в 0
+     по построению. Тоже не хранится — выводится из леджера; без капа, бонусов не даёт.
      Демо-режим работает через localStorage (dataOp) — паритет с сервером. */
   var BANK_STREAK_MAX = 21;
   function bankKind(n, reason, opts){
@@ -99,6 +103,23 @@ window.RobTop = window.RobTop || {};
     while(days[bankDayKey(cur)] && n<BANK_STREAK_MAX){ n++; cur.setDate(cur.getDate()-1); }
     return n;
   }
+  /* Пунктстрик: плюсы подряд с конца леджера до первого минуса.
+     Хронология: createdAt, при равенстве — числовой id (сервер: автоинкремент;
+     демо-строки нечисловых id равенство дают редко — берём 0). n==0 не бывает
+     (bankAdd пишет только ненулевые), но на всякий случай нули просто пропускаем. */
+  function bankPlusStreakFrom(items){
+    var arr=items.slice().sort(function(a,b){
+      var t=(a.createdAt||0)-(b.createdAt||0); if(t) return t;
+      return (parseInt(a.id,10)||0)-(parseInt(b.id,10)||0);
+    });
+    var n=0, i, v;
+    for(i=arr.length-1;i>=0;i--){
+      v=parseInt(arr[i].data && arr[i].data.n,10)||0;
+      if(v>0) n++;
+      else if(v<0) break;
+    }
+    return n;
+  }
   function bankTxn(rec){ return dataOp("bank","create","points",{data:rec}); }
   /* Добавить транзакцию; никогда не reject (модули зовут fire-and-forget).
      → Promise<{ok, n, kind, streak|null, bonus}>
@@ -120,12 +141,13 @@ window.RobTop = window.RobTop || {};
       });
     }).catch(function(){ out.ok=false; return out; });
   }
-  /* Сводка копилки: баланс (сумма всех n), винстрик (из леджера), все транзакции. Может reject (сеть). */
+  /* Сводка копилки: баланс (сумма всех n), винстрик и пунктстрик (из леджера), все транзакции. Может reject (сеть). */
   function bankSummary(){
     return dataOp("bank","list","points",null).then(function(r){
       var items=(r&&r.items)||[], sum=0, i, d;
       for(i=0;i<items.length;i++){ d=items[i].data||{}; sum += parseInt(d.n,10)||0; }
-      return { balance:sum, streak:bankStreakFrom(items, Date.now()), count:items.length, items:items };
+      return { balance:sum, streak:bankStreakFrom(items, Date.now()),
+               plusStreak:bankPlusStreakFrom(items), count:items.length, items:items };
     });
   }
 

@@ -217,6 +217,23 @@
     ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
     ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
   }
+  /* ---- цвета канваса из ТОКЕНОВ ТЕМЫ (правило тем, КОНТЕКСТ §8): canvas не умеет
+     var(), поэтому читаем токены из computed style на mount (смена темы — только в
+     Настройках, модуль при этом размонтирован). Фолбэк — исходный неон. ---- */
+  var TH={cyan:[25,227,255],gold:"#ffd23b",magenta:[255,43,214],head:"#bff4ff",eyes:"#06303c"};
+  function hex2rgb(h){ var m=/^#([0-9a-f]{6})$/i.exec(String(h||"").trim()); if(!m) return null;
+    var n=parseInt(m[1],16); return [n>>16&255,n>>8&255,n&255]; }
+  function themeColors(){
+    try{
+      var cs=getComputedStyle(document.body);
+      function v(n,fb){ var x=(cs.getPropertyValue(n)||"").trim(); return x||fb; }
+      TH={ cyan:hex2rgb(v("--cyan","#19e3ff"))||[25,227,255],
+           gold:v("--gold","#ffd23b"),
+           magenta:hex2rgb(v("--magenta","#ff2bd6"))||[255,43,214],
+           head:v("--cyan-soft","#bff4ff"),
+           eyes:v("--on-bright","#06303c") };
+    }catch(e){}
+  }
   function dot(ctx,cx,cy,r,color,glow){
     ctx.save(); ctx.fillStyle=color; ctx.shadowColor=color; ctx.shadowBlur=glow;
     ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.restore();
@@ -227,14 +244,14 @@
     var W=E.canvas.width,H=E.canvas.height,cs=W/COLS,i;
     ctx.clearRect(0,0,W,H);
     /* точки «печатной платы» в узлах сетки */
-    ctx.fillStyle="rgba(25,227,255,.07)";
+    ctx.fillStyle="rgba("+TH.cyan.join(",")+",.07)";
     for(var gx=1;gx<COLS;gx++) for(var gy=1;gy<ROWS;gy++) ctx.fillRect(gx*cs-1,gy*cs-1,2,2);
     /* еда — золотой орб */
-    if(g.food) dot(ctx,(g.food.x+0.5)*cs,(g.food.y+0.5)*cs,cs*0.32,"#ffd23b",cs*0.5);
+    if(g.food) dot(ctx,(g.food.x+0.5)*cs,(g.food.y+0.5)*cs,cs*0.32,TH.gold,cs*0.5);
     /* бонус-жучок — magenta, мигает на последних ходах */
     if(g.bonus && (g.bonus.t>8 || g.bonus.t%2===0)){
-      dot(ctx,(g.bonus.x+0.5)*cs,(g.bonus.y+0.5)*cs,cs*0.4,"#ff2bd6",cs*0.65);
-      ctx.save(); ctx.strokeStyle="rgba(255,43,214,.55)"; ctx.lineWidth=Math.max(1,cs*0.07);
+      dot(ctx,(g.bonus.x+0.5)*cs,(g.bonus.y+0.5)*cs,cs*0.4,"rgb("+TH.magenta.join(",")+")",cs*0.65);
+      ctx.save(); ctx.strokeStyle="rgba("+TH.magenta.join(",")+",.55)"; ctx.lineWidth=Math.max(1,cs*0.07);
       ctx.beginPath(); ctx.arc((g.bonus.x+0.5)*cs,(g.bonus.y+0.5)*cs,cs*0.52,0,Math.PI*2); ctx.stroke(); ctx.restore();
     }
     /* змейка: от хвоста к голове, хвост бледнее */
@@ -243,14 +260,14 @@
       var seg=g.snake[i], f=n>1?i/(n-1):0; /* 0 = голова, 1 = хвост */
       var x=seg.x*cs+1.5, y=seg.y*cs+1.5, s=cs-3;
       ctx.save();
-      if(i===0){ ctx.fillStyle="#bff4ff"; ctx.shadowColor="#19e3ff"; ctx.shadowBlur=cs*0.6; }
-      else ctx.fillStyle="rgba(25,227,255,"+(0.95-0.55*f).toFixed(2)+")";
+      if(i===0){ ctx.fillStyle=TH.head; ctx.shadowColor="rgb("+TH.cyan.join(",")+")"; ctx.shadowBlur=cs*0.6; }
+      else ctx.fillStyle="rgba("+TH.cyan.join(",")+","+(0.95-0.55*f).toFixed(2)+")";
       rrect(ctx,x,y,s,s,cs*0.3); ctx.fill(); ctx.restore();
     }
     /* глаза на голове — перпендикулярно направлению движения */
     var hd=g.snake[0], hx=(hd.x+0.5)*cs, hy=(hd.y+0.5)*cs;
     var px=g.dir.y, py=g.dir.x; /* перпендикуляр */
-    ctx.fillStyle="#06303c";
+    ctx.fillStyle=TH.eyes;
     ctx.beginPath(); ctx.arc(hx+g.dir.x*cs*0.16+px*cs*0.18, hy+g.dir.y*cs*0.16+py*cs*0.18, cs*0.085, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc(hx+g.dir.x*cs*0.16-px*cs*0.18, hy+g.dir.y*cs*0.16-py*cs*0.18, cs*0.085, 0, Math.PI*2); ctx.fill();
   }
@@ -366,6 +383,7 @@
 
   /* =================== mount / unmount =================== */
   function mount(rootEl, theSdk){
+    themeColors(); // токены темы → цвета канваса (см. блок TH выше)
     sdk=theSdk; root=rootEl; E={}; games=[]; best=0; metaId=null; metaLoaded=false;
     mode="idle"; g=null; curSheet=null; saving=false; recJust=false; touchPt=null;
     var sp=sdk.storage.local("speed").get(); speedSel=(sp>=1&&sp<=9)?Math.floor(sp):3;

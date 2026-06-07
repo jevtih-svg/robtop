@@ -234,18 +234,28 @@ foreach ($cq->fetchAll() as $r) {
 /* ---------- очки (копилка): сумма n по module_data bank/points ---------- */
 $pq = $db->prepare(
     "SELECT data, created_at FROM module_data
-     WHERE user_id = ? AND module = 'bank' AND collection = 'points' AND deleted_at IS NULL"
+     WHERE user_id = ? AND module = 'bank' AND collection = 'points' AND deleted_at IS NULL
+     ORDER BY id ASC"
 );
 $pq->execute([$childId]);
 $points   = 0;
 $taskDays = []; // даты (Y-m-d) с выполненными заданиями — для винстрика
+$signs    = []; // знаки транзакций в хронологии (id ASC) — для пунктстрика
 foreach ($pq->fetchAll() as $r) {
     $d = json_decode($r['data'], true);
     if (!is_array($d)) continue;
-    if (isset($d['n'])) $points += (int)$d['n'];
+    if (isset($d['n'])) { $points += (int)$d['n']; $signs[] = (int)$d['n']; }
     if (isset($d['kind']) && $d['kind'] === 'task_done' && !empty($r['created_at'])) {
         $taskDays[substr((string)$r['created_at'], 0, 10)] = true;
     }
+}
+
+/* ---------- пунктстрик (копилка): плюсы подряд с конца леджера до первого минуса.
+   То же правило, что в движке core/sdk.js (bankPlusStreakFrom). ---------- */
+$plusStreak = 0;
+for ($i = count($signs) - 1; $i >= 0; $i--) {
+    if ($signs[$i] > 0) $plusStreak++;
+    elseif ($signs[$i] < 0) break;
 }
 
 /* ---------- винстрик (копилка): серия дней подряд с выполненным заданием.
@@ -274,6 +284,7 @@ rt_json([
     'canViewImages' => $canImages,
     'points'        => $points,
     'streak'        => $streak,
+    'plusStreak'    => $plusStreak,
     'days'          => $days,
     'items'         => $items,
     'events'        => $events,

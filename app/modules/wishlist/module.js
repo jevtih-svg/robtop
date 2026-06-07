@@ -142,7 +142,7 @@
     think:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 19a5.5 5.5 0 1 1 4-9.9A4 4 0 1 1 18 14H9.5z"/><circle cx="6" cy="21" r="1.2" fill="currentColor" stroke="none"/></svg>',
     back2:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-1"/></svg>',
     link:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/></svg>',
-    badge:'<svg viewBox="0 0 24 24" fill="none" stroke="#04231c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
+    badge:'<svg viewBox="0 0 24 24" fill="none" style="stroke:var(--on-bright)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
     edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
     trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>',
     clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
@@ -438,7 +438,7 @@
     var grants=st.grants||[];
     var rows=grants.length?grants.map(function(g){
       return '<div class="acct-row"><span class="nm">'+esc(g.nickname)+'</span>'
-        +'<button class="hbtn" data-rm="'+g.id+'" aria-label="'+esc(t("share.revoke"))+'" title="'+esc(t("share.revoke"))+'" style="width:34px;height:34px;color:#ffb3c0">✕</button></div>';
+        +'<button class="hbtn" data-rm="'+g.id+'" aria-label="'+esc(t("share.revoke"))+'" title="'+esc(t("share.revoke"))+'" style="width:34px;height:34px;color:var(--red-soft)">✕</button></div>';
     }).join(""):'<p class="set-note">'+esc(t("share.grantEmpty"))+'</p>';
     body.innerHTML='<p class="set-note">'+esc(t("share.linkHint"))+'</p>'
       +'<div class="invlink">'+esc(st.url||"")+'</div>'
@@ -493,7 +493,7 @@
   function closeSheet(){ E.overlay.classList.remove("show"); }
   function saveSheet(){
     var title=E.title.value.trim();
-    if(!title){ E.title.focus(); E.title.style.borderColor="#ff3db0"; sdk.ui.toast(t("toast.needTitle")); return; }
+    if(!title){ E.title.focus(); E.title.style.borderColor="var(--pink)"; sdk.ui.toast(t("toast.needTitle")); return; }
     var link=E.link.value.trim(),note=E.note.value.trim();
     if(editingId){
       var it=findItem(editingId);
@@ -543,7 +543,7 @@
     +'<div class="overlay" id="wlOverlay"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="wlSheetTitle">'
       +'<div class="grip"></div><h2 id="wlSheetTitle">'+esc(t("form.newWish"))+'</h2>'
       +'<div class="photo-pick" id="wlPhotoPick"><div class="ppreview" id="wlPpreview"></div>'
-        +'<svg viewBox="0 0 24 24" fill="none" stroke="#ff7ab8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h3l2-3h8l2 3h3v13H3z"/><circle cx="12" cy="13" r="4"/></svg>'
+        +'<svg viewBox="0 0 24 24" fill="none" style="stroke:var(--pink-soft)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h3l2-3h8l2 3h3v13H3z"/><circle cx="12" cy="13" r="4"/></svg>'
         +'<span>'+esc(t("form.addPhoto"))+'</span><span class="pp-edit">'+esc(t("form.replacePhoto"))+'</span></div>'
       +'<input type="file" id="wlPhotoInput" accept="image/*" hidden>'
       +'<div class="field"><label for="wlTitle">'+esc(t("form.titleLabel"))+'</label><input id="wlTitle" type="text" maxlength="60" placeholder="'+esc(t("form.titlePh"))+'" autocomplete="off"></div>'

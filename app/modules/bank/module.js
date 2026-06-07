@@ -9,6 +9,9 @@
    ВИНСТРИК (2026-06-07, v1.2.0): серия дней подряд с хотя бы одним выполненным заданием;
    выводится движком из леджера (день без задания — огонёк гаснет сам). Кнопка-огонёк с «i»
    открывает объяснение для ребёнка (openStreakInfo, простые правила + пример недели).
+   ПУНКТСТРИК (2026-06-07, v1.3.0, поверх винстрика): чип ⚡ справа сверху — плюсы подряд
+   без единого минуса (любой kind), минус сбрасывает в 0; считает движок (plusStreak),
+   объяснение для ребёнка — openPlusInfo (свой «i»). Бонусов не даёт, капа нет.
    Сам ничего не считает — читает леджер через sdk.points (движок в core/sdk.js, политика — ГАЙД-очки.md). */
 (function(){
   "use strict";
@@ -45,6 +48,20 @@
       infoEx5:"Fri — did a task → fire 1 again",
       infoMax:"The biggest fire is 21 — then every task gives +20 bonus points!",
       infoGames:"Games give points too, but only parent tasks light the fire.",
+      plusLabel:"points streak",
+      pinfoTitle:"What is the points streak? ⚡",
+      pinfoIntro:"The points streak counts your pluses in a row, without a single minus.",
+      pinfoRule1:"Every green plus row (a win, a task, a bonus) makes the streak grow by 1.",
+      pinfoRule2:"Get a minus (lost a game or points were taken) — the streak burns down to 0.",
+      pinfoRule3:"The next plus starts the count again: 1, 2, 3…",
+      pinfoExTitle:"Example",
+      pinfoEx1:"+10 teeth brushing → streak 1",
+      pinfoEx2:"+10 parent task → streak 2",
+      pinfoEx3:"+1 streak bonus → streak 3",
+      pinfoEx4:"−5 wrong guess → the streak is out, 0",
+      pinfoEx5:"+10 task → streak 1 again",
+      pinfoNote:"No limit — see how long you can keep it!",
+      pinfoVs:"The fire 🔥 counts days with tasks. The points streak ⚡ counts pluses in a row. They live separately.",
       secCustom:"Custom amount", amountPh:"How many", notePh:"What for (child will see it)",
       btnGive:"Give", btnTake:"Take", needAmount:"Enter a number first", doneToast:"Done!",
       streakToast:"Win streak: {n} 🔥", bonusToast:"Streak bonus +{n}!",
@@ -90,6 +107,20 @@
       infoEx5:"Пт — сделал задание → огонёк снова 1",
       infoMax:"Самый большой огонёк — 21: тогда каждое задание даёт +20 бонусом!",
       infoGames:"Игры тоже дают пункты, но огонёк зажигают только задания родителей.",
+      plusLabel:"пунктстрик",
+      pinfoTitle:"Что такое пунктстрик? ⚡",
+      pinfoIntro:"Пунктстрик — это сколько плюсов подряд ты получил без единого минуса.",
+      pinfoRule1:"Каждая зелёная строка с плюсом (победа, задание, бонус) делает пунктстрик больше на 1.",
+      pinfoRule2:"Получил минус (проиграл или сняли пункты) — пунктстрик сгорает в 0.",
+      pinfoRule3:"Следующий плюс начинает счёт заново: 1, 2, 3…",
+      pinfoExTitle:"Пример",
+      pinfoEx1:"+10 чистка зубов → пунктстрик 1",
+      pinfoEx2:"+10 задание родителей → пунктстрик 2",
+      pinfoEx3:"+1 бонус серии → пунктстрик 3",
+      pinfoEx4:"−5 не отгадал число → пунктстрик погас, 0",
+      pinfoEx5:"+10 задание → пунктстрик снова 1",
+      pinfoNote:"Предела нет — проверь, сколько продержишься!",
+      pinfoVs:"Огонёк 🔥 считает дни с заданиями. Пунктстрик ⚡ считает плюсы подряд. Они живут отдельно.",
       secCustom:"Произвольная сумма", amountPh:"Сколько", notePh:"За что (увидит ребёнок)",
       btnGive:"Начислить", btnTake:"Снять", needAmount:"Сначала введи число", doneToast:"Готово!",
       streakToast:"Винстрик: {n} 🔥", bonusToast:"Бонус серии +{n}!",
@@ -135,6 +166,20 @@
       infoEx5:"Pk — izpildīji uzdevumu → uguntiņa atkal 1",
       infoMax:"Lielākā uguntiņa ir 21 — tad katrs uzdevums dod +20 bonusā!",
       infoGames:"Spēles arī dod punktus, bet uguntiņu iededz tikai vecāku uzdevumi.",
+      plusLabel:"punktu sērija",
+      pinfoTitle:"Kas ir punktu sērija? ⚡",
+      pinfoIntro:"Punktu sērija skaita tavus plusus pēc kārtas bez neviena mīnusa.",
+      pinfoRule1:"Katra zaļā plus rinda (uzvara, uzdevums, bonuss) palielina sēriju par 1.",
+      pinfoRule2:"Saņēmi mīnusu (zaudēji spēlē vai punktus noņēma) — sērija nodziest uz 0.",
+      pinfoRule3:"Nākamais pluss sāk skaitu no jauna: 1, 2, 3…",
+      pinfoExTitle:"Piemērs",
+      pinfoEx1:"+10 zobu tīrīšana → sērija 1",
+      pinfoEx2:"+10 vecāku uzdevums → sērija 2",
+      pinfoEx3:"+1 sērijas bonuss → sērija 3",
+      pinfoEx4:"−5 neuzminēji skaitli → sērija nodzisa, 0",
+      pinfoEx5:"+10 uzdevums → sērija atkal 1",
+      pinfoNote:"Limita nav — pārbaudi, cik ilgi noturēsies!",
+      pinfoVs:"Uguntiņa 🔥 skaita dienas ar uzdevumiem. Punktu sērija ⚡ skaita plusus pēc kārtas. Tās dzīvo atsevišķi.",
       secCustom:"Brīva summa", amountPh:"Cik daudz", notePh:"Par ko (bērns redzēs)",
       btnGive:"Pieskaitīt", btnTake:"Noņemt", needAmount:"Vispirms ievadi skaitli", doneToast:"Gatavs!",
       streakToast:"Uzvaru sērija: {n} 🔥", bonusToast:"Sērijas bonuss +{n}!",
@@ -154,6 +199,7 @@
   var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
   var PARENT_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>';
   var FLAME_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c4.4 0 7.5-2.9 7.5-6.8 0-2.9-1.7-5.2-3.4-7C14.3 6.3 13.2 4.4 13.4 2c-3.2 1.9-4.6 4.5-4.4 7 .1 1.3-1 1.6-1.7.7-.4-.5-.7-1.1-.8-1.9C4.7 9.4 4 11.6 4 13.6 4 18 7.6 22 12 22z"/><path d="M12 22c-1.9 0-3.4-1.5-3.4-3.4 0-1.6 1-2.7 2-3.9.6-.7 1-1.4 1.2-2.2 1.4 1.2 3.6 3.1 3.6 5.8 0 2-1.5 3.7-3.4 3.7z"/></svg>';
+  var BOLT_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.6 13.4h6L9.8 22l8.6-11.4h-6L13 2z"/></svg>';
   /* свинка-копилка (вид сбоку, по эскизу Артёма): тело, голова с пятачком, ушко,
      ножки, хвостик-петелька, прорезь сверху и монетка над ней */
   var PIG_IC='<svg viewBox="0 0 210 150" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">'
@@ -208,7 +254,7 @@
     Promise.all([ sdk.points.summary(), sdk.data.list("tasks") ]).then(function(rr){
       if(!alive) return;
       var s=rr[0];
-      S.balance=s.balance; S.streak=s.streak; S.loaded=true; S.err=false;
+      S.balance=s.balance; S.streak=s.streak; S.plus=s.plusStreak||0; S.loaded=true; S.err=false;
       S.items=s.items.slice().sort(function(a,b){ return (b.createdAt||0)-(a.createdAt||0); });
       S.tasks=rr[1]||[];
       render();
@@ -409,11 +455,13 @@
     E.pts.textContent = S.err ? "…" : S.balance;
     E.flameN.textContent = S.streak;
     E.flame.classList.toggle("off", !(S.streak>0));
+    E.plusN.textContent = S.plus;
+    E.plus.classList.toggle("off", !(S.plus>0));
     sdk.ui.hud({ left:t("title"), cNum:(S.err?0:S.balance), cLbl:t("hudPts"), rNum:S.streak, rLbl:t("hudStreak") });
     var an=S.err?0:actionable();
     if(E.tabN){ E.tabN.textContent=an; E.tabN.hidden=!(an>0); }
     renderList();
-    if(PE){ PE.bal.textContent=S.balance; PE.str.textContent=S.streak; }
+    if(PE){ PE.bal.textContent=S.balance; PE.str.textContent=S.streak; if(PE.plus) PE.plus.textContent=S.plus; }
   }
   function renderList(){
     var box=E.list;
@@ -466,6 +514,30 @@
     box.querySelector("[data-close]").onclick=function(){ ctl.close(); };
   }
 
+  /* ---------- «что такое пунктстрик?» — объяснение для ребёнка (чип ⚡ с «i») ---------- */
+  function openPlusInfo(){
+    var box=document.createElement("div");
+    box.innerHTML='<h2>'+esc(t("pinfoTitle"))+'</h2>'
+      +'<div class="bk-info">'
+        +'<p class="bk-info-intro">'+esc(t("pinfoIntro"))+'</p>'
+        +'<div class="bk-info-rule plus"><span class="ic">⚡</span><p>'+esc(t("pinfoRule1"))+'</p></div>'
+        +'<div class="bk-info-rule plus"><span class="ic">💨</span><p>'+esc(t("pinfoRule2"))+'</p></div>'
+        +'<div class="bk-info-rule plus"><span class="ic">🔁</span><p>'+esc(t("pinfoRule3"))+'</p></div>'
+        +'<div class="store-section">'+esc(t("pinfoExTitle"))+'</div>'
+        +'<ul class="bk-info-ex plus">'
+          +'<li>'+esc(t("pinfoEx1"))+'</li>'
+          +'<li>'+esc(t("pinfoEx2"))+'</li>'
+          +'<li>'+esc(t("pinfoEx3"))+'</li>'
+          +'<li class="out">'+esc(t("pinfoEx4"))+'</li>'
+          +'<li>'+esc(t("pinfoEx5"))+'</li></ul>'
+        +'<p class="bk-info-note plus">'+esc(t("pinfoNote"))+'</p>'
+        +'<p class="bk-info-note dim">'+esc(t("pinfoVs"))+'</p>'
+      +'</div>'
+      +'<div class="sheet-actions"><button class="btn btn-primary" data-close>'+esc(t("common.done"))+'</button></div>';
+    var ctl=sdk.ui.sheet(box); curSheet=ctl;
+    box.querySelector("[data-close]").onclick=function(){ ctl.close(); };
+  }
+
   /* ---------- родительская панель ----------
      PIN упразднён (2026-06-07): панель открывает роль parent из сессии; демо — песочница без гейта.
      Ребёнку кнопка не рендерится (parentAllowed), тост — защитная ветка. */
@@ -479,7 +551,8 @@
     box.innerHTML='<h2>'+esc(t("parentTitle"))+'</h2>'
       +'<div class="bk-pgrid">'
         +'<div class="bk-pstat"><div class="n" id="bkPBal">'+S.balance+'</div><div class="l">'+esc(t("balanceNow"))+'</div></div>'
-        +'<div class="bk-pstat"><div class="n" id="bkPStr">'+S.streak+'</div><div class="l">'+esc(t("streakNow"))+'</div></div></div>'
+        +'<div class="bk-pstat"><div class="n" id="bkPStr">'+S.streak+'</div><div class="l">'+esc(t("streakNow"))+'</div></div>'
+        +'<div class="bk-pstat"><div class="n" id="bkPPlus">'+S.plus+'</div><div class="l">'+esc(t("plusLabel"))+'</div></div></div>'
       +'<div class="store-section">'+esc(t("secBonus"))+'</div>'
       +'<div class="bk-pbtns">'
         +'<button class="btn btn-cancel" data-op="daily">'+esc(t("btnDailyBonus"))+'</button></div>'
@@ -489,7 +562,7 @@
       +'<div class="sheet-actions"><button class="btn btn-cancel" data-op="take">'+esc(t("btnTake"))+'</button>'
       +'<button class="btn btn-primary" data-op="give">'+esc(t("btnGive"))+'</button></div>';
     var ctl=sdk.ui.sheet(box); curSheet=ctl;
-    PE={ bal:box.querySelector("#bkPBal"), str:box.querySelector("#bkPStr") };
+    PE={ bal:box.querySelector("#bkPBal"), str:box.querySelector("#bkPStr"), plus:box.querySelector("#bkPPlus") };
     function val(){ return parseInt((box.querySelector("#bkAmt").value||"").trim(),10)||0; }
     function note(){ return (box.querySelector("#bkNote").value||"").trim(); }
     box.querySelectorAll("[data-op]").forEach(function(b){
@@ -520,7 +593,7 @@
   /* ---------- каркас ---------- */
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; alive=true; busy=false; curSheet=null; PE=null;
-    S={ balance:0, streak:0, items:[], tasks:[], tab:"apps", loaded:false, err:false };
+    S={ balance:0, streak:0, plus:0, items:[], tasks:[], tab:"apps", loaded:false, err:false };
     root.innerHTML='<div class="bk">'
       +'<div class="bk-header"><button class="back" id="bkBack" aria-label="'+esc(t("common.back"))+'">'+BACK_IC+'</button>'
         +'<div class="bk-head-main"><div class="bk-title">'+esc(t("title"))+'</div><div class="bk-sub">'+esc(t("subtitle"))+'</div></div>'
@@ -528,6 +601,9 @@
       +'<div class="bk-stage">'
         +'<button class="bk-flame off" id="bkFlame" aria-label="'+esc(t("infoTitle"))+'">'+FLAME_IC
           +'<span class="bk-flame-n" id="bkFlameN">0</span><span class="bk-flame-l">'+esc(t("streakLabel"))+'</span>'
+          +'<span class="bk-flame-i" aria-hidden="true">i</span></button>'
+        +'<button class="bk-plus off" id="bkPlus" aria-label="'+esc(t("pinfoTitle"))+'">'+BOLT_IC
+          +'<span class="bk-flame-n" id="bkPlusN">0</span><span class="bk-flame-l">'+esc(t("plusLabel"))+'</span>'
           +'<span class="bk-flame-i" aria-hidden="true">i</span></button>'
         +'<div class="bk-pig" id="bkPig">'+PIG_IC
           +'<div class="bk-pig-label">'+esc(t("ptsWord"))+': <b id="bkPts">…</b></div></div></div>'
@@ -539,10 +615,12 @@
       +'</div>';
     var el=root.querySelector(".bk");
     E={ pts:el.querySelector("#bkPts"), flame:el.querySelector("#bkFlame"), flameN:el.querySelector("#bkFlameN"),
+        plus:el.querySelector("#bkPlus"), plusN:el.querySelector("#bkPlusN"),
         pig:el.querySelector("#bkPig"), tabs:el.querySelector("#bkTabs"), list:el.querySelector("#bkList"),
         tabN:el.querySelector("#bkTabN") };
     el.querySelector("#bkBack").onclick=function(){ sdk.ui.back(); };
     E.flame.onclick=openStreakInfo;
+    E.plus.onclick=openPlusInfo;
     var pb=el.querySelector("#bkParent"); if(pb) pb.onclick=openParentGate;
     E.tabs.addEventListener("click",function(e){
       var b=e.target.closest(".bk-tab"); if(!b || !alive) return;

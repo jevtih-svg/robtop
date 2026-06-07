@@ -900,8 +900,11 @@ window.RobTop = window.RobTop || {};
   }
 
   /* =================== данные =================== */
-  function fetchData(childId){
-    S.loading=true; S.error=false; render();
+  /* silent=true — ТИХАЯ дозагрузка (живое обновление, v2026.06.07.54): старый контент
+     остаётся на экране до прихода свежих данных, без мигания «…». Иначе каждый
+     sync-рефреш видимого дашборда стирал его в плейсхолдер. */
+  function fetchData(childId, silent){
+    S.loading=true; S.error=false; if(!silent) render();
     var url="parent.php?days=30"+(childId?("&child="+encodeURIComponent(childId)):"");
     RT.API.get(url).then(function(r){
       S.loading=false;
@@ -922,14 +925,20 @@ window.RobTop = window.RobTop || {};
 
   /* =================== публичный интерфейс =================== */
   RT.Parent={
-    /* показать дашборд (вызывает shell.showParent после переключения вида) */
+    /* показать дашборд (вызывает shell.showParent после переключения вида).
+       Кэш рисуем МГНОВЕННО и всегда дотягиваем свежее тихой дозагрузкой (v2026.06.07.54):
+       пока родитель был внутри модуля (подтверждал задания в Копилке), sync-тики уже
+       «съели» отпечаток изменений — без дозагрузки дашборд показывал устаревшие
+       «⏳ ждут проверки»/очки до следующего события (баг Джеффа). */
     show: function(){
       wireTabs();
-      if(!S.data && !S.loading) fetchData(savedChild());
-      else render();
+      if(!S.data && !S.loading){ fetchData(savedChild()); return; }
+      render();
+      if(!S.loading) fetchData(S.childId||savedChild(), true);
     },
     render: render,
-    refresh: function(){ fetchData(S.childId); },
+    /* живое обновление (sync) зовёт refresh при видимом дашборде — тоже тихо, без «…» */
+    refresh: function(){ if(!S.loading) fetchData(S.childId, true); },
     moreJournal: moreJournal,
     active: active,
     /* выбранный ребёнок для скоупа данных: sdk.js шлёт его серверу с КАЖДЫМ запросом

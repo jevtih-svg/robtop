@@ -31,6 +31,20 @@
 [data-mod="bank"] .bk-flame.off svg{filter:none}
 [data-mod="bank"] .bk-flame.off .bk-flame-n{color:var(--muted);text-shadow:none}
 
+/* пунктстрик ⚡ (правый верхний угол, зеркально огоньку): плюсы подряд, минус сбрасывает в 0 */
+[data-mod="bank"] .bk-plus{position:absolute;right:12px;top:12px;display:flex;align-items:center;gap:6px;
+  min-height:44px;padding:7px 12px 7px 9px;border-radius:999px;background:rgba(var(--panel-rgb),.65);
+  border:1.5px solid color-mix(in srgb,var(--green) 55%,transparent);color:var(--green);cursor:pointer;
+  font:inherit;-webkit-tap-highlight-color:transparent;
+  box-shadow:0 0 18px -4px color-mix(in srgb,var(--green) 70%,transparent)}
+[data-mod="bank"] .bk-plus svg{width:20px;height:20px;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--green) 90%,transparent))}
+[data-mod="bank"] .bk-plus .bk-flame-n{text-shadow:0 0 10px color-mix(in srgb,var(--green) 90%,transparent)}
+[data-mod="bank"] .bk-plus .bk-flame-i{background:var(--green);box-shadow:0 0 10px -2px color-mix(in srgb,var(--green) 90%,transparent)}
+[data-mod="bank"] .bk-plus.off{border-color:color-mix(in srgb,var(--muted) 35%,transparent);color:var(--muted-dim);box-shadow:none}
+[data-mod="bank"] .bk-plus.off svg{filter:none}
+[data-mod="bank"] .bk-plus.off .bk-flame-n{color:var(--muted);text-shadow:none}
+[data-mod="bank"] .bk-plus.off .bk-flame-i{background:var(--muted);box-shadow:none}
+
 /* свинка */
 [data-mod="bank"] .bk-pig{position:relative;width:min(72%,280px);margin:18px auto 4px;color:var(--red-soft);cursor:pointer;
   -webkit-tap-highlight-color:transparent}
@@ -117,6 +131,11 @@
 .bk-info-ex li::before{content:"🔥";position:absolute;left:9px;top:7px;font-size:13px}
 .bk-info-ex li.out{border-color:color-mix(in srgb,var(--muted) 30%,transparent);color:var(--muted)}
 .bk-info-ex li.out::before{content:"💨"}
+.bk-info-ex.plus li::before{content:"⚡"}
+.bk-info-ex.plus li.out::before{content:"💨"}
+.bk-info-rule.plus{border-color:color-mix(in srgb,var(--green) 30%,transparent)}
+.bk-info-note.plus{color:var(--green);background:color-mix(in srgb,var(--green) 7%,transparent);
+  border-color:color-mix(in srgb,var(--green) 40%,transparent)}
 .bk-info-note{margin:0 0 8px;padding:9px 11px;border-radius:12px;text-align:center;
   color:var(--gold);font-weight:800;font-size:13px;background:color-mix(in srgb,var(--gold) 8%,transparent);
   border:1px solid color-mix(in srgb,var(--gold) 40%,transparent)}

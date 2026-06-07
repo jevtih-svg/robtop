@@ -66,7 +66,7 @@
   }
   function renderList(){
     if(!E.list) return; // модуль мог быть размонтирован, пока грузилась история
-    if(!items.length){ E.list.innerHTML='<div style="color:#6f80a6;font-weight:600;font-size:14px;text-align:center;padding:14px">'+esc(t("listEmpty"))+'</div>'; hud(); return; }
+    if(!items.length){ E.list.innerHTML='<div style="color:var(--muted-dim);font-weight:600;font-size:14px;text-align:center;padding:14px">'+esc(t("listEmpty"))+'</div>'; hud(); return; }
     E.list.innerHTML=items.map(function(it){
       var d=it.data||{};
       return '<div class="rev-row" data-id="'+esc(it.id)+'"><div class="w">'+esc(d.reversed||"")+'<small>'+esc(d.text||"")+'</small></div>'

@@ -227,7 +227,7 @@
   function ringSVG(progress){
     var off=C*(1-progress);
     return '<svg class="tt-ring" width="230" height="230" viewBox="0 0 230 230" aria-hidden="true">'
-      +'<defs><linearGradient id="ttgrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3df0c0"/><stop offset="1" stop-color="#19e3ff"/></linearGradient></defs>'
+      +'<defs><linearGradient id="ttgrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--green)"/><stop offset="1" style="stop-color:var(--cyan)"/></linearGradient></defs>'
       +'<circle class="track" cx="115" cy="115" r="100" fill="none" stroke-width="14"/>'
       +'<circle class="prog" id="ttProg" cx="115" cy="115" r="100" fill="none" stroke-width="14" stroke-dasharray="'+C.toFixed(2)+'" stroke-dashoffset="'+off.toFixed(2)+'"/></svg>';
   }
