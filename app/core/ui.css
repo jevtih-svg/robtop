@@ -61,7 +61,8 @@ body[data-theme="tilley"] .store-row{--c:#E8440A !important}
 body[data-theme="tilley"] #bg{opacity:.85}
 
 html{background:var(--bg0)}
-html,body{margin:0;padding:0;min-height:100%;overscroll-behavior:none;touch-action:manipulation}
+/* pan-x pan-y = скролл разрешён, pinch-zoom и double-tap-zoom запрещены (как в нативном приложении) */
+html,body{margin:0;padding:0;min-height:100%;overscroll-behavior:none;touch-action:pan-x pan-y}
 body{
   font-family:var(--font-body);
   color:var(--ink); background:var(--bg0); min-height:100vh; overflow-x:hidden;
