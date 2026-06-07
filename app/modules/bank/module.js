@@ -645,8 +645,14 @@
 
   /* живое обновление (sync-поллер оболочки, v2026.06.07.47): чужие изменения — задание
      от родителя, начисление с другого устройства — подтягиваются без перезахода.
-     Не дёргаем во время своей операции (busy) и при открытой шторке (curSheet). */
-  function refresh(){ if(alive && !busy && !curSheet) load(); }
+     Занят (своя операция busy / открытая шторка curSheet) → вернуть false: shell
+     НЕ сдвинет отпечаток и повторит следующим тиком — обновление не теряется
+     (фикс v2026.06.07.54: раньше изменение, пришедшее в занятый модуль, пропадало). */
+  function refresh(){
+    if(!alive) return true;             // демонтирован — изменение не для нас
+    if(busy || curSheet) return false;  // занят — повторить позже
+    load(); return true;
+  }
 
   RobTop.register({ id:"bank", mount:mount, unmount:unmount, refresh:refresh, messages:MESSAGES });
 })();

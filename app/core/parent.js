@@ -40,7 +40,7 @@ window.RobTop = window.RobTop || {};
     sum:{ wishlist:"{total} wishes · {want} want · {bought} bought",
       teeth:"streak: {n} 🔥 · {c} in period", rating:"average: {avg}★ · {c} rated",
       mood:"most often: {e} {name} ×{c}", reverse:"{c} words reversed", guess:"guessed {w} of {c}",
-      bank:"{p} points total · streak {s} 🔥", bankTasks:"⏳ waiting for check: {n}",
+      bank:"{p} points total · streak {s} 🔥 · pluses {ps} ⚡", bankTasks:"⏳ waiting for check: {n}",
       generic:{one:"{n} action in period",other:"{n} actions in period"}, none:"no activity in period" },
     ins:{ streak:"Brushing streak: {n} days in a row", bought:"Wish fulfilled: “{t}” 🎉",
       peak:{ morning:"Most active in the morning (7–11)", day:"Most active in the daytime (11–17)", evening:"Most active in the evening (17–22)" } },
@@ -90,7 +90,7 @@ window.RobTop = window.RobTop || {};
     sum:{ wishlist:"{total} желаний · {want} хочу · {bought} куплено",
       teeth:"серия: {n} 🔥 · {c} за период", rating:"средняя: {avg}★ · {c} оценок",
       mood:"чаще всего: {e} {name} ×{c}", reverse:"{c} слов перевёрнуто", guess:"угадано {w} из {c}",
-      bank:"{p} пунктов всего · винстрик {s} 🔥", bankTasks:"⏳ ждут проверки: {n}",
+      bank:"{p} пунктов всего · винстрик {s} 🔥 · плюсы {ps} ⚡", bankTasks:"⏳ ждут проверки: {n}",
       generic:{one:"{n} действие за период",few:"{n} действия за период",many:"{n} действий за период"}, none:"нет активности за период" },
     ins:{ streak:"Серия чистки зубов: {n} дней подряд", bought:"Исполнено желание: «{t}» 🎉",
       peak:{ morning:"Самое активное время — утро (7–11)", day:"Самое активное время — день (11–17)", evening:"Самое активное время — вечер (17–22)" } },
@@ -140,7 +140,7 @@ window.RobTop = window.RobTop || {};
     sum:{ wishlist:"{total} vēlmes · {want} gribu · {bought} nopirkts",
       teeth:"sērija: {n} 🔥 · {c} periodā", rating:"vidēji: {avg}★ · {c} vērtējumi",
       mood:"visbiežāk: {e} {name} ×{c}", reverse:"{c} vārdi apgriezti", guess:"uzminēti {w} no {c}",
-      bank:"{p} punkti kopā · sērija {s} 🔥", bankTasks:"⏳ gaida pārbaudi: {n}",
+      bank:"{p} punkti kopā · sērija {s} 🔥 · plusi {ps} ⚡", bankTasks:"⏳ gaida pārbaudi: {n}",
       generic:{zero:"{n} darbību periodā",one:"{n} darbība periodā",other:"{n} darbības periodā"}, none:"perioda aktivitātes nav" },
     ins:{ streak:"Zobu tīrīšanas sērija: {n} dienas pēc kārtas", bought:"Vēlme piepildīta: “{t}” 🎉",
       peak:{ morning:"Aktīvākais laiks — rīts (7–11)", day:"Aktīvākais laiks — diena (11–17)", evening:"Aktīvākais laiks — vakars (17–22)" } },
@@ -428,7 +428,7 @@ window.RobTop = window.RobTop || {};
       if(m.id==="bank"){
         var pend=bankPending();
         line=pend>0 ? t("parent.sum.bankTasks",{n:pend})
-                    : t("parent.sum.bank",{p:(data.points||0),s:(data.streak||0)});
+                    : t("parent.sum.bank",{p:(data.points||0),s:(data.streak||0),ps:(data.plusStreak||0)});
       }
       else if(m.id==="wishlist") line=t("parent.sum.wishlist",{total:items.length,want:wWant,bought:wBought});
       else if(m.id==="teeth") line=a.teethN?t("parent.sum.teeth",{n:a.streak,c:a.teethN}):t("parent.sum.none");
@@ -937,8 +937,10 @@ window.RobTop = window.RobTop || {};
       if(!S.loading) fetchData(S.childId||savedChild(), true);
     },
     render: render,
-    /* живое обновление (sync) зовёт refresh при видимом дашборде — тоже тихо, без «…» */
-    refresh: function(){ if(!S.loading) fetchData(S.childId, true); },
+    /* живое обновление (sync) зовёт refresh при видимом дашборде — тоже тихо, без «…».
+       Если загрузка уже идёт — вернуть false: shell не сдвинет отпечаток и повторит
+       следующим тиком (стартовавший ДО изменения запрос мог привезти старые данные) */
+    refresh: function(){ if(S.loading) return false; fetchData(S.childId, true); },
     moreJournal: moreJournal,
     active: active,
     /* выбранный ребёнок для скоупа данных: sdk.js шлёт его серверу с КАЖДЫМ запросом
