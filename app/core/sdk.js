@@ -35,9 +35,25 @@ window.RobTop = window.RobTop || {};
     if(op==="restore"){ var rr=find(); if(rr>=0){ arr[rr].deletedAt=null; lsWrite(mod,coll,arr); } return {ok:true}; }
     return {ok:true};
   }
+  /* ---- выбранный ребёнок родителя: данные модулей скоупятся на НЕГО (фикс v.44) ----
+     Родитель выбирает ребёнка на дашборде (parent.js: S.childId + localStorage rt_parent_child).
+     Раньше child серверу НЕ передавался, и data.php молча скоупил роль parent на ПЕРВОГО
+     ребёнка семьи: при нескольких детях родитель видел «одну копилку на всех» и начислял
+     очки не тому ребёнку. Теперь каждый запрос родителя несёт child=<id>, сервер проверяет
+     права (rt_can_manage_child) и работает со скоупом ИМЕННО выбранного ребёнка. */
+  function parentChild(){
+    var sh=RT._shell||{};
+    if(!(sh.user && sh.user.role==="parent")) return null;
+    var id=null;
+    if(RT.Parent && RT.Parent.childId) id=RT.Parent.childId();
+    if(!id){ try{ id=parseInt(localStorage.getItem("rt_parent_child")||"",10)||null; }catch(e){ id=null; } }
+    return id||null;
+  }
   function dataOp(mod, op, coll, payload){
     if(RT.isDemo()) return Promise.resolve(demoData(mod, op, coll, payload));
-    return API.post("data.php", Object.assign({op:op, module:mod, collection:coll||"default"}, payload||{}));
+    var body=Object.assign({op:op, module:mod, collection:coll||"default"}, payload||{});
+    var pc=parentChild(); if(pc) body.child=pc;
+    return API.post("data.php", body);
   }
 
   /* ---- движок очков: леджер bank/points + винстрик в bank/meta (политика — ГАЙД-очки.md) ----
@@ -126,7 +142,7 @@ window.RobTop = window.RobTop || {};
         remove:  function(coll,id){ return dataOp(mod,"delete",coll,{id:id}); },
         restore: function(coll,id){ return dataOp(mod,"restore",coll,{id:id}); }
       },
-      events: { track:function(type,payload){ if(RT.isDemo()) return Promise.resolve(); return API.post("data.php",{op:"track",module:mod,type:type,data:payload||null}).catch(function(){}); } },
+      events: { track:function(type,payload){ if(RT.isDemo()) return Promise.resolve(); var b={op:"track",module:mod,type:type,data:payload||null}; var pc=parentChild(); if(pc) b.child=pc; return API.post("data.php",b).catch(function(){}); } },
       media:  { upload:function(dataUrl,kind){ return API.post("upload.php",{dataUrl:dataUrl, kind:kind||mod}); } },
       ui: {
         toast:    function(m,a,f){ return shell.toast(m,a,f); },

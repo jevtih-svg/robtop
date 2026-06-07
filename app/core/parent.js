@@ -932,6 +932,9 @@ window.RobTop = window.RobTop || {};
     render: render,
     refresh: function(){ fetchData(S.childId); },
     moreJournal: moreJournal,
-    active: active
+    active: active,
+    /* выбранный ребёнок для скоупа данных: sdk.js шлёт его серверу с КАЖДЫМ запросом
+       роли parent (data.php проверяет права и работает со скоупом этого ребёнка) */
+    childId: function(){ return S.childId || savedChild(); }
   };
 })(window.RobTop);
