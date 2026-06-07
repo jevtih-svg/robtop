@@ -91,7 +91,15 @@
         guestNote: "Without sign-in the app runs in family mode.",
         forgot: "Forgot password?",
         forgotHint: "For parents only: a child's password is reset by their parent. Enter your email — we'll send a reset link.",
-        forgotSend: "Send the link", forgotSent: "If this email is registered, the link has been sent."
+        forgotSend: "Send the link", forgotSent: "If this email is registered, the link has been sent.",
+        deviceList: "On this device",
+        addAccount: "Add account",
+        addHint: "Sign in once — the account will stay on this device for quick switching.",
+        orPassword: "Or sign in with a password:",
+        switchGone: "This account is no longer available — sign in with the password",
+        removeDev: "Remove from this device",
+        removeConfirm: "Remove {name} from this device? You'll need the password to add it back. Data is kept.",
+        removedDev: "{name} removed from this device"
       },
       store: {
         title: "Apps", adminNote: "App management is for a parent.",
@@ -213,7 +221,15 @@
         guestNote: "Без входа приложение работает в семейном режиме.",
         forgot: "Забыли пароль?",
         forgotHint: "Только для родителя: ребёнку пароль сбрасывает родитель. Введите email — пришлём ссылку для смены пароля.",
-        forgotSend: "Отправить ссылку", forgotSent: "Если такой email зарегистрирован, ссылка отправлена."
+        forgotSend: "Отправить ссылку", forgotSent: "Если такой email зарегистрирован, ссылка отправлена.",
+        deviceList: "На этом устройстве",
+        addAccount: "Добавить аккаунт",
+        addHint: "Войдите один раз — аккаунт останется на устройстве для быстрого переключения.",
+        orPassword: "Или войдите по паролю:",
+        switchGone: "Этот аккаунт больше недоступен — войдите по паролю",
+        removeDev: "Убрать с этого устройства",
+        removeConfirm: "Убрать {name} с этого устройства? Чтобы вернуть, понадобится пароль. Данные сохранятся.",
+        removedDev: "{name} убран с этого устройства"
       },
       store: {
         title: "Приложения", adminNote: "Управление приложениями — для родителя.",
@@ -335,7 +351,15 @@
         guestNote: "Bez pieslēgšanās lietotne darbojas ģimenes režīmā.",
         forgot: "Aizmirsi paroli?",
         forgotHint: "Tikai vecākiem: bērna paroli atiestata vecāks. Ievadi e-pastu — atsūtīsim saiti paroles maiņai.",
-        forgotSend: "Nosūtīt saiti", forgotSent: "Ja šāds e-pasts ir reģistrēts, saite ir nosūtīta."
+        forgotSend: "Nosūtīt saiti", forgotSent: "Ja šāds e-pasts ir reģistrēts, saite ir nosūtīta.",
+        deviceList: "Šajā ierīcē",
+        addAccount: "Pievienot kontu",
+        addHint: "Pieslēdzieties vienreiz — konts paliks šajā ierīcē ātrai pārslēgšanai.",
+        orPassword: "Vai pieslēdzieties ar paroli:",
+        switchGone: "Šis konts vairs nav pieejams — pieslēdzieties ar paroli",
+        removeDev: "Noņemt no šīs ierīces",
+        removeConfirm: "Noņemt {name} no šīs ierīces? Lai atgrieztu, būs vajadzīga parole. Dati saglabājas.",
+        removedDev: "{name} noņemts no šīs ierīces"
       },
       store: {
         title: "Lietotnes", adminNote: "Lietotņu pārvaldība ir vecākiem.",

@@ -174,13 +174,71 @@ window.RobTop = window.RobTop || {};
     renderLock(loading);
     window.scrollTo(0,0);
   }
+  /* ---- мульти-аккаунты устройства: localStorage rt_accounts = [{id,nick,kind,tok}] ----
+     Токен переключения выдаёт сервер при входе (op login/register_parent → switchToken),
+     обменивается на свежую сессию op switch. «Выйти» аккаунт с устройства НЕ убирает —
+     убирает ✕ в настройках (op switch_revoke). Блокировка на сервере закрывает switch. */
+  function devAccounts(){ return lsGet("rt_accounts",[]); }
+  function devUpsert(u,tok){
+    if(!u||!tok) return;
+    var l=devAccounts().filter(function(a){ return a.id!==u.id; });
+    l.push({id:u.id,nick:u.nickname,kind:u.kind,tok:tok});
+    lsSet("rt_accounts",l);
+  }
+  function devRemove(id){ lsSet("rt_accounts",devAccounts().filter(function(a){ return a.id!==id; })); }
+  function devSwitch(a,onFail){
+    RT.API.post("accounts.php",{op:"switch",token:a.tok}).then(function(r){
+      if(!(r&&r.ok&&r.user)){ throw new Error("bad"); }
+      toast(t("account.welcome",{name:r.user.nickname}));
+      setTimeout(function(){ location.reload(); },300);
+    }).catch(function(){
+      devRemove(a.id); toast(t("account.switchGone")); if(onFail) onFail();
+    });
+  }
+  function devRowsHtml(excludeId){
+    var saved=devAccounts().filter(function(a){ return a.id!==excludeId; });
+    if(!saved.length) return '';
+    return saved.map(function(a){
+      var role=(a.kind==="parent")?t("account.roleParent"):t("account.roleChild");
+      return '<div class="acct-row acct-dev" data-devrow="'+a.id+'">'
+        +'<button class="acct-go" data-sw="'+a.id+'"><span class="nm">'+esc(a.nick)+'</span><span class="rl">'+esc(role)+'</span></button>'
+        +'<button class="acct-x" data-rm="'+a.id+'" aria-label="✕" title="'+esc(t("account.removeDev"))+'">✕</button>'
+        +'</div>';
+    }).join("");
+  }
+  function wireDevRows(root,onFail,withRemove){
+    Array.prototype.forEach.call(root.querySelectorAll("[data-sw]"),function(btn){
+      btn.onclick=function(){
+        var id=parseInt(btn.getAttribute("data-sw"),10);
+        var a=devAccounts().filter(function(x){ return x.id===id; })[0];
+        if(a) devSwitch(a,onFail);
+      };
+    });
+    Array.prototype.forEach.call(root.querySelectorAll("[data-rm]"),function(btn){
+      if(!withRemove){ btn.style.display="none"; return; }
+      btn.onclick=function(){
+        var id=parseInt(btn.getAttribute("data-rm"),10);
+        var a=devAccounts().filter(function(x){ return x.id===id; })[0];
+        if(!a) return;
+        confirm({title:t("account.removeDev"), text:t("account.removeConfirm",{name:a.nick}), ok:t("common.yes"), cancel:t("common.cancel")}).then(function(ok){
+          if(!ok) return;
+          RT.API.post("accounts.php",{op:"switch_revoke",token:a.tok}).catch(function(){});
+          devRemove(id); toast(t("account.removedDev",{name:a.nick})); if(onFail) onFail();
+        });
+      };
+    });
+  }
+
   function renderLock(loading){
     var head='<div class="hometop"><h1 class="brand">Rob<b>Top</b></h1>'
       +'<div class="tagline">'+esc(t("lock.hint"))+'</div></div>';
     if(loading){ lockView.innerHTML=head+'<p class="set-note" style="text-align:center">'+esc(t("account.loading"))+'</p>'; return; }
+    var saved=devRowsHtml(0);
     lockView.innerHTML=head
       +'<div class="lockform">'
-      +'<p class="set-note">'+esc(t("account.loginHint"))+'</p>'
+      +(saved?'<p class="set-note" style="text-align:center;font-weight:800">'+esc(t("lock.title"))+'</p>'+saved
+        +'<p class="set-note" style="margin-top:10px">'+esc(t("account.orPassword"))+'</p>':'')
+      +(!saved?'<p class="set-note">'+esc(t("account.loginHint"))+'</p>':'')
       +'<input class="set-in" id="lockLogin" type="text" placeholder="'+esc(t("account.loginPh"))+'" autocomplete="username">'
       +'<input class="set-in" id="lockPass" type="password" placeholder="'+esc(t("account.passPh"))+'" autocomplete="current-password">'
       +'<button class="btn btn-primary" id="lockIn">'+esc(t("account.signIn"))+'</button>'
@@ -193,7 +251,8 @@ window.RobTop = window.RobTop || {};
     lockView.querySelector("#lockReg").onclick=renderLockRegister;
     lockView.querySelector("#lockForgot").onclick=renderLockForgot;
     ps.addEventListener("keydown",function(e){ if(e.key==="Enter") go(); });
-    setTimeout(function(){ lg.focus(); },150);
+    wireDevRows(lockView,function(){ renderLock(false); },false); // на локе без ✕ — убирают в настройках
+    if(!saved) setTimeout(function(){ lg.focus(); },150);
   }
   /* «Забыли пароль?» прямо на lock-экране (раньше только в family.html).
      Только для родителя: детям пароль сбрасывает родитель. Op forgot всегда отвечает ok. */
@@ -235,6 +294,7 @@ window.RobTop = window.RobTop || {};
       if(!nick||!em||!pw||pw.length<4){ toast(t("reg.fail")); return; }
       RT.API.post("accounts.php",{op:"register_parent",nickname:nick,email:em,password:pw}).then(function(r){
         if(!(r&&r.ok)){ toast(t("reg.fail")); return; }
+        if(r.user&&r.switchToken) devUpsert(r.user,r.switchToken); // запомнить на устройстве
         toast(t("account.welcome",{name:nick}));
         setTimeout(function(){ location.reload(); },500);
       }).catch(function(){ toast(t("reg.fail")); });
@@ -246,6 +306,7 @@ window.RobTop = window.RobTop || {};
     if(!loginV||!passV){ toast(t("account.badLogin")); return; }
     RT.API.post("accounts.php",{op:"login",login:loginV,password:passV}).then(function(r){
       if(!(r&&r.ok&&r.user)){ toast(t("account.badLogin")); return; }
+      if(r.switchToken) devUpsert(r.user,r.switchToken); // запомнить аккаунт на устройстве (мульти-вход)
       if(r.user.mustChangePassword){ renderForcePass(forceTarget); return; }
       toast(t("account.welcome",{name:r.user.nickname}));
       setTimeout(function(){ location.reload(); },500);
@@ -335,8 +396,17 @@ window.RobTop = window.RobTop || {};
     if(acct===null) return out+'<p class="set-note">'+esc(t("account.loading"))+'</p>';
     if(acct.authenticated && acct.user){
       var u=acct.user, role=(u.kind==="parent")?t("account.roleParent"):t("account.roleChild");
+      var others=devRowsHtml(u.id);
       return out
-        +'<div class="acct-row"><span class="nm">'+esc(u.nickname)+'</span><span class="rl">'+esc(role)+'</span></div>';
+        +'<div class="acct-row"><span class="nm">'+esc(u.nickname)+'</span><span class="rl">'+esc(role)+'</span></div>'
+        +(others?'<div class="store-section">'+esc(t("account.deviceList"))+'</div>'+others:'')
+        +'<div class="store-install" id="acctAdd">＋ '+esc(t("account.addAccount"))+'</div>'
+        +'<div id="acctAddBox" style="display:none">'
+        +'<p class="set-note">'+esc(t("account.addHint"))+'</p>'
+        +'<input class="set-in" id="acctLogin" type="text" placeholder="'+esc(t("account.loginPh"))+'" autocomplete="username">'
+        +'<input class="set-in" id="acctPass" type="password" placeholder="'+esc(t("account.passPh"))+'" autocomplete="current-password">'
+        +'<div class="sheet-actions"><button class="btn btn-primary" id="acctIn" style="flex:1">'+esc(t("account.signIn"))+'</button></div>'
+        +'</div>';
     }
     return out
       +'<p class="set-note">'+esc(t("account.loginHint"))+' '+esc(t("account.guestNote"))+'</p>'
@@ -358,6 +428,15 @@ window.RobTop = window.RobTop || {};
       inBtn.onclick=doLogin;
       ps.addEventListener("keydown",function(e){ if(e.key==="Enter") doLogin(); });
     }
+    // мульти-аккаунты: переключение, ✕ с устройства, тумблер формы «добавить»
+    wireDevRows(settingsBody,function(){ renderSettings(); },true);
+    var addBtn=settingsBody.querySelector("#acctAdd");
+    if(addBtn) addBtn.onclick=function(){
+      var box=settingsBody.querySelector("#acctAddBox");
+      var open=box.style.display!=="none";
+      box.style.display=open?"none":"";
+      if(!open) setTimeout(function(){ var f=box.querySelector("#acctLogin"); if(f) f.focus(); },100);
+    };
   }
   /* обязательная смена одноразового 1234 (target: settingsBody или форма на lock-экране) */
   function renderForcePass(target){

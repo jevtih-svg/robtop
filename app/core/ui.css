@@ -409,3 +409,12 @@ body[data-view="parent"] .pd-tabbar{display:flex}
 .pd-cphoto{display:block;width:44px;height:44px;border-radius:10px;background-size:cover;background-position:center;
   border:1px solid rgba(255,255,255,.16);margin-top:2px}
 .pd-openj,.pd-morebtn{margin-top:10px}
+
+/* ===== мульти-аккаунты: строки переключения на lock-экране и в настройках (2026-06-07) ===== */
+.acct-row.acct-dev{display:flex;align-items:center;gap:8px;padding:0}
+.acct-go{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:none;border:none;color:inherit;font:inherit;font-weight:700;cursor:pointer;
+  padding:13px 14px;text-align:left;border-radius:inherit}
+.acct-go:active{transform:scale(.99)}
+.acct-x{flex:0 0 auto;width:34px;height:34px;margin-right:8px;border:1px solid rgba(255,77,109,.45);
+  border-radius:10px;background:rgba(255,77,109,.12);color:#ffb3c0;font-weight:800;cursor:pointer}

@@ -279,6 +279,26 @@ function rt_family_banned($db, $familyId) {
     return (bool)$s->fetch();
 }
 
+/* ---------- мульти-аккаунты на устройстве (switch_tokens, миграция 009) ----------
+   Длинный токен выдаётся при входе, живёт в localStorage и обменивается на свежую
+   сессию (op switch) — так на семейном планшете переключаются без пароля.
+   Блокировка аккаунта закрывает и переключение (switch проверяет status). */
+function rt_switch_token_new($db, $userId) {
+    $tok = bin2hex(random_bytes(32)); // 64 hex; руками не набирается, в БД только хэш
+    $db->prepare("INSERT INTO switch_tokens (user_id, token_hash, created_at, last_used_at, expires_at)
+                  VALUES (?, ?, NOW(), NOW(), DATE_ADD(NOW(), INTERVAL 180 DAY))")
+       ->execute([(int)$userId, rt_token_hash($tok)]);
+    return $tok;
+}
+function rt_switch_token_row($db, $tok) {
+    if (!is_string($tok) || strlen($tok) !== 64) return null;
+    $s = $db->prepare("SELECT id, user_id FROM switch_tokens
+                       WHERE token_hash = ? AND revoked_at IS NULL AND expires_at > NOW() LIMIT 1");
+    $s->execute([rt_token_hash($tok)]);
+    $r = $s->fetch();
+    return $r ?: null;
+}
+
 /* ---------- безопасный вывод пользователя ---------- */
 function rt_public_user($row, $self = false) {
     $out = [

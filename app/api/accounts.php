@@ -54,7 +54,8 @@ switch ($op) {
         rt_log('accounts', 'account_created', $uid, 'parent', null, null, ['kind' => 'parent']);
         rt_log('accounts', 'family_created', $fid, null, null, null, ['owner' => $uid]);
         $u = rt_account($db, $uid);
-        rt_json(['ok' => true, 'user' => rt_public_user($u, true), 'family_id' => $fid]);
+        rt_json(['ok' => true, 'user' => rt_public_user($u, true), 'family_id' => $fid,
+                 'switchToken' => rt_switch_token_new($db, $uid)]);
     }
 
     /* ---------------- вход ---------------- */
@@ -69,7 +70,30 @@ switch ($op) {
         rt_start_session($db, (int)$acc['id']);
         $db->prepare("UPDATE accounts SET last_login_at = NOW() WHERE user_id = ?")->execute([(int)$acc['id']]);
         rt_log('accounts', 'login', (int)$acc['id'], null, null, null, ['kind' => $acc['kind']]);
+        // токен переключения: клиент запоминает аккаунт на устройстве (мульти-вход)
+        rt_json(['ok' => true, 'user' => rt_public_user($acc, true), 'switchToken' => rt_switch_token_new($db, (int)$acc['id'])]);
+    }
+
+    /* ---------------- мульти-аккаунты: переключение по токену устройства ---------------- */
+    case 'switch': {
+        $row = rt_switch_token_row($db, isset($b['token']) ? (string)$b['token'] : '');
+        if (!$row) rt_json(['error' => 'invalid switch token'], 401);
+        $acc = rt_account($db, (int)$row['user_id']);
+        if (!$acc || $acc['status'] === 'disabled') rt_json(['error' => 'disabled'], 403); // блокировка закрывает и переключение
+        rt_start_session($db, (int)$acc['id']);
+        $db->prepare("UPDATE switch_tokens SET last_used_at = NOW() WHERE id = ?")->execute([(int)$row['id']]);
+        $db->prepare("UPDATE accounts SET last_login_at = NOW() WHERE user_id = ?")->execute([(int)$acc['id']]);
+        rt_log('accounts', 'account_switched', (int)$acc['id'], null, null, null, ['kind' => $acc['kind']]);
         rt_json(['ok' => true, 'user' => rt_public_user($acc, true)]);
+    }
+
+    case 'switch_revoke': { // убрать аккаунт с устройства (токен сам себя отзывает, вход не нужен)
+        $tok = isset($b['token']) ? (string)$b['token'] : '';
+        if (is_string($tok) && strlen($tok) === 64) {
+            $db->prepare("UPDATE switch_tokens SET revoked_at = NOW() WHERE token_hash = ? AND revoked_at IS NULL")
+               ->execute([rt_token_hash($tok)]);
+        }
+        rt_json(['ok' => true]);
     }
 
     /* ---------------- выход ---------------- */
