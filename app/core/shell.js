@@ -1034,6 +1034,45 @@ window.RobTop = window.RobTop || {};
     };
   }
 
+  /* ===== ТЕМА ОФОРМЛЕНИЯ (2026-06-07): выбирает себе КАЖДЫЙ аккаунт (ребёнок и родитель).
+     Реестр и визуальное применение — core/bg.js (RTTheme: body[data-theme] + канвас + кэш
+     rt_theme); хранение на аккаунте — accounts.php op set_theme (users.theme, миграция 016).
+     В демо (file://) тема живёт только в кэше устройства. ===== */
+  function themeSectionHtml(){
+    if(!window.RTTheme) return '';
+    var cur=RTTheme.get();
+    var cards=RTTheme.list().map(function(th){
+      var p=th.preview||{};
+      var dots=(p.dots||[]).map(function(c,i){
+        return '<i style="color:'+c+';background:'+c+';left:'+(11+i*19)+'px;top:'+(19+(i%2)*10)+'px"></i>';
+      }).join("");
+      return '<button class="theme-card'+(th.id===cur?' on':'')+'" data-theme-pick="'+th.id+'">'
+        +'<span class="mark">✓</span>'
+        +'<span class="prev" style="background:'+(p.bg||"#111")+'">'+dots+'</span>'
+        +'<span class="nm">'+esc(t("theme."+th.id))+'</span>'
+        +'</button>';
+    }).join("");
+    return '<div class="store-section">'+esc(t("settings.theme"))+'</div>'
+      +'<div class="theme-grid">'+cards+'</div>';
+  }
+  function wireThemeSection(){
+    var grid=settingsBody?settingsBody.querySelector(".theme-grid"):null; if(!grid) return;
+    grid.addEventListener("click",function(e){
+      var b=e.target.closest("[data-theme-pick]"); if(!b || !window.RTTheme) return;
+      var id=b.getAttribute("data-theme-pick");
+      if(id===RTTheme.get()) return;
+      RTTheme.set(id); buzz(6);
+      Array.prototype.forEach.call(grid.querySelectorAll(".theme-card"),function(c){
+        c.classList.toggle("on", c.getAttribute("data-theme-pick")===id);
+      });
+      if(!demo && acct && acct.authenticated){
+        if(acct.user) acct.user.theme=id;
+        RT.API.post("accounts.php",{op:"set_theme",theme:id})
+          .catch(function(){ toast(t("common.failed")); });
+      }
+    });
+  }
+
   /* «Выйти» — один раз, внизу экрана, отдельно от данных аккаунта */
   function signOutHtml(){
     if(demo || !(acct && acct.authenticated)) return '';
@@ -1061,6 +1100,7 @@ window.RobTop = window.RobTop || {};
         : '')
       +'<div class="store-section">'+esc(t("settings.language"))+'</div>'
       +'<div class="lang-seg">'+langBtns+'</div>'
+      +themeSectionHtml()
       +signOutHtml()
       +'<div class="set-ver">RobTop '+esc(window.RT_VER?("v"+window.RT_VER):"")+'</div>'
       +'</div>';
@@ -1079,6 +1119,7 @@ window.RobTop = window.RobTop || {};
       var b=e.target.closest("[data-lang]"); if(!b) return;
       I.set(b.getAttribute("data-lang")); buzz(6);
     });
+    wireThemeSection();
     var mng=settingsBody.querySelector("#settingsManage");
     if(mng) mng.onclick=openStore; // магазин — шторкой поверх настроек, «назад» остаётся логичным
   }

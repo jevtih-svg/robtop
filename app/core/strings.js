@@ -29,8 +29,9 @@
       },
       settings: {
         open: "Settings", title: "Settings", language: "Language",
-        manageApps: "Manage apps"
+        manageApps: "Manage apps", theme: "Theme"
       },
+      theme: { neon: "Neon", tilley: "Tilley Live" },
       family: {
         title: "Family",
         empty: "No children yet.",
@@ -194,8 +195,9 @@
       },
       settings: {
         open: "Настройки", title: "Настройки", language: "Язык",
-        manageApps: "Управление приложениями"
+        manageApps: "Управление приложениями", theme: "Оформление"
       },
+      theme: { neon: "Неон", tilley: "Tilley Live" },
       family: {
         title: "Семья",
         empty: "Детей пока нет.",
@@ -359,8 +361,9 @@
       },
       settings: {
         open: "Iestatījumi", title: "Iestatījumi", language: "Valoda",
-        manageApps: "Pārvaldīt lietotnes"
+        manageApps: "Pārvaldīt lietotnes", theme: "Noformējums"
       },
+      theme: { neon: "Neons", tilley: "Tilley Live" },
       family: {
         title: "Ģimene",
         empty: "Bērnu vēl nav.",

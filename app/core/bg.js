@@ -1,14 +1,43 @@
-/* RobTop — анимированный неоновый фон (плата + орбы) и конфетти.
-   Общие визуальные сервисы оболочки. window.Confetti.launch() доступен модулям через sdk.ui.confetti(). */
+/* RobTop — темы оформления (window.RTTheme) + анимированный тематический фон и конфетти.
+   Общие визуальные сервисы оболочки. window.Confetti.launch() доступен модулям через sdk.ui.confetti().
 
-/* ================= ANIMATED NEON BACKGROUND ================= */
+   ТЕМЫ: тема хранится на аккаунте (users.theme, op set_theme), применяется здесь:
+   body[data-theme] переключает CSS-токены (блоки в core/ui.css), канвас перестраивается
+   под палитру/арт темы, meta theme-color обновляется. localStorage rt_theme — только КЭШ
+   для мгновенной отрисовки до ответа accounts.php op=me (источник правды — аккаунт).
+   Новая тема = запись THEMES здесь + блок токенов в ui.css + allowlist в accounts.php. */
+
+/* ================= THEMES + ANIMATED BACKGROUND ================= */
 (function(){
+  /* ---- реестр тем ----
+     base/metaColor — цвет страницы/шапки браузера; pal — палитра канваса (rgb);
+     art — параметры фона: traces (дорожки платы), density (px² на орб; больше = реже),
+           size [мелкие, средние, крупные] = [база, разброс], speed, alpha;
+     preview — мини-превью для карточки в Настройках (фон + три точки). */
+  var THEMES={
+    neon:{
+      metaColor:"#07061a",
+      pal:[[25,227,255],[255,43,214],[166,75,255],[59,107,255],[43,240,192],[255,210,59],[255,77,109]],
+      art:{traces:true,density:12000,size:[[2,4],[6,6],[12,12]],speed:.32,alpha:[.5,.45],glow:2.7},
+      preview:{bg:"linear-gradient(150deg,#1a1738 0%,#13102e 55%,#070617 100%)",dots:["#19e3ff","#ff2bd6","#a64bff"]}
+    },
+    tilley:{
+      metaColor:"#192E28",
+      pal:[[232,68,10],[222,213,190],[95,191,158],[217,164,65]],
+      art:{traces:false,density:24000,size:[[1.5,2.5],[3.5,3.5],[7,6]],speed:.11,alpha:[.32,.38],glow:3.1},
+      preview:{bg:"linear-gradient(150deg,#2E5248 0%,#213D36 55%,#14261F 100%)",dots:["#E8440A","#DED5BE","#5FBF9E"]}
+    }
+  };
+  var DEFAULT_THEME="neon";
+  function lsGetTheme(){ try{ return localStorage.getItem("rt_theme")||""; }catch(e){ return ""; } }
+  function lsSetTheme(id){ try{ localStorage.setItem("rt_theme",id); }catch(e){} }
+  var current=THEMES[lsGetTheme()]?lsGetTheme():DEFAULT_THEME;
+
   var cv=document.getElementById("bg");
   var ctx=cv && cv.getContext && cv.getContext("2d");
-  if(!ctx) return;
   var W=0,H=0,DPR=1,circuit=null,orbs=[],sprites={},raf=null;
   var reduce=window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var PAL=[[25,227,255],[255,43,214],[166,75,255],[59,107,255],[43,240,192],[255,210,59],[255,77,109]];
+  function theme(){ return THEMES[current]||THEMES[DEFAULT_THEME]; }
   function rgba(c,a){ return "rgba("+c[0]+","+c[1]+","+c[2]+","+a+")"; }
   function sprite(c){
     var key=c.join(","); if(sprites[key]) return sprites[key];
@@ -18,6 +47,8 @@
     g.fillStyle=grd; g.beginPath(); g.arc(r,r,r,0,7); g.fill(); sprites[key]=cn; return cn;
   }
   function buildCircuit(){
+    circuit=null; if(!theme().art.traces) return;
+    var PAL=theme().pal;
     circuit=document.createElement("canvas"); circuit.width=Math.max(1,W*DPR); circuit.height=Math.max(1,H*DPR);
     var g=circuit.getContext("2d"); g.setTransform(DPR,0,0,DPR,0,0);
     var step=28,n=Math.round((W*H)/14000);
@@ -31,14 +62,20 @@
     }
   }
   function buildOrbs(){
-    orbs=[]; var area=W*H,count=Math.min(78,Math.max(36,Math.round(area/12000)));
+    orbs=[]; var a=theme().art, PAL=theme().pal;
+    var area=W*H,count=Math.min(78,Math.max(20,Math.round(area/a.density)));
     for(var i=0;i<count;i++){
-      var t=Math.random(),r=t<.6?2+Math.random()*4:(t<.86?6+Math.random()*6:12+Math.random()*12);
-      var sp=reduce?0:(.05+Math.random()*.32),a=Math.random()*6.28;
-      orbs.push({x:Math.random()*W,y:Math.random()*H,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:r,glow:2.7+Math.random()*1.2,col:PAL[(Math.random()*PAL.length)|0],al:.5+Math.random()*.45,ph:Math.random()*6.28});
+      var t=Math.random(),
+          sz=t<.6?a.size[0]:(t<.86?a.size[1]:a.size[2]),
+          r=sz[0]+Math.random()*sz[1];
+      var sp=reduce?0:(.05+Math.random()*a.speed),ang=Math.random()*6.28;
+      orbs.push({x:Math.random()*W,y:Math.random()*H,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,r:r,
+        glow:a.glow+Math.random()*1.2,col:PAL[(Math.random()*PAL.length)|0],
+        al:a.alpha[0]+Math.random()*a.alpha[1],ph:Math.random()*6.28});
     }
   }
-  function resize(){ DPR=Math.min(window.devicePixelRatio||1,2); W=window.innerWidth; H=window.innerHeight; cv.width=W*DPR; cv.height=H*DPR; cv.style.width=W+"px"; cv.style.height=H+"px"; ctx.setTransform(DPR,0,0,DPR,0,0); buildCircuit(); buildOrbs(); }
+  function rebuild(){ if(!ctx) return; buildCircuit(); buildOrbs(); if(reduce) draw(0); }
+  function resize(){ if(!ctx) return; DPR=Math.min(window.devicePixelRatio||1,2); W=window.innerWidth; H=window.innerHeight; cv.width=W*DPR; cv.height=H*DPR; cv.style.width=W+"px"; cv.style.height=H+"px"; ctx.setTransform(DPR,0,0,DPR,0,0); buildCircuit(); buildOrbs(); }
   function draw(t){
     ctx.clearRect(0,0,W,H); if(circuit) ctx.drawImage(circuit,0,0,W,H);
     ctx.globalCompositeOperation="lighter";
@@ -52,6 +89,33 @@
     ctx.globalAlpha=1; ctx.globalCompositeOperation="source-over";
     if(!reduce) raf=requestAnimationFrame(draw);
   }
+
+  /* ---- применить тему к документу (body-атрибут + цвет шапки браузера + канвас) ---- */
+  function applyDom(){
+    document.body.setAttribute("data-theme",current);
+    var m=document.querySelector('meta[name="theme-color"]');
+    if(m) m.setAttribute("content",theme().metaColor);
+    rebuild();
+  }
+  window.RTTheme={
+    ids:function(){ return Object.keys(THEMES); },
+    list:function(){ return Object.keys(THEMES).map(function(id){ return {id:id,preview:THEMES[id].preview}; }); },
+    get:function(){ return current; },
+    has:function(id){ return !!THEMES[id]; },
+    /* set: применяет немедленно и кэширует. Сохранение НА АККАУНТ делает shell
+       (accounts.php op set_theme) — здесь только визуальный слой. */
+    set:function(id){
+      if(!THEMES[id]) id=DEFAULT_THEME;
+      if(id===current){ lsSetTheme(id); return current; }
+      current=id; lsSetTheme(id); applyDom(); return current;
+    }
+  };
+
+  /* первый запуск: тема из кэша применяется сразу (до ответа op=me) */
+  document.body.setAttribute("data-theme",current);
+  var mt=document.querySelector('meta[name="theme-color"]');
+  if(mt) mt.setAttribute("content",theme().metaColor);
+  if(!ctx) return;
   var rt=null;
   window.addEventListener("resize",function(){ clearTimeout(rt); rt=setTimeout(function(){ resize(); if(reduce) draw(0); },180); });
   resize(); if(reduce) draw(0); else raf=requestAnimationFrame(draw);
