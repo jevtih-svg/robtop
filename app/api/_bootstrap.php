@@ -150,6 +150,9 @@ function rt_module_meta($r) {
         'icon'    => isset($man['icon']) ? $man['icon'] : null,
         'wide'    => !empty($man['wide']),
         'status'  => isset($man['status']) ? $man['status'] : 'active',
+        // roles ОБЯЗАТЕЛЬНО отдаются клиенту: sdk.can() модуля читает meta.roles; без них
+        // can("edit") падал в дефолт ["child"] и родитель видел пустой мастер walk (фикс v.22)
+        'roles'   => (isset($man['roles']) && is_array($man['roles'])) ? $man['roles'] : null,
         'source'  => $r['source'],
         'server'  => ((int)$r['server'] === 1),
     ];
