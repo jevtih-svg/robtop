@@ -14,7 +14,7 @@
   /* =================== ЛОКАЛИЗАЦИЯ (en/ru/lv) =================== */
   var MESSAGES={
     en:{ walk:{
-      subtitle:"Log your dog walk",
+      subtitle:"Family dog walks — everyone logs, everyone sees",
       hudLeft:"Dog <b>walk</b>", hudCLbl:"walks", hudRLbl:"minutes",
       durTitle:"How long was the walk?", durMin:"{n} min", durOther:"Other",
       numTitle:"How many minutes?",
@@ -24,6 +24,11 @@
       timeLbl:"Walk time",
       behBtn:"Behaviour problem", behTitle:"What happened?", behWhen:"When did it happen?",
       behSavedToast:"Noted!", behNeedPick:"Pick what happened first",
+      evtBtn:"Important event", evtTitle:"What kind of event?", evtWhen:"When?",
+      evtNote:"Note", evtNotePh:"e.g. nails trimmed",
+      evtSavedToast:"Event saved!", evtNeedPick:"Pick the event type first",
+      addEvt:"My type", ownEvtTitle:"New event type",
+      evt:{ vet:"Vet visit", birthday:"Birthday", vaccine:"Vaccination", groom:"Grooming" },
       cmdTitle:"Which commands did you practice today?",
       issTitle:"Any behaviour problems today?",
       addCmd:"My command", addIss:"My option",
@@ -45,7 +50,7 @@
       aria:{ settings:"Walk settings", photo:"Photo", del:"Remove" }
     }, bank:{ r_walk_done:"Dog walk" }},
     ru:{ walk:{
-      subtitle:"Запиши прогулку с собакой",
+      subtitle:"Семейные прогулки с собакой — пишут все, видят все",
       hudLeft:"Прогулка <b>с собакой</b>", hudCLbl:"прогулок", hudRLbl:"минут",
       durTitle:"Сколько гуляли?", durMin:"{n} мин", durOther:"Другое",
       numTitle:"Сколько минут?",
@@ -55,6 +60,11 @@
       timeLbl:"Время прогулки",
       behBtn:"Проблема с поведением", behTitle:"Что случилось?", behWhen:"Когда это случилось?",
       behSavedToast:"Записано!", behNeedPick:"Сначала выбери, что случилось",
+      evtBtn:"Важное событие", evtTitle:"Какое событие?", evtWhen:"Когда?",
+      evtNote:"Заметка", evtNotePh:"например: подстригли когти",
+      evtSavedToast:"Событие записано!", evtNeedPick:"Сначала выбери тип события",
+      addEvt:"Свой тип", ownEvtTitle:"Новый тип события",
+      evt:{ vet:"Ветеринар", birthday:"День рождения", vaccine:"Прививка", groom:"Стрижка / груминг" },
       cmdTitle:"Какие команды сегодня отрабатывали?",
       issTitle:"Были ли сегодня проблемы с поведением?",
       addCmd:"Своя команда", addIss:"Свой вариант",
@@ -76,7 +86,7 @@
       aria:{ settings:"Настройки прогулки", photo:"Фото", del:"Убрать" }
     }, bank:{ r_walk_done:"Прогулка с собакой" }},
     lv:{ walk:{
-      subtitle:"Pieraksti pastaigu ar suni",
+      subtitle:"Ģimenes pastaigas ar suni — raksta visi, redz visi",
       hudLeft:"Pastaiga <b>ar suni</b>", hudCLbl:"pastaigas", hudRLbl:"minūtes",
       durTitle:"Cik ilgi pastaigājāties?", durMin:"{n} min", durOther:"Cits",
       numTitle:"Cik minūtes?",
@@ -86,6 +96,11 @@
       timeLbl:"Pastaigas laiks",
       behBtn:"Uzvedības problēma", behTitle:"Kas notika?", behWhen:"Kad tas notika?",
       behSavedToast:"Pierakstīts!", behNeedPick:"Vispirms izvēlies, kas notika",
+      evtBtn:"Svarīgs notikums", evtTitle:"Kāds notikums?", evtWhen:"Kad?",
+      evtNote:"Piezīme", evtNotePh:"piemēram: apgrieza nagus",
+      evtSavedToast:"Notikums pierakstīts!", evtNeedPick:"Vispirms izvēlies notikuma veidu",
+      addEvt:"Mans veids", ownEvtTitle:"Jauns notikuma veids",
+      evt:{ vet:"Veterinārārsts", birthday:"Dzimšanas diena", vaccine:"Vakcinācija", groom:"Frizūra / kopšana" },
       cmdTitle:"Kuras komandas šodien trenējāt?",
       issTitle:"Vai šodien bija problēmas ar uzvedību?",
       addCmd:"Mana komanda", addIss:"Mans variants",
@@ -113,6 +128,7 @@
   var RATE_KEYS=["sad","mid","happy"];           // слева направо; позитив ВСЕГДА справа (спека)
   var SYS_CMD=["stop","heel","come","sit","stand","down","here","wait","no","noPull","go"];
   var SYS_ISS=["toilet","floor","leash","ignore"];
+  var SYS_EVT=["vet","birthday","vaccine","groom"]; // важные события: ветеринар, ДР, прививка, груминг
   var PHOTO_MAX=10, REWARD_DEF=10, REWARD_STEP=5, REWARD_MAX=100;
 
   var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
@@ -120,6 +136,7 @@
   var CAM_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2L9 4.8h6L16.5 7h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="13" r="3.4"/></svg>';
   var PAW_IC='<svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="6.4" cy="10" rx="1.7" ry="2.3"/><ellipse cx="9.9" cy="7.3" rx="1.7" ry="2.4"/><ellipse cx="14.1" cy="7.3" rx="1.7" ry="2.4"/><ellipse cx="17.6" cy="10" rx="1.7" ry="2.3"/><path d="M12 11.2c2.9 0 5.3 2.1 5.7 4.8.3 1.9-1.1 3.4-3 3.4-1.3 0-1.9-.6-2.7-.6s-1.4.6-2.7.6c-1.9 0-3.3-1.5-3-3.4.4-2.7 2.8-4.8 5.7-4.8z"/></svg>';
   var WARN_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.2L21 19.4H3z"/><path d="M12 10v4.4"/><circle cx="12" cy="16.9" r=".4" fill="currentColor" stroke="none"/></svg>';
+  var STAR_IC='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.7 5.7 6.3.8-4.6 4.4 1.2 6.2L12 17.8 6.4 20.1l1.2-6.2L3 9.5l6.3-.8z"/></svg>';
 
   /* три смайлика в стиле mood; цвет — в CSS по классу f-<key> */
   function faceSvg(mouth){
@@ -138,20 +155,32 @@
 
   /* =================== состояние =================== */
   var sdk=null, root=null, E={};
-  var entries=[], behs=[], cmds=[], iss=[], meta={id:null,puppy:1,reward:REWARD_DEF};
-  var step="dur", cur=null, beh=null, saving=false;
+  var entries=[], behs=[], evts=[], cmds=[], iss=[], evtTypes=[], meta={id:null,puppy:1,reward:REWARD_DEF};
+  var step="dur", cur=null, beh=null, ev=null, saving=false;
 
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
   function t(k,p){ return sdk.t(k,p); }
   function pad2(n){ return (n<10?"0":"")+n; }
   function dayKey(d){ d=d||new Date(); return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
   function hhmm(d){ d=d||new Date(); return pad2(d.getHours())+":"+pad2(d.getMinutes()); }
-  function blankCur(){ return {duration:0, rating:null, sel:{}, selIss:{}, photos:[], time:hhmm(), editId:null}; }
+  /* округление времени до БЛИЖАЙШИХ 15 минут (требование Джеффа): 08:37→08:30, 08:38→08:45, 23:55→23:45 (без перехода суток) */
+  function r15(hm){
+    var m=/^(\d{2}):(\d{2})$/.exec(String(hm||"")); if(!m) return hm;
+    var tot=Math.round((+m[1]*60 + +m[2])/15)*15;
+    if(tot>=1440) tot=1425;
+    return pad2(Math.floor(tot/60))+":"+pad2(tot%60);
+  }
+  function hhmm15(){ return r15(hhmm()); }
+  function blankCur(){ return {duration:0, rating:null, sel:{}, selIss:{}, photos:[], time:hhmm15(), editId:null}; }
   /* активная карта выбора непослушания: экран отдельного события (beh) или детали прогулки */
   function issMap(){ return (step==="beh"&&beh) ? beh.sel : (cur?cur.selIss:{}); }
-  function timeOf(sel){ // прочитать введённое время HH:MM из input, фолбэк — текущее
+  function timeOf(sel){ // прочитать введённое время HH:MM из input (округляется к 15 мин), фолбэк — текущее
     var el=E.main&&E.main.querySelector(sel), v=el?String(el.value||""):"";
-    return /^\d{2}:\d{2}$/.test(v) ? v : hhmm();
+    return /^\d{2}:\d{2}$/.test(v) ? r15(v) : hhmm15();
+  }
+  function dateOf(sel){ // прочитать дату YYYY-MM-DD из input, фолбэк — сегодня
+    var el=E.main&&E.main.querySelector(sel), v=el?String(el.value||""):"";
+    return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : dayKey();
   }
   function dataOf(it){ return (it&&it.data)||{}; }
   function rateOf(it){ var r=dataOf(it).rating; return RATE_KEYS.indexOf(r)>=0?r:null; }
@@ -160,13 +189,16 @@
   function load(){
     Promise.all([
       sdk.data.list("entries"), sdk.data.list("commands"), sdk.data.list("issues"), sdk.data.list("meta"),
-      sdk.data.list("behavior")
+      sdk.data.list("behavior"), sdk.data.list("events"), sdk.data.list("eventTypes")
     ]).then(function(rr){
       if(!root) return;
       entries=(rr[0]||[]).filter(function(it){ return dataOf(it).duration>0; });
       entries.sort(function(a,b){ return (b.createdAt||0)-(a.createdAt||0); });
       behs=(rr[4]||[]).filter(function(it){ return (dataOf(it).issues||[]).length>0; });
       behs.sort(function(a,b){ return (b.createdAt||0)-(a.createdAt||0); });
+      evts=(rr[5]||[]).filter(function(it){ return (dataOf(it).kinds||[]).length>0; });
+      evts.sort(function(a,b){ return (b.createdAt||0)-(a.createdAt||0); });
+      evtTypes=(rr[6]||[]).slice().sort(function(a,b){ return (a.createdAt||0)-(b.createdAt||0); });
       cmds=(rr[1]||[]).slice().sort(function(a,b){ return (a.createdAt||0)-(b.createdAt||0); });
       iss=(rr[2]||[]).slice().sort(function(a,b){ return (a.createdAt||0)-(b.createdAt||0); });
       var m=(rr[3]||[])[0];
@@ -205,6 +237,17 @@
     for(var i=0;i<iss.length;i++){ if("u_"+iss[i].id===id) return dataOf(iss[i]).label||"?"; }
     return "?";
   }
+  function evtLabel(id){
+    if(/^s_/.test(id)) return t("evt."+id.slice(2));
+    for(var i=0;i<evtTypes.length;i++){ if("u_"+evtTypes[i].id===id) return dataOf(evtTypes[i]).label||"?"; }
+    return "?";
+  }
+  /* типы важных событий: системные в каноническом порядке + свои (по времени создания) */
+  function evtOrder(){
+    var all=SYS_EVT.map(function(k){ return "s_"+k; });
+    evtTypes.forEach(function(r){ all.push("u_"+r.id); });
+    return all;
+  }
   /* порядок чипов команд: команды ПРЕДЫДУЩЕЙ прогулки → системные → пользовательские */
   function cmdOrder(){
     var prev=[], i;
@@ -236,24 +279,43 @@
     if(step==="dur") return renderDur();
     if(step==="rate") return renderRate();
     if(step==="beh") return renderBeh();
+    if(step==="evt") return renderEvt();
     renderDetails();
   }
   function renderDur(){
     var h='<div class="wk-card"><h3 class="wk-card-title">'+esc(t("durTitle"))+'</h3><div class="wk-durs">';
     DUR.forEach(function(n){ h+='<button type="button" class="wk-dur" data-dur="'+n+'">'+esc(t("durMin",{n:n}))+'</button>'; });
     h+='<button type="button" class="wk-dur other" id="wkDurOther">'+esc(t("durOther"))+'</button></div></div>';
-    /* отдельное событие «проблема с поведением» — НЕ часть прогулки (фидбек Джеффа); только режим «Щенок» */
+    /* отдельные записи — НЕ часть прогулки (фидбек Джеффа): важное событие (всегда)
+       и проблема с поведением (только режим «Щенок») */
+    h+='<button type="button" class="wk-evtbtn" id="wkEvtBtn"><span class="ic">'+STAR_IC+'</span>'+esc(t("evtBtn"))+'</button>';
     if(meta.puppy) h+='<button type="button" class="wk-behbtn" id="wkBehBtn"><span class="ic">'+WARN_IC+'</span>'+esc(t("behBtn"))+'</button>';
     E.main.innerHTML=h;
   }
-  /* экран отдельного события поведения: чипы вариантов + время + сохранить */
+  /* экран отдельного события поведения: чипы вариантов + время (шаг 15 мин) + сохранить */
   function renderBeh(){
     var h='<div class="wk-card warn"><h3 class="wk-card-title">'+esc(t("behTitle"))+'</h3>'
       +chipsHtml(issOrder(), beh.sel, "iss")
       +'<div class="wk-sect">'+esc(t("behWhen"))+'</div>'
-      +'<input type="time" class="wk-time" id="wkBehTime" value="'+esc(beh.time)+'">'
+      +'<input type="time" class="wk-time" id="wkBehTime" step="900" value="'+esc(beh.time)+'">'
       +'<div class="wk-actions"><button type="button" class="btn btn-cancel" id="wkBehCancel">'+esc(t("common.cancel"))+'</button>'
       +'<button type="button" class="btn btn-primary" id="wkBehSave">'+esc(t("common.save"))+'</button></div></div>';
+    E.main.innerHTML=h;
+  }
+  /* экран ВАЖНОГО события (вет, день рождения, прививка, груминг + свои типы):
+     чипы типов + дата + время (шаг 15 мин) + заметка + сохранить */
+  function renderEvt(){
+    var h='<div class="wk-card gold"><h3 class="wk-card-title">'+esc(t("evtTitle"))+'</h3>'
+      +chipsHtml(evtOrder(), ev.sel, "evt")
+      +'<div class="wk-sect">'+esc(t("evtWhen"))+'</div>'
+      +'<div class="wk-when">'
+      +'<input type="date" class="wk-time" id="wkEvtDate" value="'+esc(ev.day)+'">'
+      +'<input type="time" class="wk-time" id="wkEvtTime" step="900" value="'+esc(ev.time)+'">'
+      +'</div>'
+      +'<div class="wk-sect">'+esc(t("evtNote"))+'</div>'
+      +'<input type="text" class="wk-note" id="wkEvtNote" maxlength="120" placeholder="'+esc(t("evtNotePh"))+'" value="'+esc(ev.note||"")+'">'
+      +'<div class="wk-actions"><button type="button" class="btn btn-cancel" id="wkEvtCancel">'+esc(t("common.cancel"))+'</button>'
+      +'<button type="button" class="btn btn-primary" id="wkEvtSave">'+esc(t("common.save"))+'</button></div></div>';
     E.main.innerHTML=h;
   }
   function facesHtml(extra){
@@ -272,13 +334,15 @@
       +'</div>';
   }
   function chipsHtml(order, selMap, kind){
+    var cls=kind==="iss"?" warn":(kind==="evt"?" gold":"");
+    var addId=kind==="cmd"?"wkAddCmd":(kind==="iss"?"wkAddIss":"wkAddEvt");
+    var addLbl=kind==="cmd"?t("addCmd"):(kind==="iss"?t("addIss"):t("addEvt"));
     var h='<div class="wk-chips">';
     order.forEach(function(id){
-      var lbl=kind==="cmd"?cmdLabel(id):issLabel(id);
-      h+='<button type="button" class="wk-chip'+(kind==="iss"?" warn":"")+(selMap[id]?" on":"")+'" data-'+kind+'="'+esc(id)+'">'+esc(lbl)+'</button>';
+      var lbl=kind==="cmd"?cmdLabel(id):(kind==="iss"?issLabel(id):evtLabel(id));
+      h+='<button type="button" class="wk-chip'+cls+(selMap[id]?" on":"")+'" data-'+kind+'="'+esc(id)+'">'+esc(lbl)+'</button>';
     });
-    h+='<button type="button" class="wk-chip add" id="'+(kind==="cmd"?"wkAddCmd":"wkAddIss")+'">＋ '
-      +esc(kind==="cmd"?t("addCmd"):t("addIss"))+'</button></div>';
+    h+='<button type="button" class="wk-chip add" id="'+addId+'">＋ '+esc(addLbl)+'</button></div>';
     return h;
   }
   function photosHtml(){
@@ -295,7 +359,7 @@
       +'<p class="wk-hint">'+esc(t("dtHint"))+'</p>'
       +facesHtml("mini")
       +'<div class="wk-sect">'+esc(t("timeLbl"))+'</div>'
-      +'<input type="time" class="wk-time" id="wkTime" value="'+esc(cur.time)+'">'
+      +'<input type="time" class="wk-time" id="wkTime" step="900" value="'+esc(cur.time)+'">'
       +'<div class="wk-sect">'+esc(t("cmdTitle"))+'</div>'+chipsHtml(cmdOrder(), cur.sel, "cmd");
     if(meta.puppy) h+='<div class="wk-sect">'+esc(t("issTitle"))+'</div>'+chipsHtml(issOrder(), cur.selIss, "iss");
     h+='<div class="wk-sect">'+esc(t("photoTitle"))+'</div>'+photosHtml()
@@ -391,6 +455,26 @@
   }
   function selectedOf(map, order){ return order.filter(function(id){ return !!map[id]; }); }
 
+  /* важное событие (вет, ДР, прививка, груминг, свои): сохранение; очков нет */
+  function saveEvt(){
+    if(!ev||saving) return;
+    var kinds=selectedOf(ev.sel, evtOrder());
+    if(!kinds.length){ sdk.ui.toast(t("evtNeedPick")); return; }
+    saving=true;
+    var noteEl=E.main&&E.main.querySelector("#wkEvtNote");
+    var payload={ day:dateOf("#wkEvtDate"), time:timeOf("#wkEvtTime"), kinds:kinds,
+      note:(noteEl?noteEl.value:"").trim().slice(0,120), author:(sdk.user&&sdk.user.name)||"" };
+    sdk.data.create("events",payload).then(function(item){
+      saving=false; if(!root) return;
+      if(item) evts.unshift(item);
+      sdk.events.track("walk_event",{kinds:kinds.length, hasNote:!!payload.note, day:payload.day});
+      sdk.ui.haptics(10);
+      ev=null; step="dur";
+      sdk.ui.toast(t("evtSavedToast"));
+      renderMain(); renderList();
+    }).catch(function(){ saving=false; sdk.ui.toast(t("saveFailed")); });
+  }
+
   /* отдельное событие поведения: сохранение (очков нет — это не «задание», просто факт для родителя) */
   function saveBeh(){
     if(!beh||saving) return;
@@ -465,7 +549,7 @@
   /* =================== свои команды / варианты =================== */
   function openOwn(kind){
     var node=document.createElement("div");
-    node.innerHTML='<h2>'+esc(kind==="cmd"?t("ownCmdTitle"):t("ownIssTitle"))+'</h2>'
+    node.innerHTML='<h2>'+esc(kind==="cmd"?t("ownCmdTitle"):(kind==="iss"?t("ownIssTitle"):t("ownEvtTitle")))+'</h2>'
       +'<div class="field"><input type="text" id="wkOwnInput" maxlength="40" placeholder="'+esc(t("ownPh"))+'"></div>'
       +'<div class="sheet-actions"><button class="btn btn-cancel" data-close>'+esc(t("common.cancel"))+'</button>'
       +'<button class="btn btn-primary" id="wkOwnSave">'+esc(t("common.save"))+'</button></div>';
@@ -476,15 +560,17 @@
     node.querySelector("#wkOwnSave").addEventListener("click",function(){
       var label=(inp.value||"").trim().slice(0,40);
       if(!label) return;
-      var list=kind==="cmd"?cmds:iss, lc=label.toLowerCase(), i;
+      var list=kind==="cmd"?cmds:(kind==="iss"?iss:evtTypes), lc=label.toLowerCase(), i;
       for(i=0;i<list.length;i++){ if((dataOf(list[i]).label||"").toLowerCase()===lc){ sdk.ui.toast(t("dupToast")); return; } }
-      var sys=kind==="cmd"?SYS_CMD:SYS_ISS, ns=kind==="cmd"?"cmd.":"iss.";
+      var sys=kind==="cmd"?SYS_CMD:(kind==="iss"?SYS_ISS:SYS_EVT), ns=kind==="cmd"?"cmd.":(kind==="iss"?"iss.":"evt.");
       for(i=0;i<sys.length;i++){ if(t(ns+sys[i]).toLowerCase()===lc){ sdk.ui.toast(t("dupToast")); return; } }
-      sdk.data.create(kind==="cmd"?"commands":"issues",{label:label}).then(function(item){
+      var coll=kind==="cmd"?"commands":(kind==="iss"?"issues":"eventTypes");
+      sdk.data.create(coll,{label:label}).then(function(item){
         if(!root||!item) return;
         if(kind==="cmd"){ cmds.push(item); if(cur) cur.sel["u_"+item.id]=1; }
-        else { iss.push(item); issMap()["u_"+item.id]=1; } // активная карта: детали прогулки или отдельное событие
-        sdk.events.track(kind==="cmd"?"walk_cmd_added":"walk_iss_added",{label:label});
+        else if(kind==="iss"){ iss.push(item); issMap()["u_"+item.id]=1; } // активная карта: детали прогулки или отдельное событие
+        else { evtTypes.push(item); if(ev) ev.sel["u_"+item.id]=1; }
+        sdk.events.track(kind==="cmd"?"walk_cmd_added":(kind==="iss"?"walk_iss_added":"walk_evtype_added"),{label:label});
         sh.close(); renderMain();
       }).catch(function(){ sdk.ui.toast(t("saveFailed")); });
     });
@@ -527,6 +613,8 @@
     var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(day||"")); if(!m) return String(day||"");
     return sdk.formatDate(new Date(+m[1],+m[2]-1,+m[3],12,0,0), {weekday:"short", day:"numeric", month:"long"});
   }
+  /* автор в строке истории: семейное приложение — видно, кто гулял/записал (фидбек Джеффа) */
+  function authBit(d){ return d.author?esc(d.author):""; }
   function walkRowHtml(it){
     var d=dataOf(it), r=rateOf(it), ph=(d.photos&&d.photos[0])||null;
     var face=r?('<span class="wk-mini f-'+r+'">'+FACE[r]+'</span>'):('<span class="wk-mini f-none">'+FACE.none+'</span>');
@@ -535,6 +623,7 @@
     var bits=[esc(t("durMin",{n:parseInt(d.duration,10)||0}))];
     if(r) bits.push(esc(t("rnames."+r))); else bits.push('<i>'+esc(t("noRate"))+'</i>');
     if(d.commands&&d.commands.length) bits.push(esc(String(d.commands.length))+" ✓");
+    if(authBit(d)) bits.push(authBit(d));
     return '<div class="wk-row" data-id="'+esc(it.id)+'">'+thumb
       +'<div class="m"><div class="d">'+esc(fmtDay(d.day))+(d.time?' · '+esc(d.time):'')+'</div>'
       +'<div class="s">'+face+bits.join(" · ")+'</div></div></div>';
@@ -542,18 +631,42 @@
   function behRowHtml(it){
     var d=dataOf(it), names=(d.issues||[]).map(issLabel);
     var txt=names.slice(0,2).join(", ")+(names.length>2?" +"+(names.length-2):"");
+    if(authBit(d)) txt+=" · "+d.author;
     return '<div class="wk-row beh" data-bid="'+esc(it.id)+'"><div class="wk-thumb beh">'+WARN_IC+'</div>'
       +'<div class="m"><div class="d">'+esc(fmtDay(d.day))+(d.time?' · '+esc(d.time):'')+'</div>'
       +'<div class="s warn">'+esc(txt)+'</div></div></div>';
   }
-  /* единая лента: прогулки + отдельные события поведения, свежие сверху */
+  function evtRowHtml(it){
+    var d=dataOf(it), names=(d.kinds||[]).map(evtLabel);
+    var txt=names.join(", ")+(d.note?" · "+d.note:"")+(authBit(d)?" · "+d.author:"");
+    return '<div class="wk-row evt" data-eid="'+esc(it.id)+'"><div class="wk-thumb evt">'+STAR_IC+'</div>'
+      +'<div class="m"><div class="d">'+esc(fmtDay(d.day))+(d.time?' · '+esc(d.time):'')+'</div>'
+      +'<div class="s gold">'+esc(txt)+'</div></div></div>';
+  }
+  /* единая лента: прогулки + события поведения + важные события, свежие сверху */
   function renderList(){
     if(!root||!E.list) return;
     var rows=entries.map(function(it){ return {at:it.createdAt||0, h:walkRowHtml(it)}; })
-      .concat(behs.map(function(it){ return {at:it.createdAt||0, h:behRowHtml(it)}; }));
+      .concat(behs.map(function(it){ return {at:it.createdAt||0, h:behRowHtml(it)}; }))
+      .concat(evts.map(function(it){ return {at:it.createdAt||0, h:evtRowHtml(it)}; }));
     if(!rows.length){ E.list.innerHTML='<div class="wk-empty">'+esc(t("historyEmpty"))+'</div>'; return; }
     rows.sort(function(a,b){ return b.at-a.at; });
     E.list.innerHTML=rows.map(function(r){ return r.h; }).join("");
+  }
+  function openEvtDetail(id){
+    var it=null; for(var i=0;i<evts.length;i++){ if(String(evts[i].id)===String(id)){ it=evts[i]; break; } }
+    if(!it) return;
+    var d=dataOf(it), node=document.createElement("div"); node.className="wk-detail";
+    var h='<h2>'+esc(fmtDay(d.day))+(d.time?' · '+esc(d.time):'')+'</h2>'
+      +'<div class="wk-sect">'+esc(t("evtTitle"))+'</div><div class="wk-chips ro">';
+    (d.kinds||[]).forEach(function(k){ h+='<span class="wk-chip gold on">'+esc(evtLabel(k))+'</span>'; });
+    h+='</div>';
+    if(d.note) h+='<div class="wk-sect">'+esc(t("evtNote"))+'</div><p class="wk-det-note">'+esc(d.note)+'</p>';
+    if(d.author) h+='<p class="wk-author">'+esc(t("byAuthor",{name:d.author}))+'</p>';
+    h+='<div class="sheet-actions" style="margin-top:14px"><button class="btn btn-cancel" data-close style="flex:1">'+esc(t("common.close"))+'</button></div>';
+    node.innerHTML=h;
+    var sh=sdk.ui.sheet(node);
+    node.querySelector("[data-close]").addEventListener("click",sh.close);
   }
   function openBehDetail(id){
     var it=null; for(var i=0;i<behs.length;i++){ if(String(behs[i].id)===String(id)){ it=behs[i]; break; } }
@@ -604,7 +717,7 @@
     if(rn) rn.addEventListener("click",function(){
       sh.close();
       cur=blankCur(); cur.editId=it.id; cur.duration=parseInt(d.duration,10)||0;
-      if(/^\d{2}:\d{2}$/.test(String(d.time||""))) cur.time=d.time; // время записи — в поле деталей
+      if(/^\d{2}:\d{2}$/.test(String(d.time||""))) cur.time=r15(d.time); // время записи — в поле деталей (шаг 15 мин)
       (d.commands||[]).forEach(function(cid){ cur.sel[cid]=1; });
       (d.issues||[]).forEach(function(iid){ cur.selIss[iid]=1; });
       cur.photos=(d.photos||[]).slice();
@@ -616,8 +729,8 @@
   /* =================== mount / unmount =================== */
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; E={};
-    entries=[]; behs=[]; cmds=[]; iss=[]; meta={id:null,puppy:1,reward:REWARD_DEF};
-    step="dur"; cur=null; beh=null; saving=false;
+    entries=[]; behs=[]; evts=[]; cmds=[]; iss=[]; evtTypes=[]; meta={id:null,puppy:1,reward:REWARD_DEF};
+    step="dur"; cur=null; beh=null; ev=null; saving=false;
     var title=sdk.i18n.t("tile.walk");
     root.innerHTML='<div class="wk">'
       +'<div class="wk-header"><button class="back" id="wkBack" aria-label="'+esc(t("common.back"))+'">'+BACK_IC+'</button>'
@@ -632,6 +745,7 @@
       if(step==="details"){ step="rate"; renderMain(); return; }
       if(step==="rate"){ step="dur"; cur=null; renderMain(); return; }
       if(step==="beh"){ step="dur"; beh=null; renderMain(); return; }
+      if(step==="evt"){ step="dur"; ev=null; renderMain(); return; }
       sdk.ui.back();
     });
     root.querySelector("#wkGear").addEventListener("click",openSettings);
@@ -641,14 +755,23 @@
       var b;
       if(!sdk.can("edit")) {
         var row0=e.target.closest(".wk-row");
-        if(row0){ if(row0.getAttribute("data-bid")) openBehDetail(row0.getAttribute("data-bid")); else openDetail(row0.getAttribute("data-id")); }
+        if(row0){
+          if(row0.getAttribute("data-bid")) openBehDetail(row0.getAttribute("data-bid"));
+          else if(row0.getAttribute("data-eid")) openEvtDetail(row0.getAttribute("data-eid"));
+          else openDetail(row0.getAttribute("data-id"));
+        }
         return;
       }
       b=e.target.closest("[data-dur]"); if(b){ pickDur(parseInt(b.getAttribute("data-dur"),10)); return; }
       if(e.target.closest("#wkDurOther")){ openNumpad(); return; }
-      if(e.target.closest("#wkBehBtn")){ beh={sel:{}, time:hhmm()}; step="beh"; sdk.ui.haptics(8); renderMain(); return; }
+      if(e.target.closest("#wkBehBtn")){ beh={sel:{}, time:hhmm15()}; step="beh"; sdk.ui.haptics(8); renderMain(); return; }
       if(e.target.closest("#wkBehSave")){ saveBeh(); return; }
       if(e.target.closest("#wkBehCancel")){ beh=null; step="dur"; renderMain(); return; }
+      if(e.target.closest("#wkEvtBtn")){ ev={sel:{}, day:dayKey(), time:hhmm15(), note:""}; step="evt"; sdk.ui.haptics(8); renderMain(); return; }
+      if(e.target.closest("#wkEvtSave")){ saveEvt(); return; }
+      if(e.target.closest("#wkEvtCancel")){ ev=null; step="dur"; renderMain(); return; }
+      b=e.target.closest("[data-evt]"); if(b){ var ek=b.getAttribute("data-evt"); if(ev){ ev.sel[ek]=ev.sel[ek]?0:1; b.classList.toggle("on",!!ev.sel[ek]); sdk.ui.haptics(4); } return; }
+      if(e.target.closest("#wkAddEvt")){ openOwn("evt"); return; }
       b=e.target.closest("[data-rate]"); if(b){ pickRate(b.getAttribute("data-rate")); return; }
       if(e.target.closest("#wkLater")){ saveLater(); return; }
       b=e.target.closest("[data-cmd]"); if(b){ var c=b.getAttribute("data-cmd"); if(cur){ cur.sel[c]=cur.sel[c]?0:1; b.classList.toggle("on",!!cur.sel[c]); sdk.ui.haptics(4); } return; }
@@ -665,15 +788,19 @@
       }
       if(e.target.closest("#wkSave")){ save(); return; }
       var row=e.target.closest(".wk-row");
-      if(row){ if(row.getAttribute("data-bid")) openBehDetail(row.getAttribute("data-bid")); else openDetail(row.getAttribute("data-id")); }
+      if(row){
+        if(row.getAttribute("data-bid")) openBehDetail(row.getAttribute("data-bid"));
+        else if(row.getAttribute("data-eid")) openEvtDetail(row.getAttribute("data-eid"));
+        else openDetail(row.getAttribute("data-id"));
+      }
     };
     root.addEventListener("click",E.onRootClick);
     renderMain(); renderList(); hud(); load();
   }
   function unmount(){
     if(root && E.onRootClick) root.removeEventListener("click",E.onRootClick);
-    E={}; entries=[]; behs=[]; cmds=[]; iss=[]; root=null;
-    step="dur"; cur=null; beh=null; saving=false; meta={id:null,puppy:1,reward:REWARD_DEF};
+    E={}; entries=[]; behs=[]; evts=[]; cmds=[]; iss=[]; evtTypes=[]; root=null;
+    step="dur"; cur=null; beh=null; ev=null; saving=false; meta={id:null,puppy:1,reward:REWARD_DEF};
   }
 
   RobTop.register({ id:"walk", mount:mount, unmount:unmount, messages:MESSAGES });

@@ -39,6 +39,24 @@
   background:linear-gradient(165deg, rgba(40,14,22,.55), rgba(9,8,24,.92))}
 [data-mod="walk"] .wk-card.warn .wk-card-title{color:#ffc9d4;text-shadow:0 0 12px rgba(255,77,109,.55)}
 
+/* ВАЖНОЕ событие (вет, день рождения…) — золотой акцент */
+[data-mod="walk"] .wk-evtbtn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;margin-top:12px;
+  min-height:54px;border-radius:16px;cursor:pointer;font-family:'Rubik',sans-serif;font-weight:800;font-size:15px;color:#ffe9a8;
+  background:rgba(255,210,59,.08);border:1.6px dashed rgba(255,210,59,.55)}
+[data-mod="walk"] .wk-evtbtn:active{transform:scale(.97);background:rgba(255,210,59,.16)}
+[data-mod="walk"] .wk-evtbtn .ic{width:20px;height:20px;flex:none}
+[data-mod="walk"] .wk-evtbtn .ic svg{width:100%;height:100%;display:block}
+[data-mod="walk"] .wk-card.gold{border-color:rgba(255,210,59,.45);box-shadow:0 12px 30px rgba(0,0,0,.5), 0 0 28px -10px #ffd23b;
+  background:linear-gradient(165deg, rgba(40,32,14,.55), rgba(9,8,24,.92))}
+[data-mod="walk"] .wk-card.gold .wk-card-title{color:#ffe9a8;text-shadow:0 0 12px rgba(255,210,59,.55)}
+.wk-chip.gold.on{color:#2b2206;background:#ffd23b;border-color:#ffd23b;box-shadow:0 0 14px -2px rgba(255,210,59,.8)}
+.wk-when{display:grid;grid-template-columns:1.4fr 1fr;gap:9px}
+.wk-note{width:100%;border:1.6px solid rgba(255,255,255,.14);border-radius:14px;padding:12px;
+  font-family:inherit;font-size:15px;font-weight:600;color:var(--ink);background:rgba(255,255,255,.04);outline:none}
+.wk-note:focus{border-color:#ffd23b;box-shadow:0 0 0 3px rgba(255,210,59,.16)}
+[data-mod="walk"] .wk-card.gold .wk-time:focus{border-color:#ffd23b;box-shadow:0 0 0 3px rgba(255,210,59,.16)}
+.wk-det-note{color:#e7eeff;font-weight:600;font-size:15px;margin:2px 0 0;word-break:break-word}
+
 /* поле времени (детали прогулки и событие поведения) */
 .wk-time{width:100%;border:1.6px solid rgba(255,255,255,.14);border-radius:14px;padding:12px;
   font-family:'Russo One',sans-serif;font-size:18px;color:var(--ink);background:rgba(255,255,255,.04);outline:none;
@@ -136,6 +154,9 @@
 [data-mod="walk"] .wk-thumb.f-sad{color:#ff4d6d}
 [data-mod="walk"] .wk-thumb.beh{color:#ff8aa3;background-color:rgba(255,77,109,.1)}
 [data-mod="walk"] .wk-row .s.warn{color:#ffb3c0}
+[data-mod="walk"] .wk-thumb.evt{color:#ffd23b;background-color:rgba(255,210,59,.1)}
+[data-mod="walk"] .wk-thumb.evt svg{width:24px;height:24px}
+[data-mod="walk"] .wk-row .s.gold{color:#ffe9a8}
 [data-mod="walk"] .wk-row .m{flex:1;min-width:0}
 [data-mod="walk"] .wk-row .d{color:#e7eeff;font-weight:700;font-size:14px}
 [data-mod="walk"] .wk-row .s{color:#9fb0d6;font-weight:600;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;

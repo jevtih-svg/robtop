@@ -97,6 +97,30 @@ function rt_family_child_uid($db, $pid) {
     } catch (Throwable $e) { return null; }
 }
 
+/**
+ * ОБЩЕСЕМЕЙНЫЙ пул (манифест "familyPool":true, напр. walk): канонический владелец данных
+ * для ЛЮБОГО участника семьи — первый активный ребёнок СЕМЬИ пользователя (и для детей тоже:
+ * второй ребёнок пишет и читает в том же пуле, что и первый). Вне семьи: для родителя —
+ * первый ребёнок по опекунству (rt_family_child_uid), иначе сам пользователь.
+ */
+function rt_family_pool_uid($db, $uid) {
+    try {
+        $fid = rt_user_family_id($db, $uid);
+        if ($fid) {
+            $s = $db->prepare(
+                "SELECT user_id FROM family_members
+                 WHERE family_id = ? AND role = 'child' AND status = 'active'
+                 ORDER BY user_id LIMIT 1"
+            );
+            $s->execute([$fid]);
+            $r = $s->fetch();
+            if ($r) return (int)$r['user_id'];
+        }
+        $cid = rt_family_child_uid($db, $uid);
+        return $cid !== null ? $cid : (int)$uid;
+    } catch (Throwable $e) { return (int)$uid; }
+}
+
 /** Роль текущего пользователя (для проверки прав модулей). */
 function rt_user_role() {
     static $role = null;
