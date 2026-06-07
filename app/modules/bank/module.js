@@ -12,6 +12,10 @@
    ПУНКТСТРИК (2026-06-07, v1.3.0, поверх винстрика): чип ⚡ справа сверху — плюсы подряд
    без единого минуса (любой kind), минус сбрасывает в 0; считает движок (plusStreak),
    объяснение для ребёнка — openPlusInfo (свой «i»). Бонусов не даёт, капа нет.
+   ШТРАФ (2026-06-07, v1.6.0, заказ Джеффа): именованный минус reason=parent_penalty
+   (kind=parent) — кнопка «⚠️ Штраф» в панели родителя и на дашборде (core/parent.js);
+   причина ОБЯЗАТЕЛЬНА (ребёнок в истории видит «Штраф: причина», labelOf), оповещение
+   ntf.ev.bank.penalty; как любой минус, сбрасывает пунктстрик, винстрик не трогает.
    Сам ничего не считает — читает леджер через sdk.points (движок в core/sdk.js, политика — ГАЙД-очки.md). */
 (function(){
   "use strict";
@@ -30,6 +34,7 @@
       r_guess_win:"Guess the Number — win", r_guess_wrong:"Guess the Number — wrong",
       r_guess_timeout:"Guess the Number — out of time",
       r_streak_bonus:"Streak bonus 🔥", r_parent_give:"From parents", r_parent_take:"Taken by parents",
+      r_parent_penalty:"Penalty",
       r_task_done:"Parent task done", r_task_fail:"Task not done", r_daily_bonus:"All tasks of the day!",
       r_spend:"Shop", r_spend_refund:"Shop — points returned", r_other:"Points",
       earnedAll:"earned all time: {n}",
@@ -64,7 +69,8 @@
       pinfoNote:"No limit — see how long you can keep it!",
       pinfoVs:"The fire 🔥 counts days with tasks. The points streak ⚡ counts pluses in a row. They live separately.",
       secCustom:"Custom amount", amountPh:"How many", notePh:"What for (child will see it)",
-      btnGive:"Give", btnTake:"Take", needAmount:"Enter a number first", doneToast:"Done!",
+      btnGive:"Give", btnTake:"Take", btnPen:"⚠️ Penalty", needAmount:"Enter a number first",
+      needNote:"Write what the penalty is for", doneToast:"Done!",
       streakToast:"Win streak: {n} 🔥", bonusToast:"Streak bonus +{n}!",
       btnAddTask:"+ New task", btnIDid:"I did it!",
       chipPending:"waiting for check ⏳", chipDone:"done ✓",
@@ -90,6 +96,7 @@
       r_guess_win:"Угадай число — победа", r_guess_wrong:"Угадай число — не отгадал",
       r_guess_timeout:"Угадай число — не успел",
       r_streak_bonus:"Бонус серии 🔥", r_parent_give:"От родителей", r_parent_take:"Снято родителями",
+      r_parent_penalty:"Штраф",
       r_task_done:"Задание выполнено", r_task_fail:"Задание не выполнено", r_daily_bonus:"Все задания дня!",
       r_spend:"Магазин", r_spend_refund:"Магазин — возврат пунктов", r_other:"Пункты",
       earnedAll:"заработано за всё время: {n}",
@@ -124,7 +131,8 @@
       pinfoNote:"Предела нет — проверь, сколько продержишься!",
       pinfoVs:"Огонёк 🔥 считает дни с заданиями. Пунктстрик ⚡ считает плюсы подряд. Они живут отдельно.",
       secCustom:"Произвольная сумма", amountPh:"Сколько", notePh:"За что (увидит ребёнок)",
-      btnGive:"Начислить", btnTake:"Снять", needAmount:"Сначала введи число", doneToast:"Готово!",
+      btnGive:"Начислить", btnTake:"Снять", btnPen:"⚠️ Штраф", needAmount:"Сначала введи число",
+      needNote:"Сначала напиши, за что штраф", doneToast:"Готово!",
       streakToast:"Винстрик: {n} 🔥", bonusToast:"Бонус серии +{n}!",
       btnAddTask:"+ Новое задание", btnIDid:"Сделал!",
       chipPending:"ждёт проверки ⏳", chipDone:"выполнено ✓",
@@ -150,6 +158,7 @@
       r_guess_win:"Uzmini skaitli — uzvara", r_guess_wrong:"Uzmini skaitli — nepareizi",
       r_guess_timeout:"Uzmini skaitli — laiks beidzās",
       r_streak_bonus:"Sērijas bonuss 🔥", r_parent_give:"No vecākiem", r_parent_take:"Vecāki noņēma",
+      r_parent_penalty:"Sods",
       r_task_done:"Uzdevums izpildīts", r_task_fail:"Uzdevums nav izpildīts", r_daily_bonus:"Visi dienas uzdevumi!",
       r_spend:"Veikals", r_spend_refund:"Veikals — punkti atgriezti", r_other:"Punkti",
       earnedAll:"nopelnīts pavisam: {n}",
@@ -184,7 +193,8 @@
       pinfoNote:"Limita nav — pārbaudi, cik ilgi noturēsies!",
       pinfoVs:"Uguntiņa 🔥 skaita dienas ar uzdevumiem. Punktu sērija ⚡ skaita plusus pēc kārtas. Tās dzīvo atsevišķi.",
       secCustom:"Brīva summa", amountPh:"Cik daudz", notePh:"Par ko (bērns redzēs)",
-      btnGive:"Pieskaitīt", btnTake:"Noņemt", needAmount:"Vispirms ievadi skaitli", doneToast:"Gatavs!",
+      btnGive:"Pieskaitīt", btnTake:"Noņemt", btnPen:"⚠️ Sods", needAmount:"Vispirms ievadi skaitli",
+      needNote:"Vispirms uzraksti, par ko sods", doneToast:"Gatavs!",
       streakToast:"Uzvaru sērija: {n} 🔥", bonusToast:"Sērijas bonuss +{n}!",
       btnAddTask:"+ Jauns uzdevums", btnIDid:"Izdarīju!",
       chipPending:"gaida pārbaudi ⏳", chipDone:"izpildīts ✓",
@@ -224,7 +234,7 @@
   var S={ balance:0, streak:0, items:[], tasks:[], tab:"apps", loaded:false, err:false };
   var PARENT_KINDS={ parent:1, task_done:1, task_fail:1, daily_bonus:1, manual:1, bonus:1 };
   var KNOWN_R={ teeth:1, teeth_manual:1, guess_win:1, guess_wrong:1, guess_timeout:1, streak_bonus:1,
-                parent_give:1, parent_take:1, task_done:1, task_fail:1, daily_bonus:1, spend:1, spend_refund:1 };
+                parent_give:1, parent_take:1, parent_penalty:1, task_done:1, task_fail:1, daily_bonus:1, spend:1, spend_refund:1 };
   var LIST_CAP=60;
   var TASK_W={ pending:0, active:1, done:2 };
 
@@ -239,6 +249,8 @@
   }
   function tabOf(d){ return PARENT_KINDS[kindOf(d)] ? "parents" : "apps"; }
   function labelOf(d){
+    /* штраф (2026-06-07): всегда явное слово «Штраф», причина — после двоеточия */
+    if(d && d.reason==="parent_penalty") return t("r_parent_penalty")+(d.note?": "+String(d.note):"");
     if(d && d.note) return String(d.note);
     var r=(d && d.reason) ? String(d.reason) : "";
     if(KNOWN_R[r]) return t("r_"+r);
@@ -585,7 +597,8 @@
       +'<div class="store-section">'+esc(t("secCustom"))+'</div>'
       +'<div class="bk-custom"><input type="number" id="bkAmt" inputmode="numeric" placeholder="'+esc(t("amountPh"))+'">'
       +'<input type="text" id="bkNote" maxlength="60" placeholder="'+esc(t("notePh"))+'"></div>'
-      +'<div class="sheet-actions"><button class="btn btn-cancel" data-op="take">'+esc(t("btnTake"))+'</button>'
+      +'<div class="sheet-actions bk-pact"><button class="btn btn-cancel bk-pen" data-op="pen">'+esc(t("btnPen"))+'</button>'
+      +'<button class="btn btn-cancel" data-op="take">'+esc(t("btnTake"))+'</button>'
       +'<button class="btn btn-primary" data-op="give">'+esc(t("btnGive"))+'</button></div>';
     var ctl=sdk.ui.sheet(box); curSheet=ctl;
     PE={ bal:box.querySelector("#bkPBal"), str:box.querySelector("#bkPStr"), plus:box.querySelector("#bkPPlus") };
@@ -596,6 +609,12 @@
         var op=b.getAttribute("data-op"), n, v;
         if(busy) return;
         if(op==="daily"){ n=[5,"daily_bonus",{kind:"daily_bonus",src:"parent"}]; }
+        else if(op==="pen"){ /* штраф: именованный минус, причина обязательна (ребёнок видит «Штраф: …») */
+          v=val();
+          if(!v){ sdk.ui.toast(t("needAmount")); return; }
+          if(!note()){ sdk.ui.toast(t("needNote")); return; }
+          n=[ -Math.abs(v), "parent_penalty", {kind:"parent",src:"parent",note:note()} ];
+        }
         else {
           v=val();
           if(!v){ sdk.ui.toast(t("needAmount")); return; }
@@ -613,7 +632,7 @@
           /* оповещение ребёнку о начислении/снятии с панели (ГАЙД-оповещения.md) */
           if(sdk.notify){
             if(op==="daily") sdk.notify.send("child","daily_bonus",{link:{module:"bank"}});
-            else sdk.notify.send("child", op==="give"?"points_given":"points_taken",
+            else sdk.notify.send("child", op==="pen"?"penalty":(op==="give"?"points_given":"points_taken"),
                   {params:{n:Math.abs(n[0]),note:n[2].note||""},link:{module:"bank"}});
           }
           load();

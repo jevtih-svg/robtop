@@ -51,6 +51,7 @@ window.RobTop = window.RobTop || {};
     give:{ btn:"⭐ Give points", title:"Give points", customPh:"How many", notePh:"What for? (the child will see it)",
       submit:"Give +{n}", needAmount:"Enter the amount", needNote:"Write what it's for",
       done:"+{n} points added", fail:"Couldn't save, try again" },
+    pen:{ btn:"⚠️ Penalty", title:"Penalty", submit:"Take −{n}", done:"−{n} points taken" },
     g:{ win:"guessed it", wrong:"missed", timeout:"time ran out" },
     wl:{ banner:"View mode. Only {name} can make changes.",
       want:"Want", thinking:"Thinking", bought:"Bought", empty:"Nothing in this section.",
@@ -94,8 +95,8 @@ window.RobTop = window.RobTop || {};
       mood:"чаще всего: {e} {name} ×{c}", reverse:"{c} слов перевёрнуто", guess:"угадано {w} из {c}",
       bank:"{p} пунктов всего · винстрик {s} 🔥 · плюсы {ps} ⚡", bankTasks:"⏳ ждут проверки: {n}",
       shop:"{n} призов в магазине", shopOrders:"🛍 ждут подтверждения: {n}",
-      generic:{one:"{n} действие за период",few:"{n} действия за период",many:"{n} действий за период"}, none:"нет активности за период" },
       chat:"💬 семейный чат — открыть и написать",
+      generic:{one:"{n} действие за период",few:"{n} действия за период",many:"{n} действий за период"}, none:"нет активности за период" },
     ins:{ streak:"Серия чистки зубов: {n} дней подряд", bought:"Исполнено желание: «{t}» 🎉",
       peak:{ morning:"Самое активное время — утро (7–11)", day:"Самое активное время — день (11–17)", evening:"Самое активное время — вечер (17–22)" } },
     m:{ lastEvents:"Последние события", openJournal:"Журнал приложения", empty:"Пока пусто.",
@@ -103,6 +104,7 @@ window.RobTop = window.RobTop || {};
     give:{ btn:"⭐ Начислить очки", title:"Начислить очки", customPh:"Сколько", notePh:"За что? (увидит ребёнок)",
       submit:"Начислить +{n}", needAmount:"Введи сумму", needNote:"Напиши, за что",
       done:"+{n} пунктов начислено", fail:"Не получилось сохранить, попробуй ещё раз" },
+    pen:{ btn:"⚠️ Штраф", title:"Штраф", submit:"Снять −{n}", done:"−{n} пунктов снято" },
     g:{ win:"угадал", wrong:"не угадал", timeout:"время вышло" },
     wl:{ banner:"Режим просмотра. Изменения может вносить только {name}.",
       want:"Хочу", thinking:"Думаю", bought:"Купил", empty:"В этом разделе пусто.",
@@ -146,15 +148,16 @@ window.RobTop = window.RobTop || {};
       mood:"visbiežāk: {e} {name} ×{c}", reverse:"{c} vārdi apgriezti", guess:"uzminēti {w} no {c}",
       bank:"{p} punkti kopā · sērija {s} 🔥 · plusi {ps} ⚡", bankTasks:"⏳ gaida pārbaudi: {n}",
       shop:"{n} balvas veikalā", shopOrders:"🛍 gaida apstiprinājumu: {n}",
+      chat:"💬 ģimenes čats — atvērt un rakstīt",
       generic:{zero:"{n} darbību periodā",one:"{n} darbība periodā",other:"{n} darbības periodā"}, none:"perioda aktivitātes nav" },
     ins:{ streak:"Zobu tīrīšanas sērija: {n} dienas pēc kārtas", bought:"Vēlme piepildīta: “{t}” 🎉",
-      chat:"💬 ģimenes čats — atvērt un rakstīt",
       peak:{ morning:"Aktīvākais laiks — rīts (7–11)", day:"Aktīvākais laiks — diena (11–17)", evening:"Aktīvākais laiks — vakars (17–22)" } },
     m:{ lastEvents:"Pēdējie notikumi", openJournal:"Lietotnes žurnāls", empty:"Vēl nekā nav.",
       noText:"bez komentāra", liked:"Patika: {x}", walkAdd:"🐾 Pierakstīt pastaigu" },
     give:{ btn:"⭐ Piešķirt punktus", title:"Piešķirt punktus", customPh:"Cik daudz", notePh:"Par ko? (bērns redzēs)",
       submit:"Piešķirt +{n}", needAmount:"Ievadi summu", needNote:"Uzraksti, par ko",
       done:"+{n} punkti pieskaitīti", fail:"Neizdevās saglabāt, mēģini vēlreiz" },
+    pen:{ btn:"⚠️ Sods", title:"Sods", submit:"Noņemt −{n}", done:"−{n} punkti noņemti" },
     g:{ win:"uzminēja", wrong:"neuzminēja", timeout:"laiks beidzās" },
     wl:{ banner:"Skatīšanās režīms. Izmaiņas var veikt tikai {name}.",
       want:"Gribu", thinking:"Domāju", bought:"Nopirku", empty:"Šajā sadaļā nekā nav.",
@@ -369,13 +372,14 @@ window.RobTop = window.RobTop || {};
       ? t("parent.lastSeen",{x:(dayOff(last)===0?t("parent.j.today").toLowerCase():I.formatDate(last,{day:"numeric",month:"short"}))+" "+hhmm(last)})
       : t("parent.never");
     var many=S.data&&S.data.children&&S.data.children.length>1;
+    /* Шапка-минимум (фидбек Джеффа 2026-06-07): только карточка ребёнка; ↻ убран —
+       живое обновление (sync 4с) сделало его лишним, ⚙ и 🔔 — ГЛОБАЛЬНЫЙ фиксированный
+       кластер оболочки вверху справа (как на главном ребёнка), «Только просмотр» —
+       строкой статуса вместо отдельной пилюли. */
     return '<div class="pd-top">'
       +'<button class="pd-kid" id="pdKid"'+(many?'':' disabled')+'>'
       +'<span class="ava">🧑‍🚀</span><span class="ktx"><span class="nm">'+esc(kidName())+(many?' ▾':'')+'</span>'
-      +'<span class="st">'+esc(lastTxt)+'</span></span></button>'
-      +'<span class="pd-badge">👁 '+esc(t("parent.badge"))+'</span>'
-      +'<button class="hbtn" id="pdRefresh" aria-label="'+esc(t("parent.refresh"))+'">↻</button>'
-      +'<button class="hbtn" id="pdGear" aria-label="'+esc(t("settings.open"))+'">⚙</button>'
+      +'<span class="st">👁 '+esc(t("parent.badge"))+' · '+esc(lastTxt)+'</span></span></button>'
       +'</div>';
   }
   /* шапка экрана приложения: назад + иконка + имя */
@@ -385,7 +389,6 @@ window.RobTop = window.RobTop || {};
       +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg></button>'
       +'<span class="mic" style="--mc:'+esc(modColor(id))+'">'+modIcon(id)+'</span>'
       +'<span class="mttl">'+esc(modName(id))+'</span>'
-      +'<span class="pd-badge">👁 '+esc(t("parent.badge"))+'</span>'
       +'</div>';
   }
   /* таббар рисуется в #pdTabs на уровне <body> (см. шапку файла) */
@@ -411,8 +414,10 @@ window.RobTop = window.RobTop || {};
       +'<div class="h"><div class="n">'+a.per.length+'</div><div class="l">'+esc(I.plural(a.per.length,"parent.hud.acts").replace(/\{n\}\s*/,"").replace(/^\d+\s*/,""))+'</div></div>'
       +'<div class="h"><div class="n">'+a.activeDays+'</div><div class="l">'+esc(I.plural(a.activeDays,"parent.hud.days").replace(/\{n\}\s*/,"").replace(/^\d+\s*/,""))+'</div></div>'
       +'<div class="h"><div class="n">'+(data.points||0)+'</div><div class="l">'+esc(t("parent.hud.points"))+'</div></div></div>';
-    /* начисление очков родителем: шторка с быстрыми суммами (пишет в леджер Копилки) */
-    h+='<button class="btn btn-primary" id="pdGive" style="flex:none;width:100%;margin:10px 0 0">'+esc(t("parent.give.btn"))+'</button>';
+    /* начисление очков и штраф родителем: две шторки с быстрыми суммами (пишут в леджер Копилки) */
+    h+='<div style="display:flex;gap:8px;margin:10px 0 0">'
+      +'<button class="btn btn-primary" id="pdGive" style="flex:1.4">'+esc(t("parent.give.btn"))+'</button>'
+      +'<button class="btn btn-cancel" id="pdPen" style="flex:1">'+esc(t("parent.pen.btn"))+'</button></div>';
     /* график: ряд баров + отдельный ряд подписей; считаются только домен-события */
     var n=S.period, max=1, d, bars="", labels="";
     for(d=0;d<n;d++) if((a.perDay[d]||0)>max) max=a.perDay[d];
@@ -447,12 +452,12 @@ window.RobTop = window.RobTop || {};
         var sst=shopStats();
         line=sst.pend>0 ? t("parent.sum.shopOrders",{n:sst.pend}) : t("parent.sum.shop",{n:sst.items});
       }
+      else if(m.id==="chat") line=t("parent.sum.chat");
       else if(m.id==="wishlist") line=t("parent.sum.wishlist",{total:items.length,want:wWant,bought:wBought});
       else if(m.id==="teeth") line=a.teethN?t("parent.sum.teeth",{n:a.streak,c:a.teethN}):t("parent.sum.none");
       else if(m.id==="rating") line=a.rated?t("parent.sum.rating",{avg:a.avg,c:a.rated}):t("parent.sum.none");
       else if(m.id==="mood") line=a.topMood?t("parent.sum.mood",{e:MOOD_E[a.topMood]||"🙂",name:t("parent.mood."+a.topMood,{fallback:a.topMood}),c:a.topMoodN}):t("parent.sum.none");
       else if(m.id==="reverse") line=a.words?t("parent.sum.reverse",{c:a.words}):t("parent.sum.none");
-      else if(m.id==="chat") line=t("parent.sum.chat");
       else if(m.id==="guess") line=a.guessCnt?t("parent.sum.guess",{w:a.guessWin,c:a.guessCnt}):t("parent.sum.none");
       else { var cc=a.perMod[m.id]||0; line=cc?I.plural(cc,"parent.sum.generic"):t("parent.sum.none"); }
       return line;
@@ -761,26 +766,32 @@ window.RobTop = window.RobTop || {};
     document.addEventListener("keydown",onK);
   }
 
-  /* ---------- начисление очков родителем (быстрые суммы + произвольная) ----------
-     Пишет ТОЛЬКО через движок sdk.points (ГАЙД-очки.md §8.3): транзакция
-     {n:+N, reason:"parent_give", kind:"parent", note} — винстрик не трогает,
-     история видна ребёнку в Копилке (вкладка «Родители»), note перебивает подпись.
+  /* ---------- начисление очков / штраф родителем (быстрые суммы + произвольная) ----------
+     Одна шторка openPoints(pen) на оба направления. Пишет ТОЛЬКО через движок
+     sdk.points (ГАЙД-очки.md §8.3): начисление {n:+N, reason:"parent_give", kind:"parent",
+     note}, штраф {n:−N, reason:"parent_penalty", kind:"parent", note} (заказ Джеффа
+     2026-06-07; прежнее «снятие с дашборда сознательно не делается» отменено — теперь
+     именованный «Штраф» здесь и в панели Копилки). Винстрик не трогают; штраф, как любой
+     минус, сбрасывает пунктстрик (канон §3). Причина обязательна в обе стороны — ребёнок
+     видит её в истории Копилки (штраф — «Штраф: причина») и в оповещении.
      Серверный путь: data.php → bank/points; роль parent скоупится на ребёнка
      СЕМЬИ (rt_family_child_uid, общий пул — как walk), миграция 010 разрешает
      edit роли parent в манифесте bank. */
   var _bsdk=null, giveBusy=false;
   function bankSdk(){ if(!_bsdk) _bsdk=RT.createSdk({id:"bank"}); return _bsdk; }
-  function openGive(){
-    var AMTS=[10,20,25,50];
+  function openGive(){ openPoints(false); }
+  function openPen(){ openPoints(true); }
+  function openPoints(pen){
+    var AMTS=pen?[5,10,20,50]:[10,20,25,50], sg=pen?"−":"+", K=pen?"parent.pen.":"parent.give.";
     var node=document.createElement("div");
-    var h='<h2>'+esc(t("parent.give.title"))+'</h2>';
+    var h='<h2>'+esc(t(K+"title"))+'</h2>';
     h+='<div class="pd-gamts" id="pdGA">';
-    AMTS.forEach(function(a,i){ h+='<button type="button" data-a="'+a+'"'+(i===0?' class="on"':'')+'>+'+a+'</button>'; });
-    h+='<button type="button" data-a="0">+…</button></div>';
+    AMTS.forEach(function(a,i){ h+='<button type="button" data-a="'+a+'"'+(i===0?' class="on"':'')+'>'+sg+a+'</button>'; });
+    h+='<button type="button" data-a="0">'+sg+'…</button></div>';
     h+='<div class="field" id="pdGCW" style="display:none"><input type="number" id="pdGC" inputmode="numeric" min="1" max="9999" placeholder="'+esc(t("parent.give.customPh"))+'"></div>';
     h+='<div class="field"><input type="text" id="pdGN" maxlength="60" placeholder="'+esc(t("parent.give.notePh"))+'"></div>';
     h+='<div class="sheet-actions"><button class="btn btn-cancel" data-close style="flex:1">'+esc(t("parent.close"))+'</button>'
-      +'<button class="btn btn-primary" id="pdGGo" style="flex:1.4">'+esc(t("parent.give.submit",{n:AMTS[0]}))+'</button></div>';
+      +'<button class="btn btn-primary" id="pdGGo" style="flex:1.4">'+esc(t(K+"submit",{n:AMTS[0]}))+'</button></div>';
     node.innerHTML=h;
     var ctl=RT._shell.sheet(node);
     node.querySelector("[data-close]").onclick=ctl.close;
@@ -788,7 +799,7 @@ window.RobTop = window.RobTop || {};
     var cw=node.querySelector("#pdGCW"), ci=node.querySelector("#pdGC"),
         ni=node.querySelector("#pdGN"), go=node.querySelector("#pdGGo");
     function val(){ return custom ? Math.max(0,parseInt((ci.value||"").trim(),10)||0) : amt; }
-    function lbl(){ var n=val(); go.textContent=t("parent.give.submit",{n:n||"…"}); }
+    function lbl(){ var n=val(); go.textContent=t(K+"submit",{n:n||"…"}); }
     Array.prototype.forEach.call(node.querySelectorAll("#pdGA [data-a]"),function(b){
       b.onclick=function(){
         Array.prototype.forEach.call(node.querySelectorAll("#pdGA [data-a]"),function(x){ x.classList.toggle("on",x===b); });
@@ -807,14 +818,15 @@ window.RobTop = window.RobTop || {};
       if(!note){ RT._shell.toast(t("parent.give.needNote")); ni.focus(); return; }
       giveBusy=true; go.disabled=true;
       /* fire-and-forget по гайду нельзя: родителю нужен результат; add никогда не reject */
-      bankSdk().points.add(n,"parent_give",{kind:"parent",src:"parent",note:note}).then(function(out){
+      bankSdk().points.add(pen?-n:n, pen?"parent_penalty":"parent_give",
+        {kind:"parent",src:"parent",note:note}).then(function(out){
         giveBusy=false; go.disabled=false;
         if(!out || !out.ok){ RT._shell.toast(t("parent.give.fail")); return; }
         ctl.close();
-        RT._shell.toast(t("parent.give.done",{n:n}));
-        /* оповещение ребёнку о начислении (ГАЙД-оповещения.md; src=bank — иконка Копилки) */
+        RT._shell.toast(t(K+"done",{n:n}));
+        /* оповещение ребёнку о начислении/штрафе (ГАЙД-оповещения.md; src=bank — иконка Копилки) */
         RT.API.post("notify.php",{op:"send",to:"child",child:S.childId||0,src:"bank",
-          type:"points_given",params:{n:n,note:note},link:{module:"bank"}}).catch(function(){});
+          type:pen?"penalty":"points_given",params:{n:n,note:note},link:{module:"bank"}}).catch(function(){});
         fetchData(S.childId); /* обновить HUD очков */
       });
     };
@@ -864,12 +876,12 @@ window.RobTop = window.RobTop || {};
       return;
     }
     if(S.data && (!S.data.children || !S.data.children.length)){
-      root.innerHTML='<div class="pd-wrap">'+topbarNoChild()
-        +'<div class="pd-empty" style="padding-top:40px"><b style="display:block;font-size:16px;color:#fff;margin-bottom:8px">'+esc(t("parent.noChild.h"))+'</b>'
+      /* пустое состояние без своей шапки: ⚙ и 🔔 — глобальный кластер оболочки */
+      root.innerHTML='<div class="pd-wrap">'
+        +'<div class="pd-empty" style="padding-top:70px"><b style="display:block;font-size:16px;color:#fff;margin-bottom:8px">'+esc(t("parent.noChild.h"))+'</b>'
         +esc(t("parent.noChild.p"))+'</div>'
         +'<div style="text-align:center;margin-top:14px"><button class="btn btn-primary" id="pdSet" style="max-width:260px;margin:0 auto">'+esc(t("parent.noChild.btn"))+'</button></div></div>';
       var sb=root.querySelector("#pdSet"); if(sb) sb.onclick=function(){ if(RT._shell.openSettings) RT._shell.openSettings(); };
-      var g2=root.querySelector("#pdGear2"); if(g2) g2.onclick=function(){ if(RT._shell.openSettings) RT._shell.openSettings(); };
       return;
     }
     if(!S.data){ root.innerHTML=""; return; }
@@ -882,10 +894,6 @@ window.RobTop = window.RobTop || {};
     root.innerHTML='<div class="pd-wrap">'+head+'<div class="pd-body">'+body+'</div></div>';
     wire(root);
     if(keepMode) root.__jgl.refresh(); // режим перестановки пережил перерисовку (скрытие глазом)
-  }
-  function topbarNoChild(){
-    return '<div class="pd-top"><span class="pd-badge">👁 '+esc(t("parent.badge"))+'</span>'
-      +'<button class="hbtn" id="pdGear2" aria-label="'+esc(t("settings.open"))+'" style="margin-left:auto">⚙</button></div>';
   }
   /* тап по глазу на карточке дашборда: скрытие личное (аккаунт родителя, как у плиток
      ребёнка); RT._shell.applyTileHidden сохраняет и перерисовывает главный экран,
@@ -913,9 +921,8 @@ window.RobTop = window.RobTop || {};
     if(wa) wa.onclick=function(){ if(RT.open) RT.open("walk"); };
     var gv=root.querySelector("#pdGive");
     if(gv) gv.onclick=openGive;
-    var g=root.querySelector("#pdGear");
-    if(g) g.onclick=function(){ if(RT._shell.openSettings) RT._shell.openSettings(); };
-    var rf=root.querySelector("#pdRefresh"); if(rf) rf.onclick=function(){ fetchData(S.childId); };
+    var pv=root.querySelector("#pdPen");
+    if(pv) pv.onclick=openPen;
     var kid=root.querySelector("#pdKid"); if(kid&&!kid.disabled) kid.onclick=openChildSwitch;
     var per=root.querySelector("#pdPeriod");
     if(per) Array.prototype.forEach.call(per.querySelectorAll("[data-p]"),function(b){
@@ -928,6 +935,7 @@ window.RobTop = window.RobTop || {};
         if(e && e.target && e.target.closest(".jgl-eye")){ toggleCardHidden(id); return; }
         if(id==="bank"){ if(RT.open) RT.open("bank"); return; } /* модуль с заданиями, как walk */
         if(id==="shop"){ if(RT.open) RT.open("shop"); return; } /* призы и подтверждение покупок — в самом модуле */
+        if(id==="chat"){ if(RT.open) RT.open("chat"); return; } /* родитель переписывается в самом модуле (свои + все чаты семьи) */
         if(id==="wishlist"){ S.tab="wishlist"; render(); }
         else { S.mod=id; render(); }
         window.scrollTo(0,0);
@@ -942,7 +950,6 @@ window.RobTop = window.RobTop || {};
     });
     var jf=root.querySelector("#pdJf");
     if(jf) Array.prototype.forEach.call(jf.querySelectorAll("[data-f]"),function(b){
-        if(id==="chat"){ if(RT.open) RT.open("chat"); return; } /* родитель переписывается в самом модуле (свои + все чаты семьи) */
       b.onclick=function(){ S.jfilter=b.getAttribute("data-f"); S.jshown=PAGE; render(); window.scrollTo(0,0); };
     });
     Array.prototype.forEach.call(root.querySelectorAll("button.pd-ev"),function(b){

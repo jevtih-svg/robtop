@@ -165,6 +165,9 @@
 .bk-pbtns{display:flex;flex-direction:column;gap:8px}
 .bk-pbtns .btn{width:100%;min-height:48px}
 .bk-pbtns .bk-hint{display:block;font-size:10px;font-weight:700;color:var(--muted);margin-top:1px}
+/* три кнопки панели в один ряд (Штраф/Снять/Начислить, v1.6.0); штраф — красный акцент */
+.bk-pact .btn{flex:1;padding:14px 6px}
+.bk-pen{color:var(--red-soft);border-color:color-mix(in srgb,var(--red) 45%,transparent)}
 .bk-custom{display:flex;gap:8px;margin-bottom:4px}
 .bk-custom input{min-height:46px;border-radius:12px;border:1.5px solid color-mix(in srgb,var(--muted) 35%,transparent);
   background:rgba(var(--panel-rgb),.8);color:var(--ink);font-weight:700;padding:0 12px;font-size:15px}

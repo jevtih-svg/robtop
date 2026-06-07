@@ -41,6 +41,7 @@ window.RobTop = window.RobTop || {};
         task_approved:"“{title}” approved — +{n} points!",
         points_given:"+{n} points from parents",
         points_taken:"−{n} points (parents)",
+        penalty:"⚠️ Penalty −{n}",
         daily_bonus:"+5 — all tasks of the day!" },
       wishlist:{
         share_request:"{child} asks to publish their wishlist",
@@ -67,6 +68,7 @@ window.RobTop = window.RobTop || {};
         task_approved:"«{title}» подтверждено — +{n} очков!",
         points_given:"+{n} очков от родителей",
         points_taken:"−{n} очков (родители)",
+        penalty:"⚠️ Штраф −{n}",
         daily_bonus:"+5 — все задания дня!" },
       wishlist:{
         share_request:"{child} просит включить публичный виш-лист",
@@ -93,6 +95,7 @@ window.RobTop = window.RobTop || {};
         task_approved:"“{title}” apstiprināts — +{n} punkti!",
         points_given:"+{n} punkti no vecākiem",
         points_taken:"−{n} punkti (vecāki)",
+        penalty:"⚠️ Sods −{n}",
         daily_bonus:"+5 — visi dienas uzdevumi!" },
       wishlist:{
         share_request:"{child} lūdz publicēt savu vēlmju sarakstu",
