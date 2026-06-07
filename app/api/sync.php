@@ -69,7 +69,26 @@ try {
     $q = $s->fetch();
     $t = [$q['c'], $q['u'], $q['n']];
 } catch (Throwable $e) { /* таблицы тикетов может не быть (миграция 015) */ }
-$data = md5(implode('|', $d) . '#' . implode('|', $t));
+/* чат (миграция 023): сообщения ВСЕЙ семьи (родитель видит все треды; участникам над-триггер
+   безвреден) + мои маркеры прочитанности (read на другом устройстве гасит бейджи тут) */
+$c = ['0', '0', '0', '0'];
+try {
+    $fid = rt_user_family_id($db, $uid);
+    if ($fid) {
+        $s = $db->prepare(
+            "SELECT COUNT(*) c, COALESCE(MAX(m.id),0) m, COALESCE(SUM(m.deleted_at IS NOT NULL),0) d
+             FROM chat_messages m JOIN chat_threads t ON t.id = m.thread_id
+             WHERE t.family_id = ?"
+        );
+        $s->execute([$fid]);
+        $q = $s->fetch();
+        $c[0] = $q['c']; $c[1] = $q['m']; $c[2] = $q['d'];
+    }
+    $s = $db->prepare("SELECT COALESCE(SUM(last_read_id),0) lr FROM chat_members WHERE user_id = ?");
+    $s->execute([$uid]);
+    $c[3] = (string)$s->fetchColumn();
+} catch (Throwable $e) { /* таблиц чата может не быть (миграция 023) */ }
+$data = md5(implode('|', $d) . '#' . implode('|', $t) . '#' . implode('|', $c));
 
 /* ---- отпечаток реестра плиток ---- */
 $reg = '';

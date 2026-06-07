@@ -37,6 +37,12 @@ if (in_array($type, ['opened_module', 'viewed_detail', 'viewed_stats', 'opened_a
 }
 
 // --- делегирование серверному модулю ---
+if ($module === 'chat') {
+    require __DIR__ . '/../modules/chat/api.php';
+    if (rt_chat_action($db, $uid, $type, $itemId, $data) === false) {
+        rt_json(['error' => 'unknown type'], 400);
+    }
+}
 if ($module === 'wishlist') {
     require __DIR__ . '/../modules/wishlist/api.php';
     if (rt_wishlist_action($db, $uid, $type, $itemId, $data) === false) {

@@ -44,7 +44,10 @@ window.RobTop = window.RobTop || {};
         daily_bonus:"+5 — all tasks of the day!" },
       wishlist:{
         share_request:"{child} asks to publish their wishlist",
-        share_grant:"{child} shared their wishlist with you" }
+        share_grant:"{child} shared their wishlist with you" },
+      chat:{
+        message:"{name}: {text}",
+        photo:"{name} sent a photo 📷" }
     }
   }},
   ru:{ ntf:{
@@ -67,7 +70,10 @@ window.RobTop = window.RobTop || {};
         daily_bonus:"+5 — все задания дня!" },
       wishlist:{
         share_request:"{child} просит включить публичный виш-лист",
-        share_grant:"{child} открыл(а) тебе свой виш-лист" }
+        share_grant:"{child} открыл(а) тебе свой виш-лист" },
+      chat:{
+        message:"{name}: {text}",
+        photo:"{name} прислал(а) фото 📷" }
     }
   }},
   lv:{ ntf:{
@@ -90,7 +96,10 @@ window.RobTop = window.RobTop || {};
         daily_bonus:"+5 — visi dienas uzdevumi!" },
       wishlist:{
         share_request:"{child} lūdz publicēt savu vēlmju sarakstu",
-        share_grant:"{child} padalījās ar savu vēlmju sarakstu" }
+        share_grant:"{child} padalījās ar savu vēlmju sarakstu" },
+      chat:{
+        message:"{name}: {text}",
+        photo:"{name} atsūtīja foto 📷" }
     }
   }}
   });

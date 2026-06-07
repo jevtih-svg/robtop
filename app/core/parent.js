@@ -42,6 +42,7 @@ window.RobTop = window.RobTop || {};
       mood:"most often: {e} {name} ×{c}", reverse:"{c} words reversed", guess:"guessed {w} of {c}",
       bank:"{p} points total · streak {s} 🔥 · pluses {ps} ⚡", bankTasks:"⏳ waiting for check: {n}",
       shop:"{n} prizes in the shop", shopOrders:"🛍 waiting for approval: {n}",
+      chat:"💬 family chat — open and write",
       generic:{one:"{n} action in period",other:"{n} actions in period"}, none:"no activity in period" },
     ins:{ streak:"Brushing streak: {n} days in a row", bought:"Wish fulfilled: “{t}” 🎉",
       peak:{ morning:"Most active in the morning (7–11)", day:"Most active in the daytime (11–17)", evening:"Most active in the evening (17–22)" } },
@@ -94,6 +95,7 @@ window.RobTop = window.RobTop || {};
       bank:"{p} пунктов всего · винстрик {s} 🔥 · плюсы {ps} ⚡", bankTasks:"⏳ ждут проверки: {n}",
       shop:"{n} призов в магазине", shopOrders:"🛍 ждут подтверждения: {n}",
       generic:{one:"{n} действие за период",few:"{n} действия за период",many:"{n} действий за период"}, none:"нет активности за период" },
+      chat:"💬 семейный чат — открыть и написать",
     ins:{ streak:"Серия чистки зубов: {n} дней подряд", bought:"Исполнено желание: «{t}» 🎉",
       peak:{ morning:"Самое активное время — утро (7–11)", day:"Самое активное время — день (11–17)", evening:"Самое активное время — вечер (17–22)" } },
     m:{ lastEvents:"Последние события", openJournal:"Журнал приложения", empty:"Пока пусто.",
@@ -146,6 +148,7 @@ window.RobTop = window.RobTop || {};
       shop:"{n} balvas veikalā", shopOrders:"🛍 gaida apstiprinājumu: {n}",
       generic:{zero:"{n} darbību periodā",one:"{n} darbība periodā",other:"{n} darbības periodā"}, none:"perioda aktivitātes nav" },
     ins:{ streak:"Zobu tīrīšanas sērija: {n} dienas pēc kārtas", bought:"Vēlme piepildīta: “{t}” 🎉",
+      chat:"💬 ģimenes čats — atvērt un rakstīt",
       peak:{ morning:"Aktīvākais laiks — rīts (7–11)", day:"Aktīvākais laiks — diena (11–17)", evening:"Aktīvākais laiks — vakars (17–22)" } },
     m:{ lastEvents:"Pēdējie notikumi", openJournal:"Lietotnes žurnāls", empty:"Vēl nekā nav.",
       noText:"bez komentāra", liked:"Patika: {x}", walkAdd:"🐾 Pierakstīt pastaigu" },
@@ -196,7 +199,7 @@ window.RobTop = window.RobTop || {};
   function saveChild(id){ try{ if(id) localStorage.setItem(CHILD_KEY,String(id)); else localStorage.removeItem(CHILD_KEY); }catch(e){} }
 
   var NOISE={ opened_app:1, opened_module:1, viewed_detail:1, viewed_stats:1 };
-  var SKIP_MOD={ bank:1, admin:1, tickets:1 }; /* tickets: переписка с поддержкой приватна (автор+админ) */
+  var SKIP_MOD={ bank:1, admin:1, tickets:1, chat:1 }; /* tickets: переписка с поддержкой приватна (автор+админ); chat: семейная переписка — не метрика, родитель и так видит её в самом модуле */
   var WL_DOMAIN={ created:1, changed_mind:1, purchased:1, back_to_want:1, edited:1, favorite:1, unfavorite:1, deleted:1, restored:1,
     share_request:1, share_grant:1, share_revoke:1 }; /* шаринг: действия РЕБЁНКА — домен */
   /* тумблер шаринга включает РОДИТЕЛЬ — в журнале виден, но детским действием не считается */
@@ -449,6 +452,7 @@ window.RobTop = window.RobTop || {};
       else if(m.id==="rating") line=a.rated?t("parent.sum.rating",{avg:a.avg,c:a.rated}):t("parent.sum.none");
       else if(m.id==="mood") line=a.topMood?t("parent.sum.mood",{e:MOOD_E[a.topMood]||"🙂",name:t("parent.mood."+a.topMood,{fallback:a.topMood}),c:a.topMoodN}):t("parent.sum.none");
       else if(m.id==="reverse") line=a.words?t("parent.sum.reverse",{c:a.words}):t("parent.sum.none");
+      else if(m.id==="chat") line=t("parent.sum.chat");
       else if(m.id==="guess") line=a.guessCnt?t("parent.sum.guess",{w:a.guessWin,c:a.guessCnt}):t("parent.sum.none");
       else { var cc=a.perMod[m.id]||0; line=cc?I.plural(cc,"parent.sum.generic"):t("parent.sum.none"); }
       return line;
@@ -465,7 +469,7 @@ window.RobTop = window.RobTop || {};
     /* скрытые карточки (личное скрытие, как плитки ребёнка) — за разделителем «Скрытые»,
        виден только в режиме перестановки (.jgl); CSS прячет .hid вне режима */
     var cards=(RT._registry||[]).filter(function(m){
-      return m.status==="active" && (m.id==="bank" || !SKIP_MOD[m.id]);
+      return m.status==="active" && (m.id==="bank" || m.id==="chat" || !SKIP_MOD[m.id]);
     });
     cards.forEach(function(m){ if(!m.hidden) h+=mcardHtml(m); });
     var hidCards=cards.filter(function(m){ return !!m.hidden; });
@@ -938,6 +942,7 @@ window.RobTop = window.RobTop || {};
     });
     var jf=root.querySelector("#pdJf");
     if(jf) Array.prototype.forEach.call(jf.querySelectorAll("[data-f]"),function(b){
+        if(id==="chat"){ if(RT.open) RT.open("chat"); return; } /* родитель переписывается в самом модуле (свои + все чаты семьи) */
       b.onclick=function(){ S.jfilter=b.getAttribute("data-f"); S.jshown=PAGE; render(); window.scrollTo(0,0); };
     });
     Array.prototype.forEach.call(root.querySelectorAll("button.pd-ev"),function(b){

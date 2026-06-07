@@ -179,6 +179,44 @@ CREATE TABLE IF NOT EXISTS push_subs (
   KEY idx_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ---------- Чат (модуль chat; миграция 023, modules/chat/schema.sql) ----------
+-- Семейный мессенджер: треды (direct по dkey "d:<family>:<min>:<max>" / group),
+-- участники с last_read_id, сообщения (текст и/или фото, мягкое удаление).
+CREATE TABLE IF NOT EXISTS chat_threads (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  family_id INT UNSIGNED NOT NULL,
+  kind ENUM('direct','group') NOT NULL DEFAULT 'direct',
+  title VARCHAR(60) NOT NULL DEFAULT '',
+  dkey VARCHAR(40) DEFAULT NULL,
+  created_by INT UNSIGNED NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_chat_dkey (dkey),
+  KEY idx_chat_family (family_id, updated_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS chat_members (
+  thread_id BIGINT UNSIGNED NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
+  last_read_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  joined_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (thread_id, user_id),
+  KEY idx_chat_member_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  thread_id BIGINT UNSIGNED NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
+  body VARCHAR(1000) NOT NULL DEFAULT '',
+  photo VARCHAR(255) DEFAULT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted_at DATETIME DEFAULT NULL,
+  PRIMARY KEY (id),
+  KEY idx_chat_msg_thread (thread_id, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ---------- Заполнение реестра родными модулями ----------
 INSERT INTO modules (id, name, version, manifest, source, trusted, server, enabled, sort_order) VALUES
  ('wishlist','Виш-лист','2.0.0','{"color":"#ff3db0","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,1,1,10),
@@ -195,6 +233,7 @@ INSERT INTO modules (id, name, version, manifest, source, trusted, server, enabl
  ('walk','Прогулка','1.2.0','{"color":"#38e8a0","status":"active","wide":false,"familyPool":true,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,0,1,115),
  ('snake','Змейка','1.0.0','{"color":"#19e3ff","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,117),
  ('bank','Копилка','1.0.0','{"color":"#ff4d6d","status":"active","wide":true,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,0,1,120),
- ('shop','Магазин','1.0.0','{"color":"#ff2bd6","status":"active","wide":false,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,0,1,130)
+ ('shop','Магазин','1.0.0','{"color":"#ff2bd6","status":"active","wide":false,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,0,1,130),
+ ('chat','Чат','1.0.0','{"color":"#3b6bff","status":"active","wide":false,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,1,1,135)
 ON DUPLICATE KEY UPDATE name=VALUES(name), manifest=VALUES(manifest), server=VALUES(server), updated_at=NOW();
 -- ============================================================
