@@ -8,7 +8,7 @@ function rt_config() {
         if (!file_exists($path)) {
             http_response_code(500);
             header('Content-Type: application/json; charset=utf-8');
-            echo json_encode(['error' => 'config.php не найден. Создай его из config.example.php'], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['error' => 'config_missing', 'message' => 'config.php not found. Create it from config.example.php'], JSON_UNESCAPED_UNICODE);
             exit;
         }
         $cfg = require $path;
@@ -30,7 +30,7 @@ function rt_db() {
         } catch (Throwable $e) {
             http_response_code(500);
             header('Content-Type: application/json; charset=utf-8');
-            echo json_encode(['error' => 'Не удалось подключиться к базе данных'], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['error' => 'db_failed', 'message' => 'Could not connect to the database'], JSON_UNESCAPED_UNICODE);
             exit;
         }
         // Авто-миграции: при первом подключении создаём/обновляем таблицы из api/migrations/.

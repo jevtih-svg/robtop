@@ -37,14 +37,18 @@ return [
     'single_user'  => true,
     // Базовый URL приложения — для ссылок-приглашений и сброса пароля (со слешем в конце).
     'app_base_url' => 'https://apps.tilley.live/robtop/',
-    // Отправка писем (только родителям: сброс пароля, приглашение второго родителя).
-    // 'log'  — письма не шлются, ссылка пишется в журнал (events) на сервере (для прототипа).
-    // 'smtp' — реальная отправка через PHPMailer (позже; заполни mail_smtp + DNS SPF/DKIM/DMARC).
-    'mail_driver'  => 'log',
-    'mail_from'    => 'noreply@tilley.live',
-    'mail_from_name' => 'RobTop',
-    'mail_smtp'    => [
-        // Заполняется при mail_driver=smtp. Лучше транзакционный провайдер (SES/Postmark/Brevo/Mailgun).
-        'host' => '', 'port' => 587, 'user' => '', 'pass' => '', 'secure' => 'tls',
-    ],
+    // ===== Почта (письма только родителям: сброс пароля, приглашения; у детей почты нет) =====
+    // mail_driver:
+    //   'log'     — по умолчанию: письма НЕ шлются, факт и ссылка пишутся в журнал events (прототип).
+    //   'brevo'   — РЕКОМЕНДУЕТСЯ: реальная отправка через HTTP API Brevo, без библиотек и Composer.
+    //               Бесплатно 300 писем/день. Ключ: brevo.com → SMTP & API → API Keys (вид xkeysib-...).
+    //   'phpmail' — встроенная PHP mail() через сервер Hostinger (совсем без сервисов; чаще спам).
+    // Шаблоны писем: api/mail/ (en/ru/lv), реестр всех писем: api/mail/registry.php.
+    // Тест после настройки: <сайт>/api/mail_test.php?pin=<admin_pin>&to=<адрес>&lang=ru
+    'mail_driver'        => 'log',
+    'mail_from'          => 'noreply@tilley.live',
+    'mail_from_name'     => 'RobTop',
+    'mail_brevo_key'     => '',    // только для mail_driver = 'brevo'
+    'mail_default_lang'  => 'en',  // язык письма, если запрос не передал lang (en|ru|lv)
+    'mail_rate_per_hour' => 5,     // максимум писем на один адрес в час (защита от перебора)
 ];

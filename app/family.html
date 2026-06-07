@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07061a">
+<title>RobTop — Семья</title>
+<link rel="icon" type="image/svg+xml" href="media/icon/icon.svg">
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root{--cyan:#19e3ff;--pink:#ff3db0;--purple:#a64bff;--mint:#38e8a0;--gold:#ffd23b;--red:#ff4d6d;--ink:#eaf2ff;--muted:#93a6cf}
+  html,body{margin:0;min-height:100%}
+  body{font-family:'Rubik',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink);background:#05050f;
+    background-image:radial-gradient(820px 600px at 14% 8%,rgba(166,75,255,.20),transparent 60%),
+      radial-gradient(820px 680px at 88% 22%,rgba(25,227,255,.15),transparent 60%),
+      radial-gradient(900px 800px at 50% 108%,rgba(255,43,214,.18),transparent 60%),
+      linear-gradient(180deg,#070617 0%,#05040f 60%,#07041a 100%);min-height:100vh}
+  .wrap{max-width:460px;margin:0 auto;padding:calc(22px + env(safe-area-inset-top)) 16px 40px}
+  .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  h1{font-family:'Russo One',sans-serif;font-size:26px;margin:0;color:#fff;text-shadow:0 0 12px rgba(25,227,255,.7),0 0 26px rgba(255,43,214,.5)}
+  h1 b{color:var(--pink);font-weight:400}
+  .sub{color:var(--muted);font-weight:600;font-size:13px;margin:2px 0 18px}
+  .card{background:linear-gradient(162deg,rgba(26,23,56,.72),rgba(11,10,28,.74));border:1.5px solid rgba(255,255,255,.12);
+    border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 8px 26px rgba(0,0,0,.4)}
+  .card h2{font-family:'Russo One',sans-serif;font-weight:400;font-size:16px;margin:0 0 12px;color:#fff}
+  label{display:block;font-weight:700;font-size:12.5px;color:#cfe0ff;margin:10px 0 5px}
+  input{width:100%;border:1.6px solid rgba(255,255,255,.16);border-radius:13px;padding:13px;font-family:inherit;font-size:16px;
+    font-weight:600;color:var(--ink);background:rgba(255,255,255,.05);outline:none}
+  input:focus{border-color:var(--cyan)}
+  .btn{width:100%;height:52px;border:none;border-radius:26px;cursor:pointer;font-family:'Russo One',sans-serif;font-size:16px;
+    color:#04212b;margin-top:14px;background:linear-gradient(180deg,#3df0c0,#19c7e0);box-shadow:0 0 22px -6px var(--cyan)}
+  .btn:active{transform:scale(.98)}
+  .btn.sec{background:rgba(255,255,255,.06);color:#cfe0ff;border:1.5px solid rgba(255,255,255,.16);box-shadow:none;font-family:inherit;font-weight:800}
+  .btn.pink{background:linear-gradient(180deg,#ff5db0,#d51a82);color:#fff;box-shadow:0 0 22px -6px var(--pink)}
+  .btn.sm{height:40px;font-size:13px;width:auto;padding:0 16px;margin:0;border-radius:20px}
+  .tabs{display:flex;gap:8px;margin-bottom:14px}
+  .tab{flex:1;text-align:center;padding:11px;border-radius:14px;cursor:pointer;font-weight:800;font-size:14px;color:#cfe0ff;
+    background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12)}
+  .tab.active{color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0);border-color:transparent}
+  .row{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:13px;background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.1);margin-top:9px}
+  .row .nm{flex:1;min-width:0;font-weight:700;font-size:14.5px}
+  .row .nm small{display:block;color:var(--muted);font-weight:600;font-size:12px;margin-top:1px}
+  .pill{font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;background:rgba(25,227,255,.14);color:#bdeeff;border:1px solid rgba(25,227,255,.4)}
+  .pill.prov{background:rgba(255,210,59,.14);color:var(--gold);border-color:rgba(255,210,59,.45)}
+  .pill.owner{background:rgba(43,240,192,.14);color:var(--mint);border-color:rgba(43,240,192,.45)}
+  .muted{color:var(--muted);font-size:13px;font-weight:600;line-height:1.5}
+  /* Callout — same redesign as the prototypes: solid card + left accent bar + icon, unshrinkable. */
+  .note{position:relative;flex:0 0 auto;width:100%;margin-top:10px;padding:10px 12px 10px 13px;border-radius:13px;
+    background:#0d1430;border:1px solid rgba(255,255,255,.14);border-left:4px solid var(--cyan);
+    font-size:13px;font-weight:600;color:#e7eeff;overflow-wrap:anywhere}
+  .note::before{content:"\2139\FE0F";margin-right:7px;font-size:14px}
+  .err{margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(255,77,109,.12);border:1px solid rgba(255,77,109,.45);
+    color:#ffb3c0;font-size:13px;font-weight:700}
+  .linkrow{display:flex;gap:8px;margin-top:8px}
+  .linkrow input{font-size:13px;padding:10px}
+  a.plain{color:var(--cyan);font-weight:700;text-decoration:none}
+  .small{font-size:12px}
+  .center{text-align:center}
+  .sep{height:1px;background:rgba(255,255,255,.1);margin:14px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div><h1>Rob<b>Top</b> · Семья</h1></div>
+    <button id="logoutBtn" class="btn sec sm" style="display:none">Выйти</button>
+  </div>
+  <div class="sub" id="subline">Аккаунты, дети и приглашения</div>
+  <div id="app"></div>
+  <div class="sub center small" style="margin-top:24px">
+    <a class="plain" href="index.html">← Вернуться в приложение</a>
+  </div>
+</div>
+
+<script>
+"use strict";
+var APP = document.getElementById('app');
+var SUB = document.getElementById('subline');
+var LOGOUT = document.getElementById('logoutBtn');
+LOGOUT.onclick = function(){ api('logout').then(function(){ location.href='family.html'; }); };
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function h(html){ APP.innerHTML = html; }
+function qs(id){ return document.getElementById(id); }
+function showLogout(on){ LOGOUT.style.display = on ? '' : 'none'; }
+
+function api(op, body){
+  body = body || {};
+  body.op = op;
+  return fetch('api/accounts.php', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    credentials:'same-origin', body: JSON.stringify(body)
+  }).then(function(r){
+    return r.json().catch(function(){ return {}; }).then(function(j){
+      if(!r.ok){ var e = new Error(j && j.error ? j.error : ('Ошибка ' + r.status)); e.data=j; e.status=r.status; throw e; }
+      return j;
+    });
+  });
+}
+function errBox(msg){ return '<div class="err">'+esc(msg)+'</div>'; }
+function param(name){ return new URLSearchParams(location.search).get(name); }
+
+/* ---------------- маршрутизация ---------------- */
+function boot(){
+  var reset = param('reset'), invite = param('invite');
+  if(reset){ return screenReset(reset); }
+  if(invite){ return screenInvite(invite); }
+  showLogout(false);
+  h('<div class="card center muted">Загрузка…</div>');
+  api('me').then(function(me){
+    if(me.authenticated){
+      if(me.user.mustChangePassword){ return screenChangePassword(me.user, true); }
+      return screenDashboard(me);
+    }
+    screenAuth();
+  }).catch(function(){ screenAuth(); });
+}
+
+/* ---------------- вход / регистрация ---------------- */
+function screenAuth(tab){
+  showLogout(false);
+  tab = tab || 'login';
+  SUB.textContent = 'Войдите или создайте семью';
+  h(
+    '<div class="card">'+
+    '<div class="tabs"><div class="tab '+(tab==='login'?'active':'')+'" id="tLogin">Вход</div>'+
+    '<div class="tab '+(tab==='reg'?'active':'')+'" id="tReg">Я родитель — создать</div></div>'+
+    '<div id="form"></div></div>'
+  );
+  qs('tLogin').onclick=function(){ screenAuth('login'); };
+  qs('tReg').onclick=function(){ screenAuth('reg'); };
+  if(tab==='login'){
+    qs('form').innerHTML =
+      '<label>Email (родитель) или никнейм (ребёнок)</label><input id="login" autocomplete="username">'+
+      '<label>Пароль</label><input id="pass" type="password" autocomplete="current-password">'+
+      '<button class="btn" id="go">Войти</button>'+
+      '<div class="center small" style="margin-top:12px"><a class="plain" id="forgot">Родитель забыл пароль?</a></div>'+
+      '<div id="msg"></div>';
+    qs('go').onclick=function(){
+      var login=qs('login').value.trim(), pass=qs('pass').value;
+      if(!login||!pass){ qs('msg').innerHTML=errBox('Введите логин и пароль'); return; }
+      api('login',{login:login,password:pass}).then(function(r){
+        if(r.user && r.user.mustChangePassword){ return screenChangePassword(r.user,true); }
+        boot();
+      }).catch(function(e){ qs('msg').innerHTML=errBox(e.message); });
+    };
+    qs('forgot').onclick=function(){ screenForgot(); };
+  } else {
+    qs('form').innerHTML =
+      '<div class="muted small">Родитель регистрируется по email. Детей вы добавите внутри — им email не нужен, только никнейм.</div>'+
+      '<label>Ваш никнейм</label><input id="nick">'+
+      '<label>Email</label><input id="email" type="email" autocomplete="email">'+
+      '<label>Пароль</label><input id="pass" type="password" autocomplete="new-password">'+
+      '<button class="btn pink" id="go">Создать семью</button><div id="msg"></div>';
+    qs('go').onclick=function(){
+      var nick=qs('nick').value.trim(), email=qs('email').value.trim(), pass=qs('pass').value;
+      if(!nick||!email||!pass){ qs('msg').innerHTML=errBox('Заполните все поля'); return; }
+      api('register_parent',{nickname:nick,email:email,password:pass}).then(function(){ boot(); })
+        .catch(function(e){ qs('msg').innerHTML=errBox(e.message); });
+    };
+  }
+}
+
+function screenForgot(){
+  SUB.textContent='Сброс пароля родителя';
+  h('<div class="card"><h2>Забыли пароль</h2>'+
+    '<div class="muted small">Только для родителей (у детей пароль сбрасывает родитель). Если такой email есть, мы отправим ссылку.</div>'+
+    '<label>Email</label><input id="email" type="email">'+
+    '<button class="btn" id="go">Отправить ссылку</button>'+
+    '<button class="btn sec" id="back">Назад</button><div id="msg"></div></div>');
+  qs('back').onclick=function(){ screenAuth('login'); };
+  qs('go').onclick=function(){
+    var email=qs('email').value.trim();
+    api('forgot',{email:email}).then(function(){
+      qs('msg').innerHTML='<div class="note">Если email зарегистрирован, ссылка отправлена. Пока почта не настроена, ссылка пишется в журнал на сервере.</div>';
+    }).catch(function(e){ qs('msg').innerHTML=errBox(e.message); });
+  };
+}
+
+/* ---------------- обязательная смена пароля ---------------- */
+function screenChangePassword(user, forced){
+  showLogout(true);
+  SUB.textContent = forced ? 'Смените одноразовый пароль' : 'Смена пароля';
+  h('<div class="card"><h2>Новый пароль</h2>'+
+    (forced?'<div class="muted small">Вы вошли по одноразовому паролю <b>1234</b>. Придумайте новый пароль, чтобы продолжить.</div>':'')+
+    '<label>Новый пароль (не 1234)</label><input id="np" type="password" autocomplete="new-password">'+
+    '<button class="btn" id="go">Сохранить</button><div id="msg"></div></div>');
+  qs('go').onclick=function(){
+    var np=qs('np').value;
+    if(!np || np.length<4){ qs('msg').innerHTML=errBox('Минимум 4 символа'); return; }
+    if(np==='1234'){ qs('msg').innerHTML=errBox('Выберите другой пароль, не 1234'); return; }
+    api('set_password',{new_password:np}).then(function(){ boot(); })
+      .catch(function(e){ qs('msg').innerHTML=errBox(e.message); });
+  };
+}
+
+/* ---------------- посадочная приглашения ---------------- */
+function screenInvite(token){
+  showLogout(false);
+  SUB.textContent='Приглашение';
+  h('<div class="card center muted">Проверяем приглашение…</div>');
+  api('invite_info',{token:token}).then(function(info){
+    if(!info.valid){
+      h('<div class="card"><h2>Приглашение недействительно</h2><div class="muted">Ссылка истекла, отозвана или уже использована.</div>'+
+        '<button class="btn sec" id="home">На главную</button></div>');
+      qs('home').onclick=function(){ location.href='family.html'; };
+      return;
+    }
+    var who = esc(info.inviter||'кто-то');
+    if(info.type==='child_to_child'){
+      h('<div class="card"><h2>Тебя позвал(а) '+who+' 🎉</h2>'+
+        '<div class="muted small">Придумай никнейм. Пароль будет одноразовый <b>1234</b> — поменяешь сразу после входа.</div>'+
+        '<label>Твой никнейм</label><input id="nick">'+
+        '<button class="btn pink" id="go">Присоединиться</button><div id="msg"></div></div>');
+      qs('go').onclick=function(){
+        var nick=qs('nick').value.trim();
+        if(!nick){ qs('msg').innerHTML=errBox('Введите никнейм'); return; }
+        api('accept',{token:token,nickname:nick}).then(function(r){
+          if(r.user && r.user.mustChangePassword){ return screenChangePassword(r.user,true); }
+          boot();
+        }).catch(function(e){ qs('msg').innerHTML=errBox(e.message); });
+      };
+    } else {
+      h('<div class="card"><h2>Вас пригласил(а) '+who+'</h2>'+
+        '<div class="muted small">Создайте родительский аккаунт. Email берётся из приглашения.</div>'+
+        '<label>Ваш никнейм</label><input id="nick">'+
+        '<label>Пароль</label><input id="pass" type="password" autocomplete="new-password">'+
+        '<button class="btn pink" id="go">Принять приглашение</button><div id="msg"></div></div>');
+      qs('go').onclick=function(){
+        var nick=qs('nick').value.trim(), pass=qs('pass').value;
+        if(!nick||!pass){ qs('msg').innerHTML=errBox('Заполните поля'); return; }
+        api('accept',{token:token,nickname:nick,password:pass}).then(function(){ location.href='family.html'; })
+          .catch(function(e){ qs('msg').innerHTML=errBox(e.message); });
+      };
+    }
+  }).catch(function(e){
+    h('<div class="card">'+errBox(e.message)+'<button class="btn sec" id="home">На главную</button></div>');
+    qs('home').onclick=function(){ location.href='family.html'; };
+  });
+}
+
+/* ---------------- сброс по ссылке из письма ---------------- */
+function screenReset(token){
+  showLogout(false);
+  SUB.textContent='Сброс пароля';
+  h('<div class="card"><h2>Новый пароль</h2>'+
+    '<label>Новый пароль (не 1234)</label><input id="np" type="password" autocomplete="new-password">'+
+    '<button class="btn" id="go">Сохранить</button><div id="msg"></div></div>');
+  qs('go').onclick=function(){
+    var np=qs('np').value;
+    if(!np||np.length<4||np==='1234'){ qs('msg').innerHTML=errBox('Минимум 4 символа, не 1234'); return; }
+    api('reset',{token:token,new_password:np}).then(function(){
+      qs('msg').innerHTML='<div class="note">Пароль изменён. Теперь войдите.</div>';
+      setTimeout(function(){ location.href='family.html'; }, 1200);
+    }).catch(function(e){ qs('msg').innerHTML=errBox(e.message); });
+  };
+}
+
+/* ---------------- дашборд семьи ---------------- */
+function screenDashboard(me){
+  showLogout(true);
+  var u = me.user;
+  var isParent = (u.kind==='parent');
+  SUB.textContent = 'Вы вошли как ' + u.nickname + ' · ' + (isParent?'родитель':'ребёнок');
+  h('<div id="dash"><div class="card center muted">Загрузка семьи…</div></div>');
+  api('members').then(function(m){
+    var html = '';
+
+    // состав семьи
+    html += '<div class="card"><h2>Семья</h2>';
+    if(m.members && m.members.length){
+      m.members.forEach(function(x){
+        var pill = x.role==='owner' ? '<span class="pill owner">владелец</span>'
+                 : x.role==='parent' ? '<span class="pill owner">родитель</span>'
+                 : '<span class="pill">ребёнок</span>';
+        html += '<div class="row"><div class="nm">'+esc(x.nickname)+'<small>'+(x.kind==='parent'?'родитель':'ребёнок')+
+                (x.mustChangePassword?' · ещё не сменил пароль':'')+'</small></div>'+pill+'</div>';
+      });
+    } else { html += '<div class="muted">Пока только вы.</div>'; }
+    html += '</div>';
+
+    // дети под опекой (для родителя)
+    if(isParent){
+      html += '<div class="card"><h2>Дети под опекой</h2>';
+      var kids = m.children || [];
+      if(kids.length){
+        kids.forEach(function(c){
+          var tag = c.type==='provisional' ? '<span class="pill prov">гость</span>' : '<span class="pill">ребёнок</span>';
+          html += '<div class="row"><div class="nm">'+esc(c.nickname)+'<small>'+
+                  (c.type==='provisional'?'временно под вами':'ваш ребёнок')+'</small></div>'+tag+'</div>'+
+                  '<div class="linkrow"><button class="btn sec sm" data-reset="'+c.id+'">Сбросить пароль</button>'+
+                  '<button class="btn sec sm" data-transfer="'+c.id+'">Передать родителю</button></div>';
+        });
+      } else { html += '<div class="muted">Детей пока нет. Добавьте ниже.</div>'; }
+      html += '<div class="sep"></div>'+
+        '<label>Никнейм нового ребёнка</label><input id="childNick">'+
+        '<button class="btn" id="addChild">Добавить ребёнка</button><div id="childMsg"></div></div>';
+    }
+
+    // приглашения
+    html += '<div class="card"><h2>Приглашения</h2>';
+    if(isParent){
+      html += '<div class="muted small">Пригласить второго родителя по email (он получит права в семье).</div>'+
+        '<label>Email второго родителя</label><input id="coEmail" type="email">'+
+        '<button class="btn sec" id="inviteCo">Создать приглашение</button>';
+    } else {
+      html += '<div class="muted small">Позови друга. Он создаст аккаунт и временно попадёт под опеку твоего родителя.</div>'+
+        '<button class="btn pink" id="inviteFriend">Позвать друга</button>';
+    }
+    html += '<div id="inviteOut"></div><div class="sep"></div><div id="sent" class="muted small">Загрузка приглашений…</div></div>';
+
+    qs('dash').innerHTML = html;
+
+    // handlers: add child
+    if(qs('addChild')) qs('addChild').onclick=function(){
+      var nick=qs('childNick').value.trim();
+      if(!nick){ qs('childMsg').innerHTML=errBox('Введите никнейм'); return; }
+      api('add_child',{nickname:nick}).then(function(r){
+        qs('childMsg').innerHTML='<div class="note">Ребёнок «'+esc(r.child.nickname)+'» создан. Пароль для первого входа: <b>'+esc(r.temp_password)+'</b> (он сменит его сам).</div>';
+        setTimeout(function(){ screenDashboard(me); }, 1600);
+      }).catch(function(e){ qs('childMsg').innerHTML=errBox(e.message); });
+    };
+    // reset child / transfer
+    Array.prototype.forEach.call(document.querySelectorAll('[data-reset]'), function(b){
+      b.onclick=function(){ api('reset_child',{child_id:parseInt(b.getAttribute('data-reset'),10)}).then(function(r){
+        alert('Пароль ребёнка сброшен на ' + r.temp_password + '. Он сменит его при входе.');
+      }).catch(function(e){ alert(e.message); }); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-transfer]'), function(b){
+      b.onclick=function(){
+        var email = prompt('Email настоящего родителя этого ребёнка (передать права):');
+        if(!email) return;
+        api('invite',{type:'transfer_child',email:email,target_child_id:parseInt(b.getAttribute('data-transfer'),10)})
+          .then(function(r){ showInvite(r.link); }).catch(function(e){ alert(e.message); });
+      };
+    });
+    // invite co-parent / friend
+    if(qs('inviteCo')) qs('inviteCo').onclick=function(){
+      var email=qs('coEmail').value.trim();
+      if(!email){ qs('inviteOut').innerHTML=errBox('Введите email'); return; }
+      api('invite',{type:'co_parent',email:email}).then(function(r){ showInvite(r.link); })
+        .catch(function(e){ qs('inviteOut').innerHTML=errBox(e.message); });
+    };
+    if(qs('inviteFriend')) qs('inviteFriend').onclick=function(){
+      api('invite',{type:'child_to_child'}).then(function(r){ showInvite(r.link); })
+        .catch(function(e){ qs('inviteOut').innerHTML=errBox(e.message); });
+    };
+
+    loadSent();
+  }).catch(function(e){
+    qs('dash').innerHTML = '<div class="card">'+errBox(e.message)+'</div>';
+  });
+}
+
+function showInvite(link){
+  var out = qs('inviteOut');
+  if(!out) return;
+  out.innerHTML = '<div class="note">Ссылка-приглашение (отправьте её):</div>'+
+    '<div class="linkrow"><input id="invLink" readonly value="'+esc(link)+'"><button class="btn sec sm" id="copy">Копир.</button></div>';
+  qs('copy').onclick=function(){ qs('invLink').select(); try{ document.execCommand('copy'); }catch(e){} };
+  loadSent();
+}
+
+function loadSent(){
+  var box = qs('sent'); if(!box) return;
+  api('invites').then(function(r){
+    var list = r.invites||[];
+    if(!list.length){ box.innerHTML='Отправленных приглашений нет.'; return; }
+    var typeName = {child_to_child:'другу',co_parent:'родителю',transfer_child:'передача ребёнка',add_child:'ребёнок'};
+    box.innerHTML = list.map(function(i){
+      return '<div class="row"><div class="nm">'+esc(typeName[i.type]||i.type)+
+        (i.email?'<small>'+esc(i.email)+'</small>':'')+'</div>'+
+        '<span class="pill'+(i.status==='pending'?'':' prov')+'">'+esc(i.status)+'</span>'+
+        (i.status==='pending'?' <button class="btn sec sm" data-revoke="'+i.id+'">Отозвать</button>':'')+'</div>';
+    }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('[data-revoke]'), function(b){
+      b.onclick=function(){ api('invite_action',{id:parseInt(b.getAttribute('data-revoke'),10),action:'revoke'})
+        .then(loadSent).catch(function(e){ alert(e.message); }); };
+    });
+  }).catch(function(){ box.innerHTML='Не удалось загрузить приглашения.'; });
+}
+
+boot();
+</script>
+</body>
+</html>

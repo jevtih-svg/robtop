@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RobTop — App prototype</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root{--cyan:#19e3ff;--pink:#ff3db0;--purple:#a64bff;--mint:#38e8a0;--gold:#ffd23b;--red:#ff4d6d;--ink:#eaf2ff;--muted:#93a6cf}
+  html,body{margin:0;min-height:100%}
+  body{font-family:'Rubik',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink);background:#05050f;
+    background-image:radial-gradient(900px 600px at 12% 6%,rgba(166,75,255,.18),transparent 60%),
+      radial-gradient(900px 700px at 90% 18%,rgba(25,227,255,.13),transparent 60%),
+      linear-gradient(180deg,#070617,#05040f 60%,#07041a);min-height:100vh}
+  .head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .head h1{font-family:'Russo One','Rubik',sans-serif;font-size:19px;margin:0;color:#fff;text-shadow:0 0 12px rgba(25,227,255,.6)}
+  .head h1 b{color:var(--pink);font-weight:400}
+  .head .sub{color:var(--muted);font-size:12px;font-weight:600;margin-top:2px}
+  .tools{display:flex;align-items:center;gap:10px}
+  .demo{font-size:10.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--gold);
+    background:rgba(255,210,59,.14);border:1px solid rgba(255,210,59,.45);padding:4px 9px;border-radius:999px}
+  .lang{display:flex;gap:4px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:3px}
+  .lang button{border:none;background:none;color:#cfe0ff;font-weight:800;font-size:12px;padding:5px 10px;border-radius:999px;cursor:pointer}
+  .lang button.on{color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0)}
+  .stagewrap{display:flex;flex-direction:column;align-items:center;padding:18px 16px 40px}
+  .foot{max-width:560px;margin:14px auto 0;color:var(--muted);font-size:12px;text-align:center;line-height:1.5}
+  /* phone */
+  .phone{position:relative;width:390px;max-width:94vw;border-radius:40px;padding:12px;background:linear-gradient(160deg,#15132e,#0a0920);
+    border:1px solid rgba(255,255,255,.14);box-shadow:0 30px 70px rgba(0,0,0,.6),0 0 50px -16px var(--cyan)}
+  .screen{position:relative;height:720px;max-height:78vh;overflow:auto;border-radius:30px;padding:16px 16px 24px;
+    background:radial-gradient(700px 480px at 20% 0%,rgba(166,75,255,.12),transparent 60%),linear-gradient(180deg,#0a0920,#0b0822)}
+  .screen::-webkit-scrollbar{width:0}
+  .scr{display:flex;flex-direction:column;align-items:stretch;animation:sin .24s ease both}
+  .scr > *{flex-shrink:0}
+  @keyframes sin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  /* app header inside phone */
+  .apphead{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .apphead .brand{font-family:'Russo One','Rubik',sans-serif;font-size:22px;color:#fff;text-shadow:0 0 12px rgba(25,227,255,.6)}
+  .apphead .brand b{color:var(--pink);font-weight:400}
+  .apphead .sp{flex:1}
+  .iconbtn{flex:0 0 auto;width:42px;height:42px;border-radius:13px;border:1.5px solid rgba(255,255,255,.16);cursor:pointer;
+    background:rgba(255,255,255,.05);color:#cfe0ff;display:grid;place-items:center;font-size:17px;font-weight:800}
+  .avbtn{flex:0 0 auto;width:42px;height:42px;border-radius:13px;border:none;cursor:pointer;display:grid;place-items:center;
+    font-weight:800;font-size:16px;color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0)}
+  .avbtn.p{background:linear-gradient(180deg,#ff5db0,#d51a82);color:#fff}
+  .avbtn.g{background:linear-gradient(180deg,#ffd23b,#e0a400)}
+  .tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--cyan);margin-bottom:6px;width:100%}
+  h2.t{font-family:'Russo One','Rubik',sans-serif;font-weight:400;font-size:21px;margin:0 0 4px;color:#fff;line-height:1.15;width:100%}
+  p.lead{color:var(--muted);font-size:13px;font-weight:600;margin:0 0 12px;line-height:1.5;width:100%}
+  .muted{color:var(--muted);font-size:12.5px;font-weight:600}
+  .sec{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin:14px 2px 4px}
+  /* tiles */
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+  .tile{position:relative;display:flex;flex-direction:column;gap:9px;align-items:flex-start;border-radius:18px;padding:15px 13px;cursor:pointer;
+    text-align:left;font-family:inherit;color:var(--ink);background:linear-gradient(162deg,rgba(26,23,56,.72),rgba(11,10,28,.74));
+    border:1.5px solid rgba(255,255,255,.14);transition:transform .12s}
+  .tile:active{transform:scale(.96)}
+  .tile .ic{font-size:30px;filter:drop-shadow(0 0 8px rgba(25,227,255,.5))}
+  .tile .nm{font-weight:700;font-size:14px;color:#eef4ff;line-height:1.2}
+  .tile .st{font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--cyan)}
+  .tile.soon{opacity:.5}
+  .tile.soon .st{color:#90a2c6}
+  /* rows / cards */
+  .row{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:13px;background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.1);margin-top:9px;width:100%;text-align:left;font-family:inherit;color:var(--ink)}
+  button.row{cursor:pointer}
+  button.row:active{transform:scale(.98)}
+  .av{flex:0 0 auto;width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-weight:800;color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0)}
+  .av.p{background:linear-gradient(180deg,#ff5db0,#d51a82);color:#fff}
+  .av.g{background:linear-gradient(180deg,#ffd23b,#e0a400)}
+  .av.em{background:linear-gradient(180deg,#2a2350,#171338);border:1px solid rgba(255,255,255,.14);color:#fff;font-size:17px}
+  .row .nm{flex:1;min-width:0;font-weight:700;font-size:14px}
+  .row .nm small{display:block;color:var(--muted);font-weight:600;font-size:11.5px;margin-top:1px}
+  .pill{flex:0 0 auto;font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:999px;background:rgba(25,227,255,.14);color:#bdeeff;border:1px solid rgba(25,227,255,.4)}
+  .pill.ok{background:rgba(43,240,192,.14);color:var(--mint);border-color:rgba(43,240,192,.45)}
+  .pill.g{background:rgba(255,210,59,.14);color:var(--gold);border-color:rgba(255,210,59,.45)}
+  .pill.warn{background:rgba(255,77,109,.14);color:#ffb3c0;border-color:rgba(255,77,109,.45)}
+  /* buttons */
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:50px;border:none;border-radius:25px;cursor:pointer;
+    font-family:'Russo One','Rubik',sans-serif;font-size:15px;color:#04212b;margin-top:14px;flex:0 0 auto;
+    background:linear-gradient(180deg,#3df0c0,#19c7e0);box-shadow:0 12px 24px -14px var(--cyan)}
+  .btn:active{transform:scale(.98)}
+  .btn.pink{background:linear-gradient(180deg,#ff5db0,#d51a82);color:#fff;box-shadow:0 12px 24px -14px var(--pink)}
+  .btn.ghost{background:rgba(255,255,255,.06);color:#cfe0ff;border:1.5px solid rgba(255,255,255,.16);box-shadow:none;font-family:inherit;font-weight:800}
+  .btn.danger{background:rgba(255,77,109,.14);color:#ffb3c0;border:1.5px solid rgba(255,77,109,.5);box-shadow:none;font-family:inherit;font-weight:800}
+  /* note (solid callout) */
+  .note{position:relative;flex:0 0 auto;width:100%;margin:12px 0 2px;padding:11px 13px 11px 14px;border-radius:13px;
+    font-size:12.5px;font-weight:600;line-height:1.55;word-break:break-word;color:#e7eeff;background:#0d1430;
+    border:1px solid rgba(255,255,255,.14);border-left:4px solid var(--cyan)}
+  .note::before{content:"\2139\FE0F";margin-right:7px;font-size:14px}
+  .note.ok{border-left-color:var(--mint)} .note.ok::before{content:"\2705"}
+  .note.warn{border-left-color:var(--red);background:#190f1b} .note.warn::before{content:"\26A0\FE0F"}
+  .note.gold{border-left-color:var(--gold)} .note.gold::before{content:"\1F511"}
+  .note+.btn{margin-top:18px}
+  .safebar{margin:10px 0 0;display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:800;color:#ffd9a6;width:100%;
+    background:rgba(255,170,40,.12);border:1px solid rgba(255,170,40,.45);border-radius:10px;padding:8px 10px}
+  .safelist{list-style:none;margin:8px 0 0;padding:0;width:100%}
+  .safelist li{display:flex;gap:10px;align-items:flex-start;padding:11px 12px;border-radius:12px;margin-top:8px;
+    font-size:13px;font-weight:600;line-height:1.45;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)}
+  .safelist li .ic{flex:0 0 auto;font-size:18px;line-height:1.2}
+  .safelist li.no{background:rgba(255,77,109,.1);border-color:rgba(255,77,109,.4);color:#ffc2cd}
+  .safelist li.yes{background:rgba(43,240,192,.09);border-color:rgba(43,240,192,.4);color:#c7f6e8}
+  .safelist li.tell{background:rgba(255,210,59,.1);border-color:rgba(255,210,59,.45);color:#ffe7a6}
+  .field{display:flex;align-items:center;flex-wrap:wrap;gap:8px;border:1.5px solid rgba(255,255,255,.16);border-radius:13px;padding:12px 13px;
+    background:rgba(255,255,255,.05);font-size:15px;font-weight:600;color:#e9f1ff;word-break:break-word;margin-top:8px;width:100%}
+  .field .demoflag{margin-left:auto;font-size:9.5px;font-weight:800;color:var(--gold);background:rgba(255,210,59,.12);
+    border:1px solid rgba(255,210,59,.4);padding:2px 6px;border-radius:6px;text-transform:uppercase;letter-spacing:.4px}
+  .linkbox{margin-top:10px;padding:12px 13px;border-radius:13px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.16);
+    font-size:12.5px;font-weight:600;color:#cdeeff;word-break:break-all;line-height:1.5;width:100%}
+  /* teeth ring mock */
+  .ring{width:190px;height:190px;border-radius:50%;margin:14px auto 6px;display:grid;place-items:center;
+    border:10px solid rgba(255,255,255,.08);box-shadow:0 0 30px -10px var(--cyan)}
+  .ring.run{border-color:rgba(25,227,255,.55)}
+  .ring .tm{font-family:'Russo One','Rubik',sans-serif;font-size:40px;color:#fff}
+  .npbar{display:flex;align-items:center;gap:10px;width:100%;margin-top:12px;padding:10px 12px;border-radius:14px;
+    background:rgba(255,255,255,.05);border:1px solid rgba(25,227,255,.28)}
+  .npbar .nm{flex:1;min-width:0;font-weight:700;font-size:13px;color:#e7eeff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .npbar .sk{flex:0 0 auto;width:38px;height:38px;border-radius:50%;border:none;cursor:pointer;color:#04212b;
+    display:grid;place-items:center;background:linear-gradient(180deg,#3df0c0,#19c7e0);font-size:15px}
+  .stat{display:flex;gap:9px;margin-top:10px;width:100%}
+  .stat .box{flex:1;text-align:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:13px;padding:11px 6px}
+  .stat .box .n{font-family:'Russo One','Rubik',sans-serif;font-size:22px;color:#fff}
+  .stat .box .l{font-size:10.5px;font-weight:700;color:var(--muted);margin-top:3px}
+  /* toast + sheet */
+  #toast{position:absolute;left:50%;bottom:90px;transform:translateX(-50%);z-index:40;max-width:84%;display:none;
+    background:#0c1330;border:1px solid rgba(25,227,255,.5);color:#dff0ff;font-size:12.5px;font-weight:700;
+    padding:10px 14px;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.5);text-align:center}
+  #sheetWrap{position:absolute;inset:12px;z-index:30;border-radius:30px;background:rgba(4,3,14,.6);backdrop-filter:blur(2px);display:none;align-items:flex-end}
+  #sheet{width:100%;border-radius:24px 24px 30px 30px;padding:14px 16px calc(18px);max-height:75%;overflow:auto;
+    background:linear-gradient(180deg,#191542,#0c0a24);border-top:1.5px solid rgba(255,61,176,.5)}
+  #sheet h3{font-family:'Russo One','Rubik',sans-serif;font-weight:400;font-size:17px;margin:4px 0 10px;color:#fff;text-align:center}
+  .grip{width:44px;height:5px;border-radius:3px;background:rgba(255,255,255,.28);margin:2px auto 10px}
+</style>
+</head>
+<body>
+<div class="head">
+  <div><h1>Rob<b>Top</b> · App</h1><div class="sub" id="subt">Clickable app prototype</div></div>
+  <div class="tools"><span class="demo" id="demoBadge">prototype · demo</span><div class="lang" id="lang"></div></div>
+</div>
+<div class="stagewrap">
+  <div class="phone">
+    <div class="screen"><div class="scr" id="scr"></div></div>
+    <div id="toast"></div>
+    <div id="sheetWrap"><div id="sheet"></div></div>
+  </div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+"use strict";
+/* ================= i18n ================= */
+var S = {
+  "ui.sub":{en:"Clickable app prototype",ru:"Кликабельный прототип приложения",lv:"Klikšķināms lietotnes prototips"},
+  "ui.demo":{en:"prototype · demo",ru:"прототип · демо",lv:"prototips · demo"},
+  "ui.foot":{en:"Everything is clickable, nothing needs typing. Use the avatar (top right inside the app) to switch accounts or log out. Blocking Sunny really blocks her sign-in. PIN is gone: app management now lives with the parent account.",
+    ru:"Всё кликается, ничего не нужно печатать. Аватар справа вверху внутри приложения переключает аккаунты и выходит. Блокировка Sunny реально блокирует её вход. PIN убран: управление приложениями теперь у родительского аккаунта.",
+    lv:"Viss ir klikšķināms, nekas nav jāraksta. Avatārs augšā pa labi lietotnē pārslēdz kontus un izrakstās. Sunny bloķēšana tiešām bloķē viņas pieslēgšanos. PIN ir noņemts: lietotņu pārvaldība tagad pieder vecāka kontam."},
+  "cta.continue":{en:"Continue",ru:"Продолжить",lv:"Turpināt"},
+  "cta.done":{en:"Done",ru:"Готово",lv:"Gatavs"},
+  "cta.back":{en:"Back",ru:"Назад",lv:"Atpakaļ"},
+  "cta.cancel":{en:"Cancel",ru:"Отмена",lv:"Atcelt"},
+
+  /* login */
+  "lg.tag":{en:"Sign in",ru:"Вход",lv:"Pieslēgšanās"},
+  "lg.title":{en:"Who is signing in?",ru:"Кто входит?",lv:"Kurš pieslēdzas?"},
+  "lg.lead":{en:"Demo accounts, one tap, no passwords to type. Parents sign in with email, children with a nickname.",
+    ru:"Демо-аккаунты, вход в один тап, пароли печатать не нужно. Родители входят по email, дети по никнейму.",
+    lv:"Demo konti, viens pieskāriens, paroles nav jāraksta. Vecāki pieslēdzas ar e-pastu, bērni ar segvārdu."},
+  "lg.alex":{en:"alex@home.lv · password saved",ru:"alex@home.lv · пароль сохранён",lv:"alex@home.lv · parole saglabāta"},
+  "lg.robik":{en:"nickname · password saved",ru:"никнейм · пароль сохранён",lv:"segvārds · parole saglabāta"},
+  "lg.sunny":{en:"first sign-in · one-time 1234",ru:"первый вход · одноразовый 1234",lv:"pirmā pieslēgšanās · vienreizējais 1234"},
+  "lg.sunnyblocked":{en:"blocked by a guardian",ru:"заблокирована опекуном",lv:"bloķēta no aizbildņa"},
+  "lg.new":{en:"I am a new parent — create a family",ru:"Я новый родитель — создать семью",lv:"Esmu jauns vecāks — izveidot ģimeni"},
+  "lg.how":{en:"How does sign-in work?",ru:"Как работает вход?",lv:"Kā darbojas pieslēgšanās?"},
+  "role.pg":{en:"parent/guardian",ru:"родитель/опекун",lv:"vecāks/aizbildnis"},
+  "role.child":{en:"child",ru:"ребёнок",lv:"bērns"},
+  "tag.guest":{en:"guest",ru:"гость",lv:"viesis"},
+
+  /* auth explain */
+  "ax.title":{en:"How sign-in works",ru:"Как устроен вход",lv:"Kā notiek pieslēgšanās"},
+  "ax.p1":{en:"Parents sign in with an email and a password.",ru:"Родители входят по email и паролю.",lv:"Vecāki pieslēdzas ar e-pastu un paroli."},
+  "ax.p2":{en:"Children sign in with a nickname. Children never have an email.",ru:"Дети входят по никнейму. У детей никогда нет email.",lv:"Bērni pieslēdzas ar segvārdu. Bērniem nekad nav e-pasta."},
+  "ax.p3":{en:"A new child gets the one-time 1234 and changes it at first sign-in.",ru:"Новый ребёнок получает одноразовый 1234 и меняет его при первом входе.",lv:"Jauns bērns saņem vienreizējo 1234 un nomaina to pirmajā reizē."},
+  "ax.p4":{en:"Only a parent can reset a child password. A parent resets their own by email.",ru:"Сбросить пароль ребёнку может только родитель. Свой родитель сбрасывает по email.",lv:"Bērna paroli atiestata tikai vecāks. Savu vecāks atiestata pa e-pastu."},
+  "ax.p5":{en:"No personal data. Only nicknames. Pictures stay private.",ru:"Без личных данных. Только никнеймы. Картинки приватны.",lv:"Bez personas datiem. Tikai segvārdi. Attēli ir privāti."},
+
+  /* register mock */
+  "rg.title":{en:"Create your family",ru:"Создайте семью",lv:"Izveidojiet ģimeni"},
+  "rg.lead":{en:"Demo: the form is pre-filled, just tap create.",ru:"Демо: форма заполнена, просто нажмите создать.",lv:"Demo: forma aizpildīta, vienkārši nospiediet izveidot."},
+  "rg.btn":{en:"Create family",ru:"Создать семью",lv:"Izveidot ģimeni"},
+  "rg.toast":{en:"Family created (demo)",ru:"Семья создана (демо)",lv:"Ģimene izveidota (demo)"},
+  "f.nick":{en:"Nickname",ru:"Никнейм",lv:"Segvārds"},
+  "f.email":{en:"Email",ru:"Email",lv:"E-pasts"},
+  "f.pass":{en:"Password",ru:"Пароль",lv:"Parole"},
+  "demoflag":{en:"demo",ru:"демо",lv:"demo"},
+
+  /* forced + safety */
+  "fc.title":{en:"Set a new password",ru:"Задай новый пароль",lv:"Iestati jaunu paroli"},
+  "fc.lead":{en:"You signed in with the one-time 1234. Nothing opens until you set your own password.",
+    ru:"Ты вошла по одноразовому 1234. Ничего не откроется, пока не придумаешь свой пароль.",
+    lv:"Tu pieslēdzies ar vienreizējo 1234. Nekas neatvērsies, kamēr neiestatīsi savu paroli."},
+  "fc.new":{en:"New password (not 1234)",ru:"Новый пароль (не 1234)",lv:"Jauna parole (ne 1234)"},
+  "fc.btn":{en:"Save and continue",ru:"Сохранить и продолжить",lv:"Saglabāt un turpināt"},
+  "sf.title":{en:"Read this first",ru:"Сначала прочитай это",lv:"Vispirms izlasi šo"},
+  "sf.lead":{en:"Rules that keep you safe, especially with pictures.",ru:"Правила безопасности, особенно про картинки.",lv:"Drošības noteikumi, īpaši par attēliem."},
+  "sf.no1":{en:"Do not photograph people. No faces, no strangers, no friends.",ru:"Не фотографируй людей. Ни лиц, ни незнакомцев, ни друзей.",lv:"Nefotografē cilvēkus. Ne sejas, ne svešiniekus, ne draugus."},
+  "sf.no2":{en:"Do not upload photos of yourself.",ru:"Не загружай свои фото.",lv:"Neaugšupielādē savas fotogrāfijas."},
+  "sf.yes1":{en:"Only simple objects, or pictures from the internet.",ru:"Только простые предметы или картинки из интернета.",lv:"Tikai vienkārši priekšmeti vai attēli no interneta."},
+  "sf.priv":{en:"Your pictures are private: only you and your parent can see them.",ru:"Твои картинки приватные: их видишь только ты и твой родитель.",lv:"Tavi attēli ir privāti: tos redz tikai tu un tavs vecāks."},
+  "sf.tell":{en:"If anyone asks for anything else, tell your parent and a grown-up right now.",ru:"Если кто-то просит другое, сразу скажи родителю и взрослому.",lv:"Ja kāds prasa ko citu, uzreiz pasaki vecākam un pieaugušajam."},
+  "sf.btn":{en:"I understand",ru:"Я понимаю",lv:"Es saprotu"},
+  "safebar":{en:"No people or selfies. Pictures stay private.",ru:"Без людей и селфи. Картинки приватные.",lv:"Bez cilvēkiem un selfijiem. Attēli ir privāti."},
+
+  /* child home */
+  "ch.hi":{en:"Hi, {name}!",ru:"Привет, {name}!",lv:"Sveiks, {name}!"},
+  "ch.pick":{en:"Pick an app",ru:"Выбери приложение",lv:"Izvēlies lietotni"},
+  "tile.teeth":{en:"Teeth timer",ru:"Чистка зубов",lv:"Zobu taimeris"},
+  "tile.wish":{en:"Wishlist",ru:"Виш-лист",lv:"Vēlmju saraksts"},
+  "tile.words":{en:"Backwards words",ru:"Слова наоборот",lv:"Vārdi otrādi"},
+  "tile.mood":{en:"Mood",ru:"Настроение",lv:"Garastāvoklis"},
+  "tile.bank":{en:"Piggy bank",ru:"Копилка",lv:"Krājkasīte"},
+  "st.active":{en:"active",ru:"активно",lv:"aktīvs"},
+  "st.soon":{en:"soon",ru:"скоро",lv:"drīz"},
+  "ch.invite":{en:"Invite a friend",ru:"Позвать друга",lv:"Aicināt draugu"},
+  "toast.demo":{en:"Demo tile",ru:"Демо-плитка",lv:"Demo flīze"},
+
+  /* teeth */
+  "th.title":{en:"Teeth timer",ru:"Чистка зубов",lv:"Zobu taimeris"},
+  "th.idle":{en:"2 minutes of brushing, music plays along",ru:"2 минуты чистки, музыка играет вместе с тобой",lv:"2 minūtes tīrīšanas, mūzika skan līdzi"},
+  "th.start":{en:"Start brushing",ru:"Начать чистку",lv:"Sākt tīrīšanu"},
+  "th.run":{en:"Brushing…",ru:"Чистим…",lv:"Tīrām…"},
+  "th.finish":{en:"Finish (demo)",ru:"Закончить (демо)",lv:"Pabeigt (demo)"},
+  "th.done":{en:"Great job! +10 points 🎉",ru:"Молодец! +10 очков 🎉",lv:"Lieliski! +10 punkti 🎉"},
+  "th.skip":{en:"Track skipped",ru:"Трек переключён",lv:"Dziesma pārslēgta"},
+
+  /* wishlist (child own) */
+  "wl.title":{en:"My wishlist",ru:"Мой виш-лист",lv:"Mans vēlmju saraksts"},
+  "wl.want":{en:"Want",ru:"Хочу",lv:"Gribu"},
+  "wl.think":{en:"Thinking",ru:"Думаю",lv:"Domāju"},
+  "wl.bought":{en:"Bought",ru:"Куплено",lv:"Nopirkts"},
+  "wl.fav":{en:"Top wish",ru:"Очень хочу",lv:"Ļoti gribu"},
+  "wl.add":{en:"Add a wish with a picture",ru:"Добавить желание с картинкой",lv:"Pievienot vēlmi ar attēlu"},
+  "wl.added":{en:"Added: Football ⚽",ru:"Добавлено: Мяч ⚽",lv:"Pievienots: Bumba ⚽"},
+  "wl.i1t":{en:"LEGO Technic set",ru:"Конструктор LEGO Technic",lv:"LEGO Technic komplekts"},
+  "wl.i2t":{en:"Stunt scooter",ru:"Трюковой самокат",lv:"Triku skrejritenis"},
+  "wl.i3t":{en:"Wireless headphones",ru:"Беспроводные наушники",lv:"Bezvadu austiņas"},
+  "wl.i4t":{en:"Dinosaur book",ru:"Книга про динозавров",lv:"Grāmata par dinozauriem"},
+  "wl.new":{en:"Football",ru:"Мяч",lv:"Bumba"},
+
+  /* upload guard */
+  "ug.title":{en:"Add a picture safely",ru:"Добавь картинку безопасно",lv:"Pievieno attēlu droši"},
+  "ug.lead":{en:"Only simple objects or pictures from the internet. Never people, never yourself.",
+    ru:"Только простые предметы или картинки из интернета. Никогда людей и не себя.",
+    lv:"Tikai vienkārši priekšmeti vai attēli no interneta. Nekad cilvēkus, nekad sevi."},
+  "ug.ok":{en:"It is a simple object",ru:"Это простой предмет",lv:"Tas ir vienkāršs priekšmets"},
+  "ug.tell":{en:"Someone asked me for something else",ru:"Меня просят другое",lv:"Kāds prasa ko citu"},
+  "rp.title":{en:"Reported. Well done",ru:"Сообщено. Молодец",lv:"Ziņots. Lieliski"},
+  "rp.note":{en:"Nothing was uploaded. Your parent now knows. Telling a grown-up was right.",
+    ru:"Ничего не загружено. Родитель теперь знает. Сказать взрослому было правильно.",
+    lv:"Nekas netika augšupielādēts. Vecāks tagad zina. Pateikt pieaugušajam bija pareizi."},
+
+  /* parent home */
+  "ph.hi":{en:"Hi, {name}",ru:"Здравствуйте, {name}",lv:"Sveiki, {name}"},
+  "ph.family":{en:"Family",ru:"Семья",lv:"Ģimene"},
+  "ph.children":{en:"Children",ru:"Дети",lv:"Bērni"},
+  "ph.robik":{en:"activity and wishlist, read-only",ru:"активность и виш-лист, только чтение",lv:"aktivitāte un saraksts, tikai lasīšanai"},
+  "ph.sunny":{en:"guest · manage account",ru:"гость · управление аккаунтом",lv:"viesis · konta pārvaldība"},
+  "ph.invite":{en:"Invite second parent",ru:"Пригласить второго родителя",lv:"Ielūgt otru vecāku"},
+  "ph.apps":{en:"App management",ru:"Управление приложениями",lv:"Lietotņu pārvaldība"},
+  "ph.appsnote":{en:"No PIN anymore: you are signed in as a parent",ru:"PIN больше не нужен: вы вошли как родитель",lv:"PIN vairs nav vajadzīgs: jūs esat pieslēdzies kā vecāks"},
+
+  /* parent: robik card */
+  "rc.title":{en:"Robik · read-only",ru:"Robik · только чтение",lv:"Robik · tikai lasīšanai"},
+  "rc.streak":{en:"day streak",ru:"дней подряд",lv:"dienu sērija"},
+  "rc.points":{en:"points",ru:"очки",lv:"punkti"},
+  "rc.brush":{en:"brushings",ru:"чисток",lv:"tīrīšanas"},
+  "rc.wishes":{en:"Wishlist",ru:"Виш-лист",lv:"Vēlmju saraksts"},
+  "rc.priv":{en:"You see the pictures because you are the direct parent. A temporary guardian never sees them.",
+    ru:"Вы видите картинки, потому что вы прямой родитель. Временный опекун их не видит никогда.",
+    lv:"Jūs redzat attēlus, jo esat tiešais vecāks. Pagaidu aizbildnis tos nekad neredz."},
+
+  /* manage sunny */
+  "mg.title":{en:"Manage Sunny",ru:"Управление: Sunny",lv:"Pārvaldīt: Sunny"},
+  "mg.status":{en:"Status",ru:"Статус",lv:"Statuss"},
+  "st.activeAcc":{en:"active",ru:"активен",lv:"aktīvs"},
+  "st.blocked":{en:"blocked",ru:"заблокирован",lv:"bloķēts"},
+  "mg.whocan":{en:"Any parent or guardian can block or unblock. Data is never deleted. Sunny's pictures are not visible to you: you are a temporary guardian.",
+    ru:"Заблокировать или разблокировать может любой родитель или опекун. Данные не удаляются. Картинки Sunny вам не видны: вы временный опекун.",
+    lv:"Bloķēt vai atbloķēt var jebkurš vecāks vai aizbildnis. Dati netiek dzēsti. Sunny attēli jums nav redzami: jūs esat pagaidu aizbildnis."},
+  "mg.block":{en:"Block account",ru:"Заблокировать аккаунт",lv:"Bloķēt kontu"},
+  "mg.unblock":{en:"Unblock account",ru:"Разблокировать аккаунт",lv:"Atbloķēt kontu"},
+  "mg.reset":{en:"Reset password (one-time 1234)",ru:"Сбросить пароль (одноразовый 1234)",lv:"Atiestatīt paroli (vienreizējais 1234)"},
+  "mg.attach":{en:"Attach a real parent",ru:"Привязать настоящего родителя",lv:"Piesaistīt īstu vecāku"},
+  "bc.title":{en:"Block Sunny?",ru:"Заблокировать Sunny?",lv:"Bloķēt Sunny?"},
+  "bc.lead":{en:"She will not be able to sign in until unblocked. All data is kept.",ru:"Она не сможет войти, пока её не разблокируют. Все данные сохраняются.",lv:"Viņa nevarēs pieslēgties, līdz tiks atbloķēta. Visi dati tiek saglabāti."},
+  "bc.yes":{en:"Yes, block",ru:"Да, заблокировать",lv:"Jā, bloķēt"},
+  "toast.blocked":{en:"Sunny is blocked. Try signing in as Sunny.",ru:"Sunny заблокирована. Попробуйте войти как Sunny.",lv:"Sunny ir bloķēta. Mēģiniet pieslēgties kā Sunny."},
+  "toast.unblocked":{en:"Sunny can sign in again",ru:"Sunny снова может войти",lv:"Sunny atkal var pieslēgties"},
+  "toast.reset":{en:"Password is 1234 again. Sunny will set a new one at sign-in.",ru:"Пароль снова 1234. Sunny задаст новый при входе.",lv:"Parole atkal ir 1234. Sunny iestatīs jaunu pieslēdzoties."},
+  "dis.title":{en:"Account is disabled",ru:"Аккаунт отключён",lv:"Konts ir atspējots"},
+  "dis.lead":{en:"Ask your parent or guardian to unblock you.",ru:"Попроси родителя или опекуна разблокировать тебя.",lv:"Palūdz vecākam vai aizbildnim tevi atbloķēt."},
+
+  /* invite link */
+  "lk.title":{en:"Invitation link",ru:"Ссылка-приглашение",lv:"Ielūguma saite"},
+  "lk.lead":{en:"Send this link. It works once and expires in 7 days.",ru:"Отправьте эту ссылку. Работает один раз, действует 7 дней.",lv:"Nosūtiet šo saiti. Darbojas vienreiz, derīga 7 dienas."},
+  "lk.copy":{en:"Copy",ru:"Копировать",lv:"Kopēt"},
+  "lk.copied":{en:"Copied",ru:"Скопировано",lv:"Nokopēts"},
+
+  /* apps settings stub */
+  "as.title":{en:"App management",ru:"Управление приложениями",lv:"Lietotņu pārvaldība"},
+  "as.note":{en:"The PIN is removed. This area opens because you are signed in as a parent. The settings page itself comes in the next iteration, after you review this prototype.",
+    ru:"PIN убран. Этот раздел открывается, потому что вы вошли как родитель. Сама страница настроек будет в следующей итерации, после вашего ревью прототипа.",
+    lv:"PIN ir noņemts. Šī sadaļa atveras, jo esat pieslēdzies kā vecāks. Pati iestatījumu lapa būs nākamajā iterācijā pēc jūsu prototipa pārskata."},
+
+  /* switcher */
+  "sw.title":{en:"Account",ru:"Аккаунт",lv:"Konts"},
+  "sw.switch":{en:"Switch to",ru:"Переключиться",lv:"Pārslēgties"},
+  "sw.logout":{en:"Log out",ru:"Выйти",lv:"Iziet"},
+  "sw.you":{en:"you",ru:"это вы",lv:"tas esi tu"}
+};
+var lang="en";
+function t(k,v){ var o=S[k]; var s=o?(o[lang]||o.en||k):k; if(v){ for(var p in v) s=s.replace("{"+p+"}",v[p]); } return s; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+/* ================= demo state ================= */
+var ACC = {
+  alex:{name:"Alex",kind:"parent",av:"A",cls:"p"},
+  robik:{name:"Robik",kind:"child",av:"R",cls:""},
+  sunny:{name:"Sunny",kind:"guest",av:"S",cls:"g"}
+};
+var ST = {
+  acct:null, screen:"login", stack:[],
+  sunnyMustChange:true, sunnySeenSafety:false, sunnyBlocked:false,
+  teeth:"idle", track:1,
+  wish:[ ["🧱","wl.i1t","want",true], ["🛴","wl.i2t","want",false], ["🎧","wl.i3t","think",false], ["📕","wl.i4t","bought",false] ]
+};
+var TRACKS=["100 Times — Jones Meadow","Bright Future — Killrude","Moorlands — Ealot"];
+
+/* ================= nav helpers ================= */
+function go(id){ ST.stack.push(ST.screen); ST.screen=id; render(); }
+function back(){ ST.screen = ST.stack.pop() || homeId(); render(); }
+function home(){ ST.stack=[]; ST.screen=homeId(); render(); }
+function homeId(){ if(!ST.acct) return "login"; return ACC[ST.acct].kind==="parent" ? "parentHome" : "childHome"; }
+function toast(msg){ var el=document.getElementById("toast"); el.textContent=msg; el.style.display="block";
+  clearTimeout(el._t); el._t=setTimeout(function(){ el.style.display="none"; },2200); }
+
+function loginAs(id){
+  if(id==="sunny" && ST.sunnyBlocked){ ST.acct=null; ST.stack=[]; ST.screen="disabled"; render(); return; }
+  ST.acct=id; ST.stack=[];
+  if(id==="sunny" && ST.sunnyMustChange){ ST.screen="forced"; }
+  else { ST.screen=homeId(); }
+  render(); closeSheet();
+}
+function logout(){ ST.acct=null; ST.stack=[]; ST.screen="login"; render(); closeSheet(); }
+
+/* ================= shared parts ================= */
+function appHead(showBack){
+  var a = ST.acct ? ACC[ST.acct] : null;
+  return '<div class="apphead">'+
+    (showBack?'<button class="iconbtn" data-act="back" aria-label="'+t("cta.back")+'">‹</button>':'')+
+    '<span class="brand">Rob<b>Top</b></span><span class="sp"></span>'+
+    (a?'<button class="avbtn '+a.cls+'" data-act="sheet" aria-label="'+t("sw.title")+'">'+a.av+'</button>':'')+
+  '</div>';
+}
+function field(labelKey,val){ return '<label class="muted" style="margin:10px 0 4px;display:block;font-weight:800">'+t(labelKey)+'</label>'+
+  '<div class="field">'+esc(val)+'<span class="demoflag">'+t("demoflag")+'</span></div>'; }
+function row(av,cls,name,sub,pillHtml,act){
+  var tag=act?'button':'div';
+  return '<'+tag+' class="row"'+(act?' data-act="'+act+'"':'')+'><div class="av '+cls+'">'+esc(av)+'</div>'+
+    '<div class="nm">'+esc(name)+(sub?'<small>'+sub+'</small>':'')+'</div>'+(pillHtml||'')+'</'+tag+'>';
+}
+
+/* ================= screens ================= */
+var SCR = {
+  login:function(){
+    var sunnySub = ST.sunnyBlocked ? t("lg.sunnyblocked") : (ST.sunnyMustChange?t("lg.sunny"):t("lg.robik"));
+    var sunnyPill = ST.sunnyBlocked ? '<span class="pill warn">'+t("st.blocked")+'</span>' : '<span class="pill g">'+t("tag.guest")+'</span>';
+    return '<div class="apphead"><span class="brand">Rob<b>Top</b></span></div>'+
+      '<span class="tag">'+t("lg.tag")+'</span><h2 class="t">'+t("lg.title")+'</h2>'+
+      '<p class="lead">'+t("lg.lead")+'</p>'+
+      row("A","p","Alex",t("lg.alex"),'<span class="pill ok">'+t("role.pg")+'</span>',"login:alex")+
+      row("R","","Robik",t("lg.robik"),'<span class="pill">'+t("role.child")+'</span>',"login:robik")+
+      row("S","g","Sunny",sunnySub,sunnyPill,"login:sunny")+
+      '<button class="btn pink" data-act="goto:register">'+t("lg.new")+'</button>'+
+      '<button class="btn ghost" data-act="goto:authExplain">'+t("lg.how")+'</button>';
+  },
+
+  authExplain:function(){ return appHead(true)+'<h2 class="t">'+t("ax.title")+'</h2>'+
+    '<ul class="safelist">'+
+    '<li class="yes"><span class="ic">📧</span><div>'+t("ax.p1")+'</div></li>'+
+    '<li class="yes"><span class="ic">🙂</span><div>'+t("ax.p2")+'</div></li>'+
+    '<li class="tell"><span class="ic">🔑</span><div>'+t("ax.p3")+'</div></li>'+
+    '<li class="tell"><span class="ic">👪</span><div>'+t("ax.p4")+'</div></li>'+
+    '<li class="yes"><span class="ic">🛡</span><div>'+t("ax.p5")+'</div></li></ul>'+
+    '<button class="btn ghost" data-act="back">'+t("cta.back")+'</button>'; },
+
+  register:function(){ return appHead(true)+'<span class="tag">'+t("lg.new")+'</span><h2 class="t">'+t("rg.title")+'</h2>'+
+    '<p class="lead">'+t("rg.lead")+'</p>'+
+    field("f.nick","Alex")+field("f.email","alex@home.lv")+field("f.pass","••••••")+
+    '<button class="btn pink" data-act="register">'+t("rg.btn")+'</button>'; },
+
+  forced:function(){ return '<div class="apphead"><span class="brand">Rob<b>Top</b></span></div>'+
+    '<span class="tag">Sunny</span><h2 class="t">'+t("fc.title")+'</h2>'+
+    '<p class="lead">'+t("fc.lead")+'</p>'+ field("fc.new","••••••")+
+    '<button class="btn" data-act="forcedDone">'+t("fc.btn")+'</button>'; },
+
+  safety:function(){ return '<div class="apphead"><span class="brand">Rob<b>Top</b></span></div>'+
+    '<span class="tag">'+t("sf.title")+'</span><h2 class="t">'+t("sf.title")+'</h2>'+
+    '<p class="lead">'+t("sf.lead")+'</p>'+
+    '<ul class="safelist">'+
+    '<li class="no"><span class="ic">🚫</span><div>'+t("sf.no1")+'</div></li>'+
+    '<li class="no"><span class="ic">🚫</span><div>'+t("sf.no2")+'</div></li>'+
+    '<li class="yes"><span class="ic">✅</span><div>'+t("sf.yes1")+'</div></li>'+
+    '<li class="yes"><span class="ic">🔒</span><div>'+t("sf.priv")+'</div></li>'+
+    '<li class="tell"><span class="ic">📣</span><div>'+t("sf.tell")+'</div></li></ul>'+
+    '<button class="btn pink" data-act="safetyDone">'+t("sf.btn")+'</button>'; },
+
+  childHome:function(){
+    var a=ACC[ST.acct];
+    return appHead(false)+
+      '<h2 class="t">'+t("ch.hi",{name:esc(a.name)})+'</h2><p class="lead">'+t("ch.pick")+'</p>'+
+      '<div class="tiles">'+
+      tile("🦷",t("tile.teeth"),t("st.active"),"goto:teeth")+
+      tile("🎁",t("tile.wish"),t("st.active"),"goto:wishlist")+
+      tile("🔤",t("tile.words"),t("st.active"),"demo")+
+      tile("😊",t("tile.mood"),t("st.soon"),"soon")+
+      tile("🐷",t("tile.bank"),t("st.soon"),"soon")+
+      '</div>'+
+      '<div class="safebar">🛡 '+t("safebar")+'</div>'+
+      '<button class="btn pink" data-act="goto:inviteLink">'+t("ch.invite")+'</button>';
+  },
+
+  teeth:function(){
+    var run = ST.teeth==="run";
+    var body = run
+      ? '<div class="ring run"><span class="tm">1:37</span></div>'+
+        '<p class="lead" style="text-align:center">'+t("th.run")+'</p>'+
+        '<div class="npbar"><span>🎵</span><span class="nm">'+esc(TRACKS[ST.track%TRACKS.length])+'</span>'+
+        '<button class="sk" data-act="skip">⏭</button></div>'+
+        '<button class="btn" data-act="finishTeeth">'+t("th.finish")+'</button>'
+      : '<div class="ring"><span class="tm">2:00</span></div>'+
+        '<p class="lead" style="text-align:center">'+t("th.idle")+'</p>'+
+        '<button class="btn" data-act="startTeeth">'+t("th.start")+'</button>';
+    return appHead(true)+'<span class="tag">🦷</span><h2 class="t">'+t("th.title")+'</h2>'+body;
+  },
+
+  wishlist:function(){
+    function sec(label,key){ var out='<div class="sec">'+label+'</div>'; var n=0;
+      ST.wish.forEach(function(w){ if(w[2]!==key) return; n++;
+        out+=row(w[0],"em",t(w[1]),"",w[3]?'<span class="pill ok">'+t("wl.fav")+'</span>':''); });
+      return n?out:''; }
+    return appHead(true)+'<span class="tag">🎁</span><h2 class="t">'+t("wl.title")+'</h2>'+
+      sec(t("wl.want"),"want")+sec(t("wl.think"),"think")+sec(t("wl.bought"),"bought")+
+      '<div class="safebar">🛡 '+t("safebar")+'</div>'+
+      '<button class="btn pink" data-act="goto:uploadGuard">'+t("wl.add")+'</button>';
+  },
+
+  uploadGuard:function(){ return appHead(true)+'<span class="tag">🛡</span><h2 class="t">'+t("ug.title")+'</h2>'+
+    '<p class="lead">'+t("ug.lead")+'</p>'+
+    '<ul class="safelist">'+
+    '<li class="no"><span class="ic">🚫</span><div>'+t("sf.no1")+'</div></li>'+
+    '<li class="no"><span class="ic">🚫</span><div>'+t("sf.no2")+'</div></li>'+
+    '<li class="yes"><span class="ic">🔒</span><div>'+t("sf.priv")+'</div></li></ul>'+
+    '<button class="btn" data-act="uploadOk">'+t("ug.ok")+'</button>'+
+    '<button class="btn danger" data-act="goto:reported">'+t("ug.tell")+'</button>'; },
+
+  reported:function(){ return appHead(true)+'<div style="font-size:44px;text-align:center;margin:8px 0">🛡</div>'+
+    '<h2 class="t" style="text-align:center">'+t("rp.title")+'</h2>'+
+    '<div class="note ok">'+t("rp.note")+'</div>'+
+    '<button class="btn ghost" data-act="back">'+t("cta.back")+'</button>'; },
+
+  parentHome:function(){
+    var sPill = ST.sunnyBlocked?'<span class="pill warn">'+t("st.blocked")+'</span>':'<span class="pill g">'+t("tag.guest")+'</span>';
+    return appHead(false)+
+      '<h2 class="t">'+t("ph.hi",{name:"Alex"})+'</h2>'+
+      '<div class="sec">'+t("ph.family")+'</div>'+
+      row("A","p","Alex","",'<span class="pill ok">'+t("role.pg")+'</span>')+
+      row("R","","Robik","",'<span class="pill">'+t("role.child")+'</span>')+
+      row("S","g","Sunny","",sPill)+
+      '<div class="sec">'+t("ph.children")+'</div>'+
+      row("R","","Robik",t("ph.robik"),'<span class="pill">›</span>',"goto:robikCard")+
+      row("S","g","Sunny",t("ph.sunny"),'<span class="pill">›</span>',"goto:manageSunny")+
+      '<button class="btn ghost" data-act="goto:inviteLink">'+t("ph.invite")+'</button>'+
+      '<button class="btn" data-act="goto:appsStub">⚙ '+t("ph.apps")+'</button>'+
+      '<div class="note ok">'+t("ph.appsnote")+'</div>';
+  },
+
+  robikCard:function(){
+    return appHead(true)+'<span class="tag">Robik</span><h2 class="t">'+t("rc.title")+'</h2>'+
+      '<div class="stat"><div class="box"><div class="n">5</div><div class="l">'+t("rc.streak")+'</div></div>'+
+      '<div class="box"><div class="n">120</div><div class="l">'+t("rc.points")+'</div></div>'+
+      '<div class="box"><div class="n">23</div><div class="l">'+t("rc.brush")+'</div></div></div>'+
+      '<div class="sec">'+t("rc.wishes")+'</div>'+
+      row("🧱","em",t("wl.i1t"),"",'<span class="pill ok">'+t("wl.fav")+'</span>')+
+      row("🛴","em",t("wl.i2t"),"","")+
+      '<div class="note">'+t("rc.priv")+'</div>'+
+      '<button class="btn ghost" data-act="back">'+t("cta.back")+'</button>';
+  },
+
+  manageSunny:function(){
+    var blocked=ST.sunnyBlocked;
+    return appHead(true)+'<span class="tag">'+t("tag.guest")+'</span><h2 class="t">'+t("mg.title")+'</h2>'+
+      row("S","g","Sunny","",'<span class="pill g">'+t("tag.guest")+'</span>')+
+      '<div class="row"><div class="nm">'+t("mg.status")+'</div>'+
+      (blocked?'<span class="pill warn">'+t("st.blocked")+'</span>':'<span class="pill ok">'+t("st.activeAcc")+'</span>')+'</div>'+
+      '<div class="note">'+t("mg.whocan")+'</div>'+
+      (blocked
+        ? '<button class="btn" data-act="unblock">'+t("mg.unblock")+'</button>'
+        : '<button class="btn danger" data-act="goto:blockConfirm">'+t("mg.block")+'</button>')+
+      '<button class="btn ghost" data-act="resetSunny">'+t("mg.reset")+'</button>'+
+      '<button class="btn ghost" data-act="goto:inviteLink">'+t("mg.attach")+'</button>';
+  },
+
+  blockConfirm:function(){ return appHead(true)+'<span class="tag">⚠️</span><h2 class="t">'+t("bc.title")+'</h2>'+
+    '<p class="lead">'+t("bc.lead")+'</p>'+
+    '<button class="btn danger" data-act="blockYes">'+t("bc.yes")+'</button>'+
+    '<button class="btn ghost" data-act="back">'+t("cta.cancel")+'</button>'; },
+
+  inviteLink:function(){ return appHead(true)+'<span class="tag">🔗</span><h2 class="t">'+t("lk.title")+'</h2>'+
+    '<p class="lead">'+t("lk.lead")+'</p>'+
+    '<div class="linkbox">https://apps.tilley.live/robtop/?invite=ab12cd34…</div>'+
+    '<button class="btn ghost" data-act="copy">'+t("lk.copy")+'</button>'+
+    '<button class="btn" data-act="back">'+t("cta.done")+'</button>'; },
+
+  appsStub:function(){ return appHead(true)+'<span class="tag">⚙</span><h2 class="t">'+t("as.title")+'</h2>'+
+    '<div class="note ok">'+t("as.note")+'</div>'+
+    '<button class="btn ghost" data-act="back">'+t("cta.back")+'</button>'; },
+
+  disabled:function(){ return '<div class="apphead"><span class="brand">Rob<b>Top</b></span></div>'+
+    '<div style="font-size:44px;text-align:center;margin:10px 0">⛔</div>'+
+    '<h2 class="t" style="text-align:center">'+t("dis.title")+'</h2>'+
+    '<div class="note warn">'+t("dis.lead")+'</div>'+
+    '<button class="btn ghost" data-act="goLogin">'+t("cta.back")+'</button>'; }
+};
+function tile(ic,nm,st,act){
+  var soon = act==="soon";
+  return '<button class="tile'+(soon?' soon':'')+'" data-act="'+act+'"><span class="ic">'+ic+'</span>'+
+    '<span class="nm">'+esc(nm)+'</span><span class="st">'+esc(st)+'</span></button>';
+}
+
+/* ================= account switcher sheet ================= */
+function openSheet(){
+  var cur=ST.acct, html='<div class="grip"></div><h3>'+t("sw.title")+'</h3>';
+  ["alex","robik","sunny"].forEach(function(id){
+    var a=ACC[id], me=(id===cur);
+    var pill = me ? '<span class="pill ok">'+t("sw.you")+'</span>'
+      : (id==="sunny"&&ST.sunnyBlocked) ? '<span class="pill warn">'+t("st.blocked")+'</span>'
+      : '<span class="pill">'+t("sw.switch")+'</span>';
+    html+=row(a.av,a.cls,a.name,a.kind==="parent"?t("role.pg"):(a.kind==="guest"?t("tag.guest"):t("role.child")),pill,me?null:("login:"+id));
+  });
+  html+='<button class="btn danger" data-act="logout">'+t("sw.logout")+'</button>';
+  document.getElementById("sheet").innerHTML=html;
+  document.getElementById("sheetWrap").style.display="flex";
+  bind(document.getElementById("sheet"));
+}
+function closeSheet(){ document.getElementById("sheetWrap").style.display="none"; }
+document.getElementById("sheetWrap").addEventListener("click",function(e){ if(e.target.id==="sheetWrap") closeSheet(); });
+
+/* ================= actions ================= */
+function act(name){
+  if(name==="back") return back();
+  if(name==="sheet") return openSheet();
+  if(name==="logout") return logout();
+  if(name==="goLogin"){ ST.acct=null; ST.stack=[]; ST.screen="login"; return render(); }
+  if(name.indexOf("login:")===0) return loginAs(name.slice(6));
+  if(name.indexOf("goto:")===0) return go(name.slice(5));
+  if(name==="register"){ ST.acct="alex"; ST.stack=[]; ST.screen="parentHome"; render(); toast(t("rg.toast")); return; }
+  if(name==="forcedDone"){ ST.sunnyMustChange=false; ST.screen = ST.sunnySeenSafety ? homeId() : "safety"; return render(); }
+  if(name==="safetyDone"){ ST.sunnySeenSafety=true; return home(); }
+  if(name==="startTeeth"){ ST.teeth="run"; return render(); }
+  if(name==="finishTeeth"){ ST.teeth="idle"; back(); toast(t("th.done")); return; }
+  if(name==="skip"){ ST.track++; render(); toast(t("th.skip")); return; }
+  if(name==="uploadOk"){ ST.wish.unshift(["⚽","wl.new","want",false]); back(); toast(t("wl.added")); return; }
+  if(name==="blockYes"){ ST.sunnyBlocked=true; back(); render(); toast(t("toast.blocked")); return; }
+  if(name==="unblock"){ ST.sunnyBlocked=false; render(); toast(t("toast.unblocked")); return; }
+  if(name==="resetSunny"){ ST.sunnyMustChange=true; ST.sunnySeenSafety=false; toast(t("toast.reset")); return; }
+  if(name==="copy"){ try{ if(navigator.clipboard) navigator.clipboard.writeText("https://apps.tilley.live/robtop/?invite=ab12cd34…"); }catch(_){}
+    toast(t("lk.copied")); return; }
+  if(name==="demo"||name==="soon"){ toast(t("toast.demo")); return; }
+}
+function bind(rootEl){
+  Array.prototype.forEach.call(rootEl.querySelectorAll("[data-act]"),function(b){
+    b.addEventListener("click",function(e){ e.stopPropagation(); act(b.getAttribute("data-act")); });
+  });
+}
+
+/* ================= render ================= */
+function renderLang(){
+  var box=document.getElementById("lang"); box.innerHTML="";
+  ["en","ru","lv"].forEach(function(l){ var b=document.createElement("button"); b.textContent=l.toUpperCase();
+    if(l===lang) b.className="on"; b.onclick=function(){ lang=l; renderChrome(); render(); }; box.appendChild(b); });
+}
+function renderChrome(){
+  document.getElementById("subt").textContent=t("ui.sub");
+  document.getElementById("demoBadge").textContent=t("ui.demo");
+  document.getElementById("foot").textContent=t("ui.foot");
+  document.documentElement.lang=lang; renderLang();
+}
+function render(){
+  var el=document.getElementById("scr");
+  el.innerHTML = (SCR[ST.screen]?SCR[ST.screen]():"");
+  el.parentNode.scrollTop=0;
+  bind(el);
+}
+renderChrome(); render();
+</script>
+</body>
+</html>

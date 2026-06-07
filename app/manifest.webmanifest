@@ -1,8 +1,8 @@
 {
   "name": "RobTop",
   "short_name": "RobTop",
-  "description": "Детское приложение: виш-лист и мини-игры",
-  "lang": "ru",
+  "description": "A kids app: wishlist and mini-games",
+  "lang": "en",
   "dir": "ltr",
   "start_url": "./",
   "scope": "./",

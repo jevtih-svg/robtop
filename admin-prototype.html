@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RobTop — Master admin prototype</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root{--cyan:#19e3ff;--pink:#ff3db0;--purple:#a64bff;--mint:#38e8a0;--gold:#ffd23b;--red:#ff4d6d;--ink:#eaf2ff;--muted:#93a6cf}
+  html,body{margin:0;min-height:100%}
+  body{font-family:'Rubik',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink);background:#05050f;
+    background-image:radial-gradient(900px 600px at 12% 6%,rgba(166,75,255,.18),transparent 60%),
+      radial-gradient(900px 700px at 90% 18%,rgba(25,227,255,.13),transparent 60%),
+      radial-gradient(1000px 800px at 50% 110%,rgba(255,43,214,.12),transparent 60%),
+      linear-gradient(180deg,#070617,#05040f 60%,#07041a);min-height:100vh}
+  a{color:var(--cyan)}
+  /* header */
+  .head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 22px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .head h1{font-family:'Russo One','Rubik',sans-serif;font-size:19px;margin:0;color:#fff;text-shadow:0 0 12px rgba(25,227,255,.6)}
+  .head h1 b{color:var(--pink);font-weight:400}
+  .head .sub{color:var(--muted);font-size:12px;font-weight:600;margin-top:2px}
+  .tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .demo{font-size:10.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--gold);
+    background:rgba(255,210,59,.14);border:1px solid rgba(255,210,59,.45);padding:4px 9px;border-radius:999px}
+  .nopii{font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#bfeaff;
+    background:rgba(25,227,255,.12);border:1px solid rgba(25,227,255,.5);padding:4px 9px;border-radius:999px}
+  .lang{display:flex;gap:4px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:3px}
+  .lang button{border:none;background:none;color:#cfe0ff;font-weight:800;font-size:12px;padding:5px 10px;border-radius:999px;cursor:pointer}
+  .lang button.on{color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0)}
+  /* layout */
+  .layout{display:flex;gap:18px;align-items:flex-start;padding:18px 22px 60px;max-width:1180px;margin:0 auto}
+  .side{flex:0 0 232px;position:sticky;top:14px}
+  .side .grp{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:6px 6px 6px}
+  .nav{display:block;width:100%;text-align:left;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);
+    color:#dbe6ff;font-family:inherit;font-weight:700;font-size:13.5px;padding:10px 12px;border-radius:11px;margin:6px 0;cursor:pointer;transition:.15s}
+  .nav:hover{border-color:rgba(25,227,255,.5)}
+  .nav.on{color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0);border-color:transparent}
+  .main{flex:1;min-width:0}
+  /* persistent image policy banner */
+  .policybar{display:flex;align-items:flex-start;gap:10px;background:rgba(25,227,255,.09);border:1px solid rgba(25,227,255,.4);
+    border-left:4px solid var(--cyan);border-radius:13px;padding:11px 14px;margin-bottom:16px;font-size:13px;font-weight:600;color:#d6f3ff;line-height:1.5}
+  .policybar b{color:#fff}
+  .policybar .ic{font-size:18px;line-height:1.2;flex:0 0 auto}
+  /* card */
+  .card{background:rgba(10,12,30,.6);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:18px 18px;margin-bottom:16px}
+  .card h2{font-family:'Russo One','Rubik',sans-serif;font-weight:400;font-size:20px;margin:0 0 3px;color:#fff}
+  .card .lead{color:var(--muted);font-size:13px;font-weight:600;margin:0 0 14px;line-height:1.5}
+  .crumb{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--cyan);font-family:inherit;
+    font-weight:800;font-size:12.5px;cursor:pointer;padding:0;margin:0 0 10px}
+  /* search */
+  .search{display:flex;align-items:center;gap:8px;border:1.5px solid rgba(255,255,255,.16);border-radius:12px;padding:10px 12px;
+    background:rgba(255,255,255,.05);font-size:14px;font-weight:600;color:var(--muted);margin-bottom:12px}
+  .search .demoflag{margin-left:auto;font-size:9.5px;font-weight:800;color:var(--gold);background:rgba(255,210,59,.12);
+    border:1px solid rgba(255,210,59,.4);padding:2px 6px;border-radius:6px;text-transform:uppercase;letter-spacing:.4px}
+  /* table */
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  thead th{text-align:left;font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);
+    padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.12)}
+  tbody td{padding:11px 10px;border-bottom:1px solid rgba(255,255,255,.07);font-weight:600;color:#e7eeff;vertical-align:middle}
+  tbody tr{cursor:pointer}
+  tbody tr:hover{background:rgba(25,227,255,.06)}
+  .uname{display:flex;align-items:center;gap:10px}
+  .av{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-weight:800;color:#04212b;
+    background:linear-gradient(180deg,#3df0c0,#19c7e0);flex:0 0 auto}
+  .av.p{background:linear-gradient(180deg,#ff5db0,#d51a82);color:#fff}
+  .av.g{background:linear-gradient(180deg,#ffd23b,#e0a400)}
+  .pill{font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(25,227,255,.14);color:#bdeeff;border:1px solid rgba(25,227,255,.4);white-space:nowrap}
+  .pill.g{background:rgba(255,210,59,.14);color:var(--gold);border-color:rgba(255,210,59,.45)}
+  .pill.ok{background:rgba(43,240,192,.14);color:var(--mint);border-color:rgba(43,240,192,.45)}
+  .pill.warn{background:rgba(255,77,109,.14);color:#ffb3c0;border-color:rgba(255,77,109,.45)}
+  /* locked media chip — NEVER shows the image, only the fact + metadata */
+  .lock{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.05);border:1px dashed rgba(255,255,255,.28);
+    border-radius:10px;padding:6px 9px;font-size:12px;font-weight:700;color:#cdd8f5}
+  .lock .k{font-size:14px}
+  .lock .meta{color:var(--muted);font-weight:600;font-size:11px}
+  .lock.none{border-style:solid;border-color:rgba(255,255,255,.12);color:var(--muted)}
+  /* profile grid */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .fld{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 12px}
+  .fld .l{font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+  .fld .v{font-size:14.5px;font-weight:700;color:#eef4ff;margin-top:3px;word-break:break-word}
+  /* record row */
+  .rec{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:13px;background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.1);margin-top:9px;flex-wrap:wrap}
+  .rec .nm{flex:1;min-width:140px;font-weight:700;font-size:14px}
+  .rec .nm small{display:block;color:var(--muted);font-weight:600;font-size:11.5px;margin-top:1px}
+  /* buttons */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;border-radius:11px;cursor:pointer;
+    font-family:inherit;font-weight:800;font-size:13px;padding:10px 15px;color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0)}
+  .btn:active{transform:scale(.98)}
+  .btn.ghost{background:rgba(255,255,255,.06);color:#cfe0ff;border:1.5px solid rgba(255,255,255,.16)}
+  .btn.pink{background:linear-gradient(180deg,#ff5db0,#d51a82);color:#fff}
+  .btn.danger{background:rgba(255,77,109,.14);color:#ffb3c0;border:1.5px solid rgba(255,77,109,.5)}
+  .btn.sm{padding:7px 11px;font-size:12px;border-radius:9px}
+  .actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+  .sep{height:1px;background:rgba(255,255,255,.1);margin:15px 0}
+  .h3{font-size:12px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);margin:4px 0 2px}
+  /* explainer list */
+  .plist{list-style:none;margin:8px 0 0;padding:0}
+  .plist li{display:flex;gap:10px;align-items:flex-start;padding:11px 12px;border-radius:12px;margin-top:9px;
+    font-size:13.5px;font-weight:600;line-height:1.45;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)}
+  .plist li.no{background:rgba(255,77,109,.1);border-color:rgba(255,77,109,.4);color:#ffc2cd}
+  .plist li.yes{background:rgba(43,240,192,.09);border-color:rgba(43,240,192,.4);color:#c7f6e8}
+  .plist li .ic{flex:0 0 auto;font-size:18px}
+  /* audit */
+  .log{display:flex;gap:11px;align-items:flex-start;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.07);font-size:13px}
+  .log .t{color:var(--muted);font-weight:700;font-size:11.5px;flex:0 0 92px}
+  .log .d{font-weight:600;color:#e7eeff}
+  /* toast */
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;transition:.2s;
+    background:#0c1330;border:1px solid rgba(43,240,192,.5);color:#dffaf0;font-size:13px;font-weight:700;
+    padding:11px 16px;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.5);z-index:60;pointer-events:none;max-width:80vw;text-align:center}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .foot{max-width:1180px;margin:0 auto;padding:0 22px 40px;color:var(--muted);font-size:12px}
+  @media(max-width:840px){ .layout{flex-direction:column} .side{position:static;flex:1;width:100%;display:flex;flex-wrap:wrap;gap:6px}
+    .side .grp{width:100%} .nav{width:auto;margin:0} .grid{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="head">
+  <div>
+    <h1>Rob<b>Top</b> · Admin</h1>
+    <div class="sub" id="subt">Master admin console</div>
+  </div>
+  <div class="tools">
+    <span class="nopii" id="nopii">no images</span>
+    <span class="demo" id="demoBadge">prototype · demo</span>
+    <div class="lang" id="lang"></div>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="side" id="side"></div>
+  <div class="main">
+    <div class="policybar"><span class="ic">🔒</span><div id="policybar"></div></div>
+    <div id="view"></div>
+  </div>
+</div>
+<div class="foot" id="foot"></div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+/* ================= i18n (EN base, RU, LV) ================= */
+var S = {
+  "ui.sub":{en:"Master admin console",ru:"Мастер-консоль администратора",lv:"Galvenā administratora konsole"},
+  "ui.demo":{en:"prototype · demo",ru:"прототип · демо",lv:"prototips · demo"},
+  "ui.nopii":{en:"no images",ru:"без картинок",lv:"bez attēliem"},
+  "ui.foot":{en:"Demo data, no real login, no server. The admin can manage everything except viewing image content.",
+    ru:"Демо-данные, без реального входа и сервера. Админ управляет всем, кроме просмотра содержимого картинок.",
+    lv:"Demo dati, bez reālas pieslēgšanās un servera. Administrators pārvalda visu, izņemot attēlu satura skatīšanu."},
+  "policy.bar":{en:"<b>Admin mode.</b> Image content is never shown here. You can see that an image exists — its name, size and date — and you can delete it, but you can never open the picture.",
+    ru:"<b>Режим админа.</b> Содержимое картинок здесь никогда не показывается. Вы видите, что картинка есть — имя, размер и дату — и можете её удалить, но открыть само изображение нельзя.",
+    lv:"<b>Administratora režīms.</b> Attēlu saturs šeit nekad netiek rādīts. Jūs redzat, ka attēls eksistē — nosaukumu, izmēru un datumu — un varat to dzēst, bet nekad nevarat atvērt pašu attēlu."},
+
+  /* nav */
+  "grp.console":{en:"Console",ru:"Консоль",lv:"Konsole"},
+  "grp.policy":{en:"Policy",ru:"Политика",lv:"Politika"},
+  "nav.users":{en:"All users",ru:"Все пользователи",lv:"Visi lietotāji"},
+  "nav.account":{en:"Account detail",ru:"Карточка аккаунта",lv:"Konta kartīte"},
+  "nav.record":{en:"Edit a record",ru:"Редактировать запись",lv:"Rediģēt ierakstu"},
+  "nav.image":{en:"Image policy",ru:"Политика картинок",lv:"Attēlu politika"},
+  "nav.audit":{en:"Audit log",ru:"Журнал действий",lv:"Darbību žurnāls"},
+
+  /* users view */
+  "us.title":{en:"All users",ru:"Все пользователи",lv:"Visi lietotāji"},
+  "us.lead":{en:"Every account across all families. Click a row to open and manage it.",
+    ru:"Все аккаунты во всех семьях. Нажмите на строку, чтобы открыть и управлять.",
+    lv:"Visi konti visās ģimenēs. Noklikšķiniet uz rindas, lai atvērtu un pārvaldītu."},
+  "us.search":{en:"Search by name, family, role…",ru:"Поиск по имени, семье, роли…",lv:"Meklēt pēc vārda, ģimenes, lomas…"},
+  "col.name":{en:"Name",ru:"Имя",lv:"Vārds"},
+  "col.role":{en:"Role",ru:"Роль",lv:"Loma"},
+  "col.family":{en:"Family",ru:"Семья",lv:"Ģimene"},
+  "col.status":{en:"Status",ru:"Статус",lv:"Statuss"},
+  "col.records":{en:"Records",ru:"Записи",lv:"Ieraksti"},
+  "col.images":{en:"Images",ru:"Картинки",lv:"Attēli"},
+  "col.attach":{en:"Attachment",ru:"Вложение",lv:"Pielikums"},
+  "col.act":{en:"Actions",ru:"Действия",lv:"Darbības"},
+
+  /* roles + status */
+  "role.parent":{en:"parent",ru:"родитель",lv:"vecāks"},
+  "role.guardian":{en:"guardian",ru:"опекун",lv:"aizbildnis"},
+  "role.child":{en:"child",ru:"ребёнок",lv:"bērns"},
+  "stt.active":{en:"active",ru:"активен",lv:"aktīvs"},
+  "stt.blocked":{en:"blocked",ru:"заблокирован",lv:"bloķēts"},
+
+  /* locked image */
+  "img.locked":{en:"Image attached",ru:"Картинка есть",lv:"Pievienots attēls"},
+  "img.hidden":{en:"hidden from admin",ru:"скрыта от админа",lv:"slēpts no administratora"},
+  "img.none":{en:"no image",ru:"нет картинки",lv:"nav attēla"},
+  "img.count":{en:"{n} attached",ru:"{n} шт.",lv:"{n} gab."},
+
+  /* account view */
+  "ac.back":{en:"All users",ru:"Все пользователи",lv:"Visi lietotāji"},
+  "ac.lead":{en:"Full account. Edit fields, manage records, change status. Image content stays hidden.",
+    ru:"Полный аккаунт. Меняйте поля, управляйте записями, меняйте статус. Содержимое картинок скрыто.",
+    lv:"Pilns konts. Rediģējiet laukus, pārvaldiet ierakstus, mainiet statusu. Attēlu saturs paliek slēpts."},
+  "ac.frole":{en:"Role",ru:"Роль",lv:"Loma"},
+  "ac.ffamily":{en:"Family",ru:"Семья",lv:"Ģimene"},
+  "ac.fstatus":{en:"Status",ru:"Статус",lv:"Statuss"},
+  "ac.fcreated":{en:"Created",ru:"Создан",lv:"Izveidots"},
+  "ac.frecords":{en:"Records",ru:"Записи",lv:"Ieraksti"},
+  "ac.fimages":{en:"Images on file",ru:"Картинок в аккаунте",lv:"Attēli kontā"},
+  "ac.recs":{en:"Records",ru:"Записи",lv:"Ieraksti"},
+  "ac.edit":{en:"Edit profile",ru:"Изменить профиль",lv:"Rediģēt profilu"},
+  "ac.reset":{en:"Reset password",ru:"Сбросить пароль",lv:"Atiestatīt paroli"},
+  "ac.block":{en:"Block",ru:"Заблокировать",lv:"Bloķēt"},
+  "ac.unblock":{en:"Unblock",ru:"Разблокировать",lv:"Atbloķēt"},
+  "ac.del":{en:"Delete account",ru:"Удалить аккаунт",lv:"Dzēst kontu"},
+  "ac.addrec":{en:"Add record",ru:"Добавить запись",lv:"Pievienot ierakstu"},
+  "ac.open":{en:"Open",ru:"Открыть",lv:"Atvērt"},
+
+  /* record view */
+  "rc.lead":{en:"Manage one record. The admin can edit, delete, even remove the image — but never view it.",
+    ru:"Управление одной записью. Админ может редактировать, удалить и даже убрать картинку — но не смотреть её.",
+    lv:"Pārvaldiet vienu ierakstu. Administrators var rediģēt, dzēst un pat noņemt attēlu — bet nekad to neskatīt."},
+  "rc.ftitle":{en:"Title",ru:"Название",lv:"Nosaukums"},
+  "rc.fnote":{en:"Note",ru:"Заметка",lv:"Piezīme"},
+  "rc.ftype":{en:"Type",ru:"Тип",lv:"Tips"},
+  "rc.fattach":{en:"Attachment",ru:"Вложение",lv:"Pielikums"},
+  "rc.save":{en:"Save changes",ru:"Сохранить",lv:"Saglabāt"},
+  "rc.delimg":{en:"Remove image",ru:"Убрать картинку",lv:"Noņemt attēlu"},
+  "rc.delrec":{en:"Delete record",ru:"Удалить запись",lv:"Dzēst ierakstu"},
+  "rc.viewimg":{en:"View image",ru:"Открыть картинку",lv:"Atvērt attēlu"},
+  "rc.blocked":{en:"Blocked by policy: the admin cannot open child image content.",
+    ru:"Запрещено политикой: админ не может открыть содержимое детских картинок.",
+    lv:"Aizliegts ar politiku: administrators nevar atvērt bērna attēlu saturu."},
+
+  /* image policy view */
+  "ip.title":{en:"Image policy",ru:"Политика картинок",lv:"Attēlu politika"},
+  "ip.lead":{en:"To protect children, image content is split from everything else the admin manages.",
+    ru:"Чтобы защитить детей, содержимое картинок отделено от всего, чем управляет админ.",
+    lv:"Lai aizsargātu bērnus, attēlu saturs ir atdalīts no visa pārējā, ko pārvalda administrators."},
+  "ip.can":{en:"What the admin CAN do",ru:"Что админ МОЖЕТ",lv:"Ko administrators VAR"},
+  "ip.cannot":{en:"What the admin CANNOT do",ru:"Что админ НЕ может",lv:"Ko administrators NEVAR"},
+  "ip.c1":{en:"View and edit any account and any record across all families.",ru:"Смотреть и менять любой аккаунт и любую запись во всех семьях.",lv:"Skatīt un rediģēt jebkuru kontu un ierakstu visās ģimenēs."},
+  "ip.c2":{en:"Add, edit and delete records; block, unblock and delete accounts.",ru:"Добавлять, менять и удалять записи; блокировать, разблокировать и удалять аккаунты.",lv:"Pievienot, rediģēt un dzēst ierakstus; bloķēt, atbloķēt un dzēst kontus."},
+  "ip.c3":{en:"See that an image exists, with its name, size and upload date, and delete it.",ru:"Видеть, что картинка есть — имя, размер, дату загрузки — и удалить её.",lv:"Redzēt, ka attēls eksistē — nosaukumu, izmēru, augšupielādes datumu — un to dzēst."},
+  "ip.n1":{en:"Open, preview or download the image content itself.",ru:"Открыть, посмотреть или скачать само изображение.",lv:"Atvērt, priekšskatīt vai lejupielādēt pašu attēla saturu."},
+  "ip.n2":{en:"Only the child and their own (primary) parent can ever view the picture.",ru:"Само изображение видят только ребёнок и его прямой (основной) родитель.",lv:"Pašu attēlu var redzēt tikai bērns un viņa tiešais (galvenais) vecāks."},
+  "ip.note":{en:"In the real app this is enforced server-side: the admin role passes account and record checks but is refused by the image-view check, so picture bytes are never sent to an admin.",
+    ru:"В реальном приложении это закреплено на сервере: роль админа проходит проверки аккаунта и записей, но отклоняется проверкой просмотра картинок, поэтому байты изображения админу не отправляются.",
+    lv:"Reālajā lietotnē to nodrošina serverī: administratora loma iztur konta un ierakstu pārbaudes, bet attēlu skatīšanas pārbaude to noraida, tāpēc attēla baiti administratoram netiek sūtīti."},
+
+  /* audit view */
+  "au.title":{en:"Audit log",ru:"Журнал действий",lv:"Darbību žurnāls"},
+  "au.lead":{en:"Every admin action is recorded, including denied attempts to open an image.",
+    ru:"Каждое действие админа записывается, включая отклонённые попытки открыть картинку.",
+    lv:"Katra administratora darbība tiek reģistrēta, ieskaitot noraidītos mēģinājumus atvērt attēlu."},
+  "au.a1":{en:"Opened account · Robik (Ivanov)",ru:"Открыт аккаунт · Robik (Иванов)",lv:"Atvērts konts · Robik (Ivanov)"},
+  "au.a2":{en:"Edited record · “Dinosaur book”",ru:"Изменена запись · «Книга про динозавров»",lv:"Rediģēts ieraksts · “Grāmata par dinozauriem”"},
+  "au.a3":{en:"Image open DENIED · lego.jpg (policy)",ru:"Открытие картинки ОТКЛОНЕНО · lego.jpg (политика)",lv:"Attēla atvēršana NORAIDĪTA · lego.jpg (politika)"},
+  "au.a4":{en:"Blocked account · Sunny (Ivanov)",ru:"Заблокирован аккаунт · Sunny (Иванов)",lv:"Bloķēts konts · Sunny (Ivanov)"},
+  "au.a5":{en:"Deleted image · old.png (kept the record)",ru:"Удалена картинка · old.png (запись осталась)",lv:"Dzēsts attēls · old.png (ieraksts palika)"},
+
+  /* toasts */
+  "t.demo":{en:"Demo only — no real change is made.",ru:"Только демо — реальных изменений нет.",lv:"Tikai demo — reālas izmaiņas netiek veiktas."},
+  "t.denied":{en:"Denied by policy: the admin cannot open a child's image.",ru:"Отклонено политикой: админ не может открыть детскую картинку.",lv:"Noraidīts ar politiku: administrators nevar atvērt bērna attēlu."}
+};
+
+var lang = "en";
+function t(k,vars){ var o=S[k]; var s=o?(o[lang]||o.en||k):k; if(vars){ for(var p in vars){ s=s.replace("{"+p+"}",vars[p]); } } return s; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+/* ================= demo data ================= */
+var USERS = [
+  {id:1,name:"Alex", role:"parent",  family:"Ivanov", status:"active",  created:"2026-05-20", records:6, images:3},
+  {id:2,name:"Robik",role:"child",   family:"Ivanov", status:"active",  created:"2026-05-21", records:5, images:4},
+  {id:3,name:"Sunny",role:"child",   family:"Ivanov", status:"blocked", created:"2026-05-28", records:2, images:1},
+  {id:4,name:"Mara", role:"guardian",family:"Ivanov", status:"active",  created:"2026-06-01", records:1, images:0},
+  {id:5,name:"Laura",role:"parent",  family:"Berzins",status:"active",  created:"2026-04-11", records:4, images:2},
+  {id:6,name:"Toms", role:"child",   family:"Berzins",status:"active",  created:"2026-04-12", records:3, images:5}
+];
+/* records for the demo-opened account (Robik) — some carry an image (locked), some do not */
+var RECORDS = [
+  {id:101,title:"LEGO Technic set",      type:"Wishlist",img:{name:"lego.jpg",  size:"420 KB",date:"2026-05-30"}},
+  {id:102,title:"Stunt scooter",         type:"Wishlist",img:null},
+  {id:103,title:"Wireless headphones",   type:"Wishlist",img:{name:"photo.png", size:"1.2 MB", date:"2026-06-01"}},
+  {id:104,title:"Dinosaur book",         type:"Wishlist",img:null}
+];
+var DEFAULT_USER = 2; // Robik
+
+/* ================= helpers ================= */
+function avLetter(u){ return esc(u.name.charAt(0)); }
+function avClass(role){ return role==="parent"?"p":role==="guardian"?"g":""; }
+function roleLabel(role){ return t("role."+role); }
+function statusPill(status){ return status==="blocked" ? '<span class="pill warn">'+t("stt.blocked")+'</span>' : '<span class="pill ok">'+t("stt.active")+'</span>'; }
+/* locked media chip — by design this NEVER renders the image, only the fact + metadata */
+function lockedImg(img){
+  if(!img) return '<span class="lock none">'+t("img.none")+'</span>';
+  return '<span class="lock"><span class="k">🔒</span><span>'+t("img.locked")+
+    '<span class="meta"> · '+esc(img.name)+' · '+esc(img.size)+' · '+esc(img.date)+' · '+t("img.hidden")+'</span></span></span>';
+}
+function imageCountCell(n){
+  if(!n) return '<span class="lock none">'+t("img.none")+'</span>';
+  return '<span class="lock"><span class="k">🔒</span>'+t("img.count",{n:n})+'</span>';
+}
+function flash(key){
+  var el=document.getElementById("toast"); el.textContent=t(key);
+  el.classList.add("show"); clearTimeout(flash._tm); flash._tm=setTimeout(function(){ el.classList.remove("show"); },2200);
+}
+
+/* ================= views ================= */
+var view = "users";
+var curUser = DEFAULT_USER;
+
+var VIEWS = {
+  users:function(){
+    var rows="";
+    USERS.forEach(function(u){
+      rows+='<tr data-user="'+u.id+'">'+
+        '<td><div class="uname"><div class="av '+avClass(u.role)+'">'+avLetter(u)+'</div>'+esc(u.name)+'</div></td>'+
+        '<td>'+roleLabel(u.role)+'</td>'+
+        '<td>'+esc(u.family)+'</td>'+
+        '<td>'+statusPill(u.status)+'</td>'+
+        '<td>'+u.records+'</td>'+
+        '<td>'+imageCountCell(u.images)+'</td>'+
+      '</tr>';
+    });
+    return '<div class="card"><h2>'+t("us.title")+'</h2><p class="lead">'+t("us.lead")+'</p>'+
+      '<div class="search">🔎 '+t("us.search")+'<span class="demoflag">demo</span></div>'+
+      '<table><thead><tr><th>'+t("col.name")+'</th><th>'+t("col.role")+'</th><th>'+t("col.family")+'</th>'+
+      '<th>'+t("col.status")+'</th><th>'+t("col.records")+'</th><th>'+t("col.images")+'</th></tr></thead>'+
+      '<tbody>'+rows+'</tbody></table></div>';
+  },
+
+  account:function(){
+    var u=USERS.filter(function(x){return x.id===curUser;})[0]||USERS[0];
+    var recs="";
+    RECORDS.forEach(function(r){
+      recs+='<div class="rec"><div class="nm">'+esc(r.title)+'<small>'+esc(r.type)+'</small></div>'+
+        lockedImg(r.img)+
+        '<button class="btn ghost sm" data-act="open-record" data-id="'+r.id+'">'+t("ac.open")+'</button>'+
+        '<button class="btn danger sm" data-act="del-record">'+t("rc.delrec")+'</button></div>';
+    });
+    var blockBtn = u.status==="blocked"
+      ? '<button class="btn" data-act="demo">'+t("ac.unblock")+'</button>'
+      : '<button class="btn ghost" data-act="demo">'+t("ac.block")+'</button>';
+    return '<div class="card"><button class="crumb" data-view="users">‹ '+t("ac.back")+'</button>'+
+      '<h2>'+esc(u.name)+'</h2><p class="lead">'+t("ac.lead")+'</p>'+
+      '<div class="grid">'+
+        '<div class="fld"><div class="l">'+t("ac.frole")+'</div><div class="v">'+roleLabel(u.role)+'</div></div>'+
+        '<div class="fld"><div class="l">'+t("ac.ffamily")+'</div><div class="v">'+esc(u.family)+'</div></div>'+
+        '<div class="fld"><div class="l">'+t("ac.fstatus")+'</div><div class="v">'+statusPill(u.status)+'</div></div>'+
+        '<div class="fld"><div class="l">'+t("ac.fcreated")+'</div><div class="v">'+esc(u.created)+'</div></div>'+
+        '<div class="fld"><div class="l">'+t("ac.frecords")+'</div><div class="v">'+u.records+'</div></div>'+
+        '<div class="fld"><div class="l">'+t("ac.fimages")+'</div><div class="v">'+imageCountCell(u.images)+'</div></div>'+
+      '</div>'+
+      '<div class="actions">'+
+        '<button class="btn pink" data-act="demo">'+t("ac.edit")+'</button>'+
+        '<button class="btn ghost" data-act="demo">'+t("ac.reset")+'</button>'+
+        blockBtn+
+        '<button class="btn danger" data-act="demo">'+t("ac.del")+'</button>'+
+      '</div>'+
+      '<div class="sep"></div>'+
+      '<div class="h3">'+t("ac.recs")+'</div>'+recs+
+      '<div class="actions"><button class="btn ghost sm" data-act="demo">+ '+t("ac.addrec")+'</button></div>'+
+      '</div>';
+  },
+
+  record:function(){
+    var r=RECORDS[0]; // demo: the LEGO record (has a locked image)
+    return '<div class="card"><button class="crumb" data-view="account">‹ '+t("nav.account")+'</button>'+
+      '<h2>'+esc(r.title)+'</h2><p class="lead">'+t("rc.lead")+'</p>'+
+      '<div class="grid">'+
+        '<div class="fld"><div class="l">'+t("rc.ftitle")+'</div><div class="v">'+esc(r.title)+'</div></div>'+
+        '<div class="fld"><div class="l">'+t("rc.ftype")+'</div><div class="v">'+esc(r.type)+'</div></div>'+
+      '</div>'+
+      '<div class="fld" style="margin-top:10px"><div class="l">'+t("rc.fnote")+'</div><div class="v">I\'ll build robots and cars</div></div>'+
+      '<div class="sep"></div>'+
+      '<div class="h3">'+t("rc.fattach")+'</div>'+
+      '<div class="rec">'+lockedImg(r.img)+
+        '<button class="btn ghost sm" data-act="view-image" title="'+t("rc.blocked")+'">'+t("rc.viewimg")+'</button>'+
+        '<button class="btn danger sm" data-act="demo">'+t("rc.delimg")+'</button></div>'+
+      '<div class="actions">'+
+        '<button class="btn pink" data-act="demo">'+t("rc.save")+'</button>'+
+        '<button class="btn danger" data-act="demo">'+t("rc.delrec")+'</button>'+
+      '</div></div>';
+  },
+
+  image:function(){
+    return '<div class="card"><h2>'+t("ip.title")+'</h2><p class="lead">'+t("ip.lead")+'</p>'+
+      '<div class="h3">'+t("ip.can")+'</div><ul class="plist">'+
+        '<li class="yes"><span class="ic">✅</span><div>'+t("ip.c1")+'</div></li>'+
+        '<li class="yes"><span class="ic">✅</span><div>'+t("ip.c2")+'</div></li>'+
+        '<li class="yes"><span class="ic">🔒</span><div>'+t("ip.c3")+'</div></li>'+
+      '</ul>'+
+      '<div class="h3" style="margin-top:14px">'+t("ip.cannot")+'</div><ul class="plist">'+
+        '<li class="no"><span class="ic">🚫</span><div>'+t("ip.n1")+'</div></li>'+
+        '<li class="no"><span class="ic">🛡</span><div>'+t("ip.n2")+'</div></li>'+
+      '</ul>'+
+      '<div class="policybar" style="margin:16px 0 0"><span class="ic">⚙️</span><div>'+t("ip.note")+'</div></div>'+
+      '</div>';
+  },
+
+  audit:function(){
+    var items=[["09:41","au.a1"],["09:42","au.a2"],["09:43","au.a3"],["10:05","au.a4"],["10:12","au.a5"]];
+    var rows=items.map(function(it){ return '<div class="log"><div class="t">'+it[0]+'</div><div class="d">'+t(it[1])+'</div></div>'; }).join("");
+    return '<div class="card"><h2>'+t("au.title")+'</h2><p class="lead">'+t("au.lead")+'</p>'+rows+'</div>';
+  }
+};
+
+/* ================= render ================= */
+var NAV = [["grp.console",["users","account","record","audit"]],["grp.policy",["image"]]];
+var NAVKEY = {users:"nav.users",account:"nav.account",record:"nav.record",audit:"nav.audit",image:"nav.image"};
+
+function renderLang(){
+  var box=document.getElementById("lang"); box.innerHTML="";
+  ["en","ru","lv"].forEach(function(l){
+    var b=document.createElement("button"); b.textContent=l.toUpperCase(); if(l===lang) b.className="on";
+    b.onclick=function(){ lang=l; renderAll(); }; box.appendChild(b);
+  });
+}
+function renderSide(){
+  var side=document.getElementById("side"); side.innerHTML="";
+  NAV.forEach(function(g){
+    var h=document.createElement("div"); h.className="grp"; h.textContent=t(g[0]); side.appendChild(h);
+    g[1].forEach(function(v){
+      var b=document.createElement("button"); b.className="nav"+(v===view?" on":""); b.textContent=t(NAVKEY[v]);
+      b.onclick=function(){ view=v; renderMain(); renderSide(); }; side.appendChild(b);
+    });
+  });
+}
+function renderMain(){
+  document.getElementById("policybar").innerHTML=t("policy.bar");
+  var el=document.getElementById("view");
+  el.innerHTML=(VIEWS[view]?VIEWS[view]():"");
+  // row click → open account
+  Array.prototype.forEach.call(el.querySelectorAll("[data-user]"),function(tr){
+    tr.addEventListener("click",function(){ curUser=parseInt(tr.getAttribute("data-user"),10); view="account"; renderMain(); renderSide(); });
+  });
+  // nav crumbs inside content
+  Array.prototype.forEach.call(el.querySelectorAll("[data-view]"),function(b){
+    b.addEventListener("click",function(e){ e.stopPropagation(); view=b.getAttribute("data-view"); renderMain(); renderSide(); });
+  });
+  // open a record
+  Array.prototype.forEach.call(el.querySelectorAll('[data-act="open-record"]'),function(b){
+    b.addEventListener("click",function(e){ e.stopPropagation(); view="record"; renderMain(); renderSide(); });
+  });
+  // view-image is ALWAYS denied by policy
+  Array.prototype.forEach.call(el.querySelectorAll('[data-act="view-image"]'),function(b){
+    b.addEventListener("click",function(e){ e.stopPropagation(); flash("t.denied"); });
+  });
+  // all other demo actions
+  Array.prototype.forEach.call(el.querySelectorAll('[data-act="demo"],[data-act="del-record"]'),function(b){
+    b.addEventListener("click",function(e){ e.stopPropagation(); flash("t.demo"); });
+  });
+}
+function renderChrome(){
+  document.getElementById("subt").textContent=t("ui.sub");
+  document.getElementById("demoBadge").textContent=t("ui.demo");
+  document.getElementById("nopii").textContent="🔒 "+t("ui.nopii");
+  document.getElementById("foot").textContent=t("ui.foot");
+  document.documentElement.lang=lang;
+}
+function renderAll(){ renderChrome(); renderLang(); renderSide(); renderMain(); }
+renderAll();
+</script>
+</body>
+</html>

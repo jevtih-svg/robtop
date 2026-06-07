@@ -15,7 +15,7 @@ if (!preg_match('/^[a-z0-9_-]{2,40}$/', $id)) rt_json(['error' => 'bad id'], 422
 $db  = rt_db();
 $row = rt_module_row($db, $id);
 if (!$row) rt_json(['ok' => true]);
-if ($row['source'] !== 'installed') rt_json(['error' => 'нельзя удалить встроенный модуль'], 400);
+if ($row['source'] !== 'installed') rt_json(['error' => 'cant_uninstall_native', 'message' => 'Cannot remove a built-in module'], 400);
 
 // удалить файлы apps/<id>/ (строго внутри папки apps)
 $appsBase = realpath(dirname(dirname(__DIR__)) . '/apps');

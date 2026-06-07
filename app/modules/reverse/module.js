@@ -65,6 +65,7 @@
     E.out.className="rev-out"; E.out.textContent=reverseStr(v);
   }
   function renderList(){
+    if(!E.list) return; // модуль мог быть размонтирован, пока грузилась история
     if(!items.length){ E.list.innerHTML='<div style="color:#6f80a6;font-weight:600;font-size:14px;text-align:center;padding:14px">'+esc(t("listEmpty"))+'</div>'; hud(); return; }
     E.list.innerHTML=items.map(function(it){
       var d=it.data||{};

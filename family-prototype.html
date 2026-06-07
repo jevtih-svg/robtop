@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RobTop — Family accounts prototype</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root{--cyan:#19e3ff;--pink:#ff3db0;--purple:#a64bff;--mint:#38e8a0;--gold:#ffd23b;--red:#ff4d6d;--ink:#eaf2ff;--muted:#93a6cf}
+  html,body{margin:0;min-height:100%}
+  body{font-family:'Rubik',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink);background:#05050f;
+    background-image:radial-gradient(900px 600px at 12% 6%,rgba(166,75,255,.18),transparent 60%),
+      radial-gradient(900px 700px at 90% 18%,rgba(25,227,255,.13),transparent 60%),
+      radial-gradient(1000px 800px at 50% 110%,rgba(255,43,214,.15),transparent 60%),
+      linear-gradient(180deg,#070617,#05040f 60%,#07041a);min-height:100vh}
+  a{color:var(--cyan)}
+  /* header */
+  .head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .head h1{font-family:'Russo One','Rubik',sans-serif;font-size:19px;margin:0;color:#fff;text-shadow:0 0 12px rgba(25,227,255,.6)}
+  .head h1 b{color:var(--pink);font-weight:400}
+  .head .sub{color:var(--muted);font-size:12px;font-weight:600;margin-top:2px}
+  .tools{display:flex;align-items:center;gap:10px}
+  .demo{font-size:10.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--gold);
+    background:rgba(255,210,59,.14);border:1px solid rgba(255,210,59,.45);padding:4px 9px;border-radius:999px}
+  .lang{display:flex;gap:4px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:3px}
+  .lang button{border:none;background:none;color:#cfe0ff;font-weight:800;font-size:12px;padding:5px 10px;border-radius:999px;cursor:pointer}
+  .lang button.on{color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0)}
+  /* layout */
+  .layout{display:flex;gap:18px;align-items:flex-start;padding:18px 20px 50px;max-width:1100px;margin:0 auto}
+  .side{flex:0 0 250px;position:sticky;top:14px}
+  .side .grp{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:14px 6px 6px}
+  .scn{display:block;width:100%;text-align:left;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);
+    color:#dbe6ff;font-family:inherit;font-weight:700;font-size:13px;padding:9px 11px;border-radius:11px;margin:5px 0;cursor:pointer;transition:.15s}
+  .scn:hover{border-color:rgba(25,227,255,.5)}
+  .scn.on{color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0);border-color:transparent}
+  .stagewrap{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center}
+  /* breadcrumb steps */
+  .crumbs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:12px}
+  .crumb{font-size:11px;font-weight:700;color:#9fb0d6;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+    padding:4px 9px;border-radius:999px;cursor:pointer}
+  .crumb.on{color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0);border-color:transparent}
+  .crumb.done{color:#bdeeff;border-color:rgba(25,227,255,.4)}
+  /* phone */
+  .phone{width:390px;max-width:94vw;border-radius:40px;padding:12px;background:linear-gradient(160deg,#15132e,#0a0920);
+    border:1px solid rgba(255,255,255,.14);box-shadow:0 30px 70px rgba(0,0,0,.6),0 0 50px -16px var(--cyan)}
+  .screen{position:relative;height:680px;max-height:74vh;overflow:auto;border-radius:30px;padding:18px 16px 22px;
+    background:radial-gradient(700px 480px at 20% 0%,rgba(166,75,255,.12),transparent 60%),linear-gradient(180deg,#0a0920,#0b0822)}
+  .screen::-webkit-scrollbar{width:0}
+  .scr-anim{animation:sin .26s ease both}
+  @keyframes sin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .nub{width:46px;height:5px;border-radius:3px;background:rgba(255,255,255,.2);margin:0 auto 14px}
+  .tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--cyan);margin-bottom:6px}
+  .scr{display:flex;flex-direction:column;align-items:stretch}
+  /* ЗАЩИТА ОТ СХЛОПЫВАНИЯ: ни один блок экрана не может сжаться по высоте.
+     Без этого при контенте выше фикс-высоты .screen flex-shrink давил текстовые блоки в «блин»:
+     кнопки (min-height) сопротивлялись, а заметки сжимались до полоски-эллипса, текст вытекал поверх кнопок. */
+  .scr > *{flex-shrink:0}
+  .scr > .info{align-self:flex-start}
+  .scr h2{font-family:'Russo One','Rubik',sans-serif;font-weight:400;font-size:21px;margin:0 0 4px;color:#fff;line-height:1.1}
+  .scr p.lead{color:var(--muted);font-size:13px;font-weight:600;margin:0 0 14px;line-height:1.5}
+  .scr .tag,.scr h2,.scr p.lead,.scr .note,.scr .big,.scr label{width:100%}
+  /* on-screen hint + safety */
+  .hint{margin-top:12px;font-size:12px;font-weight:700;color:#bdeeff;background:rgba(25,227,255,.08);border:1px dashed rgba(25,227,255,.4);
+    border-radius:11px;padding:9px 11px;line-height:1.45}
+  .safebar{margin:8px 0 2px;display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:800;color:#ffd9a6;
+    background:rgba(255,170,40,.12);border:1px solid rgba(255,170,40,.45);border-radius:10px;padding:8px 10px}
+  .safelist{list-style:none;margin:10px 0 0;padding:0}
+  .safelist li{display:flex;gap:10px;align-items:flex-start;padding:11px 12px;border-radius:12px;margin-top:8px;
+    font-size:13px;font-weight:600;line-height:1.45;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)}
+  .safelist li .ic{flex:0 0 auto;font-size:18px;line-height:1.2}
+  .safelist li.no{background:rgba(255,77,109,.1);border-color:rgba(255,77,109,.4);color:#ffc2cd}
+  .safelist li.yes{background:rgba(43,240,192,.09);border-color:rgba(43,240,192,.4);color:#c7f6e8}
+  .safelist li.tell{background:rgba(255,210,59,.1);border-color:rgba(255,210,59,.45);color:#ffe7a6}
+  label{display:block;font-size:12px;font-weight:800;color:#cfe0ff;margin:12px 0 5px}
+  .field{display:flex;align-items:center;flex-wrap:wrap;gap:8px;border:1.5px solid rgba(255,255,255,.16);border-radius:13px;padding:12px 13px;
+    background:rgba(255,255,255,.05);font-size:15px;font-weight:600;color:#e9f1ff;word-break:break-word;min-width:0}
+  .field .demoflag{margin-left:auto;font-size:9.5px;font-weight:800;color:var(--gold);background:rgba(255,210,59,.12);
+    border:1px solid rgba(255,210,59,.4);padding:2px 6px;border-radius:6px;text-transform:uppercase;letter-spacing:.4px}
+  .linkbox{margin-top:6px;padding:12px 13px;border-radius:13px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.16);
+    font-size:12.5px;font-weight:600;color:#cdeeff;word-break:break-all;line-height:1.5}
+  .mailcard{margin-top:10px;border-radius:13px;overflow:hidden;border:1px solid rgba(255,255,255,.16)}
+  .mailcard .mh{background:linear-gradient(135deg,#241a52,#2f1c6a);padding:9px 12px;font-weight:800;font-size:12px;color:#dfe9ff}
+  .mailcard .mb{background:rgba(255,255,255,.05);padding:11px 12px;font-size:13px;font-weight:700;color:#e7eeff;line-height:1.5}
+  .mailcard .mb .lk{display:block;margin-top:4px;word-break:break-all;color:#bdeeff;font-weight:600;font-size:11.5px}
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:50px;border:none;border-radius:25px;cursor:pointer;
+    font-family:'Russo One','Rubik',sans-serif;font-size:15px;color:#04212b;margin-top:16px;flex:0 0 auto;
+    background:linear-gradient(180deg,#3df0c0,#19c7e0);box-shadow:0 12px 24px -14px var(--cyan)}
+  .btn:active{transform:scale(.98)}
+  .btn.pink{background:linear-gradient(180deg,#ff5db0,#d51a82);color:#fff;box-shadow:0 12px 24px -14px var(--pink)}
+  .btn.ghost{background:rgba(255,255,255,.06);color:#cfe0ff;border:1.5px solid rgba(255,255,255,.16);box-shadow:none;font-family:inherit;font-weight:800}
+  .btn.danger{background:rgba(255,77,109,.14);color:#ffb3c0;border:1.5px solid rgba(255,77,109,.5);box-shadow:none;font-family:inherit;font-weight:800}
+  .btn.sm{height:38px;font-size:12.5px;width:auto;padding:0 14px;margin:0;border-radius:20px;font-family:inherit;font-weight:800}
+  .row{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);margin-top:9px}
+  .av{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-weight:800;color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0)}
+  .av.p{background:linear-gradient(180deg,#ff5db0,#d51a82);color:#fff}
+  .av.g{background:linear-gradient(180deg,#ffd23b,#e0a400)}
+  .av.wlthumb{background:linear-gradient(180deg,#2a2350,#171338);border:1px solid rgba(255,255,255,.14);font-size:18px;color:#fff}
+  .row .nm{flex:1;min-width:0;font-weight:700;font-size:14px}
+  .row .nm small{display:block;color:var(--muted);font-weight:600;font-size:11.5px;margin-top:1px}
+  .pill{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:999px;background:rgba(25,227,255,.14);color:#bdeeff;border:1px solid rgba(25,227,255,.4)}
+  .pill.g{background:rgba(255,210,59,.14);color:var(--gold);border-color:rgba(255,210,59,.45)}
+  .pill.ok{background:rgba(43,240,192,.14);color:var(--mint);border-color:rgba(43,240,192,.45)}
+  .pill.warn{background:rgba(255,77,109,.14);color:#ffb3c0;border-color:rgba(255,77,109,.45)}
+  /* Callout — full redesign of the old translucent plaque that could collapse into a thin
+     ellipse. Now a solid dark card with a colored left accent bar and a leading icon.
+     flex:0 0 auto makes it unshrinkable inside the flex column, so it can NEVER collapse;
+     width:100% keeps it full-width regardless of content height. */
+  .note{position:relative;z-index:1;flex:0 0 auto;width:100%;margin:12px 0 2px;
+    padding:11px 13px 11px 14px;border-radius:13px;font-size:12.5px;font-weight:600;line-height:1.55;
+    word-break:break-word;color:#e7eeff;background:#0d1430;border:1px solid rgba(255,255,255,.14);
+    border-left:4px solid var(--cyan)}
+  .note::before{content:"\2139\FE0F";margin-right:7px;font-size:14px}
+  .note.info{border-left-color:var(--cyan)}
+  .note.info::before{content:"\2139\FE0F"}
+  .note.ok{border-left-color:var(--mint)}
+  .note.ok::before{content:"\2705"}
+  .note.warn{border-left-color:var(--red);background:#190f1b}
+  .note.warn::before{content:"\26A0\FE0F"}
+  .note.gold{border-left-color:var(--gold)}
+  .note.gold::before{content:"\23F3"}
+  .note+.btn{margin-top:20px}
+  .big{font-family:'Russo One','Rubik',sans-serif;font-size:34px;color:#fff;text-align:center;margin:6px 0}
+  .center{text-align:center}
+  .muted{color:var(--muted);font-size:12.5px;font-weight:600}
+  .sep{height:1px;background:rgba(255,255,255,.1);margin:14px 0}
+  .tabs{display:flex;gap:7px;margin:4px 0 12px}
+  .tab{flex:1;text-align:center;font-weight:800;font-size:12.5px;color:#cfe0ff;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:9px}
+  .tab.on{color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0);border-color:transparent}
+  .stat{display:flex;gap:9px}
+  .stat .box{flex:1;text-align:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:13px;padding:11px 6px}
+  .stat .box .n{font-family:'Russo One','Rubik',sans-serif;font-size:22px;color:#fff}
+  .stat .box .l{font-size:10.5px;font-weight:700;color:var(--muted);margin-top:3px}
+  .bars{display:flex;align-items:flex-end;gap:6px;height:74px;margin-top:10px}
+  .bars i{flex:1;background:linear-gradient(180deg,#3df0c0,#19c7e0);border-radius:5px 5px 0 0;opacity:.85}
+  /* info chips / tooltip */
+  .info{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;border:1px solid rgba(25,227,255,.55);
+    color:#bdeeff;font-size:11px;font-weight:800;cursor:pointer;background:rgba(25,227,255,.1);vertical-align:middle}
+  .titlebar{display:flex;align-items:center;gap:7px}
+  #pop{position:fixed;z-index:50;max-width:240px;background:#0c1330;border:1px solid rgba(25,227,255,.5);color:#dff0ff;
+    font-size:12px;font-weight:600;line-height:1.45;padding:10px 12px;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.5);display:none}
+  /* controls + annotation */
+  .controls{display:flex;align-items:center;gap:10px;margin-top:14px}
+  .controls button{border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#dbe6ff;font-family:inherit;
+    font-weight:800;font-size:13px;padding:9px 16px;border-radius:11px;cursor:pointer}
+  .controls button:disabled{opacity:.4;cursor:default}
+  .controls .pos{font-size:12px;font-weight:700;color:var(--muted);min-width:90px;text-align:center}
+  .whats{margin-top:14px;max-width:520px;width:100%;background:rgba(10,12,30,.7);border:1px solid rgba(25,227,255,.3);
+    border-radius:14px;padding:13px 15px}
+  .whats .h{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--cyan);margin-bottom:4px}
+  .whats .t{font-size:13.5px;font-weight:600;color:#dbe9ff;line-height:1.5}
+  .whats .do{margin-top:9px;padding-top:9px;border-top:1px solid rgba(255,255,255,.1);font-size:13px;font-weight:700;color:#ffe7a6;line-height:1.5}
+  .whats .do b{color:#fff}
+  .foot{max-width:1100px;margin:0 auto;padding:0 20px 40px;color:var(--muted);font-size:12px}
+  @media(max-width:820px){ .layout{flex-direction:column} .side{position:static;flex:1;width:100%;display:flex;flex-wrap:wrap;gap:6px}
+    .side .grp{width:100%} .scn{width:auto;margin:0} }
+</style>
+</head>
+<body>
+<div class="head">
+  <div>
+    <h1>Rob<b>Top</b> · Family</h1>
+    <div class="sub" id="subt">Clickable accounts prototype</div>
+  </div>
+  <div class="tools">
+    <span class="demo" id="demoBadge">prototype · demo</span>
+    <div class="lang" id="lang"></div>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="side" id="side"></div>
+  <div class="stagewrap">
+    <div class="crumbs" id="crumbs"></div>
+    <div class="phone"><div class="screen" id="screen"></div></div>
+    <div class="controls">
+      <button id="back">‹ <span id="backL">Back</span></button>
+      <div class="pos" id="pos">1 / 1</div>
+      <button id="next"><span id="nextL">Next</span> ›</button>
+    </div>
+    <div class="whats">
+      <div class="h" id="whatsH">What is happening</div>
+      <div class="t" id="whatsT"></div>
+      <div class="do" id="whatsDo"></div>
+    </div>
+  </div>
+</div>
+<div class="foot" id="foot"></div>
+<div id="pop"></div>
+
+<script>
+"use strict";
+
+/* ================= i18n strings (EN base, RU, LV draft) ================= */
+var S = {
+  "ui.sub":{en:"Clickable accounts prototype",ru:"Кликабельный прототип аккаунтов",lv:"Klikšķināms kontu prototips"},
+  "ui.demo":{en:"prototype · demo",ru:"прототип · демо",lv:"prototips · demo"},
+  "ui.whats":{en:"What is happening",ru:"Что происходит",lv:"Kas notiek"},
+  "ui.back":{en:"Back",ru:"Назад",lv:"Atpakaļ"},
+  "ui.next":{en:"Next",ru:"Дальше",lv:"Tālāk"},
+  "ui.foot":{en:"Demo data, no real login, no server. Buttons just walk you through the flow. Pick a scenario on the left.",
+    ru:"Демо-данные, без реального входа и сервера. Кнопки просто проводят по сценарию. Сценарии слева.",
+    lv:"Demo dati, bez reālas pieslēgšanās un servera. Pogas tikai izved cauri scenārijam. Scenāriji pa kreisi."},
+  "grp.onboarding":{en:"Onboarding",ru:"Вход и старт",lv:"Sākums"},
+  "grp.family":{en:"Family",ru:"Семья",lv:"Ģimene"},
+  "grp.invites":{en:"Invitations",ru:"Приглашения",lv:"Ielūgumi"},
+  "grp.guardianship":{en:"Guardianship",ru:"Опекунство",lv:"Aizgādība"},
+  "grp.passwords":{en:"Passwords",ru:"Пароли",lv:"Paroles"},
+  "grp.edge":{en:"Edge cases",ru:"Краевые случаи",lv:"Robežgadījumi"},
+  "grp.safety":{en:"Child safety",ru:"Детская безопасность",lv:"Bērnu drošība"},
+
+  "scn.onboardParent":{en:"Parent creates a family",ru:"Родитель создаёт семью",lv:"Vecāks izveido ģimeni"},
+  "scn.childFirst":{en:"Child first login (1234)",ru:"Первый вход ребёнка (1234)",lv:"Bērna pirmā pieslēgšanās (1234)"},
+  "scn.addChild":{en:"Add a child",ru:"Добавить ребёнка",lv:"Pievienot bērnu"},
+  "scn.viewStats":{en:"Parent views child stats",ru:"Родитель смотрит статистику",lv:"Vecāks skatās statistiku"},
+  "scn.viewWishlist":{en:"Parent views wishlist",ru:"Родитель смотрит виш-лист",lv:"Vecāks skatās vēlmju sarakstu"},
+  "scn.resetChild":{en:"Reset child password",ru:"Сбросить пароль ребёнку",lv:"Atiestatīt bērna paroli"},
+  "scn.inviteCoparent":{en:"Invite second parent",ru:"Пригласить второго родителя",lv:"Ielūgt otru vecāku"},
+  "scn.childInvite":{en:"Child invites a friend",ru:"Ребёнок зовёт друга",lv:"Bērns aicina draugu"},
+  "scn.acceptChild":{en:"Friend joins (provisional)",ru:"Друг присоединяется (провизорно)",lv:"Draugs pievienojas (pagaidu)"},
+  "scn.transfer":{en:"Hand a child to a real parent",ru:"Передать ребёнка родителю",lv:"Nodot bērnu īstam vecākam"},
+  "scn.lifecycle":{en:"Invitation: revoke / resend",ru:"Приглашение: отзыв / повтор",lv:"Ielūgums: atsaukt / pārsūtīt"},
+  "scn.parentForgot":{en:"Parent forgot password",ru:"Родитель забыл пароль",lv:"Vecāks aizmirsa paroli"},
+  "scn.childForgot":{en:"Child forgot password",ru:"Ребёнок забыл пароль",lv:"Bērns aizmirsa paroli"},
+  "scn.edgeNick":{en:"Nickname already taken",ru:"Никнейм занят",lv:"Segvārds aizņemts"},
+  "scn.edgeExpired":{en:"Invite expired",ru:"Приглашение истекло",lv:"Ielūgums beidzies"},
+  "scn.edgeDisabled":{en:"Account disabled",ru:"Аккаунт отключён",lv:"Konts atspējots"},
+  "scn.edgeMail":{en:"Email not set up yet",ru:"Почта ещё не настроена",lv:"E-pasts vēl nav iestatīts"},
+
+  /* shared */
+  "cta.continue":{en:"Continue",ru:"Продолжить",lv:"Turpināt"},
+  "cta.done":{en:"Done",ru:"Готово",lv:"Gatavs"},
+  "cta.back":{en:"Back",ru:"Назад",lv:"Atpakaļ"},
+  "f.nick":{en:"Nickname",ru:"Никнейм",lv:"Segvārds"},
+  "f.email":{en:"Email",ru:"Email",lv:"E-pasts"},
+  "f.pass":{en:"Password",ru:"Пароль",lv:"Parole"},
+  "f.login":{en:"Email or nickname",ru:"Email или никнейм",lv:"E-pasts vai segvārds"},
+  "demoflag":{en:"demo",ru:"демо",lv:"demo"},
+
+  /* start */
+  "start.tag":{en:"Welcome",ru:"Добро пожаловать",lv:"Laipni lūdzam"},
+  "start.title":{en:"RobTop Family",ru:"Семья RobTop",lv:"RobTop ģimene"},
+  "start.lead":{en:"Parents sign in with email. Children sign in with a nickname. No personal data is stored, only nicknames.",
+    ru:"Родители входят по email, дети по никнейму. Личные данные не хранятся, только никнеймы.",
+    lv:"Vecāki pieslēdzas ar e-pastu, bērni ar segvārdu. Personas dati netiek glabāti, tikai segvārdi."},
+  "start.login":{en:"Sign in",ru:"Войти",lv:"Pieslēgties"},
+  "start.reg":{en:"I am a parent — create a family",ru:"Я родитель — создать семью",lv:"Esmu vecāks — izveidot ģimeni"},
+  "tip.nopii":{en:"Children never have an email here. Only a nickname and a password.",
+    ru:"У детей здесь нет email. Только никнейм и пароль.",
+    lv:"Bērniem šeit nav e-pasta. Tikai segvārds un parole."},
+
+  /* login */
+  "login.tag":{en:"Sign in",ru:"Вход",lv:"Pieslēgšanās"},
+  "login.title":{en:"Welcome back",ru:"С возвращением",lv:"Sveiks atpakaļ"},
+  "login.btn":{en:"Sign in",ru:"Войти",lv:"Pieslēgties"},
+  "login.forgot":{en:"Parent forgot password?",ru:"Родитель забыл пароль?",lv:"Vecāks aizmirsa paroli?"},
+  "tip.childlogin":{en:"A child types a nickname here, not an email.",ru:"Ребёнок вводит здесь никнейм, не email.",lv:"Bērns šeit ievada segvārdu, nevis e-pastu."},
+
+  /* register */
+  "reg.tag":{en:"New family",ru:"Новая семья",lv:"Jauna ģimene"},
+  "reg.title":{en:"Create your family",ru:"Создайте семью",lv:"Izveidojiet ģimeni"},
+  "reg.lead":{en:"You become the family owner. You add children inside, they need only a nickname.",
+    ru:"Вы становитесь владельцем семьи. Детей добавите внутри, им нужен только никнейм.",
+    lv:"Jūs kļūstat par ģimenes īpašnieku. Bērnus pievienojat iekšā, viņiem vajadzīgs tikai segvārds."},
+  "reg.btn":{en:"Create family",ru:"Создать семью",lv:"Izveidot ģimeni"},
+
+  /* forced change */
+  "fc.tag":{en:"One more step",ru:"Ещё шаг",lv:"Vēl viens solis"},
+  "fc.title":{en:"Set a new password",ru:"Задайте новый пароль",lv:"Iestatiet jaunu paroli"},
+  "fc.lead":{en:"You signed in with the one-time password 1234. Choose a new one to continue. Nothing else opens until you do.",
+    ru:"Вы вошли по одноразовому паролю 1234. Придумайте новый, чтобы продолжить. Пока не смените, ничего не откроется.",
+    lv:"Jūs pieslēdzāties ar vienreizējo paroli 1234. Izvēlieties jaunu, lai turpinātu. Līdz tam nekas neatveras."},
+  "fc.newpass":{en:"New password (not 1234)",ru:"Новый пароль (не 1234)",lv:"Jauna parole (ne 1234)"},
+  "fc.btn":{en:"Save and continue",ru:"Сохранить и продолжить",lv:"Saglabāt un turpināt"},
+  "tip.temp":{en:"1234 is a one-time password. Access stays locked until it is changed.",
+    ru:"1234 это одноразовый пароль. Доступ закрыт, пока он не сменён.",
+    lv:"1234 ir vienreizēja parole. Piekļuve slēgta, līdz tā ir nomainīta."},
+
+  /* parent dashboard */
+  "pd.tag":{en:"Parent",ru:"Родитель",lv:"Vecāks"},
+  "pd.title":{en:"Your family",ru:"Ваша семья",lv:"Jūsu ģimene"},
+  "pd.members":{en:"Members",ru:"Состав",lv:"Dalībnieki"},
+  "pd.children":{en:"Children",ru:"Дети",lv:"Bērni"},
+  "pd.addchild":{en:"Add a child",ru:"Добавить ребёнка",lv:"Pievienot bērnu"},
+  "pd.invite":{en:"Invite second parent",ru:"Пригласить второго родителя",lv:"Ielūgt otru vecāku"},
+  "role.parent":{en:"parent",ru:"родитель",lv:"vecāks"},
+  "role.pg":{en:"parent/guardian",ru:"родитель/опекун",lv:"vecāks/aizbildnis"},
+  "role.tg":{en:"temporary guardian",ru:"временный опекун",lv:"pagaidu aizbildnis"},
+  "role.child":{en:"child",ru:"ребёнок",lv:"bērns"},
+  "tag.guest":{en:"guest",ru:"гость",lv:"viesis"},
+  "sub.yourchild":{en:"your child",ru:"ваш ребёнок",lv:"jūsu bērns"},
+  "sub.tempunder":{en:"temporarily under you",ru:"временно под вами",lv:"pagaidām jūsu aizgādībā"},
+  "tip.guest":{en:"A guest is a child invited by your child. You are the temporary guardian until a real parent is attached.",
+    ru:"Гость это ребёнок, которого позвал ваш ребёнок. Вы временный опекун, пока не привязан настоящий родитель.",
+    lv:"Viesis ir bērns, kuru uzaicināja jūsu bērns. Jūs esat pagaidu aizbildnis, līdz tiek piesaistīts īsts vecāks."},
+
+  /* child dashboard */
+  "cd.tag":{en:"Child",ru:"Ребёнок",lv:"Bērns"},
+  "cd.title":{en:"Hi, Robik!",ru:"Привет, Robik!",lv:"Sveiks, Robik!"},
+  "cd.lead":{en:"Your apps and points live here.",ru:"Здесь твои занятия и очки.",lv:"Šeit ir tavas lietotnes un punkti."},
+  "cd.invite":{en:"Invite a friend",ru:"Позвать друга",lv:"Aicināt draugu"},
+  "cd.apps":{en:"Teeth timer · Wishlist · Words",ru:"Чистка зубов · Виш-лист · Слова",lv:"Zobu taimeris · Vēlmju saraksts · Vārdi"},
+
+  /* add child */
+  "ac.tag":{en:"Add a child",ru:"Добавить ребёнка",lv:"Pievienot bērnu"},
+  "ac.title":{en:"New child",ru:"Новый ребёнок",lv:"Jauns bērns"},
+  "ac.lead":{en:"Only a nickname. No email, no real name.",ru:"Только никнейм. Без email и имени.",lv:"Tikai segvārds. Bez e-pasta un vārda."},
+  "ac.btn":{en:"Create child",ru:"Создать ребёнка",lv:"Izveidot bērnu"},
+
+  /* child created */
+  "cc.tag":{en:"Created",ru:"Создано",lv:"Izveidots"},
+  "cc.title":{en:"Child is ready",ru:"Ребёнок готов",lv:"Bērns gatavs"},
+  "cc.note":{en:"First-login password is 1234. Tell the child to sign in and change it right away.",
+    ru:"Пароль для первого входа 1234. Пусть ребёнок войдёт и сразу сменит его.",
+    lv:"Pirmās pieslēgšanās parole ir 1234. Lai bērns pieslēdzas un uzreiz to nomaina."},
+  "cc.back":{en:"Back to family",ru:"Назад к семье",lv:"Atpakaļ uz ģimeni"},
+  "cc.done":{en:"Done",ru:"Готово",lv:"Gatavs"},
+
+  /* child card */
+  "ck.tag":{en:"Child card",ru:"Карточка ребёнка",lv:"Bērna kartīte"},
+  "ck.reset":{en:"Reset password",ru:"Сбросить пароль",lv:"Atiestatīt paroli"},
+  "ck.attach":{en:"Attach a real parent",ru:"Привязать родителя",lv:"Piesaistīt vecāku"},
+  "ck.stats":{en:"View activity",ru:"Смотреть активность",lv:"Skatīt aktivitāti"},
+  "ck.remove":{en:"Remove guest",ru:"Убрать гостя",lv:"Noņemt viesi"},
+
+  /* reset child confirm */
+  "rc.title":{en:"Password reset",ru:"Пароль сброшен",lv:"Parole atiestatīta"},
+  "rc.note":{en:"The child password is 1234 again. They will change it at next sign in.",
+    ru:"Пароль ребёнка снова 1234. Он сменит его при следующем входе.",
+    lv:"Bērna parole atkal ir 1234. Viņš to nomainīs nākamajā reizē."},
+
+  /* stats */
+  "st.title":{en:"Robik · activity",ru:"Robik · активность",lv:"Robik · aktivitāte"},
+  "st.readonly":{en:"Read only. Parents can see, not edit.",ru:"Только чтение. Родитель видит, но не меняет.",lv:"Tikai lasīšana. Vecāks redz, bet nelabo."},
+
+  /* parent views child's wishlist (read-only) */
+  "ck.wishlist":{en:"View wishlist",ru:"Смотреть виш-лист",lv:"Skatīt vēlmju sarakstu"},
+  "wl.tag":{en:"Wishlist",ru:"Виш-лист",lv:"Vēlmju saraksts"},
+  "wl.title":{en:"{name} · wishlist",ru:"{name} · виш-лист",lv:"{name} · vēlmju saraksts"},
+  "wl.lead":{en:"Read-only. This is what your child wants.",ru:"Только чтение. Вот что хочет ваш ребёнок.",lv:"Tikai lasīšanai. Lūk, ko vēlas jūsu bērns."},
+  "wl.want":{en:"Want",ru:"Хочу",lv:"Gribu"},
+  "wl.think":{en:"Thinking",ru:"Думаю",lv:"Domāju"},
+  "wl.bought":{en:"Bought",ru:"Куплено",lv:"Nopirkts"},
+  "wl.fav":{en:"Top wish",ru:"Очень хочу",lv:"Ļoti gribu"},
+  "wl.priv":{en:"You see the pictures because you are the parent. Pictures are private: only the child and their own parent see them, never a provisional guardian or the admin.",ru:"Вы видите картинки, потому что вы родитель. Картинки приватны: их видят только ребёнок и его родитель, но не временный опекун и не админ.",lv:"Jūs redzat attēlus, jo esat vecāks. Attēli ir privāti: tos redz tikai bērns un viņa vecāks, nekad pagaidu aizbildnis vai administrators."},
+  "wl.i1t":{en:"LEGO Technic set",ru:"Конструктор LEGO Technic",lv:"LEGO Technic komplekts"},
+  "wl.i1n":{en:"I'll build robots and cars",ru:"Буду строить роботов и машины",lv:"Būvēšu robotus un mašīnas"},
+  "wl.i2t":{en:"Stunt scooter",ru:"Трюковой самокат",lv:"Triku skrejritenis"},
+  "wl.i3t":{en:"Wireless headphones",ru:"Беспроводные наушники",lv:"Bezvadu austiņas"},
+  "wl.i3n":{en:"Listen to music outside",ru:"Слушать музыку на улице",lv:"Klausīties mūziku ārā"},
+  "wl.i4t":{en:"Dinosaur book",ru:"Книга про динозавров",lv:"Grāmata par dinozauriem"},
+  "n.wishlist":{en:"A parent opens the child's wishlist, read-only. The parent and the child can see the pictures; a provisional guardian and the admin never can.",ru:"Родитель открывает виш-лист ребёнка только для чтения. Родитель и ребёнок видят картинки; временный опекун и админ — никогда.",lv:"Vecāks atver bērna vēlmju sarakstu tikai lasīšanai. Vecāks un bērns redz attēlus; pagaidu aizbildnis un administrators — nekad."},
+  "st.streak":{en:"day streak",ru:"дней подряд",lv:"dienu sērija"},
+  "st.points":{en:"points",ru:"очки",lv:"punkti"},
+  "st.done":{en:"brushings",ru:"чисток",lv:"tīrīšanas"},
+  "st.week":{en:"This week",ru:"Эта неделя",lv:"Šī nedēļa"},
+
+  /* invite co-parent */
+  "ic.tag":{en:"Invite",ru:"Приглашение",lv:"Ielūgums"},
+  "ic.title":{en:"Invite second parent",ru:"Второй родитель",lv:"Otrs vecāks"},
+  "ic.lead":{en:"They get parent rights in your family. They sign up with this email.",
+    ru:"Он получит права родителя в семье. Зарегистрируется по этому email.",
+    lv:"Viņš iegūs vecāka tiesības ģimenē. Reģistrēsies ar šo e-pastu."},
+  "ic.btn":{en:"Create invitation",ru:"Создать приглашение",lv:"Izveidot ielūgumu"},
+
+  /* invite friend (child) */
+  "if.tag":{en:"Invite a friend",ru:"Позвать друга",lv:"Aicināt draugu"},
+  "if.title":{en:"Invite a friend",ru:"Позвать друга",lv:"Aicināt draugu"},
+  "if.lead":{en:"Your friend will get an account and join under your parent for now.",
+    ru:"Друг получит аккаунт и пока попадёт под опеку твоего родителя.",
+    lv:"Draugs iegūs kontu un pagaidām būs tava vecāka aizgādībā."},
+  "if.btn":{en:"Get invite link",ru:"Получить ссылку",lv:"Saņemt saiti"},
+
+  /* link shown */
+  "lk.tag":{en:"Share",ru:"Поделиться",lv:"Dalīties"},
+  "lk.title":{en:"Invitation link",ru:"Ссылка-приглашение",lv:"Ielūguma saite"},
+  "lk.lead":{en:"Send this link. It expires in 7 days and works once.",ru:"Отправьте эту ссылку. Действует 7 дней и один раз.",lv:"Nosūtiet šo saiti. Derīga 7 dienas un vienu reizi."},
+  "lk.copy":{en:"Copy",ru:"Копир.",lv:"Kopēt"},
+  "lk.copied":{en:"Copied",ru:"Скопировано",lv:"Nokopēts"},
+  "lk.sent":{en:"For a parent invite we also email it (when mail is set up).",
+    ru:"Для приглашения родителя письмо тоже отправим (когда настроена почта).",
+    lv:"Vecāka ielūgumam to arī nosūtām e-pastā (kad e-pasts iestatīts)."},
+
+  /* sent invites */
+  "si.tag":{en:"Invitations",ru:"Приглашения",lv:"Ielūgumi"},
+  "si.title":{en:"Sent invitations",ru:"Отправленные",lv:"Nosūtītie"},
+  "st.pending":{en:"pending",ru:"ожидает",lv:"gaida"},
+  "st.accepted":{en:"accepted",ru:"принято",lv:"pieņemts"},
+  "st.revoked":{en:"revoked",ru:"отозвано",lv:"atsaukts"},
+  "si.revoke":{en:"Revoke",ru:"Отозвать",lv:"Atsaukt"},
+  "si.resend":{en:"Resend",ru:"Переслать",lv:"Pārsūtīt"},
+
+  /* landing child */
+  "la.tag":{en:"Invitation",ru:"Приглашение",lv:"Ielūgums"},
+  "lac.title":{en:"Mara invited you!",ru:"Mara позвал(а) тебя!",lv:"Mara tevi uzaicināja!"},
+  "lac.lead":{en:"Pick a nickname. Your password will be 1234, you change it right after.",
+    ru:"Придумай никнейм. Пароль будет 1234, сразу поменяешь.",
+    lv:"Izvēlies segvārdu. Parole būs 1234, uzreiz to nomainīsi."},
+  "lac.btn":{en:"Join",ru:"Присоединиться",lv:"Pievienoties"},
+
+  /* landing parent */
+  "lap.title":{en:"You were invited",ru:"Вас пригласили",lv:"Jūs tikāt uzaicināts"},
+  "lap.lead":{en:"Create a parent account. The email comes from the invitation.",
+    ru:"Создайте родительский аккаунт. Email берётся из приглашения.",
+    lv:"Izveidojiet vecāka kontu. E-pasts nāk no ielūguma."},
+  "lap.btn":{en:"Accept invitation",ru:"Принять приглашение",lv:"Pieņemt ielūgumu"},
+
+  /* transfer confirm + severed */
+  "tr.tag":{en:"Transfer",ru:"Передача",lv:"Nodošana"},
+  "tr.title":{en:"You will become Sunny's parent",ru:"Вы станете родителем Sunny",lv:"Jūs kļūsiet par Sunny vecāku"},
+  "tr.lead":{en:"A new family forms for Sunny with you as owner. The temporary link to the inviting parent is cut.",
+    ru:"Для Sunny создаётся новая семья, вы владелец. Временная связь с прежним родителем разрывается.",
+    lv:"Sunny izveidojas jauna ģimene, jūs esat īpašnieks. Pagaidu saite ar iepriekšējo vecāku tiek pārtraukta."},
+  "tr.btn":{en:"Confirm and take over",ru:"Подтвердить и принять",lv:"Apstiprināt un pārņemt"},
+  "sv.title":{en:"Done. Sunny is in your family",ru:"Готово. Sunny в вашей семье",lv:"Gatavs. Sunny ir jūsu ģimenē"},
+  "sv.note":{en:"The temporary guardianship is now severed forever, but it stays in the log. Sunny keeps all their data.",
+    ru:"Временное опекунство разорвано навсегда, но осталось в логе. Все данные Sunny при нём.",
+    lv:"Pagaidu aizgādība tagad ir pārtraukta uz visiem laikiem, bet paliek žurnālā. Visi Sunny dati paliek."},
+  "tip.sever":{en:"Severed means the row stays in the database for history. Children safety needs logs to be kept.",
+    ru:"Разорвано значит строка остаётся в базе для истории. Для детской безопасности логи сохраняются.",
+    lv:"Pārtraukts nozīmē, ka ieraksts paliek datubāzē vēsturei. Bērnu drošībai žurnāli tiek saglabāti."},
+
+  /* forgot + reset */
+  "fg.tag":{en:"Reset",ru:"Сброс",lv:"Atiestate"},
+  "fg.title":{en:"Forgot password",ru:"Забыли пароль",lv:"Aizmirsta parole"},
+  "fg.lead":{en:"Parents only. Children ask a parent. If the email exists, we send a link.",
+    ru:"Только для родителей. Дети просят родителя. Если email есть, пришлём ссылку.",
+    lv:"Tikai vecākiem. Bērni lūdz vecākam. Ja e-pasts pastāv, nosūtām saiti."},
+  "fg.btn":{en:"Send reset link",ru:"Отправить ссылку",lv:"Nosūtīt saiti"},
+  "fg.sent":{en:"If that email is registered, a link was sent. Until mail is set up, the link is logged on the server.",
+    ru:"Если email зарегистрирован, ссылка отправлена. Пока почта не настроена, ссылка пишется в журнал на сервере.",
+    lv:"Ja e-pasts ir reģistrēts, saite nosūtīta. Kamēr e-pasts nav iestatīts, saite tiek ierakstīta žurnālā."},
+  "rl.title":{en:"Set a new password",ru:"Новый пароль",lv:"Jauna parole"},
+  "rl.lead":{en:"You opened the reset link from your email. Choose a new password.",ru:"Вы открыли ссылку сброса из письма. Придумайте новый пароль.",lv:"Jūs atvērāt atiestates saiti no e-pasta. Izvēlieties jaunu paroli."},
+  "rl.btn":{en:"Save password",ru:"Сохранить",lv:"Saglabāt"},
+  "rs.tag":{en:"Check your email",ru:"Проверьте почту",lv:"Pārbaudiet e-pastu"},
+  "rs.title":{en:"We sent a reset link",ru:"Мы отправили ссылку сброса",lv:"Nosūtījām atiestates saiti"},
+  "rs.lead":{en:"Open your email and tap the reset link. In this prototype, tap the email below to continue.",ru:"Откройте почту и нажмите ссылку сброса. В прототипе нажмите на письмо ниже.",lv:"Atveriet e-pastu un nospiediet atiestates saiti. Prototipā nospiediet uz e-pasta zemāk."},
+  "rs.mailsubj":{en:"Reset your RobTop password",ru:"Сброс пароля RobTop",lv:"Atiestatiet RobTop paroli"},
+  "rs.open":{en:"Open the reset link",ru:"Открыть ссылку сброса",lv:"Atvērt atiestates saiti"},
+
+  /* child forgot hint */
+  "chf.title":{en:"Ask your parent",ru:"Попроси родителя",lv:"Palūdz vecākam"},
+  "chf.lead":{en:"You cannot reset your own password. A parent resets it, then you sign in with 1234 and pick a new one.",
+    ru:"Свой пароль сбросить нельзя. Его сбросит родитель, потом ты войдёшь по 1234 и придумаешь новый.",
+    lv:"Savu paroli atiestatīt nevari. To atiestata vecāks, tad tu pieslēdzies ar 1234 un izvēlies jaunu."},
+
+  /* edge */
+  "en.title":{en:"Nickname is taken",ru:"Никнейм занят",lv:"Segvārds aizņemts"},
+  "en.lead":{en:"Nicknames are unique. Try one of these.",ru:"Никнеймы уникальны. Попробуй один из этих.",lv:"Segvārdi ir unikāli. Pamēģini vienu no šiem."},
+  "en.btn":{en:"Use Robik2",ru:"Взять Robik2",lv:"Izmantot Robik2"},
+  "ee.title":{en:"Invitation is not valid",ru:"Приглашение недействительно",lv:"Ielūgums nav derīgs"},
+  "ee.lead":{en:"This link expired, was revoked, or was already used. Ask for a new one.",
+    ru:"Ссылка истекла, отозвана или уже использована. Попроси новую.",
+    lv:"Saite beigusies, atsaukta vai jau izmantota. Palūdz jaunu."},
+  "ed.title":{en:"Account is disabled",ru:"Аккаунт отключён",lv:"Konts atspējots"},
+  "ed.lead":{en:"This account was turned off. Contact the family owner.",
+    ru:"Этот аккаунт выключен. Обратитесь к владельцу семьи.",
+    lv:"Šis konts ir izslēgts. Sazinieties ar ģimenes īpašnieku."},
+  "em.title":{en:"Email is not set up yet",ru:"Почта ещё не настроена",lv:"E-pasts vēl nav iestatīts"},
+  "em.lead":{en:"For now the invitation works as a link you copy and send yourself.",
+    ru:"Пока приглашение работает как ссылка, которую вы копируете и отправляете сами.",
+    lv:"Pagaidām ielūgums darbojas kā saite, kuru kopējat un nosūtāt pats."},
+  "em.btn":{en:"Show link instead",ru:"Показать ссылку",lv:"Rādīt saiti"},
+
+  /* what-to-do label */
+  "ui.do":{en:"What to do",ru:"Что делать",lv:"Ko darīt"},
+
+  /* auth explainer */
+  "login.explain":{en:"How does sign-in work?",ru:"Как работает вход?",lv:"Kā darbojas pieslēgšanās?"},
+  "ax.tag":{en:"How it works",ru:"Как это работает",lv:"Kā tas darbojas"},
+  "ax.title":{en:"How sign-in works",ru:"Как устроен вход",lv:"Kā notiek pieslēgšanās"},
+  "ax.p1":{en:"Parents sign in with an email and a password.",ru:"Родители входят по email и паролю.",lv:"Vecāki pieslēdzas ar e-pastu un paroli."},
+  "ax.p2":{en:"Children sign in with a nickname and a password. Children never have an email.",ru:"Дети входят по никнейму и паролю. У детей никогда нет email.",lv:"Bērni pieslēdzas ar segvārdu un paroli. Bērniem nekad nav e-pasta."},
+  "ax.p3":{en:"A new child gets the one-time password 1234 and must change it at first sign in.",ru:"Новый ребёнок получает одноразовый пароль 1234 и меняет его при первом входе.",lv:"Jauns bērns saņem vienreizēju paroli 1234 un nomaina to pirmajā reizē."},
+  "ax.p4":{en:"Only a parent can reset a child password. A parent resets their own by email.",ru:"Сбросить пароль ребёнку может только родитель. Свой родитель сбрасывает по email.",lv:"Bērna paroli var atiestatīt tikai vecāks. Savu vecāks atiestata pa e-pastu."},
+  "ax.p5":{en:"No personal data is stored. Only nicknames.",ru:"Личные данные не хранятся. Только никнеймы.",lv:"Personas dati netiek glabāti. Tikai segvārdi."},
+  "ax.back":{en:"Got it",ru:"Понятно",lv:"Sapratu"},
+
+  /* child safety rules */
+  "sf.tag":{en:"Safety first",ru:"Сначала безопасность",lv:"Vispirms drošība"},
+  "sf.title":{en:"Read this first",ru:"Сначала прочитай это",lv:"Vispirms izlasi šo"},
+  "sf.lead":{en:"A few rules to keep you safe. They matter every time you add a picture.",ru:"Несколько правил для твоей безопасности. Они важны каждый раз, когда добавляешь картинку.",lv:"Daži noteikumi tavai drošībai. Tie ir svarīgi katru reizi, kad pievieno attēlu."},
+  "sf.no1":{en:"Do not photograph people. No faces, no strangers, no friends.",ru:"Не фотографируй людей. Ни лиц, ни незнакомцев, ни друзей.",lv:"Nefotografē cilvēkus. Ne sejas, ne svešiniekus, ne draugus."},
+  "sf.no2":{en:"Do not upload photos of yourself.",ru:"Не загружай свои фото.",lv:"Neaugšupielādē savas fotogrāfijas."},
+  "sf.yes1":{en:"Pictures are only simple objects, or pictures from the internet.",ru:"Картинки — только простые предметы или картинки из интернета.",lv:"Attēli — tikai vienkārši priekšmeti vai attēli no interneta."},
+  "sf.tell1":{en:"If anyone asks you to upload anything else, tell your parent and a grown-up right now.",ru:"Если кто-то просит загрузить что-то ещё, сразу скажи родителю и взрослому рядом.",lv:"Ja kāds prasa augšupielādēt ko citu, uzreiz pasaki vecākam un pieaugušajam."},
+  "sf.private":{en:"Your pictures are private. They are never shared anywhere. Only you and your direct parent can see them, no one else.",ru:"Твои картинки приватные. Они нигде не публикуются. Их видишь только ты и твой родитель, больше никто.",lv:"Tavi attēli ir privāti. Tie nekur netiek koplietoti. Tos redz tikai tu un tavs vecāks, neviens cits."},
+  "sf.be":{en:"Be kind and careful. If something feels wrong, ask a grown-up.",ru:"Будь добрым и осторожным. Если что-то не так, спроси взрослого.",lv:"Esi laipns un uzmanīgs. Ja kaut kas nav labi, pajautā pieaugušajam."},
+  "sf.btn":{en:"I understand",ru:"Я понимаю",lv:"Es saprotu"},
+  "safebar.short":{en:"No people or selfies. Your pictures stay private.",ru:"Без людей и селфи. Твои картинки приватные.",lv:"Bez cilvēkiem un selfijiem. Tavi attēli ir privāti."},
+
+  /* account management + blocking */
+  "grp.manage":{en:"Account management",ru:"Управление аккаунтами",lv:"Kontu pārvaldība"},
+  "scn.manageChild":{en:"Manage a child account",ru:"Управление аккаунтом ребёнка",lv:"Pārvaldīt bērna kontu"},
+  "scn.blockChild":{en:"Block a child",ru:"Заблокировать ребёнка",lv:"Bloķēt bērnu"},
+  "scn.unblockChild":{en:"Unblock a child",ru:"Разблокировать ребёнка",lv:"Atbloķēt bērnu"},
+  "ck.manage":{en:"Manage account",ru:"Управление аккаунтом",lv:"Pārvaldīt kontu"},
+  "mg.tag":{en:"Account management",ru:"Управление аккаунтом",lv:"Konta pārvaldība"},
+  "mg.title":{en:"Manage {name}",ru:"Управление: {name}",lv:"Pārvaldīt: {name}"},
+  "mg.status":{en:"Status",ru:"Статус",lv:"Statuss"},
+  "st.active":{en:"active",ru:"активен",lv:"aktīvs"},
+  "st.blocked":{en:"blocked",ru:"заблокирован",lv:"bloķēts"},
+  "mg.whocan":{en:"Any parent or guardian can block or unblock this child. Blocking keeps all their data, nothing is deleted.",ru:"Заблокировать или разблокировать ребёнка может любой родитель или опекун. Блокировка сохраняет все данные, ничего не удаляется.",lv:"Bloķēt vai atbloķēt bērnu var jebkurš vecāks vai aizbildnis. Bloķēšana saglabā visus datus, nekas netiek dzēsts."},
+  "mg.block":{en:"Block account",ru:"Заблокировать аккаунт",lv:"Bloķēt kontu"},
+  "mg.unblock":{en:"Unblock account",ru:"Разблокировать аккаунт",lv:"Atbloķēt kontu"},
+  "bc.tag":{en:"Confirm",ru:"Подтверждение",lv:"Apstiprinājums"},
+  "bc.title":{en:"Block {name}?",ru:"Заблокировать {name}?",lv:"Bloķēt {name}?"},
+  "bc.lead":{en:"They will not be able to sign in until a parent or guardian unblocks them. All their data is kept, nothing is deleted.",ru:"Он не сможет войти, пока родитель или опекун не разблокирует. Все данные сохраняются, ничего не удаляется.",lv:"Viņš nevarēs pieslēgties, līdz vecāks vai aizbildnis atbloķēs. Visi dati tiek saglabāti, nekas netiek dzēsts."},
+  "bc.confirm":{en:"Yes, block",ru:"Да, заблокировать",lv:"Jā, bloķēt"},
+  "bc.cancel":{en:"Cancel",ru:"Отмена",lv:"Atcelt"},
+  "ab.tag":{en:"Blocked",ru:"Заблокировано",lv:"Bloķēts"},
+  "ab.title":{en:"{name} is blocked",ru:"{name} заблокирован",lv:"{name} ir bloķēts"},
+  "ab.note":{en:"This child cannot sign in now. At login they see a neutral “account is disabled” message. Any parent or guardian can unblock at any time. Data is untouched.",ru:"Этот ребёнок сейчас не может войти. При входе он видит нейтральное «аккаунт отключён». Разблокировать может любой родитель или опекун в любой момент. Данные не тронуты.",lv:"Šis bērns tagad nevar pieslēgties. Pieslēdzoties viņš redz neitrālu “konts atspējots”. Atbloķēt var jebkurš vecāks vai aizbildnis jebkurā laikā. Dati netiek skarti."},
+  "ab.btn":{en:"Done",ru:"Готово",lv:"Gatavs"},
+  "au.title":{en:"{name} can sign in again",ru:"{name} снова может войти",lv:"{name} atkal var pieslēgties"},
+  "au.note":{en:"The account is active again. The next sign in works as usual.",ru:"Аккаунт снова активен. Следующий вход работает как обычно.",lv:"Konts atkal ir aktīvs. Nākamā pieslēgšanās darbojas kā parasti."},
+
+  /* upload guard */
+  "ug.tag":{en:"Before you add a picture",ru:"Перед добавлением картинки",lv:"Pirms pievieno attēlu"},
+  "ug.title":{en:"Add a picture safely",ru:"Добавь картинку безопасно",lv:"Pievieno attēlu droši"},
+  "ug.lead":{en:"Only simple objects, or pictures from the internet. Never people, never yourself.",ru:"Только простые предметы или картинки из интернета. Никогда людей и не себя.",lv:"Tikai vienkārši priekšmeti vai attēli no interneta. Nekad cilvēkus, nekad sevi."},
+  "ug.ok":{en:"It is a simple object",ru:"Это простой предмет",lv:"Tas ir vienkāršs priekšmets"},
+  "ug.tell":{en:"Someone asked me for something else",ru:"Меня просят другое",lv:"Kāds prasa ko citu"},
+  "rp.tag":{en:"You are safe",ru:"Ты в безопасности",lv:"Tu esi drošībā"},
+  "rp.title":{en:"Reported. Well done",ru:"Сообщено. Молодец",lv:"Ziņots. Lieliski"},
+  "rp.note":{en:"Telling a grown-up was exactly the right thing to do. Nothing was uploaded, and your parent now knows.",ru:"Сказать взрослому было правильно. Ничего не загружено, и родитель теперь знает.",lv:"Pateikt pieaugušajam bija pareizi. Nekas netika augšupielādēts, un vecāks tagad zina."},
+  "rp.btn":{en:"Back to safety",ru:"Назад к безопасности",lv:"Atpakaļ uz drošību"},
+
+  /* scenario titles (new) */
+  "scn.authExplain":{en:"How sign-in works",ru:"Как работает вход",lv:"Kā darbojas pieslēgšanās"},
+  "scn.childSafety":{en:"Child safety rules",ru:"Правила безопасности ребёнка",lv:"Bērna drošības noteikumi"},
+  "scn.uploadSafety":{en:"Safe picture upload",ru:"Безопасная загрузка картинки",lv:"Droša attēla augšupielāde"},
+
+  /* what-to-do hints */
+  "do.start":{en:"Choose sign in or create a family. Buttons are demo, just tap one.",ru:"Выберите вход или создание семьи. Кнопки демо, просто нажмите.",lv:"Izvēlieties pieslēgties vai izveidot ģimeni. Pogas ir demo, vienkārši nospiediet."},
+  "do.next":{en:"Fields are pre-filled. Tap the main button to go on.",ru:"Поля заполнены. Нажмите главную кнопку, чтобы продолжить.",lv:"Lauki aizpildīti. Nospiediet galveno pogu, lai turpinātu."},
+  "do.read":{en:"Read the screen, then tap the main button.",ru:"Прочитайте экран и нажмите главную кнопку.",lv:"Izlasiet ekrānu un nospiediet galveno pogu."},
+  "do.safety":{en:"Read every rule, then tap I understand.",ru:"Прочитайте каждое правило и нажмите Я понимаю.",lv:"Izlasiet katru noteikumu un nospiediet Es saprotu."},
+  "do.copy":{en:"Copy the link and send it. Then tap Done.",ru:"Скопируйте ссылку и отправьте. Затем нажмите Готово.",lv:"Nokopējiet saiti un nosūtiet. Tad nospiediet Gatavs."},
+  "do.child":{en:"This is the child home. Tap Invite a friend to continue.",ru:"Это детская домашняя. Нажмите Позвать друга.",lv:"Šī ir bērna sākumlapa. Nospiediet Aicināt draugu."},
+  "do.card":{en:"Pick an action on the child card.",ru:"Выберите действие в карточке ребёнка.",lv:"Izvēlieties darbību bērna kartītē."},
+  "do.uploadGuard":{en:"Simple object: continue. Someone asked for more: tell your parent.",ru:"Простой предмет: продолжай. Просят больше: скажи родителю.",lv:"Vienkāršs priekšmets: turpini. Prasa vairāk: pasaki vecākam."},
+  "do.done":{en:"End of this flow. Pick another scenario on the left.",ru:"Конец сценария. Выберите другой слева.",lv:"Scenārija beigas. Izvēlieties citu pa kreisi."},
+  "do.explainBack":{en:"Read how sign-in works, then pick a flow on the left.",ru:"Прочитайте, как работает вход, и выберите сценарий слева.",lv:"Izlasiet, kā darbojas pieslēgšanās, un izvēlieties scenāriju pa kreisi."},
+  "do.tapReset":{en:"Tap Reset password. The child gets the one-time 1234 and sets a new one at next login.",ru:"Нажмите «Сбросить пароль». Ребёнок получит одноразовый 1234 и задаст новый при следующем входе.",lv:"Nospiediet “Atiestatīt paroli”. Bērns saņem vienreizējo 1234 un iestata jaunu nākamajā reizē."},
+  "do.tapBlock":{en:"Tap Block account to continue.",ru:"Нажмите «Заблокировать аккаунт».",lv:"Nospiediet “Bloķēt kontu”."},
+  "do.manageHub":{en:"This is the management hub. Open Block a child or Reset child password on the left to see each action.",ru:"Это центр управления. Слева откройте «Заблокировать ребёнка» или «Сбросить пароль ребёнку».",lv:"Šis ir pārvaldības centrs. Pa kreisi atveriet “Bloķēt bērnu” vai “Atiestatīt bērna paroli”."},
+  "do.enterNew":{en:"Here the CHILD enters a new password. A parent never sets the child's lasting password, only the one-time 1234.",ru:"Здесь новый пароль вводит сам РЕБЁНОК. Родитель не задаёт постоянный пароль ребёнка, только одноразовый 1234.",lv:"Šeit jauno paroli ievada pats BĒRNS. Vecāks neiestata bērna pastāvīgo paroli, tikai vienreizējo 1234."}
+};
+
+/* notes shown in the What-is-happening panel, one per step */
+var N = {
+  "n.start":{en:"The app opens with no session. A parent registers; a child signs in with a nickname.",
+    ru:"Приложение открыто без сессии. Родитель регистрируется, ребёнок входит по никнейму.",
+    lv:"Lietotne atvērta bez sesijas. Vecāks reģistrējas, bērns pieslēdzas ar segvārdu."},
+  "n.register":{en:"On submit: the account, a family, and an owner membership are created, and a session starts.",
+    ru:"При отправке создаются аккаунт, семья и членство владельца, открывается сессия.",
+    lv:"Iesniedzot: izveido kontu, ģimeni un īpašnieka dalību, sākas sesija."},
+  "n.parentDash":{en:"The owner sees members and children, and can add a child or invite a second parent.",
+    ru:"Владелец видит состав и детей, может добавить ребёнка или пригласить второго родителя.",
+    lv:"Īpašnieks redz dalībniekus un bērnus, var pievienot bērnu vai ielūgt otru vecāku."},
+  "n.loginChild":{en:"A child signs in with a nickname and the one-time 1234.",
+    ru:"Ребёнок входит по никнейму и одноразовому 1234.",
+    lv:"Bērns pieslēdzas ar segvārdu un vienreizējo 1234."},
+  "n.forced":{en:"must_change_password is on, so only this screen is reachable until a new password is set.",
+    ru:"Флаг must_change_password включён, доступен только этот экран, пока пароль не сменён.",
+    lv:"must_change_password ir ieslēgts, pieejams tikai šis ekrāns, līdz parole nomainīta."},
+  "n.childDash":{en:"The child is in. Apps and points live here, plus invite a friend.",
+    ru:"Ребёнок внутри. Здесь занятия, очки и кнопка позвать друга.",
+    lv:"Bērns ir iekšā. Šeit lietotnes, punkti un poga aicināt draugu."},
+  "n.addChild":{en:"The parent types only a nickname. No email for children, ever.",
+    ru:"Родитель вводит только никнейм. Email у детей нет никогда.",
+    lv:"Vecāks ievada tikai segvārdu. Bērniem nekad nav e-pasta."},
+  "n.childCreated":{en:"A child account is created with password 1234 and must_change set. A primary guardianship is added.",
+    ru:"Создан детский аккаунт с паролем 1234 и флагом смены. Заведено primary-опекунство.",
+    lv:"Izveidots bērna konts ar paroli 1234 un maiņas karogu. Pievienota primārā aizgādība."},
+  "n.childCard":{en:"From the child card a parent can reset the password, attach a real parent, or view activity.",
+    ru:"Из карточки ребёнка родитель может сбросить пароль, привязать родителя или смотреть активность.",
+    lv:"No bērna kartītes vecāks var atiestatīt paroli, piesaistīt vecāku vai skatīt aktivitāti."},
+  "n.resetChild":{en:"The child password becomes 1234 again with must_change on. Logged as password_reset_by_parent.",
+    ru:"Пароль ребёнка снова 1234 с флагом смены. В логе password_reset_by_parent.",
+    lv:"Bērna parole atkal kļūst 1234 ar maiņas karogu. Žurnālā password_reset_by_parent."},
+  "n.stats":{en:"Sharing is read only. The parent sees the child activity but cannot edit it.",
+    ru:"Шаринг только на чтение. Родитель видит активность ребёнка, но не меняет её.",
+    lv:"Koplietošana tikai lasīšanai. Vecāks redz aktivitāti, bet nelabo to."},
+  "n.inviteCo":{en:"A pending invitation is created with a hashed token and a 7 day expiry, then a link is returned.",
+    ru:"Создаётся приглашение pending с хэшем токена и сроком 7 дней, возвращается ссылка.",
+    lv:"Izveido gaidošu ielūgumu ar tokena jaucējkodu un 7 dienu termiņu, atgriež saiti."},
+  "n.inviteFriend":{en:"A child invite has no email. The token is shared as a link or code directly.",
+    ru:"Детское приглашение без email. Токен передаётся ссылкой или кодом напрямую.",
+    lv:"Bērna ielūgumam nav e-pasta. Tokenu nodod kā saiti vai kodu tieši."},
+  "n.link":{en:"The inviter shares this link. Opening it leads to the landing screen.",
+    ru:"Приглашающий делится ссылкой. Её открытие ведёт на посадочный экран.",
+    lv:"Uzaicinātājs dalās ar šo saiti. Tās atvēršana ved uz galveno ekrānu."},
+  "n.sent":{en:"The inviter can revoke a pending invite or resend it with a fresh token.",
+    ru:"Приглашающий может отозвать pending или переслать со свежим токеном.",
+    lv:"Uzaicinātājs var atsaukt gaidošo vai pārsūtīt ar jaunu tokenu."},
+  "n.landingChild":{en:"A new child account is created. A provisional guardianship attaches them to the inviter's parent.",
+    ru:"Создаётся новый детский аккаунт. Провизорное опекунство привязывает его к родителю пригласившего.",
+    lv:"Izveido jaunu bērna kontu. Pagaidu aizgādība piesaista to uzaicinātāja vecākam."},
+  "n.landingParent":{en:"An incoming parent registers with the email from the invitation.",
+    ru:"Входящий родитель регистрируется по email из приглашения.",
+    lv:"Ienākošais vecāks reģistrējas ar e-pastu no ielūguma."},
+  "n.transfer":{en:"On accept: a real family forms for the child and the provisional link is severed, kept in the log.",
+    ru:"При приёме: для ребёнка формируется настоящая семья, провизорная связь разрывается и сохраняется в логе.",
+    lv:"Pieņemot: bērnam izveidojas īsta ģimene, pagaidu saite tiek pārtraukta un saglabāta žurnālā."},
+  "n.severed":{en:"The previous provisional guardian no longer sees this child, only the history remains.",
+    ru:"Прежний провизорный опекун больше не видит ребёнка, остаётся только история.",
+    lv:"Iepriekšējais pagaidu aizbildnis vairs neredz šo bērnu, paliek tikai vēsture."},
+  "n.forgot":{en:"The response is always the same so it does not reveal if the email exists.",
+    ru:"Ответ всегда одинаковый, чтобы не раскрывать, есть ли email.",
+    lv:"Atbilde vienmēr ir vienāda, lai neatklātu, vai e-pasts pastāv."},
+  "n.resetSent":{en:"The email arrives with a one-time reset link. Opening that link is what leads to the set-new-password screen.",
+    ru:"Письмо приходит с одноразовой ссылкой сброса. Именно её открытие ведёт на экран нового пароля.",
+    lv:"E-pasts pienāk ar vienreizēju atiestates saiti. Tieši tās atvēršana ved uz jaunās paroles ekrānu."},
+  "n.reset":{en:"A one-time token from the email lets the parent set a new password.",
+    ru:"Одноразовый токен из письма позволяет родителю задать новый пароль.",
+    lv:"Vienreizējs tokens no e-pasta ļauj vecākam iestatīt jaunu paroli."},
+  "n.childForgot":{en:"A child cannot self reset. A parent resets it, then the child changes 1234.",
+    ru:"Ребёнок не сбрасывает сам. Сбрасывает родитель, потом ребёнок меняет 1234.",
+    lv:"Bērns pats neatiestata. Atiestata vecāks, tad bērns nomaina 1234."},
+  "n.edgeNick":{en:"Nicknames are globally unique. The UI suggests free alternatives.",
+    ru:"Никнеймы глобально уникальны. Интерфейс предлагает свободные варианты.",
+    lv:"Segvārdi ir globāli unikāli. Saskarne piedāvā brīvas alternatīvas."},
+  "n.edgeExpired":{en:"Opening an expired or revoked invitation shows a clear dead end with a way to ask again.",
+    ru:"Открытие истёкшего или отозванного приглашения показывает понятный тупик и путь попросить заново.",
+    lv:"Beigta vai atsaukta ielūguma atvēršana rāda skaidru strupceļu un veidu, kā palūgt vēlreiz."},
+  "n.edgeDisabled":{en:"A disabled account cannot sign in. The message stays neutral.",
+    ru:"Отключённый аккаунт не входит. Сообщение нейтральное.",
+    lv:"Atspējots konts nevar pieslēgties. Ziņojums paliek neitrāls."},
+  "n.edgeMail":{en:"Without mail set up, parent invites still work as a copyable link.",
+    ru:"Без настроенной почты приглашения родителей всё равно работают как ссылка для копирования.",
+    lv:"Bez iestatīta e-pasta vecāku ielūgumi joprojām darbojas kā kopējama saite."},
+  "n.authExplain":{en:"This screen explains the sign-in rules. It opens from the Sign in screen.",
+    ru:"Этот экран объясняет правила входа. Открывается с экрана Вход.",
+    lv:"Šis ekrāns skaidro pieslēgšanās noteikumus. Atveras no pieslēgšanās ekrāna."},
+  "n.childSafety":{en:"Shown to a child right after the first password change, before anything else opens.",
+    ru:"Показывается ребёнку сразу после первой смены пароля, до того как откроется остальное.",
+    lv:"Tiek parādīts bērnam uzreiz pēc pirmās paroles maiņas, pirms atveras pārējais."},
+  "n.uploadGuard":{en:"A safety guard appears before any picture upload. The child confirms it is safe or tells a parent.",
+    ru:"Перед любой загрузкой картинки появляется защита. Ребёнок подтверждает безопасность или зовёт родителя.",
+    lv:"Pirms jebkura attēla augšupielādes parādās aizsardzība. Bērns apstiprina drošību vai pasaka vecākam."},
+  "n.reported":{en:"The child chose to tell a parent. Nothing is uploaded and the parent is notified. This is always the safe choice.",
+    ru:"Ребёнок решил сказать родителю. Ничего не загружено, родитель уведомлён. Это всегда безопасный выбор.",
+    lv:"Bērns izvēlējās pateikt vecākam. Nekas netiek augšupielādēts, vecāks tiek informēts. Tā vienmēr ir drošā izvēle."},
+  "n.manageChild":{en:"Account management for a child. Any parent or guardian (including a provisional one) can block, reset the password, or attach a real parent.",
+    ru:"Управление аккаунтом ребёнка. Любой родитель или опекун (включая временного) может заблокировать, сбросить пароль или привязать настоящего родителя.",
+    lv:"Bērna konta pārvaldība. Jebkurš vecāks vai aizbildnis (arī pagaidu) var bloķēt, atiestatīt paroli vai piesaistīt īstu vecāku."},
+  "n.blockConfirm":{en:"Blocking is a two-step confirm. It is reversible and keeps all data. Sets account status to disabled.",
+    ru:"Блокировка в два шага. Обратима и сохраняет данные. Ставит статус аккаунта disabled.",
+    lv:"Bloķēšana ir divu soļu apstiprinājums. Atgriezeniska un saglabā datus. Iestata konta statusu disabled."},
+  "n.accountBlocked":{en:"The child account status becomes blocked. Sign in is refused until unblocked. Logged as account_blocked with who did it.",
+    ru:"Статус аккаунта ребёнка становится «заблокирован». Вход отклоняется до разблокировки. В логе account_blocked с автором.",
+    lv:"Bērna konta statuss kļūst “bloķēts”. Pieslēgšanās tiek atteikta līdz atbloķēšanai. Žurnālā account_blocked ar autoru."},
+  "n.accountUnblocked":{en:"The status returns to active. Any parent or guardian can do this. Logged as account_unblocked.",
+    ru:"Статус возвращается в «активен». Это может сделать любой родитель или опекун. В логе account_unblocked.",
+    lv:"Statuss atgriežas “aktīvs”. To var izdarīt jebkurš vecāks vai aizbildnis. Žurnālā account_unblocked."}
+};
+
+/* ================= demo data ================= */
+var D = { parent:"Alex", child:"Robik", guest:"Sunny", friend:"Mara",
+  pemail:"alex@home.lv", invemail:"mara@home.lv", link:"https://apps.tilley.live/robtop/?invite=ab12cd…",
+  rlink:"https://apps.tilley.live/robtop/?reset=9f8e7d…" };
+
+/* ================= helpers ================= */
+var lang = "en";
+function t(k,vars){ var o=S[k]||N[k]; var s=o?(o[lang]||o.en||k):k; if(vars){ for(var p in vars){ s=s.replace("{"+p+"}",vars[p]); } } return s; }
+function info(tip){ return '<button class="info" data-tip="'+tip+'" aria-label="info">i</button>'; }
+function field(labelKey,val,tip){ return '<label>'+t(labelKey)+(tip?' '+info(tip):'')+'</label>'+
+  '<div class="field">'+esc(val)+'<span class="demoflag">'+t("demoflag")+'</span></div>'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function btn(labelKey,cls){ return '<button class="btn '+(cls||'')+' adv">'+t(labelKey)+'</button>'; }
+
+/* ================= screens ================= */
+var SCREENS = {
+  start:function(){ return '<span class="tag">'+t("start.tag")+'</span><h2>'+t("start.title")+'</h2>'+
+    '<p class="lead">'+t("start.lead")+' '+info("tip.nopii")+'</p>'+ btn("start.login","")+ btn("start.reg","pink"); },
+
+  login:function(){ return '<span class="tag">'+t("login.tag")+'</span><h2>'+t("login.title")+'</h2>'+
+    field("f.login", D.child, "tip.childlogin")+ field("f.pass","1234")+ btn("login.btn","")+
+    '<button class="btn ghost" data-scn="authExplain">'+t("login.explain")+'</button>'+
+    '<div class="center" style="margin-top:12px"><span class="muted">'+t("login.forgot")+'</span></div>'; },
+
+  register:function(){ return '<span class="tag">'+t("reg.tag")+'</span><h2>'+t("reg.title")+'</h2>'+
+    '<p class="lead">'+t("reg.lead")+'</p>'+ field("f.nick",D.parent)+ field("f.email",D.pemail)+ field("f.pass","••••••")+ btn("reg.btn","pink"); },
+
+  forced:function(){ return '<span class="tag">'+t("fc.tag")+'</span><h2>'+t("fc.title")+'</h2>'+
+    '<p class="lead">'+t("fc.lead")+' '+info("tip.temp")+'</p>'+ field("fc.newpass","••••••")+ btn("fc.btn",""); },
+
+  parentDash:function(){ return '<span class="tag">'+t("pd.tag")+'</span><h2>'+t("pd.title")+'</h2>'+
+    '<div class="muted" style="margin:6px 0 4px;font-weight:800">'+t("pd.members")+'</div>'+
+    rowEl("p",D.parent,"","pg")+
+    rowEl("c",D.child,"","child")+
+    '<div class="muted" style="margin:14px 0 4px;font-weight:800">'+t("pd.children")+' '+info("tip.guest")+'</div>'+
+    rowEl("c",D.child,"","child")+
+    rowEl("g",D.guest,"","guest")+
+    '<div class="sep"></div>'+ btn("pd.addchild","")+ btn("pd.invite","ghost"); },
+
+  childDash:function(){ return '<span class="tag">'+t("cd.tag")+'</span><h2>'+t("cd.title")+'</h2>'+
+    '<p class="lead">'+t("cd.lead")+'</p>'+
+    '<div class="safebar">🛡 '+t("safebar.short")+'</div>'+
+    '<div class="row"><div class="av">★</div><div class="nm">'+t("cd.apps")+'</div></div>'+
+    '<div class="sep"></div>'+ btn("cd.invite","pink"); },
+
+  addChild:function(){ return '<span class="tag">'+t("ac.tag")+'</span><h2>'+t("ac.title")+'</h2>'+
+    '<p class="lead">'+t("ac.lead")+'</p>'+ field("f.nick","Sunny")+ btn("ac.btn",""); },
+
+  childCreated:function(){ return '<span class="tag">'+t("cc.tag")+'</span><h2>'+t("cc.title")+'</h2>'+
+    rowEl("c","Sunny","","child")+
+    '<div class="note gold">'+t("cc.note")+' '+info("tip.temp")+'</div>'+ btn("cc.back",""); },
+
+  childCard:function(){ return '<span class="tag">'+t("ck.tag")+'</span><h2>'+esc(D.guest)+'</h2>'+
+    rowEl("g",D.guest,"","guest")+
+    '<div class="sep"></div>'+ btn("ck.manage","pink")+ btn("ck.wishlist","ghost")+ btn("ck.stats","ghost")+ btn("ck.attach","ghost"); },
+
+  childWishlist:function(){ return '<span class="tag">'+t("wl.tag")+'</span><h2>'+t("wl.title",{name:esc(D.guest)})+'</h2>'+
+    '<p class="lead">'+t("wl.lead")+'</p>'+
+    '<div class="muted" style="margin:6px 0 2px;font-weight:800">'+t("wl.want")+'</div>'+
+    wishItem("🧱",t("wl.i1t"),t("wl.i1n"),true)+
+    wishItem("🛴",t("wl.i2t"),"",false)+
+    '<div class="muted" style="margin:13px 0 2px;font-weight:800">'+t("wl.think")+'</div>'+
+    wishItem("🎧",t("wl.i3t"),t("wl.i3n"),false)+
+    '<div class="muted" style="margin:13px 0 2px;font-weight:800">'+t("wl.bought")+'</div>'+
+    wishItem("📕",t("wl.i4t"),"",false)+
+    '<div class="note info">'+t("wl.priv")+'</div>'+ btn("cc.back","ghost"); },
+
+  resetChild:function(){ return '<span class="tag">'+t("ck.reset")+'</span><h2>'+t("rc.title")+'</h2>'+
+    '<div class="note ok">'+t("rc.note")+'</div>'+ btn("cc.back",""); },
+
+  stats:function(){ var bars=''; var hs=[40,70,55,90,60,80,50]; for(var i=0;i<7;i++) bars+='<i style="height:'+hs[i]+'%"></i>';
+    return '<span class="tag">'+t("ck.stats")+'</span><h2>'+t("st.title")+'</h2>'+
+    '<div class="note info">'+t("st.readonly")+'</div>'+
+    '<div class="stat" style="margin-top:12px"><div class="box"><div class="n">5</div><div class="l">'+t("st.streak")+'</div></div>'+
+    '<div class="box"><div class="n">120</div><div class="l">'+t("st.points")+'</div></div>'+
+    '<div class="box"><div class="n">23</div><div class="l">'+t("st.done")+'</div></div></div>'+
+    '<div class="muted" style="margin-top:14px;font-weight:800">'+t("st.week")+'</div><div class="bars">'+bars+'</div>'+ btn("cc.back","ghost"); },
+
+  inviteCo:function(){ return '<span class="tag">'+t("ic.tag")+'</span><h2>'+t("ic.title")+'</h2>'+
+    '<p class="lead">'+t("ic.lead")+'</p>'+ field("f.email",D.invemail)+ btn("ic.btn","pink"); },
+
+  inviteFriend:function(){ return '<span class="tag">'+t("if.tag")+'</span><h2>'+t("if.title")+'</h2>'+
+    '<p class="lead">'+t("if.lead")+'</p>'+ btn("if.btn","pink"); },
+
+  // Layout order: content → explanatory note → action buttons. The note must NOT sit
+  // between two buttons (that crams it against the glowing primary button — see CONTEXT log).
+  link:function(){ return '<span class="tag">'+t("lk.tag")+'</span><h2>'+t("lk.title")+'</h2>'+
+    '<p class="lead">'+t("lk.lead")+'</p>'+
+    '<div class="linkbox">'+esc(D.link)+'</div>'+
+    '<div class="note info">'+t("lk.sent")+'</div>'+
+    '<button class="btn ghost copy" data-copy="'+esc(D.link)+'">'+t("lk.copy")+'</button>'+
+    btn("cc.done",""); },
+
+  sent:function(){ return '<span class="tag">'+t("si.tag")+'</span><h2>'+t("si.title")+'</h2>'+
+    invRow(t("role.parent"),D.invemail,"pending")+
+    invRow(t("if.tag"),"",("accepted"))+
+    '<div class="sep"></div>'+ btn("cc.done","ghost"); },
+
+  landingChild:function(){ return '<span class="tag">'+t("la.tag")+'</span><h2>'+t("lac.title").replace("Mara",esc(D.friend))+'</h2>'+
+    '<p class="lead">'+t("lac.lead")+'</p>'+ field("f.nick","Sunny")+ btn("lac.btn","pink"); },
+
+  landingParent:function(){ return '<span class="tag">'+t("la.tag")+'</span><h2>'+t("lap.title")+'</h2>'+
+    '<p class="lead">'+t("lap.lead")+'</p>'+ field("f.nick","Mara")+ field("f.email",D.invemail)+ field("f.pass","••••••")+ btn("lap.btn","pink"); },
+
+  transfer:function(){ return '<span class="tag">'+t("tr.tag")+'</span><h2>'+t("tr.title")+'</h2>'+
+    '<p class="lead">'+t("tr.lead")+' '+info("tip.sever")+'</p>'+ btn("tr.btn","pink"); },
+
+  severed:function(){ return '<span class="tag">'+t("tr.tag")+'</span><div class="big">✓</div><h2 class="center">'+t("sv.title")+'</h2>'+
+    '<div class="note ok">'+t("sv.note")+'</div>'+ btn("cc.done",""); },
+
+  forgot:function(){ return '<span class="tag">'+t("fg.tag")+'</span><h2>'+t("fg.title")+'</h2>'+
+    '<p class="lead">'+t("fg.lead")+'</p>'+ field("f.email",D.pemail)+ btn("fg.btn","")+
+    '<div class="note info" style="margin-top:14px">'+t("fg.sent")+' '+info("n.forgot")+'</div>'; },
+
+  resetSent:function(){ return '<span class="tag">'+t("rs.tag")+'</span><h2>'+t("rs.title")+'</h2>'+
+    '<p class="lead">'+t("rs.lead")+'</p>'+
+    '<div class="mailcard"><div class="mh">📧 RobTop · '+esc(D.pemail)+'</div>'+
+      '<div class="mb">'+t("rs.mailsubj")+'<span class="lk">'+esc(D.rlink)+'</span></div></div>'+
+    btn("rs.open","pink"); },
+
+  reset:function(){ return '<span class="tag">'+t("fg.tag")+'</span><h2>'+t("rl.title")+'</h2>'+
+    '<p class="lead">'+t("rl.lead")+'</p>'+ field("fc.newpass","••••••")+ btn("rl.btn",""); },
+
+  childForgot:function(){ return '<span class="tag">'+t("fg.tag")+'</span><h2>'+t("chf.title")+'</h2>'+
+    '<p class="lead">'+t("chf.lead")+'</p>'+ btn("cta.back","ghost"); },
+
+  edgeNick:function(){ return '<span class="tag">'+t("ac.tag")+'</span><h2>'+t("en.title")+'</h2>'+
+    '<div class="field" style="border-color:rgba(255,77,109,.5)">Robik <span class="pill warn" style="margin-left:auto">'+t("en.title")+'</span></div>'+
+    '<p class="lead" style="margin-top:10px">'+t("en.lead")+'</p>'+
+    '<div class="row"><div class="nm">Robik2 · Robik_, · RobikX</div></div>'+ btn("en.btn",""); },
+
+  edgeExpired:function(){ return '<span class="tag">'+t("la.tag")+'</span><div class="big">⌛</div><h2 class="center">'+t("ee.title")+'</h2>'+
+    '<div class="note warn">'+t("ee.lead")+'</div>'+ btn("cta.back","ghost"); },
+
+  edgeDisabled:function(){ return '<span class="tag">'+t("login.tag")+'</span><div class="big">⛔</div><h2 class="center">'+t("ed.title")+'</h2>'+
+    '<div class="note warn">'+t("ed.lead")+'</div>'+ btn("cta.back","ghost"); },
+
+  edgeMail:function(){ return '<span class="tag">'+t("ic.tag")+'</span><h2>'+t("em.title")+'</h2>'+
+    '<div class="note info">'+t("em.lead")+'</div>'+ btn("em.btn","pink"); },
+
+  authExplain:function(){ return '<span class="tag">'+t("ax.tag")+'</span><h2>'+t("ax.title")+'</h2>'+
+    '<ul class="safelist">'+
+      '<li class="yes"><span class="ic">📧</span><div>'+t("ax.p1")+'</div></li>'+
+      '<li class="yes"><span class="ic">🙂</span><div>'+t("ax.p2")+'</div></li>'+
+      '<li class="tell"><span class="ic">🔑</span><div>'+t("ax.p3")+'</div></li>'+
+      '<li class="tell"><span class="ic">👪</span><div>'+t("ax.p4")+'</div></li>'+
+      '<li class="yes"><span class="ic">🛡</span><div>'+t("ax.p5")+'</div></li>'+
+    '</ul>'+ btn("ax.back","ghost"); },
+
+  childSafety:function(){ return '<span class="tag">'+t("sf.tag")+'</span><h2>'+t("sf.title")+'</h2>'+
+    '<p class="lead">'+t("sf.lead")+'</p>'+
+    '<ul class="safelist">'+
+      '<li class="no"><span class="ic">🚫</span><div>'+t("sf.no1")+'</div></li>'+
+      '<li class="no"><span class="ic">🚫</span><div>'+t("sf.no2")+'</div></li>'+
+      '<li class="yes"><span class="ic">✅</span><div>'+t("sf.yes1")+'</div></li>'+
+      '<li class="yes"><span class="ic">🔒</span><div>'+t("sf.private")+'</div></li>'+
+      '<li class="tell"><span class="ic">📣</span><div>'+t("sf.tell1")+'</div></li>'+
+      '<li class="yes"><span class="ic">💛</span><div>'+t("sf.be")+'</div></li>'+
+    '</ul>'+ btn("sf.btn","pink"); },
+
+  uploadGuard:function(){ return '<span class="tag">'+t("ug.tag")+'</span><h2>'+t("ug.title")+'</h2>'+
+    '<p class="lead">'+t("ug.lead")+'</p>'+
+    '<ul class="safelist">'+
+      '<li class="no"><span class="ic">🚫</span><div>'+t("sf.no1")+'</div></li>'+
+      '<li class="no"><span class="ic">🚫</span><div>'+t("sf.no2")+'</div></li>'+
+      '<li class="yes"><span class="ic">✅</span><div>'+t("sf.yes1")+'</div></li>'+
+      '<li class="yes"><span class="ic">🔒</span><div>'+t("sf.private")+'</div></li>'+
+    '</ul>'+ btn("ug.ok","")+ btn("ug.tell","danger"); },
+
+  reported:function(){ return '<span class="tag">'+t("rp.tag")+'</span><div class="big">🛡</div><h2 class="center">'+t("rp.title")+'</h2>'+
+    '<div class="note ok">'+t("rp.note")+'</div>'+ btn("rp.btn","ghost"); },
+
+  manageChild:function(){ return '<span class="tag">'+t("mg.tag")+'</span><h2>'+t("mg.title",{name:esc(D.guest)})+'</h2>'+
+    rowEl("g",D.guest,"","guest")+
+    '<div class="row"><div class="nm">'+t("mg.status")+'</div><span class="pill ok">'+t("st.active")+'</span></div>'+
+    '<div class="note info">'+t("mg.whocan")+'</div>'+
+    '<div class="sep"></div>'+ btn("mg.block","danger")+ btn("ck.reset","ghost")+ btn("ck.attach","ghost"); },
+
+  blockConfirm:function(){ return '<span class="tag">'+t("bc.tag")+'</span><h2>'+t("bc.title",{name:esc(D.guest)})+'</h2>'+
+    '<p class="lead">'+t("bc.lead")+'</p>'+ btn("bc.confirm","danger")+ btn("bc.cancel","ghost"); },
+
+  accountBlocked:function(){ return '<span class="tag">'+t("ab.tag")+'</span><div class="big">🔒</div><h2 class="center">'+t("ab.title",{name:esc(D.guest)})+'</h2>'+
+    '<div class="row"><div class="nm">'+t("mg.status")+'</div><span class="pill warn">'+t("st.blocked")+'</span></div>'+
+    '<div class="note warn">'+t("ab.note")+'</div>'+ btn("mg.unblock","")+ btn("ab.btn","ghost"); },
+
+  accountUnblocked:function(){ return '<span class="tag">'+t("mg.tag")+'</span><div class="big">✓</div><h2 class="center">'+t("au.title",{name:esc(D.guest)})+'</h2>'+
+    '<div class="row"><div class="nm">'+t("mg.status")+'</div><span class="pill ok">'+t("st.active")+'</span></div>'+
+    '<div class="note ok">'+t("au.note")+'</div>'+ btn("cc.done","ghost"); }
+};
+function wishItem(thumb,title,note,fav){
+  var sub = note ? '<small>'+esc(note)+'</small>' : '';
+  var star = fav ? '<span class="pill ok">'+t("wl.fav")+'</span>' : '';
+  return '<div class="row"><div class="av wlthumb">'+thumb+'</div><div class="nm">'+esc(title)+sub+'</div>'+star+'</div>';
+}
+function rowEl(av,name,sub,pillType){
+  var p = pillType==="pg"?'<span class="pill ok">'+t("role.pg")+'</span>'
+        : pillType==="tg"?'<span class="pill g">'+t("role.tg")+'</span>'
+        : pillType==="guest"?'<span class="pill g">'+t("tag.guest")+'</span>'
+        : '<span class="pill">'+t("role.child")+'</span>';
+  var subHtml = sub ? '<small>'+esc(sub)+'</small>' : '';
+  return '<div class="row"><div class="av '+(av==='p'?'p':av==='g'?'g':'')+'">'+esc(name.charAt(0))+'</div>'+
+    '<div class="nm">'+esc(name)+subHtml+'</div>'+p+'</div>';
+}
+function invRow(kind,email,status){
+  var cls = status==='pending'?'':status==='accepted'?'ok':'warn';
+  var stk = status==='pending'?t("st.pending"):status==='accepted'?t("st.accepted"):t("st.revoked");
+  var act = status==='pending'?'<button class="btn sm ghost" style="margin-left:6px">'+t("si.revoke")+'</button>':'';
+  return '<div class="row"><div class="nm">'+esc(kind)+(email?'<small>'+esc(email)+'</small>':'')+'</div><span class="pill '+cls+'">'+stk+'</span>'+act+'</div>';
+}
+
+/* ================= scenarios ================= */
+var SCN = [
+  {id:"onboardParent",grp:"grp.onboarding",steps:[["start","n.start","do.start"],["register","n.register","do.next"],["parentDash","n.parentDash","do.read"]]},
+  {id:"childFirst",grp:"grp.onboarding",steps:[["start","n.start","do.start"],["login","n.loginChild","do.next"],["forced","n.forced","do.next"],["childSafety","n.childSafety","do.safety"],["childDash","n.childDash","do.read"]]},
+  {id:"authExplain",grp:"grp.onboarding",steps:[["authExplain","n.authExplain","do.explainBack"]]},
+  {id:"addChild",grp:"grp.family",steps:[["parentDash","n.parentDash","do.read"],["addChild","n.addChild","do.next"],["childCreated","n.childCreated","do.read"],["parentDash","n.parentDash","do.done"]]},
+  {id:"viewStats",grp:"grp.family",steps:[["parentDash","n.parentDash","do.read"],["childCard","n.childCard","do.card"],["stats","n.stats","do.done"]]},
+  {id:"viewWishlist",grp:"grp.family",steps:[["parentDash","n.parentDash","do.read"],["childCard","n.childCard","do.card"],["childWishlist","n.wishlist","do.read"]]},
+  {id:"manageChild",grp:"grp.manage",steps:[["parentDash","n.parentDash","do.read"],["childCard","n.childCard","do.card"],["manageChild","n.manageChild","do.manageHub"]]},
+  {id:"blockChild",grp:"grp.manage",steps:[["childCard","n.childCard","do.card"],["manageChild","n.manageChild","do.tapBlock"],["blockConfirm","n.blockConfirm","do.read"],["accountBlocked","n.accountBlocked","do.done"]]},
+  {id:"unblockChild",grp:"grp.manage",steps:[["accountBlocked","n.accountBlocked","do.card"],["accountUnblocked","n.accountUnblocked","do.done"]]},
+  {id:"childSafety",grp:"grp.safety",steps:[["childSafety","n.childSafety","do.safety"]]},
+  {id:"uploadSafety",grp:"grp.safety",steps:[["childDash","n.childDash","do.child"],["uploadGuard","n.uploadGuard","do.uploadGuard"],["reported","n.reported","do.done"]]},
+  {id:"resetChild",grp:"grp.passwords",steps:[["parentDash","n.parentDash","do.read"],["childCard","n.childCard","do.card"],["manageChild","n.manageChild","do.tapReset"],["resetChild","n.resetChild","do.read"],["login","n.loginChild","do.next"],["forced","n.forced","do.enterNew"],["childDash","n.childDash","do.done"]]},
+  {id:"inviteCoparent",grp:"grp.invites",steps:[["parentDash","n.parentDash","do.read"],["inviteCo","n.inviteCo","do.next"],["link","n.link","do.copy"],["sent","n.sent","do.done"]]},
+  {id:"childInvite",grp:"grp.invites",steps:[["childDash","n.childDash","do.child"],["inviteFriend","n.inviteFriend","do.read"],["link","n.link","do.copy"]]},
+  {id:"acceptChild",grp:"grp.guardianship",steps:[["landingChild","n.landingChild","do.next"],["forced","n.forced","do.next"],["childSafety","n.childSafety","do.safety"],["childDash","n.childDash","do.done"]]},
+  {id:"transfer",grp:"grp.guardianship",steps:[["childCard","n.childCard","do.card"],["inviteCo","n.inviteCo","do.next"],["link","n.link","do.copy"],["landingParent","n.landingParent","do.next"],["transfer","n.transfer","do.read"],["severed","n.severed","do.done"]]},
+  {id:"lifecycle",grp:"grp.invites",steps:[["sent","n.sent","do.read"]]},
+  {id:"parentForgot",grp:"grp.passwords",steps:[["start","n.start","do.start"],["forgot","n.forgot","do.next"],["resetSent","n.resetSent","do.read"],["reset","n.reset","do.next"],["login","n.loginChild","do.done"]]},
+  {id:"childForgot",grp:"grp.passwords",steps:[["login","n.loginChild","do.next"],["childForgot","n.childForgot","do.read"],["childCard","n.childCard","do.card"],["resetChild","n.resetChild","do.done"]]},
+  {id:"edgeNick",grp:"grp.edge",steps:[["addChild","n.addChild","do.next"],["edgeNick","n.edgeNick","do.read"]]},
+  {id:"edgeExpired",grp:"grp.edge",steps:[["edgeExpired","n.edgeExpired","do.read"]]},
+  {id:"edgeDisabled",grp:"grp.edge",steps:[["login","n.loginChild","do.next"],["edgeDisabled","n.edgeDisabled","do.read"]]},
+  {id:"edgeMail",grp:"grp.edge",steps:[["inviteCo","n.inviteCo","do.next"],["edgeMail","n.edgeMail","do.read"]]}
+];
+
+/* ================= state + render ================= */
+var cur = 0, step = 0;
+
+function renderLang(){
+  var box = document.getElementById("lang"); box.innerHTML="";
+  ["en","ru","lv"].forEach(function(l){
+    var b=document.createElement("button"); b.textContent=l.toUpperCase(); if(l===lang) b.className="on";
+    b.onclick=function(){ lang=l; renderAll(); }; box.appendChild(b);
+  });
+}
+function renderSide(){
+  var side=document.getElementById("side"); side.innerHTML="";
+  var groups=["grp.onboarding","grp.safety","grp.family","grp.manage","grp.invites","grp.guardianship","grp.passwords","grp.edge"];
+  groups.forEach(function(g){
+    var h=document.createElement("div"); h.className="grp"; h.textContent=t(g); side.appendChild(h);
+    SCN.forEach(function(s,i){ if(s.grp!==g) return;
+      var b=document.createElement("button"); b.className="scn"+(i===cur?" on":""); b.textContent=t("scn."+s.id);
+      b.onclick=function(){ cur=i; step=0; renderStage(); renderSide(); }; side.appendChild(b);
+    });
+  });
+}
+function renderCrumbs(){
+  var c=document.getElementById("crumbs"); c.innerHTML=""; var steps=SCN[cur].steps;
+  steps.forEach(function(st,i){
+    var b=document.createElement("button"); b.className="crumb"+(i===step?" on":i<step?" done":"");
+    b.textContent=(i+1); b.title=t(SCREENS[st[0]]?("scn."+SCN[cur].id):""); b.onclick=function(){ step=i; renderStage(); };
+    c.appendChild(b);
+  });
+}
+function scnIndex(id){ for(var i=0;i<SCN.length;i++){ if(SCN[i].id===id) return i; } return -1; }
+function renderStage(){
+  var sc=SCN[cur].steps[step]; var screenId=sc[0], noteKey=sc[1], doKey=sc[2]||"do.read";
+  var el=document.getElementById("screen");
+  el.className="screen"; void el.offsetWidth;
+  el.innerHTML='<div class="nub"></div><div class="scr scr-anim">'+(SCREENS[screenId]?SCREENS[screenId]():"")+'</div>';
+  document.getElementById("pos").textContent=(step+1)+" / "+SCN[cur].steps.length;
+  document.getElementById("back").disabled=(step===0);
+  document.getElementById("next").disabled=(step===SCN[cur].steps.length-1);
+  document.getElementById("whatsT").textContent=t(noteKey);
+  document.getElementById("whatsDo").innerHTML='<b>'+t("ui.do")+':</b> '+esc(t(doKey));
+  // jump-to-scenario buttons (e.g. "How sign-in works") — handle BEFORE advance
+  Array.prototype.forEach.call(el.querySelectorAll("[data-scn]"),function(b){ b.addEventListener("click",function(e){
+    e.stopPropagation(); var idx=scnIndex(b.getAttribute("data-scn")); if(idx>=0){ cur=idx; step=0; renderStage(); renderSide(); }
+  }); });
+  // advance buttons
+  Array.prototype.forEach.call(el.querySelectorAll(".adv"),function(b){ b.addEventListener("click",function(e){
+    if(b.classList.contains("info")||b.hasAttribute("data-scn")) return; next();
+  }); });
+  // info chips
+  Array.prototype.forEach.call(el.querySelectorAll(".info"),function(b){ b.addEventListener("click",function(e){
+    e.stopPropagation(); showPop(b, t(b.getAttribute("data-tip")));
+  }); });
+  // copy buttons (do not advance)
+  Array.prototype.forEach.call(el.querySelectorAll(".copy"),function(b){ b.addEventListener("click",function(e){
+    e.stopPropagation();
+    try{ if(navigator.clipboard) navigator.clipboard.writeText(b.getAttribute("data-copy")); }catch(_){}
+    b.textContent=t("lk.copied");
+  }); });
+  renderCrumbs();
+}
+function next(){ if(step<SCN[cur].steps.length-1){ step++; renderStage(); } }
+function back(){ if(step>0){ step--; renderStage(); } }
+
+function showPop(anchor,text){
+  var pop=document.getElementById("pop");
+  if(pop.style.display==="block" && pop._a===anchor){ pop.style.display="none"; return; }
+  pop.textContent=text; pop.style.display="block"; pop._a=anchor;
+  var r=anchor.getBoundingClientRect();
+  var top=r.bottom+8+window.scrollY, left=Math.min(r.left+window.scrollX, window.innerWidth-260);
+  pop.style.top=top+"px"; pop.style.left=Math.max(10,left)+"px";
+}
+document.addEventListener("click",function(e){ var pop=document.getElementById("pop");
+  if(pop.style.display==="block" && !pop.contains(e.target) && !(e.target.classList&&e.target.classList.contains("info"))) pop.style.display="none"; });
+
+function renderChrome(){
+  document.getElementById("subt").textContent=t("ui.sub");
+  document.getElementById("demoBadge").textContent=t("ui.demo");
+  document.getElementById("backL").textContent=t("ui.back");
+  document.getElementById("nextL").textContent=t("ui.next");
+  document.getElementById("whatsH").textContent=t("ui.whats");
+  document.getElementById("foot").textContent=t("ui.foot");
+  document.documentElement.lang=lang;
+}
+function renderAll(){ renderChrome(); renderLang(); renderSide(); renderStage(); }
+
+document.getElementById("back").onclick=back;
+document.getElementById("next").onclick=next;
+renderAll();
+</script>
+</body>
+</html>
