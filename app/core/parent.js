@@ -496,6 +496,7 @@ window.RobTop = window.RobTop || {};
         +esc(t("parent.noChild.p"))+'</div>'
         +'<div style="text-align:center;margin-top:14px"><button class="btn btn-primary" id="pdSet" style="max-width:260px;margin:0 auto">'+esc(t("parent.noChild.btn"))+'</button></div></div>';
       var sb=root.querySelector("#pdSet"); if(sb) sb.onclick=function(){ if(RT._shell.openSettings) RT._shell.openSettings(); };
+      var g2=root.querySelector("#pdGear2"); if(g2) g2.onclick=function(){ if(RT._shell.openSettings) RT._shell.openSettings(); }; // шестерёнка работала только при полном рендере
       return;
     }
     if(!S.data){ root.innerHTML=""; return; }

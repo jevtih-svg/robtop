@@ -28,7 +28,7 @@ body{
 @keyframes viewin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
 /* ===================== HOME ===================== */
-#home{padding-bottom:130px}
+#home{padding-bottom:46px}
 .hometop{padding:calc(30px + env(safe-area-inset-top)) 6px 14px;position:relative}
 .brand{font-family:'Russo One',sans-serif;font-size:40px;letter-spacing:1px;line-height:1;margin:0;color:#fff;
   text-shadow:0 0 12px rgba(25,227,255,.7), 0 0 28px rgba(255,43,214,.6)}
@@ -41,6 +41,10 @@ body{
 .gear:active{transform:scale(.93)}
 
 .apps{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:18px}
+/* разделитель «Скоро» между активными и будущими плитками */
+.apps-sep{grid-column:1 / -1;display:flex;align-items:center;gap:10px;margin:8px 2px 0;
+  font-weight:800;font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:#90a2c6}
+.apps-sep::before,.apps-sep::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.1)}
 .tile{position:relative;display:flex;flex-direction:column;gap:11px;align-items:flex-start;
   border-radius:20px;padding:17px 15px;cursor:pointer;text-align:left;font-family:inherit;color:var(--ink);
   background:linear-gradient(162deg, rgba(26,23,56,.72), rgba(11,10,28,.74));
@@ -75,6 +79,10 @@ body{
 .back svg,.hbtn svg{width:22px;height:22px}
 
 /* ===================== HUD ===================== */
+/* HUD — поверхность модулей (их счётчики). На главном, lock и в настройках скрыт:
+   числа «приложений/доступно» ценности не несли. */
+body[data-view="home"] .hud,body[data-view="lock"] .hud,body[data-view="settings"] .hud{display:none}
+body[data-view="settings"] .fab{display:none}
 .hud{position:fixed;left:0;right:0;bottom:0;z-index:14;pointer-events:none;
   max-width:480px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;
   padding:0 22px calc(16px + env(safe-area-inset-bottom));
@@ -180,15 +188,21 @@ body.demo .demo-badge{display:block}
   color:var(--ink);background:rgba(255,255,255,.04);outline:none;transition:border-color .15s, box-shadow .15s}
 .pin-row input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(25,227,255,.18)}
 
-/* ===================== ЯЗЫК (настройки) ===================== */
-.lang-row{display:flex;flex-direction:column;gap:8px;margin-top:6px}
-.lang-opt{display:flex;align-items:center;justify-content:space-between;width:100%;cursor:pointer;
-  border-radius:14px;padding:13px 16px;font-family:inherit;font-weight:700;font-size:16px;color:#e7eeff;
-  background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.12);
-  transition:border-color .15s, box-shadow .15s, transform .1s}
-.lang-opt:active{transform:scale(.98)}
-.lang-opt.on{border-color:var(--cyan);color:#fff;box-shadow:0 0 0 3px rgba(25,227,255,.16), 0 0 18px -6px var(--cyan)}
-.lang-opt.on::after{content:"✓";color:var(--cyan);font-weight:800;font-size:18px}
+/* ===================== ЭКРАН НАСТРОЕК (#settings) ===================== */
+#settings{padding-bottom:46px}
+.set-top{display:flex;align-items:center;gap:12px;padding:calc(26px + env(safe-area-inset-top)) 0 8px}
+.set-top h1{font-family:'Russo One',sans-serif;font-weight:400;font-size:23px;margin:0;color:#fff;
+  text-shadow:0 0 12px rgba(255,61,176,.6)}
+/* язык: сегмент-контрол в одну строку вместо стопки кнопок */
+.lang-seg{display:flex;gap:6px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.12);
+  border-radius:16px;padding:5px;margin-top:6px}
+.lang-seg button{flex:1;min-width:0;border:none;background:none;cursor:pointer;border-radius:12px;
+  font-family:inherit;font-weight:700;font-size:13.5px;color:#cfe0ff;padding:11px 4px;transition:.15s}
+.lang-seg button:active{transform:scale(.97)}
+.lang-seg button.on{color:#fff;background:rgba(25,227,255,.13);
+  box-shadow:inset 0 0 0 1.5px var(--cyan), 0 0 16px -6px var(--cyan)}
+/* «Выйти» — внизу экрана, отдельно от остального */
+.set-out{width:100%;margin-top:28px;flex:none}
 
 /* ===================== ЭКРАН ВХОДА (lock) ===================== */
 #lock{padding-bottom:60px}
