@@ -65,7 +65,7 @@ window.RobTop = window.RobTop || {};
     {id:"mood",name:"Mood of the Day",color:"#ffd23b",status:"active",source:"native",sort:30},
     {id:"teeth",name:"Toothbrushing Timer",color:"#19e3ff",status:"active",source:"native",sort:40},
     {id:"guess",name:"Guess the Number",color:"#a64bff",status:"active",source:"native",sort:50},
-    {id:"names",name:"Funny Names",color:"#38e8a0",status:"soon",source:"native",sort:60},
+    {id:"names",name:"Funny Names",color:"#38e8a0",status:"active",source:"native",sort:60},
     {id:"days",name:"Day Counter",color:"#3b6bff",status:"soon",source:"native",sort:70},
     {id:"find",name:"Find the Object",color:"#19e3ff",status:"soon",source:"native",sort:80},
     {id:"museum",name:"Home Museum",color:"#c0a0ff",status:"soon",source:"native",sort:90},

@@ -152,7 +152,7 @@ INSERT INTO modules (id, name, version, manifest, source, trusted, server, enabl
  ('mood','Настроение дня','1.0.0','{"color":"#ffd23b","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,30),
  ('teeth','Таймер чистки зубов','1.0.0','{"color":"#19e3ff","status":"active","roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,40),
  ('guess','Угадай число','1.0.0','{"color":"#a64bff","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,50),
- ('names','Смешные имена','1.0.0','{"color":"#38e8a0","status":"soon"}','native',1,0,1,60),
+ ('names','Смешные имена','1.0.0','{"color":"#38e8a0","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,60),
  ('days','Счётчик дней','1.0.0','{"color":"#3b6bff","status":"soon"}','native',1,0,1,70),
  ('find','Найти предмет','1.0.0','{"color":"#19e3ff","status":"soon"}','native',1,0,1,80),
  ('museum','Домашний музей','1.0.0','{"color":"#c0a0ff","status":"soon"}','native',1,0,1,90),

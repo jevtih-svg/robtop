@@ -1,0 +1,79 @@
+/* RobTop — модуль «Смешные имена». Скоуп [data-mod="names"], классы fn-*. Акцент — мятный var(--mint). */
+[data-mod="names"] .fn{padding-bottom:140px}
+[data-mod="names"] .fn-header{display:flex;align-items:center;gap:12px;padding:calc(20px + env(safe-area-inset-top)) 2px 8px}
+[data-mod="names"] .fn-head-main{flex:1;min-width:0}
+[data-mod="names"] .fn-title{font-family:var(--font-display);font-size:24px;color:#fff;
+  text-shadow:0 0 12px color-mix(in srgb,var(--mint) 80%,transparent), 0 0 26px color-mix(in srgb,var(--mint) 40%,transparent)}
+[data-mod="names"] .fn-sub{margin:0;color:var(--muted);font-weight:600;font-size:13px}
+
+/* карточка с именем */
+[data-mod="names"] .fn-card{position:relative;margin-top:14px;border-radius:22px;padding:20px 16px 18px;text-align:center;
+  background:linear-gradient(165deg, rgba(var(--panel-rgb),.6), rgba(var(--panel-rgb),.92));
+  border:1.5px solid color-mix(in srgb,var(--mint) 45%,transparent);box-shadow:0 12px 30px rgba(0,0,0,.5), 0 0 28px -10px var(--mint)}
+[data-mod="names"] .fn-hint{color:var(--muted-2);font-weight:600;font-size:13px;margin:0 0 8px}
+[data-mod="names"] .fn-note{color:var(--muted-2);font-weight:600;font-size:14px;margin:0;text-align:center}
+[data-mod="names"] .fn-name{font-family:var(--font-display);font-size:36px;line-height:1.15;color:var(--green-soft);
+  margin:6px 4px 4px;word-wrap:break-word;
+  text-shadow:0 0 14px color-mix(in srgb,var(--mint) 70%,transparent), 0 0 34px color-mix(in srgb,var(--mint) 35%,transparent)}
+[data-mod="names"] .fn-name.long{font-size:29px}
+[data-mod="names"] .fn-name.pop{animation:fn-pop .3s ease}
+@keyframes fn-pop{0%{transform:scale(.82);opacity:.4}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+[data-mod="names"] .fn-num{color:var(--muted-dim);font-weight:700;font-size:11px;letter-spacing:.4px;text-transform:uppercase;margin:0 0 6px}
+
+/* два смайлика */
+[data-mod="names"] .fn-btns{display:flex;gap:18px;justify-content:center;margin-top:10px}
+[data-mod="names"] .fn-emoji{width:104px;min-height:96px;border-radius:20px;border:2px solid transparent;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  background:rgba(var(--panel-rgb),.85);font-size:44px;line-height:1;-webkit-tap-highlight-color:transparent;
+  transition:transform .12s ease, box-shadow .15s ease, border-color .15s ease}
+[data-mod="names"] .fn-emoji:active{transform:scale(.92)}
+[data-mod="names"] .fn-emoji .cap{font-family:var(--font-body);font-size:12.5px;font-weight:800}
+[data-mod="names"] .fn-emoji.funny{border-color:color-mix(in srgb,var(--mint) 60%,transparent);
+  box-shadow:0 0 16px -4px var(--mint), inset 0 0 18px color-mix(in srgb,var(--mint) 12%,transparent)}
+[data-mod="names"] .fn-emoji.funny .cap{color:var(--green-soft)}
+[data-mod="names"] .fn-emoji.sad{border-color:color-mix(in srgb,var(--blue) 55%,transparent);
+  box-shadow:0 0 16px -6px var(--blue), inset 0 0 18px color-mix(in srgb,var(--blue) 10%,transparent)}
+[data-mod="names"] .fn-emoji.sad .cap{color:var(--muted-2)}
+[data-mod="names"] .fn-emoji[disabled]{opacity:.5;pointer-events:none}
+
+/* имена закончились */
+[data-mod="names"] .fn-done-emoji{font-size:52px;line-height:1;margin:2px 0 8px}
+[data-mod="names"] .fn-done-title{font-family:var(--font-display);font-size:22px;color:var(--gold-soft);margin:0 0 6px;
+  text-shadow:0 0 12px color-mix(in srgb,var(--gold) 60%,transparent)}
+
+/* статистика (3 плашки) */
+[data-mod="names"] .fn-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+[data-mod="names"] .fn-stat{border-radius:16px;padding:10px 6px 8px;text-align:center;
+  background:rgba(var(--panel-rgb),.8);border:1.5px solid color-mix(in srgb,var(--mint) 22%,transparent)}
+[data-mod="names"] .fn-stat .n{font-family:var(--font-display);font-size:24px;color:#fff}
+[data-mod="names"] .fn-stat .l{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+[data-mod="names"] .fn-stat.funny .n{color:var(--green-soft);text-shadow:0 0 10px color-mix(in srgb,var(--mint) 65%,transparent)}
+[data-mod="names"] .fn-stat.sad .n{color:var(--muted-2)}
+[data-mod="names"] .fn-stat.total .n{color:var(--gold-soft);text-shadow:0 0 10px color-mix(in srgb,var(--gold) 55%,transparent)}
+
+/* история: две вкладки */
+[data-mod="names"] .fn-tabs{display:flex;gap:8px;margin:4px 0 10px}
+[data-mod="names"] .fn-tab{flex:1;min-height:44px;border-radius:14px;border:1.5px solid color-mix(in srgb,var(--mint) 25%,transparent);
+  background:rgba(var(--panel-rgb),.8);color:var(--muted-2);font-family:var(--font-body);font-weight:800;font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;-webkit-tap-highlight-color:transparent}
+[data-mod="names"] .fn-tab .n{font-family:var(--font-display);font-size:13px;min-width:26px;padding:2px 7px;border-radius:999px;
+  background:color-mix(in srgb,var(--mint) 14%,transparent);color:var(--green-soft)}
+[data-mod="names"] .fn-tab.active{color:#fff;border-color:color-mix(in srgb,var(--mint) 70%,transparent);
+  box-shadow:0 0 14px -4px var(--mint), inset 0 0 16px color-mix(in srgb,var(--mint) 10%,transparent)}
+[data-mod="names"] .fn-tab.sad .n{background:color-mix(in srgb,var(--blue) 16%,transparent);color:var(--muted-2)}
+[data-mod="names"] .fn-tab.sad.active{border-color:color-mix(in srgb,var(--blue) 60%,transparent);box-shadow:0 0 14px -5px var(--blue), inset 0 0 16px color-mix(in srgb,var(--blue) 9%,transparent)}
+
+/* список истории */
+[data-mod="names"] .fn-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;margin-bottom:8px;
+  background:rgba(var(--panel-rgb),.75);border:1px solid color-mix(in srgb,var(--mint) 14%,transparent)}
+[data-mod="names"] .fn-row .em{font-size:24px;line-height:1}
+[data-mod="names"] .fn-row .nm{flex:1;min-width:0;font-family:var(--font-display);font-size:17px;color:var(--ink);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+[data-mod="names"] .fn-row .when{text-align:right;color:var(--muted);font-size:11.5px;font-weight:600;line-height:1.35}
+[data-mod="names"] .fn-row .when small{display:block;color:var(--muted-dim)}
+[data-mod="names"] .fn-empty{padding:18px 12px;text-align:center;color:var(--muted);font-weight:600;font-size:13.5px;
+  border:1.5px dashed color-mix(in srgb,var(--mint) 28%,transparent);border-radius:16px}
+
+@media (prefers-reduced-motion: reduce){
+  [data-mod="names"] .fn-name.pop{animation:none}
+}
