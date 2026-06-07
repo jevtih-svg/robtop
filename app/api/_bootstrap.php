@@ -98,6 +98,32 @@ function rt_family_child_uid($db, $pid) {
 }
 
 /**
+ * ВСЕ дети родителя: прямые опекунства + дети его семей (объединение, как в sync.php).
+ * Используется реордером магазина (сброс личных tile_order семьи). Пустой массив — детей нет.
+ */
+function rt_family_children_uids($db, $pid) {
+    $ids = [];
+    try {
+        $s = $db->prepare(
+            "SELECT child_user_id AS id FROM guardianships
+             WHERE guardian_user_id = ? AND status = 'active'"
+        );
+        $s->execute([$pid]);
+        foreach ($s->fetchAll() as $r) $ids[] = (int)$r['id'];
+        $s = $db->prepare(
+            "SELECT fm2.user_id AS id
+             FROM family_members fm1
+             JOIN family_members fm2 ON fm1.family_id = fm2.family_id
+             WHERE fm1.user_id = ? AND fm1.role IN ('owner','parent') AND fm1.status='active'
+               AND fm2.role = 'child' AND fm2.status='active'"
+        );
+        $s->execute([$pid]);
+        foreach ($s->fetchAll() as $r) $ids[] = (int)$r['id'];
+    } catch (Throwable $e) { /* нет таблиц семьи — пусто */ }
+    return array_values(array_unique(array_map('intval', $ids)));
+}
+
+/**
  * ОБЩЕСЕМЕЙНЫЙ пул (манифест "familyPool":true, напр. walk): канонический владелец данных
  * для ЛЮБОГО участника семьи — первый активный ребёнок СЕМЬИ пользователя (и для детей тоже:
  * второй ребёнок пишет и читает в том же пуле, что и первый). Вне семьи: для родителя —

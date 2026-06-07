@@ -411,13 +411,26 @@ window.RobTop = window.RobTop || {};
     }
     h+='<div class="pd-sect">'+esc(t("parent.sect.activity"))+'</div><div class="pd-card">'
       +'<div class="pd-chart">'+bars+'</div><div class="pd-chart-x">'+labels+'</div></div>';
-    /* приложения: осмысленная строка по каждому (карточки = единственный блок) */
+    /* приложения: осмысленная строка по каждому (карточки = единственный блок).
+       Единый проход по реестру В ЕГО ПОРЯДКЕ (личный tile_order уже применён registry.php):
+       bank — внутри прохода, НЕ дорисовывается последним (фикс «реордер не сохраняется»:
+       прежний хвост ломал сохранённую позицию Копилки при каждой перерисовке).
+       Копилка: спец-карточка (bank в SKIP_MOD — скрыт из метрик/журнала, но родителю нужен
+       вход к заданиям и подтверждениям). Тап открывает САМ модуль через RobTop.open —
+       прецедент walk. Строка: «⏳ ждут проверки: N» (bank/tasks), иначе пункты+винстрик. */
     var items=(data.items||[]), wWant=0,wBought=0;
     items.forEach(function(w){ if(w.status==="want")wWant++; if(w.status==="bought")wBought++; });
     h+='<div class="pd-sect">'+esc(t("parent.sect.byApp"))+'</div>';
-    activeMods().forEach(function(m){
+    (RT._registry||[]).filter(function(m){
+      return m.status==="active" && (m.id==="bank" || !SKIP_MOD[m.id]);
+    }).forEach(function(m){
       var line;
-      if(m.id==="wishlist") line=t("parent.sum.wishlist",{total:items.length,want:wWant,bought:wBought});
+      if(m.id==="bank"){
+        var pend=bankPending();
+        line=pend>0 ? t("parent.sum.bankTasks",{n:pend})
+                    : t("parent.sum.bank",{p:(data.points||0),s:(data.streak||0)});
+      }
+      else if(m.id==="wishlist") line=t("parent.sum.wishlist",{total:items.length,want:wWant,bought:wBought});
       else if(m.id==="teeth") line=a.teethN?t("parent.sum.teeth",{n:a.streak,c:a.teethN}):t("parent.sum.none");
       else if(m.id==="rating") line=a.rated?t("parent.sum.rating",{avg:a.avg,c:a.rated}):t("parent.sum.none");
       else if(m.id==="mood") line=a.topMood?t("parent.sum.mood",{e:MOOD_E[a.topMood]||"🙂",name:t("parent.mood."+a.topMood,{fallback:a.topMood}),c:a.topMoodN}):t("parent.sum.none");
@@ -430,20 +443,6 @@ window.RobTop = window.RobTop || {};
         +'<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>'
         +'</button>';
     });
-    /* Копилка: спец-карточка (bank в SKIP_MOD — скрыт из метрик/журнала, но родителю нужен
-       вход к заданиям и подтверждениям). Тап открывает САМ модуль через RobTop.open —
-       прецедент walk: родитель видит то же, что ребёнок, плюс свои кнопки (задания, панель).
-       Строка: «⏳ ждут проверки: N» (bank/tasks из content), иначе пункты+винстрик. */
-    if(RT.metaFor && RT.metaFor("bank")){
-      var pend=bankPending();
-      var bline=pend>0 ? t("parent.sum.bankTasks",{n:pend})
-                       : t("parent.sum.bank",{p:(data.points||0),s:(data.streak||0)});
-      h+='<button class="pd-mcard" data-mod="bank" style="--mc:'+esc(modColor("bank"))+'">'
-        +'<span class="ic">'+modIcon("bank")+'</span>'
-        +'<span class="tx"><span class="t1">'+esc(modName("bank"))+'</span><span class="t2">'+esc(bline)+'</span></span>'
-        +'<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>'
-        +'</button>';
-    }
     /* заметки */
     var ins=[];
     if(a.streak>=3) ins.push({e:"🔥",x:t("parent.ins.streak",{n:a.streak})});
