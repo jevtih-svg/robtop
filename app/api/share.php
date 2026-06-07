@@ -209,6 +209,8 @@ switch ($op) {
             'link'  => rt_app_url(''),
         ]);
         rt_log('wishlist', 'share_request', null, $u['nickname'], null, null, ['to_parent' => $gid]);
+        // оповещение родителю (ГАЙД-оповещения.md): включение — в настройках, в карточке ребёнка
+        rt_notify($gid, 'wishlist', 'share_request', ['child' => $u['nickname']], ['view' => 'settings'], $cid);
         rt_json(['ok' => !empty($res['ok']), 'sent' => !empty($res['ok'])]);
     }
 
@@ -235,6 +237,9 @@ switch ($op) {
              ON DUPLICATE KEY UPDATE revoked_at = NULL"
         )->execute([$cid, (int)$target['id']]);
         rt_log('wishlist', 'share_grant', null, $target['nickname'], null, null, ['grantee' => (int)$target['id']]);
+        // оповещение получателю доступа: ребёнку — в Виш-лист (👥), родителю — в настройки
+        rt_notify((int)$target['id'], 'wishlist', 'share_grant', ['child' => $u['nickname']],
+                  ($target['kind'] === 'child') ? ['module' => 'wishlist'] : ['view' => 'settings'], $cid);
         rt_json(['ok' => true, 'nickname' => $target['nickname']]);
     }
 

@@ -4,6 +4,7 @@
 require __DIR__ . '/_db.php';
 require_once __DIR__ . '/_mail.php';
 require_once __DIR__ . '/_accounts.php';
+require_once __DIR__ . '/_push.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
@@ -213,4 +214,64 @@ function rt_role_can($mod, $action, $role) {
         ? $man['roles'][$action]
         : ($action === 'read' ? ['child','parent'] : ['child']);
     return in_array($role, $roles, true);
+}
+
+/* ---------- Оповещения (ядро, миграция 020; канон — ГАЙД-оповещения.md) ---------- */
+/**
+ * Создать оповещение получателю. НИКОГДА не ломает основную операцию (всё в try/catch,
+ * при ошибке просто false) — вызывай fire-and-forget после успешного основного действия.
+ * $params — массив параметров i18n-шаблона клиента (ключ ntf.ev.<src>.<type> в core/notify.js);
+ * $link — переход по тапу: ['module'=>'bank'] | ['module'=>'wishlist','item'=>'12']
+ *         | ['view'=>'ticket','id'=>5] | ['view'=>'settings']. null — без перехода.
+ * Себе оповещение не пишется ($actorId === $toUid). Кап: у получателя живут только
+ * последние 100 строк — старые удаляются прямо здесь, отдельной чистки не нужно.
+ */
+function rt_notify($toUid, $src, $type, $params = null, $link = null, $actorId = null) {
+    try {
+        $toUid = (int)$toUid;
+        if ($toUid <= 0) return false;
+        if ($actorId !== null && (int)$actorId === $toUid) return false;
+        $db = rt_db();
+        $db->prepare(
+            "INSERT INTO notifications (user_id, actor_id, src, type, params, link, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, NOW())"
+        )->execute([
+            $toUid,
+            $actorId !== null ? (int)$actorId : null,
+            mb_substr((string)$src, 0, 40),
+            mb_substr((string)$type, 0, 40),
+            $params !== null ? json_encode($params, JSON_UNESCAPED_UNICODE) : null,
+            $link !== null ? json_encode($link, JSON_UNESCAPED_UNICODE) : null,
+        ]);
+        $s = $db->prepare("SELECT id FROM notifications WHERE user_id = ? ORDER BY id DESC LIMIT 1 OFFSET 99");
+        $s->execute([$toUid]);
+        $min = $s->fetchColumn();
+        if ($min) $db->prepare("DELETE FROM notifications WHERE user_id = ? AND id < ?")->execute([$toUid, (int)$min]);
+        // web push «звонком» на устройства получателя (no-op, пока vapid не настроен в config)
+        if (function_exists('rt_push_user')) rt_push_user($toUid);
+        return true;
+    } catch (Throwable $e) { return false; }
+}
+
+/**
+ * Родители ребёнка (адресат "parents" в notify.php и серверные источники):
+ * активные опекуны (guardianships) + родители/владельцы его семьи. Без дублей.
+ */
+function rt_child_parents($db, $cid) {
+    $ids = [];
+    try {
+        $s = $db->prepare("SELECT guardian_user_id AS id FROM guardianships WHERE child_user_id = ? AND status = 'active'");
+        $s->execute([(int)$cid]);
+        foreach ($s->fetchAll() as $r) $ids[] = (int)$r['id'];
+        $s = $db->prepare(
+            "SELECT fm2.user_id AS id
+             FROM family_members fm1
+             JOIN family_members fm2 ON fm1.family_id = fm2.family_id
+             WHERE fm1.user_id = ? AND fm1.role = 'child' AND fm1.status = 'active'
+               AND fm2.role IN ('owner','parent') AND fm2.status = 'active'"
+        );
+        $s->execute([(int)$cid]);
+        foreach ($s->fetchAll() as $r) $ids[] = (int)$r['id'];
+    } catch (Throwable $e) { /* нет таблиц семьи — пусто */ }
+    return array_values(array_unique(array_map('intval', $ids)));
 }

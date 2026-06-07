@@ -94,4 +94,16 @@ try {
     if ($html && preg_match('/window\.RT_VER\s*=\s*"([^"]+)"/', $html, $m)) $ver = $m[1];
 } catch (Throwable $e) {}
 
-rt_json(['ok' => true, 'data' => $data, 'reg' => $reg, 'ver' => $ver]);
+/* ---- оповещения ТЕКУЩЕГО аккаунта (core/notify.js): сырые значения, не хэш ----
+   n — непрочитанных (бейдж колокольчика без лишнего запроса), m — MAX(id) непрочитанных
+   (рост m = пришло новое → клиент тянет list и показывает баннер). Скоуп — строго
+   сессионный пользователь: оповещения личные, семейный пул здесь ни при чём. */
+$ntf = ['n' => 0, 'm' => 0];
+try {
+    $s = $db->prepare("SELECT COUNT(*) n, COALESCE(MAX(id),0) m FROM notifications WHERE user_id = ? AND read_at IS NULL");
+    $s->execute([$uid]);
+    $q = $s->fetch();
+    $ntf = ['n' => (int)$q['n'], 'm' => (int)$q['m']];
+} catch (Throwable $e) { /* таблицы может не быть до миграции 020 */ }
+
+rt_json(['ok' => true, 'data' => $data, 'reg' => $reg, 'ver' => $ver, 'ntf' => $ntf]);

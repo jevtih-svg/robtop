@@ -592,3 +592,54 @@ body[data-view="parent"] .pd-tabbar{display:flex}
 
 /* HUD, спрятанный модулем на время полноэкранной сцены: shell.hud({hidden:true}) (игра в змейке) */
 .hud.hud-off{display:none}
+
+/* ===================== ОПОВЕЩЕНИЯ (ядро: core/notify.js + api/notify.php, ГАЙД-оповещения.md) =====================
+   Колокольчик фиксирован вверху справа на ВСЕХ экранах (решение Джеффа 2026-06-07);
+   на главном сдвинут влево от ⚙; на lock и в демо его нет; модуль, спрятавший HUD
+   (hud({hidden:true})), прячет и его (.ntf-hide ставит shell через RT.Notify.hide). */
+.ntf-bell{position:fixed;top:calc(30px + env(safe-area-inset-top));right:6px;z-index:15;width:42px;height:42px;
+  border-radius:13px;background:rgba(var(--panel-rgb),.66);border:1.5px solid rgba(255,255,255,.16);
+  color:var(--ink-2);display:grid;place-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ntf-bell svg{width:21px;height:21px}
+.ntf-bell:active{transform:scale(.93)}
+body[data-view="home"] .ntf-bell{right:56px}
+body[data-view="lock"] .ntf-bell,body.demo .ntf-bell,.ntf-bell.ntf-hide{display:none}
+body[data-view="parent"] .pd-top{padding-right:48px}   /* кнопки дашборда не лезут под колокольчик */
+body[data-view="settings"] .set-top{padding-right:48px}
+.ntf-badge{position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;border-radius:10px;display:none;
+  place-items:center;background:var(--red);color:#fff;font-size:11px;font-weight:800;padding:0 5px;
+  border:2px solid rgba(var(--panel-rgb),.9);box-shadow:0 0 12px -3px var(--red)}
+.ntf-bell.has .ntf-badge{display:grid}
+/* всплывающие баннеры (iOS-стиль): стек сверху по центру, поверх всего */
+.ntf-banners{position:fixed;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);
+  z-index:70;width:min(480px,94vw);display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.ntf-banner{pointer-events:auto;display:flex;align-items:center;gap:11px;padding:11px 14px;border-radius:18px;
+  cursor:pointer;background:rgba(var(--panel-rgb),.97);border:1.5px solid var(--line-strong);
+  box-shadow:0 12px 34px rgba(0,0,0,.5);opacity:0;transform:translateY(-80px);transition:transform .3s, opacity .3s}
+.ntf-banner.in{opacity:1;transform:none}
+.ntf-ic{flex:none;width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:18px;
+  color:var(--c,var(--cyan));background:color-mix(in srgb, var(--c,var(--cyan)) 20%, transparent)}
+.ntf-ic svg{width:20px;height:20px}
+.ntf-ic img{width:22px;height:22px}
+.ntf-tx{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px}
+.ntf-tx .app{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+.ntf-tx .msg{font-weight:700;font-size:14px;line-height:1.3;color:var(--ink);overflow-wrap:break-word}
+/* центр оповещений (шторка) */
+.ntf-list{max-height:52vh;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:6px}
+.ntf-row{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:10px 11px;margin:0 0 8px;
+  border-radius:14px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);
+  color:var(--ink);cursor:pointer;font:inherit}
+.ntf-row .when{font-size:11.5px;color:var(--muted-2);margin-top:2px}
+.ntf-row.unread{background:color-mix(in srgb, var(--c,var(--cyan)) 9%, transparent);
+  border-color:color-mix(in srgb, var(--c,var(--cyan)) 30%, transparent)}
+.ntf-dot{flex:none;width:9px;height:9px;border-radius:50%;background:var(--c,var(--cyan));box-shadow:0 0 8px var(--c,var(--cyan))}
+.ntf-empty{text-align:center;color:var(--muted);font-weight:700;padding:18px 0}
+.ntf-readall{width:100%;margin:2px 0 6px}
+/* строка Web Push в центре: текст + системный тумблер (.toggle из магазина) */
+.ntf-push{display:flex;align-items:center;gap:10px;padding:10px 11px;margin-top:8px;border-radius:14px;
+  background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09)}
+.ntf-push .lbl{flex:1;font-weight:700;font-size:13.5px;color:var(--ink-2)}
+.ntf-push.hint .lbl{font-weight:600;color:var(--muted)}
+/* бейдж непрочитанного у ДРУГИХ аккаунтов устройства (настройки и lock) */
+.ntf-acct{margin-left:8px;min-width:19px;height:19px;border-radius:10px;display:inline-grid;place-items:center;
+  vertical-align:middle;background:var(--red);color:#fff;font-size:11px;font-weight:800;padding:0 5px}

@@ -39,6 +39,8 @@ window.RobTop = window.RobTop || {};
 
   RT.open = function(id){
     var meta=RT.metaFor(id); if(!meta) return;
+    /* ссылка из оповещения (RT._pendingLink, core/notify.js) адресована другому модулю — сброс */
+    if(RT._pendingLink && RT._pendingLink.module!==id) RT._pendingLink=null;
     var nm=(RT.i18n?RT.i18n.t("tile."+id,{fallback:meta.name}):meta.name);
     if(meta.status==="soon"){ RT._shell.toast(RT.i18n?RT.i18n.t("tile.soonToast",{name:nm}):(nm+": soon!")); return; }
     var dir=folder(meta);
@@ -57,6 +59,12 @@ window.RobTop = window.RobTop || {};
       RT._current=id;
       RT._shell.showModule();
       try{ def.mount(view, sdk); }catch(e){ RT._shell.toast(RT.i18n?RT.i18n.t("err.module_error"):"Module error"); }
+      /* переход из оповещения: ОПЦИОНАЛЬНЫЙ хук link(link, sdk) контракта register —
+         модуль может открыть конкретный «предмет» (item). Без хука просто открылись. */
+      if(RT._pendingLink && RT._pendingLink.module===id){
+        var lk=RT._pendingLink; RT._pendingLink=null;
+        if(typeof def.link==="function"){ try{ def.link(lk, sdk); }catch(e){} }
+      }
       sdk.events.track("opened_module",{module:id});
     }).catch(function(){ RT._shell.toast(RT.i18n?RT.i18n.t("err.module_open",{name:nm}):("Couldn't open “"+nm+"”")); });
   };

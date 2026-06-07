@@ -52,4 +52,13 @@ return [
     'mail_brevo_key'     => '',    // только для mail_driver = 'brevo'
     'mail_default_lang'  => 'en',  // язык письма, если запрос не передал lang (en|ru|lv)
     'mail_rate_per_hour' => 5,     // максимум писем на один адрес в час (защита от перебора)
+
+    // ===== Web Push (PWA, ГАЙД-оповещения.md) =====
+    // Без блока 'vapid' push молча выключен (приложение работает как раньше).
+    // Ключ создаётся ОДИН РАЗ: openssl ecparam -genkey -name prime256v1 -noout
+    // (полная инструкция — РЕЛИЗ.md). Приватный ключ живёт ТОЛЬКО здесь, не в Git.
+    // 'vapid' => [
+    //     'subject'     => 'mailto:jeff@muncly.com',
+    //     'private_pem' => "-----BEGIN EC PRIVATE KEY-----\n...\n-----END EC PRIVATE KEY-----\n",
+    // ],
 ];

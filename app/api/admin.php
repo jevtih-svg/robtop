@@ -763,7 +763,7 @@ switch ($op) {
         $text = isset($b['text']) ? trim((string)$b['text']) : '';
         if (!$id || $text === '') rt_json(['error' => 'bad input'], 422);
         $text = mb_substr($text, 0, 2000);
-        $s = $db->prepare("SELECT id, subject FROM tickets WHERE id = ? LIMIT 1"); $s->execute([$id]);
+        $s = $db->prepare("SELECT id, user_id, subject FROM tickets WHERE id = ? LIMIT 1"); $s->execute([$id]);
         $tk = $s->fetch();
         if (!$tk) rt_json(['error' => 'not found'], 404);
         $db->prepare("INSERT INTO ticket_messages (ticket_id, author_id, is_admin, body) VALUES (?, ?, 1, ?)")
@@ -771,6 +771,8 @@ switch ($op) {
         // ответ админа: репортёру загорается «новое», закрытый тикет переоткрывается
         $db->prepare("UPDATE tickets SET status = 'open', closed_at = NULL, user_unread = 1, admin_unread = 0, updated_at = NOW() WHERE id = ?")
            ->execute([$id]);
+        // оповещение автору (ГАЙД-оповещения.md): тап открывает переписку в настройках
+        rt_notify((int)$tk['user_id'], 'tickets', 'reply', ['subject' => $tk['subject']], ['view' => 'ticket', 'id' => $id], $AID);
         alog('ticket_replied', $id, $tk['subject']);
         rt_json(['ok' => true]);
     }
@@ -781,6 +783,9 @@ switch ($op) {
         if ($op === 'ticket_close') {
             // закрытие видно репортёру (user_unread=1 — статус изменился)
             $db->prepare("UPDATE tickets SET status = 'closed', closed_at = NOW(), user_unread = 1, admin_unread = 0, updated_at = NOW() WHERE id = ?")->execute([$id]);
+            // оповещение автору о закрытии (тап — в переписку)
+            $s = $db->prepare("SELECT user_id, subject FROM tickets WHERE id = ? LIMIT 1"); $s->execute([$id]);
+            if ($tk = $s->fetch()) rt_notify((int)$tk['user_id'], 'tickets', 'closed', ['subject' => $tk['subject']], ['view' => 'ticket', 'id' => $id], $AID);
             alog('ticket_closed', $id);
         } else {
             $db->prepare("UPDATE tickets SET status = 'open', closed_at = NULL, updated_at = NOW() WHERE id = ?")->execute([$id]);
