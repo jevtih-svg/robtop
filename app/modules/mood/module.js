@@ -132,9 +132,11 @@
 
   /* ----- смайлики ----- */
   function facesHtml(chosen, interactive, extra){
+    var blink=/\bform\b/.test(extra||""); // в форме подтверждённый смайлик моргает
     var h='<div class="md-faces '+(extra||"")+(interactive?"":" ro")+'">';
     MOOD_KEYS.forEach(function(key){
-      h+='<button type="button" class="md-face f-'+key+(chosen===key?" on":"")+'"'
+      var on=chosen===key;
+      h+='<button type="button" class="md-face f-'+key+(on?" on":"")+(on&&blink?" blink":"")+'"'
         +(interactive?' data-face="'+key+'"':' tabindex="-1"')
         +' aria-label="'+esc(t("names."+key))+'">'+FACE[key]+'</button>';
     });
@@ -200,7 +202,8 @@
   function updateFormFaces(){
     if(!E.state) return;
     var btns=E.state.querySelectorAll(".md-faces [data-face]");
-    for(var i=0;i<btns.length;i++){ btns[i].classList.toggle("on", btns[i].getAttribute("data-face")===form.mood); }
+    for(var i=0;i<btns.length;i++){ var on=btns[i].getAttribute("data-face")===form.mood;
+      btns[i].classList.toggle("on",on); btns[i].classList.toggle("blink",on); }
   }
 
   /* ----- фото: уменьшение + (демо: dataUrl) / (сервер: upload → путь) ----- */
