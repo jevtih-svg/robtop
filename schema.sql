@@ -148,7 +148,7 @@ CREATE TABLE IF NOT EXISTS module_data (
 INSERT INTO modules (id, name, version, manifest, source, trusted, server, enabled, sort_order) VALUES
  ('wishlist','Виш-лист','2.0.0','{"color":"#ff3db0","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,1,1,10),
  ('reverse','Слова наоборот','1.0.0','{"color":"#ff7a3d","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,20),
- ('mood','Настроение дня','1.0.0','{"color":"#ffd23b","status":"soon"}','native',1,0,1,30),
+ ('mood','Настроение дня','1.0.0','{"color":"#ffd23b","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,30),
  ('teeth','Таймер чистки зубов','1.0.0','{"color":"#19e3ff","status":"active","roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,40),
  ('guess','Угадай число','1.0.0','{"color":"#a64bff","status":"soon"}','native',1,0,1,50),
  ('names','Смешные имена','1.0.0','{"color":"#38e8a0","status":"soon"}','native',1,0,1,60),

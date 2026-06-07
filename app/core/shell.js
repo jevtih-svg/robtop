@@ -58,7 +58,7 @@ window.RobTop = window.RobTop || {};
   var DEFAULTS=[
     {id:"wishlist",name:"Wishlist",color:"#ff3db0",status:"active",source:"native",server:true,sort:10},
     {id:"reverse",name:"Words Backwards",color:"#ff7a3d",status:"active",source:"native",server:false,sort:20},
-    {id:"mood",name:"Mood of the Day",color:"#ffd23b",status:"soon",source:"native",sort:30},
+    {id:"mood",name:"Mood of the Day",color:"#ffd23b",status:"active",source:"native",sort:30},
     {id:"teeth",name:"Toothbrushing Timer",color:"#19e3ff",status:"active",source:"native",sort:40},
     {id:"guess",name:"Guess the Number",color:"#a64bff",status:"soon",source:"native",sort:50},
     {id:"names",name:"Funny Names",color:"#38e8a0",status:"soon",source:"native",sort:60},
