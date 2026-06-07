@@ -16,7 +16,7 @@
         demo: "demo", removed: "Removed", failed: "Couldn't do that",
         back: "Back", confirmTitle: "Confirm?"
       },
-      home: { tagline: "Choose an app" },
+      home: { tagline: "Choose an app", soonSep: "Coming soon" },
       hud: { apps: "apps", available: "available" },
       tile: {
         status: { open: "Open", soon: "Soon" },
@@ -128,7 +128,7 @@
         demo: "демо", removed: "Удалено", failed: "Не удалось",
         back: "Назад", confirmTitle: "Подтвердить?"
       },
-      home: { tagline: "Выбери приложение" },
+      home: { tagline: "Выбери приложение", soonSep: "Скоро будут" },
       hud: { apps: "приложений", available: "доступно" },
       tile: {
         status: { open: "Открыть", soon: "Скоро" },
@@ -240,7 +240,7 @@
         demo: "demo", removed: "Izdzēsts", failed: "Neizdevās",
         back: "Atpakaļ", confirmTitle: "Apstiprināt?"
       },
-      home: { tagline: "Izvēlies lietotni" },
+      home: { tagline: "Izvēlies lietotni", soonSep: "Drīz būs" },
       hud: { apps: "lietotnes", available: "pieejamas" },
       tile: {
         status: { open: "Atvērt", soon: "Drīz" },

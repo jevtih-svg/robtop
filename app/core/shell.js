@@ -53,6 +53,7 @@ window.RobTop = window.RobTop || {};
     cube:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>'
   };
   var TILE_ICON={ wishlist:"cherry", reverse:"reverse", mood:"smile", teeth:"tooth", guess:"quiz", names:"tag", days:"calendar", find:"search", museum:"museum", rating:"star", lost:"gem", bank:"bank" };
+  var BACK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg>';
 
   /* ---- встроенный список модулей (демо/фолбэк). name — фолбэк, отображается tile.<id> ---- */
   var DEFAULTS=[
@@ -79,8 +80,8 @@ window.RobTop = window.RobTop || {};
   function setInstalled(o){ lsSet("robtop_installed",o); }
 
   /* ---- DOM ---- */
-  var body, appsEl, homeView, moduleView, lockView, parentView, fabEl, toastEl, demoBadge,
-      hudL,hudCnum,hudClbl,hudRnum,hudRlbl, settingsOverlay, settingsBody,
+  var body, appsEl, homeView, moduleView, lockView, parentView, settingsView, fabEl, toastEl, demoBadge,
+      hudL,hudCnum,hudClbl,hudRnum,hudRlbl, settingsBody,
       storeOverlay, storeBody, gearBtn;
 
   /* ================= общие UI-сервисы ================= */
@@ -149,18 +150,19 @@ window.RobTop = window.RobTop || {};
   /* ================= ВИДЫ ================= */
   function moduleViewEl(){ return moduleView; }
   function hideParent(){ if(parentView) parentView.classList.remove("active"); }
+  function hideSettings(){ if(settingsView) settingsView.classList.remove("active"); }
   /* «домой» для РОДИТЕЛЯ = дашборд (а не детские плитки): один шов, через который
      возвращаются и RT.close() из модуля, и boot(). Детский путь не меняется. */
   function showHome(){
     if(!demo && isParent() && RT.Parent){ showParent(); return; }
-    body.setAttribute("data-view","home"); if(lockView) lockView.classList.remove("active"); hideParent(); moduleView.classList.remove("active"); homeView.classList.add("active"); window.scrollTo(0,0); fabDestroy(); homeHud();
+    body.setAttribute("data-view","home"); if(lockView) lockView.classList.remove("active"); hideParent(); hideSettings(); moduleView.classList.remove("active"); homeView.classList.add("active"); window.scrollTo(0,0); fabDestroy(); homeHud();
   }
-  function showModule(){ body.setAttribute("data-view","module"); if(lockView) lockView.classList.remove("active"); hideParent(); homeView.classList.remove("active"); moduleView.classList.add("active"); window.scrollTo(0,0); }
+  function showModule(){ body.setAttribute("data-view","module"); if(lockView) lockView.classList.remove("active"); hideParent(); hideSettings(); homeView.classList.remove("active"); moduleView.classList.add("active"); window.scrollTo(0,0); }
   /* родительский дашборд (core/parent.js); read-only поверхность вместо детского дома */
   function showParent(){
     body.setAttribute("data-view","parent");
     if(lockView) lockView.classList.remove("active");
-    homeView.classList.remove("active"); moduleView.classList.remove("active");
+    homeView.classList.remove("active"); moduleView.classList.remove("active"); hideSettings();
     if(parentView) parentView.classList.add("active");
     window.scrollTo(0,0); fabDestroy();
     if(RT.Parent) RT.Parent.show();
@@ -169,7 +171,7 @@ window.RobTop = window.RobTop || {};
   /* ---- экран входа (lock): на сервере без сессии приложение закрыто ---- */
   function showLock(loading){
     body.setAttribute("data-view","lock");
-    homeView.classList.remove("active"); moduleView.classList.remove("active"); hideParent();
+    homeView.classList.remove("active"); moduleView.classList.remove("active"); hideParent(); hideSettings();
     lockView.classList.add("active");
     renderLock(loading);
     window.scrollTo(0,0);
@@ -239,15 +241,20 @@ window.RobTop = window.RobTop || {};
     RT._registry.forEach(function(m){ if(m.status==="active") active++; });
     hud({ left:'RobTop · <b>beta</b>', cNum:total, cLbl:t("hud.apps"), rNum:active, rLbl:t("hud.available") });
   }
+  function tileHtml(m){
+    var soon=m.status!=="active";
+    return '<button class="tile'+(soon?' soon':' active')+(m.wide?' wide':'')+'" style="--c:'+(m.color||"#19e3ff")+'" data-mod="'+esc(m.id)+'">'
+      +(soon?'<span class="lock">'+ICONS.lock+'</span>':'<span class="ring"></span>')
+      +'<span class="ic">'+iconHtml(m)+'</span>'
+      +'<span class="txt"><span class="nm">'+esc(modName(m))+'</span><span class="st">'+(soon?esc(t("tile.status.soon")):esc(t("tile.status.open")))+'</span></span>'
+      +'</button>';
+  }
+  /* активные плитки всегда сверху; группа «скоро» — ниже, за разделителем */
   function renderHome(){
-    appsEl.innerHTML=RT._registry.map(function(m){
-      var soon=m.status!=="active";
-      return '<button class="tile'+(soon?' soon':' active')+(m.wide?' wide':'')+'" style="--c:'+(m.color||"#19e3ff")+'" data-mod="'+esc(m.id)+'">'
-        +(soon?'<span class="lock">'+ICONS.lock+'</span>':'<span class="ring"></span>')
-        +'<span class="ic">'+iconHtml(m)+'</span>'
-        +'<span class="txt"><span class="nm">'+esc(modName(m))+'</span><span class="st">'+(soon?esc(t("tile.status.soon")):esc(t("tile.status.open")))+'</span></span>'
-        +'</button>';
-    }).join("");
+    var act=[], soon=[];
+    RT._registry.forEach(function(m){ (m.status==="active"?act:soon).push(m); });
+    appsEl.innerHTML=act.map(tileHtml).join("")
+      +(soon.length?'<div class="apps-sep">'+esc(t("home.soonSep"))+'</div>'+soon.map(tileHtml).join(""):"");
     homeHud();
   }
 
@@ -282,15 +289,23 @@ window.RobTop = window.RobTop || {};
     }).catch(function(){ RT.setRegistry(visible(DEFAULTS.map(function(m){return Object.assign({},m);}))); renderHome(); refreshParentIfActive(); });
   }
 
-  /* ================= НАСТРОЙКИ (аккаунт + язык; «приложения» — родителю, PIN как fallback) ================= */
+  /* ================= НАСТРОЙКИ (отдельный экран; «приложения» — родителю, PIN как fallback) ================= */
   function authKey(){ return demo?"demo":(acct===null?"loading":(acct.authenticated?("in:"+(acct.user&&acct.user.id)):"out")); }
+  function isSettingsOpen(){ return body.getAttribute("data-view")==="settings"; }
   function openSettings(){
-    renderSettings(); settingsOverlay.classList.add("show");
+    if(isSettingsOpen()) return;
+    renderSettings();
+    body.setAttribute("data-view","settings");
+    homeView.classList.remove("active"); moduleView.classList.remove("active"); hideParent();
+    if(lockView) lockView.classList.remove("active");
+    settingsView.classList.add("active");
+    window.scrollTo(0,0); fabDestroy();
     if(!demo){ var k=authKey(); loadAccount().then(function(){
-      if(settingsOverlay.classList.contains("show") && authKey()!==k) renderSettings();
+      if(isSettingsOpen() && authKey()!==k) renderSettings();
     }); }
   }
-  function closeSettings(){ settingsOverlay.classList.remove("show"); }
+  /* назад из настроек: showHome сам уводит родителя на дашборд */
+  function closeSettings(){ if(!isSettingsOpen()) return; showHome(); }
 
   /* блок «Аккаунт» в настройках: статус + вход/выход (вход меняет rt_user_id на сервере, поэтому после
      успеха перезагружаем страницу — чистое состояние реестра и данных, без частичных перерисовок) */
@@ -301,8 +316,7 @@ window.RobTop = window.RobTop || {};
     if(acct.authenticated && acct.user){
       var u=acct.user, role=(u.kind==="parent")?t("account.roleParent"):t("account.roleChild");
       return out
-        +'<div class="acct-row"><span class="nm">'+esc(u.nickname)+'</span><span class="rl">'+esc(role)+'</span></div>'
-        +'<div class="sheet-actions"><button class="btn btn-cancel" id="acctOut" style="flex:1">'+esc(t("account.signOut"))+'</button></div>';
+        +'<div class="acct-row"><span class="nm">'+esc(u.nickname)+'</span><span class="rl">'+esc(role)+'</span></div>';
     }
     return out
       +'<p class="set-note">'+esc(t("account.loginHint"))+' '+esc(t("account.guestNote"))+'</p>'
@@ -470,34 +484,44 @@ window.RobTop = window.RobTop || {};
     };
   }
 
+  /* «Выйти» — один раз, внизу экрана, отдельно от данных аккаунта */
+  function signOutHtml(){
+    if(demo || !(acct && acct.authenticated)) return '';
+    return '<button class="btn btn-danger set-out" id="acctOut">'+esc(t("account.signOut"))+'</button>';
+  }
   function renderSettings(){
     var cur=I.get();
     var langBtns=I.supported.map(function(code){
-      return '<button class="lang-opt'+(code===cur?" on":"")+'" data-lang="'+code+'">'+esc(I.native(code))+'</button>';
+      return '<button'+(code===cur?' class="on"':'')+' data-lang="'+code+'">'+esc(I.native(code))+'</button>';
     }).join("");
     var showManage = demo || isParent(); // ребёнок управление приложениями НЕ видит
-    settingsBody.innerHTML='<h2>'+esc(t("settings.title"))+'</h2>'
+    settingsView.innerHTML='<div class="set-top">'
+      +'<button class="back" id="settingsBack" aria-label="'+esc(t("common.back"))+'">'+BACK_SVG+'</button>'
+      +'<h1>'+esc(t("settings.title"))+'</h1></div>'
+      +'<div id="settingsBody">'
       +accountSectionHtml()
       +famSectionHtml()
       +friendSectionHtml()
-      +'<div class="store-section">'+esc(t("settings.language"))+'</div>'
-      +'<div class="lang-row">'+langBtns+'</div>'
       +(showManage
-        ? '<div class="store-section">'+esc(t("settings.manageApps"))+'</div>'
+        ? '<div class="store-section">'+esc(t("store.title"))+'</div>'
           +'<div class="store-install" id="settingsManage">⚙ '+esc(t("settings.manageApps"))+'</div>'
         : '')
-      +'<div class="sheet-actions"><button class="btn btn-cancel" id="settingsClose" style="flex:1">'+esc(t("common.close"))+'</button></div>';
+      +'<div class="store-section">'+esc(t("settings.language"))+'</div>'
+      +'<div class="lang-seg">'+langBtns+'</div>'
+      +signOutHtml()
+      +'</div>';
+    settingsBody=settingsView.querySelector("#settingsBody");
+    settingsView.querySelector("#settingsBack").onclick=closeSettings;
     wireAccountSection();
     if(settingsBody.querySelector("#famBox")) loadFamily();
     var fr=settingsBody.querySelector("#friendInvite");
     if(fr) fr.onclick=openInviteFriend;
-    settingsBody.querySelector(".lang-row").addEventListener("click",function(e){
+    settingsBody.querySelector(".lang-seg").addEventListener("click",function(e){
       var b=e.target.closest("[data-lang]"); if(!b) return;
       I.set(b.getAttribute("data-lang")); buzz(6);
     });
     var mng=settingsBody.querySelector("#settingsManage");
-    if(mng) mng.onclick=function(){ closeSettings(); openStore(); };
-    settingsBody.querySelector("#settingsClose").onclick=closeSettings;
+    if(mng) mng.onclick=openStore; // магазин — шторкой поверх настроек, «назад» остаётся логичным
   }
 
   /* ================= МАГАЗИН / АДМИН ================= */
@@ -615,19 +639,22 @@ window.RobTop = window.RobTop || {};
     toastEl=document.getElementById("toast");
     demoBadge=document.getElementById("demoBadge");
     hudL=document.getElementById("hudL"); hudCnum=document.getElementById("hudCnum"); hudClbl=document.getElementById("hudClbl"); hudRnum=document.getElementById("hudRnum"); hudRlbl=document.getElementById("hudRlbl");
-    settingsOverlay=document.getElementById("settingsOverlay"); settingsBody=document.getElementById("settingsBody");
+    settingsView=document.getElementById("settings");
     storeOverlay=document.getElementById("storeOverlay"); storeBody=document.getElementById("storeBody"); gearBtn=document.getElementById("gearBtn");
   }
   function wire(){
     appsEl.addEventListener("click",function(e){ var t=e.target.closest("[data-mod]"); if(t) RT.open(t.getAttribute("data-mod")); });
     gearBtn.addEventListener("click",openSettings);
-    settingsOverlay.addEventListener("click",function(e){ if(e.target===settingsOverlay) closeSettings(); });
-    var setg=settingsOverlay.querySelector(".grip"); if(setg) setg.addEventListener("click",closeSettings);
-    enableDrag(settingsOverlay.querySelector(".sheet"), closeSettings);
     storeOverlay.addEventListener("click",function(e){ if(e.target===storeOverlay) closeStore(); });
     var sg=storeOverlay.querySelector(".grip"); if(sg) sg.addEventListener("click",closeStore);
     enableDrag(storeOverlay.querySelector(".sheet"), closeStore);
-    document.addEventListener("keydown",function(e){ if(e.key==="Escape"){ closeSettings(); closeStore(); if(RT.current()) RT.close(); } });
+    /* Escape закрывает слои по одному: магазин → настройки → модуль */
+    document.addEventListener("keydown",function(e){
+      if(e.key!=="Escape") return;
+      if(storeOverlay.classList.contains("show")){ closeStore(); return; }
+      if(isSettingsOpen()){ closeSettings(); return; }
+      if(RT.current()) RT.close();
+    });
   }
 
   /* смена языка: перевести статический DOM, перерисовать главный экран и открытые шторки */
@@ -635,7 +662,7 @@ window.RobTop = window.RobTop || {};
     I.apply(document);
     renderHome();
     if(lockView && lockView.classList.contains("active")) renderLock(false);
-    if(settingsOverlay && settingsOverlay.classList.contains("show")) renderSettings();
+    if(isSettingsOpen()) renderSettings();
     if(storeOverlay && storeOverlay.classList.contains("show")) renderStore();
     if(RT.Parent && body.getAttribute("data-view")==="parent") RT.Parent.render();
   }
