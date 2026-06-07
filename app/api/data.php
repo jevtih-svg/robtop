@@ -34,6 +34,15 @@ if (in_array($op, $writes, true) && !rt_role_can($mod, 'edit', $role)) {
     rt_json(['error' => 'forbidden'], 403);
 }
 
+// Семейный пул (2026-06-07): роль parent работает с данными РЕБЁНКА своей семьи, а не со своим
+// пустым скоупом. Так родитель пишет прогулки (walk) и очки (bank) в общий пул; писать можно
+// только в модули, чей манифест разрешает edit роли parent (проверка выше). События ниже тоже
+// зеркалятся под ребёнком ($uid передаётся в rt_log), автор фиксируется модулем в data.author.
+if ($role === 'parent') {
+    $cid = rt_family_child_uid($db, $uid);
+    if ($cid) $uid = $cid;
+}
+
 function rt_md_row($db, $uid, $module, $coll, $id) {
     $s = $db->prepare("SELECT * FROM module_data WHERE id=? AND user_id=? AND module=? AND collection=?");
     $s->execute([$id, $uid, $module, $coll]);
@@ -83,7 +92,7 @@ switch ($op) {
         );
         $st->execute([$uid, $module, $coll, $status, json_encode($data, JSON_UNESCAPED_UNICODE)]);
         $newId = (int)$db->lastInsertId();
-        rt_log($module, 'created', $newId, null, null, $status ?: null, ['collection' => $coll]);
+        rt_log($module, 'created', $newId, null, null, $status ?: null, ['collection' => $coll], $uid);
         $now = round(microtime(true) * 1000);
         rt_json(['ok' => true, 'item' => [
             'id' => (string)$newId, 'status' => $status, 'favorite' => false,
@@ -100,7 +109,7 @@ switch ($op) {
         $merged = array_merge($cur, $patch);
         $db->prepare("UPDATE module_data SET data=?, updated_at=NOW() WHERE id=? AND user_id=?")
            ->execute([json_encode($merged, JSON_UNESCAPED_UNICODE), $id, $uid]);
-        rt_log($module, 'edited', $id, null, null, null, ['collection' => $coll]);
+        rt_log($module, 'edited', $id, null, null, null, ['collection' => $coll], $uid);
         rt_json(['ok' => true]);
     }
 
@@ -110,7 +119,7 @@ switch ($op) {
         $status = isset($body['status']) ? (string)$body['status'] : '';
         $db->prepare("UPDATE module_data SET status=?, updated_at=NOW() WHERE id=? AND user_id=?")
            ->execute([$status, $id, $uid]);
-        rt_log($module, 'moved', $id, null, $r['status'], $status, ['collection' => $coll]);
+        rt_log($module, 'moved', $id, null, $r['status'], $status, ['collection' => $coll], $uid);
         rt_json(['ok' => true]);
     }
 
@@ -120,7 +129,7 @@ switch ($op) {
         $on = !empty($body['on']) ? 1 : 0;
         $db->prepare("UPDATE module_data SET favorite=?, updated_at=NOW() WHERE id=? AND user_id=?")
            ->execute([$on, $id, $uid]);
-        rt_log($module, $on ? 'favorite' : 'unfavorite', $id, null, null, null, ['collection' => $coll]);
+        rt_log($module, $on ? 'favorite' : 'unfavorite', $id, null, null, null, ['collection' => $coll], $uid);
         rt_json(['ok' => true]);
     }
 
@@ -128,7 +137,7 @@ switch ($op) {
         if ($id === null) rt_json(['error' => 'id required'], 422);
         $r = rt_md_row($db, $uid, $module, $coll, $id); if (!$r) rt_json(['error' => 'not found'], 404);
         $db->prepare("UPDATE module_data SET deleted_at=NOW(), updated_at=NOW() WHERE id=? AND user_id=?")->execute([$id, $uid]);
-        rt_log($module, 'deleted', $id, null, null, null, ['collection' => $coll]);
+        rt_log($module, 'deleted', $id, null, null, null, ['collection' => $coll], $uid);
         rt_json(['ok' => true]);
     }
 
@@ -136,14 +145,14 @@ switch ($op) {
         if ($id === null) rt_json(['error' => 'id required'], 422);
         $r = rt_md_row($db, $uid, $module, $coll, $id); if (!$r) rt_json(['error' => 'not found'], 404);
         $db->prepare("UPDATE module_data SET deleted_at=NULL, updated_at=NOW() WHERE id=? AND user_id=?")->execute([$id, $uid]);
-        rt_log($module, 'restored', $id, null, null, null, ['collection' => $coll]);
+        rt_log($module, 'restored', $id, null, null, null, ['collection' => $coll], $uid);
         rt_json(['ok' => true]);
     }
 
     case 'track': {
         $type = isset($body['type']) ? (string)$body['type'] : 'event';
         $meta = isset($body['data']) ? $body['data'] : null;
-        rt_log($module, $type, null, null, null, null, $meta);
+        rt_log($module, $type, null, null, null, null, $meta, $uid);
         rt_json(['ok' => true]);
     }
 

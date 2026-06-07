@@ -7,7 +7,7 @@
   "wide": true,
   "entry": "module.js",
   "styles": "module.css",
-  "roles": { "edit": ["child"], "read": ["child", "parent"] },
+  "roles": { "edit": ["child", "parent"], "read": ["child", "parent"] },
   "data": { "store": "generic", "collections": ["points", "meta"] },
   "server": false,
   "permissions": ["points"],

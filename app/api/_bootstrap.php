@@ -53,16 +53,48 @@ function rt_user_id() {
     return $uid;
 }
 
-/** Запись события в общий аналитический журнал. */
-function rt_log($module, $type, $itemId = null, $itemTitle = null, $from = null, $to = null, $meta = null) {
+/** Запись события в общий аналитический журнал.
+ *  $uidOverride — записать под другим user_id (семейный пул: data.php пишет события
+ *  родителя под ребёнком, чтобы дашборд видел общую историю). null = rt_user_id(). */
+function rt_log($module, $type, $itemId = null, $itemTitle = null, $from = null, $to = null, $meta = null, $uidOverride = null) {
     $st = rt_db()->prepare(
         "INSERT INTO events (user_id, module, item_id, item_title, type, from_status, to_status, meta, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())"
     );
     $st->execute([
-        rt_user_id(), $module, $itemId, $itemTitle, $type, $from, $to,
+        $uidOverride !== null ? (int)$uidOverride : rt_user_id(), $module, $itemId, $itemTitle, $type, $from, $to,
         $meta !== null ? json_encode($meta, JSON_UNESCAPED_UNICODE) : null,
     ]);
+}
+
+/**
+ * Семейный пул данных: первый ребёнок родителя (прямое опекунство, затем дети семьи).
+ * Используется data.php, чтобы роль parent читала и писала данные РЕБЁНКА (общие прогулки,
+ * очки, справочники), а не свой пустой скоуп. null — детей нет. Запросы — по образцу
+ * rt_parent_children() из parent.php (без фильтра статуса аккаунта: пул общий всегда).
+ */
+function rt_family_child_uid($db, $pid) {
+    try {
+        $s = $db->prepare(
+            "SELECT child_user_id AS id FROM guardianships
+             WHERE guardian_user_id = ? AND status = 'active'
+             ORDER BY (type='provisional'), child_user_id LIMIT 1"
+        );
+        $s->execute([$pid]);
+        $r = $s->fetch();
+        if ($r) return (int)$r['id'];
+        $s = $db->prepare(
+            "SELECT fm2.user_id AS id
+             FROM family_members fm1
+             JOIN family_members fm2 ON fm1.family_id = fm2.family_id
+             WHERE fm1.user_id = ? AND fm1.role IN ('owner','parent') AND fm1.status='active'
+               AND fm2.role = 'child' AND fm2.status='active'
+             ORDER BY fm2.user_id LIMIT 1"
+        );
+        $s->execute([$pid]);
+        $r = $s->fetch();
+        return $r ? (int)$r['id'] : null;
+    } catch (Throwable $e) { return null; }
 }
 
 /** Роль текущего пользователя (для проверки прав модулей). */

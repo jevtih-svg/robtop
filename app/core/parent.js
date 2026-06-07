@@ -45,7 +45,7 @@ window.RobTop = window.RobTop || {};
     ins:{ streak:"Brushing streak: {n} days in a row", bought:"Wish fulfilled: “{t}” 🎉",
       peak:{ morning:"Most active in the morning (7–11)", day:"Most active in the daytime (11–17)", evening:"Most active in the evening (17–22)" } },
     m:{ lastEvents:"Recent events", openJournal:"App log", empty:"Nothing here yet.",
-      noText:"no comment", liked:"Liked: {x}" },
+      noText:"no comment", liked:"Liked: {x}", walkAdd:"🐾 Log a walk" },
     g:{ win:"guessed it", wrong:"missed", timeout:"time ran out" },
     wl:{ banner:"View mode. Only {name} can make changes.",
       want:"Want", thinking:"Thinking", bought:"Bought", empty:"Nothing in this section.",
@@ -89,7 +89,7 @@ window.RobTop = window.RobTop || {};
     ins:{ streak:"Серия чистки зубов: {n} дней подряд", bought:"Исполнено желание: «{t}» 🎉",
       peak:{ morning:"Самое активное время — утро (7–11)", day:"Самое активное время — день (11–17)", evening:"Самое активное время — вечер (17–22)" } },
     m:{ lastEvents:"Последние события", openJournal:"Журнал приложения", empty:"Пока пусто.",
-      noText:"без комментария", liked:"Понравилось: {x}" },
+      noText:"без комментария", liked:"Понравилось: {x}", walkAdd:"🐾 Записать прогулку" },
     g:{ win:"угадал", wrong:"не угадал", timeout:"время вышло" },
     wl:{ banner:"Режим просмотра. Изменения может вносить только {name}.",
       want:"Хочу", thinking:"Думаю", bought:"Купил", empty:"В этом разделе пусто.",
@@ -133,7 +133,7 @@ window.RobTop = window.RobTop || {};
     ins:{ streak:"Zobu tīrīšanas sērija: {n} dienas pēc kārtas", bought:"Vēlme piepildīta: “{t}” 🎉",
       peak:{ morning:"Aktīvākais laiks — rīts (7–11)", day:"Aktīvākais laiks — diena (11–17)", evening:"Aktīvākais laiks — vakars (17–22)" } },
     m:{ lastEvents:"Pēdējie notikumi", openJournal:"Lietotnes žurnāls", empty:"Vēl nekā nav.",
-      noText:"bez komentāra", liked:"Patika: {x}" },
+      noText:"bez komentāra", liked:"Patika: {x}", walkAdd:"🐾 Pierakstīt pastaigu" },
     g:{ win:"uzminēja", wrong:"neuzminēja", timeout:"laiks beidzās" },
     wl:{ banner:"Skatīšanās režīms. Izmaiņas var veikt tikai {name}.",
       want:"Gribu", thinking:"Domāju", bought:"Nopirku", empty:"Šajā sadaļā nekā nav.",
@@ -486,7 +486,11 @@ window.RobTop = window.RobTop || {};
     else if(id==="reverse") line=a.words?t("parent.sum.reverse",{c:a.words}):"";
     else if(id==="guess") line=a.guessCnt?t("parent.sum.guess",{w:a.guessWin,c:a.guessCnt}):"";
     else line="";
-    var h= line?'<div class="pd-robanner" style="margin-top:2px">'+esc(line)+'</div>':"";
+    /* walk: родитель может записать прогулку сам — открывается обычный модуль walk
+       (детский мастер); data.php скоупит запись родителя в общий пул ребёнка */
+    var walkBtn=(id==="walk" && RT.metaFor && RT.metaFor("walk"))
+      ? '<button class="btn btn-primary" id="pdWalkAdd" style="flex:none;width:100%;margin:2px 0 10px">'+esc(t("parent.m.walkAdd"))+'</button>' : "";
+    var h= walkBtn + (line?'<div class="pd-robanner" style="margin-top:2px">'+esc(line)+'</div>':"");
     h+=moduleContentHtml(id);
     /* последние события модуля — вторичный блок */
     var evs=((S.data&&S.data.events)||[]).filter(function(e){ return e.module===id && inJournal(e); }).slice(0,10);
@@ -713,6 +717,8 @@ window.RobTop = window.RobTop || {};
     if(back) back.onclick=function(){ S.mod=null; render(); window.scrollTo(0,0); };
     var oj=root.querySelector("#pdOpenJournal");
     if(oj) oj.onclick=function(){ S.jfilter=S.mod; S.mod=null; S.tab="journal"; S.jshown=PAGE; render(); window.scrollTo(0,0); };
+    var wa=root.querySelector("#pdWalkAdd");
+    if(wa) wa.onclick=function(){ if(RT.open) RT.open("walk"); };
     var g=root.querySelector("#pdGear");
     if(g) g.onclick=function(){ if(RT._shell.openSettings) RT._shell.openSettings(); };
     var rf=root.querySelector("#pdRefresh"); if(rf) rf.onclick=function(){ fetchData(S.childId); };

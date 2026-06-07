@@ -1,0 +1,16 @@
+{
+  "id": "walk",
+  "name": "Прогулка",
+  "version": "1.0.0",
+  "color": "#38e8a0",
+  "status": "active",
+  "wide": false,
+  "entry": "module.js",
+  "styles": "module.css",
+  "roles": { "edit": ["child", "parent"], "read": ["child", "parent"] },
+  "data": { "store": "generic", "collections": ["entries", "commands", "issues", "meta"] },
+  "server": false,
+  "permissions": ["points", "camera"],
+  "min_shell": "2.0.0",
+  "sort": 115
+}

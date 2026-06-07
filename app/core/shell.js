@@ -49,9 +49,10 @@ window.RobTop = window.RobTop || {};
     gem:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M6 3.2h12l3 5-9 12.6L3 8.2z"/><path d="M3 8.2h18M9 3.2l-3 5 6 12.6 6-12.6-3-5"/></svg>',
     bank:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6.6" rx="7" ry="3"/><path d="M5 6.6v6.4c0 1.7 3.1 3 7 3s7-1.3 7-3V6.6"/><path d="M5 13c0 1.7 3.1 3 7 3s7-1.3 7-3"/></svg>',
     lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="5" y="11" width="14" height="9" rx="2.2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+    paw:'<svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="6.4" cy="10" rx="1.7" ry="2.3"/><ellipse cx="9.9" cy="7.3" rx="1.7" ry="2.4"/><ellipse cx="14.1" cy="7.3" rx="1.7" ry="2.4"/><ellipse cx="17.6" cy="10" rx="1.7" ry="2.3"/><path d="M12 11.2c2.9 0 5.3 2.1 5.7 4.8.3 1.9-1.1 3.4-3 3.4-1.3 0-1.9-.6-2.7-.6s-1.4.6-2.7.6c-1.9 0-3.3-1.5-3-3.4.4-2.7 2.8-4.8 5.7-4.8z"/></svg>',
     cube:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>'
   };
-  var TILE_ICON={ wishlist:"cherry", reverse:"reverse", mood:"smile", teeth:"tooth", guess:"quiz", names:"tag", days:"calendar", find:"search", museum:"museum", rating:"star", lost:"gem", bank:"bank" };
+  var TILE_ICON={ wishlist:"cherry", reverse:"reverse", mood:"smile", teeth:"tooth", guess:"quiz", names:"tag", days:"calendar", find:"search", museum:"museum", rating:"star", lost:"gem", walk:"paw", bank:"bank" };
   var BACK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg>';
 
   /* ---- встроенный список модулей (демо/фолбэк). name — фолбэк, отображается tile.<id> ---- */
@@ -67,6 +68,7 @@ window.RobTop = window.RobTop || {};
     {id:"museum",name:"Home Museum",color:"#c0a0ff",status:"soon",source:"native",sort:90},
     {id:"rating",name:"Day Rating",color:"#ffd23b",status:"active",source:"native",sort:100},
     {id:"lost",name:"Lost & Found",color:"#2bf0c0",status:"soon",source:"native",sort:110},
+    {id:"walk",name:"Dog Walk",color:"#38e8a0",status:"active",source:"native",sort:115},
     {id:"bank",name:"Piggy Bank",color:"#ff4d6d",status:"active",source:"native",wide:true,sort:120}
   ];
 
