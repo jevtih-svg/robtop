@@ -108,6 +108,9 @@ window.RobTop = window.RobTop || {};
   var toastT=null;
   function hideToast(){ toastEl.classList.remove("show"); }
   function toast(msg,actLabel,actFn){
+    /* пока виден «✓ Готово» режима перестановки, низ занят — тост уезжает наверх (.top),
+       иначе подсказка «Перетащи…» ложилась ровно на пилюлю */
+    toastEl.classList.toggle("top", !!document.querySelector(".jgl-done"));
     toastEl.innerHTML='<span>'+esc(msg)+'</span>'+(actLabel?'<button class="toast-act" type="button">'+esc(actLabel)+'</button>':"");
     toastEl.classList.toggle("has-act",!!actLabel); toastEl.classList.add("show");
     if(actLabel){ var b=toastEl.querySelector(".toast-act"); b.onclick=function(){ try{ if(actFn) actFn(); }catch(e){} hideToast(); }; }
@@ -1292,8 +1295,11 @@ window.RobTop = window.RobTop || {};
               RT.Parent.refresh() на дашборде, loadTickets() в открытых настройках;
        ver  → тост «Доступно обновление → Обновить» (раз на версию за сессию).
      Защита: при открытой шторке/фокусе в поле ввода НИЧЕГО не трогаем и отпечатки
-     НЕ сдвигаем — изменение подхватит следующий тик, когда форма закроется. */
-  var SYNC_MS=12000, syncTimer=null, syncBusy=false, syncLast=0, syncSeen=null, syncVerShown=null;
+     НЕ сдвигаем — изменение подхватит следующий тик, когда форма закроется.
+     Интервал (v2026.06.07.52): 12с ощущались медленно (фидбек Джеффа) → 4с. Это ~15 крошечных
+     запросов в минуту с устройства ТОЛЬКО при видимой вкладке; sync.php — лёгкие индексные
+     агрегаты (idx_scope по user_id), для семейного масштаба незаметно. */
+  var SYNC_MS=4000, syncTimer=null, syncBusy=false, syncLast=0, syncSeen=null, syncVerShown=null;
   function syncFormOpen(){
     var ae=document.activeElement;
     if(ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return true;
@@ -1332,7 +1338,7 @@ window.RobTop = window.RobTop || {};
     if(demo || syncTimer) return;
     syncTimer=setInterval(syncTick, SYNC_MS);
     document.addEventListener("visibilitychange",function(){
-      if(!document.hidden && Date.now()-syncLast>3000) syncTick(); // вернулись — проверить сразу
+      if(!document.hidden && Date.now()-syncLast>1200) syncTick(); // вернулись — проверить сразу
     });
     syncTick();
   }

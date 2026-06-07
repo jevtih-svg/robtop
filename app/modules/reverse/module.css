@@ -1,26 +1,26 @@
 /* RobTop — модуль «Слова наоборот» (клиентский, универсальное хранилище). Скоуп .rev. */
 .rev{padding-bottom:140px}
 .rev-header{display:flex;align-items:center;gap:12px;padding:calc(20px + env(safe-area-inset-top)) 2px 8px}
-.rev-title{font-family:'Russo One',sans-serif;font-size:24px;color:#fff;
-  text-shadow:0 0 12px rgba(255,122,61,.7), 0 0 24px rgba(255,43,214,.45)}
+.rev-title{font-family:var(--font-display);font-size:24px;color:#fff;
+  text-shadow:0 0 12px color-mix(in srgb,var(--orange) 70%,transparent), 0 0 24px color-mix(in srgb,var(--magenta) 45%,transparent)}
 .rev-sub{margin:0;color:var(--muted);font-weight:600;font-size:13px}
-.rev-card{margin-top:14px;border-radius:22px;padding:16px;background:linear-gradient(165deg, rgba(22,20,50,.86), rgba(9,8,24,.9));
-  border:1.5px solid rgba(255,122,61,.35);box-shadow:0 12px 30px rgba(0,0,0,.5), 0 0 26px -12px #ff7a3d}
+.rev-card{margin-top:14px;border-radius:22px;padding:16px;background:linear-gradient(165deg, rgba(var(--panel-rgb),.86), rgba(var(--panel-rgb),.9));
+  border:1.5px solid color-mix(in srgb,var(--orange) 35%,transparent);box-shadow:0 12px 30px rgba(0,0,0,.5), 0 0 26px -12px var(--orange)}
 .rev-in{width:100%;border:1.6px solid rgba(255,255,255,.14);border-radius:14px;padding:14px;font-family:inherit;
   font-size:18px;font-weight:700;color:var(--ink);background:rgba(255,255,255,.04);outline:none;text-align:center}
-.rev-in:focus{border-color:#ff7a3d;box-shadow:0 0 0 3px rgba(255,122,61,.18)}
+.rev-in:focus{border-color:var(--orange);box-shadow:0 0 0 3px color-mix(in srgb,var(--orange) 18%,transparent)}
 .rev-out{margin-top:14px;min-height:54px;display:flex;align-items:center;justify-content:center;
-  font-family:'Russo One',sans-serif;font-size:26px;color:#ffd0b0;text-align:center;word-break:break-word;
-  text-shadow:0 0 14px rgba(255,122,61,.55)}
-.rev-out.empty{color:#6f80a6;font-family:'Rubik',sans-serif;font-size:15px;font-weight:600}
+  font-family:var(--font-display);font-size:26px;color:var(--gold-soft);text-align:center;word-break:break-word;
+  text-shadow:0 0 14px color-mix(in srgb,var(--orange) 55%,transparent)}
+.rev-out.empty{color:var(--muted-dim);font-family:'Rubik',sans-serif;font-size:15px;font-weight:600}
 .rev-list{display:flex;flex-direction:column;gap:9px;margin-top:6px}
 .rev-row{display:flex;align-items:center;gap:10px;border-radius:14px;padding:11px 13px;
   background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)}
-.rev-row .w{flex:1;min-width:0;color:#e7eeff;font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rev-row .w small{display:block;color:#9fb0d6;font-weight:600;font-size:12.5px;margin-top:2px}
-.rev-row .say{flex:none;width:34px;height:34px;border-radius:10px;border:1px solid rgba(25,227,255,.5);
-  background:rgba(25,227,255,.12);color:#bdeeff;cursor:pointer;display:grid;place-items:center;font-size:15px}
+.rev-row .w{flex:1;min-width:0;color:var(--ink-2);font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rev-row .w small{display:block;color:var(--muted-2);font-weight:600;font-size:12.5px;margin-top:2px}
+.rev-row .say{flex:none;width:34px;height:34px;border-radius:10px;border:1px solid color-mix(in srgb,var(--cyan) 50%,transparent);
+  background:color-mix(in srgb,var(--cyan) 12%,transparent);color:var(--cyan-soft);cursor:pointer;display:grid;place-items:center;font-size:15px}
 .rev-row .say:active{transform:scale(.92)}
-.rev-row .del{flex:none;width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,77,109,.5);
-  background:rgba(255,77,109,.14);color:#ffb3c0;cursor:pointer;display:grid;place-items:center;font-size:16px}
+.rev-row .del{flex:none;width:34px;height:34px;border-radius:10px;border:1px solid color-mix(in srgb,var(--red) 50%,transparent);
+  background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red-soft);cursor:pointer;display:grid;place-items:center;font-size:16px}
 .rev-row .del:active{transform:scale(.92)}

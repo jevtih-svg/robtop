@@ -1,81 +1,81 @@
-/* RobTop — модуль «Прогулка» (walk). Скоуп [data-mod="walk"], классы wk-*. Акцент — мятный #38e8a0.
-   Смайлики оценки (слева направо: плохо/средне/хорошо): f-sad #ff4d6d, f-mid #ffd23b, f-happy #38e8a0,
+/* RobTop — модуль «Прогулка» (walk). Скоуп [data-mod="walk"], классы wk-*. Акцент — мятный var(--mint).
+   Смайлики оценки (слева направо: плохо/средне/хорошо): f-sad var(--red), f-mid var(--gold), f-happy var(--mint),
    f-none (без оценки) — приглушённый. Шторки (.wk-numpad, .wk-detail, .wk-setrow) — вне скоупа,
    т.к. рендерятся в общем sheet оболочки. */
 [data-mod="walk"] .wk{padding-bottom:140px}
 [data-mod="walk"] .wk-header{display:flex;align-items:center;gap:12px;padding:calc(20px + env(safe-area-inset-top)) 2px 8px}
 [data-mod="walk"] .wk-head-main{flex:1;min-width:0}
-[data-mod="walk"] .wk-title{font-family:'Russo One',sans-serif;font-size:24px;color:#fff;display:flex;align-items:center;gap:8px;
-  text-shadow:0 0 12px rgba(56,232,160,.75), 0 0 24px rgba(25,227,255,.3)}
-[data-mod="walk"] .wk-title .sic{width:22px;height:22px;color:#38e8a0;flex:none}
-[data-mod="walk"] .wk-title .sic svg{width:100%;height:100%;display:block;filter:drop-shadow(0 0 6px rgba(56,232,160,.8))}
+[data-mod="walk"] .wk-title{font-family:var(--font-display);font-size:24px;color:#fff;display:flex;align-items:center;gap:8px;
+  text-shadow:0 0 12px color-mix(in srgb,var(--mint) 75%,transparent), 0 0 24px color-mix(in srgb,var(--cyan) 30%,transparent)}
+[data-mod="walk"] .wk-title .sic{width:22px;height:22px;color:var(--mint);flex:none}
+[data-mod="walk"] .wk-title .sic svg{width:100%;height:100%;display:block;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--mint) 80%,transparent))}
 [data-mod="walk"] .wk-sub{margin:0;color:var(--muted);font-weight:600;font-size:13px}
 
 /* карточка мастера (шаги: длительность / оценка / детали) */
 [data-mod="walk"] .wk-card{margin-top:14px;border-radius:22px;padding:18px 16px;
-  background:linear-gradient(165deg, rgba(14,40,30,.55), rgba(9,8,24,.92));
-  border:1.5px solid rgba(56,232,160,.4);box-shadow:0 12px 30px rgba(0,0,0,.5), 0 0 28px -10px #38e8a0}
-[data-mod="walk"] .wk-card-title{font-family:'Russo One',sans-serif;font-size:18px;color:#bff5dd;text-align:center;margin:0 0 4px;
-  text-shadow:0 0 12px rgba(56,232,160,.55)}
-[data-mod="walk"] .wk-hint{color:#9fb0d6;font-weight:600;font-size:13px;text-align:center;margin:0 0 8px}
-.wk-sect{color:#bff5dd;font-weight:800;font-size:13.5px;letter-spacing:.3px;margin:16px 0 8px}
+  background:linear-gradient(165deg, rgba(var(--panel-rgb),.55), rgba(var(--panel-rgb),.92));
+  border:1.5px solid color-mix(in srgb,var(--mint) 40%,transparent);box-shadow:0 12px 30px rgba(0,0,0,.5), 0 0 28px -10px var(--mint)}
+[data-mod="walk"] .wk-card-title{font-family:var(--font-display);font-size:18px;color:var(--green-soft);text-align:center;margin:0 0 4px;
+  text-shadow:0 0 12px color-mix(in srgb,var(--mint) 55%,transparent)}
+[data-mod="walk"] .wk-hint{color:var(--muted-2);font-weight:600;font-size:13px;text-align:center;margin:0 0 8px}
+.wk-sect{color:var(--green-soft);font-weight:800;font-size:13.5px;letter-spacing:.3px;margin:16px 0 8px}
 
 /* шаг 1: длительность — крупные кнопки-пресеты */
 [data-mod="walk"] .wk-durs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
 [data-mod="walk"] .wk-dur{min-height:58px;border-radius:16px;cursor:pointer;
-  font-family:'Russo One',sans-serif;font-size:17px;color:#eaf2ff;
-  background:rgba(56,232,160,.08);border:1.6px solid rgba(56,232,160,.45)}
-[data-mod="walk"] .wk-dur:active{transform:scale(.96);background:rgba(56,232,160,.2)}
-[data-mod="walk"] .wk-dur.other{font-family:'Rubik',sans-serif;font-weight:800;font-size:15px;color:#bff5dd;border-style:dashed}
+  font-family:var(--font-display);font-size:17px;color:var(--ink);
+  background:color-mix(in srgb,var(--mint) 8%,transparent);border:1.6px solid color-mix(in srgb,var(--mint) 45%,transparent)}
+[data-mod="walk"] .wk-dur:active{transform:scale(.96);background:color-mix(in srgb,var(--mint) 20%,transparent)}
+[data-mod="walk"] .wk-dur.other{font-family:'Rubik',sans-serif;font-weight:800;font-size:15px;color:var(--green-soft);border-style:dashed}
 
 /* отдельное событие «проблема с поведением» (не часть прогулки; режим «Щенок») */
 [data-mod="walk"] .wk-behbtn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;margin-top:12px;
-  min-height:54px;border-radius:16px;cursor:pointer;font-family:'Rubik',sans-serif;font-weight:800;font-size:15px;color:#ffb3c0;
-  background:rgba(255,77,109,.08);border:1.6px dashed rgba(255,77,109,.55)}
-[data-mod="walk"] .wk-behbtn:active{transform:scale(.97);background:rgba(255,77,109,.16)}
+  min-height:54px;border-radius:16px;cursor:pointer;font-family:'Rubik',sans-serif;font-weight:800;font-size:15px;color:var(--red-soft);
+  background:color-mix(in srgb,var(--red) 8%,transparent);border:1.6px dashed color-mix(in srgb,var(--red) 55%,transparent)}
+[data-mod="walk"] .wk-behbtn:active{transform:scale(.97);background:color-mix(in srgb,var(--red) 16%,transparent)}
 [data-mod="walk"] .wk-behbtn .ic{width:20px;height:20px;flex:none}
 [data-mod="walk"] .wk-behbtn .ic svg{width:100%;height:100%;display:block}
-[data-mod="walk"] .wk-card.warn{border-color:rgba(255,77,109,.45);box-shadow:0 12px 30px rgba(0,0,0,.5), 0 0 28px -10px #ff4d6d;
-  background:linear-gradient(165deg, rgba(40,14,22,.55), rgba(9,8,24,.92))}
-[data-mod="walk"] .wk-card.warn .wk-card-title{color:#ffc9d4;text-shadow:0 0 12px rgba(255,77,109,.55)}
+[data-mod="walk"] .wk-card.warn{border-color:color-mix(in srgb,var(--red) 45%,transparent);box-shadow:0 12px 30px rgba(0,0,0,.5), 0 0 28px -10px var(--red);
+  background:linear-gradient(165deg, rgba(var(--panel-rgb),.55), rgba(var(--panel-rgb),.92))}
+[data-mod="walk"] .wk-card.warn .wk-card-title{color:var(--red-soft);text-shadow:0 0 12px color-mix(in srgb,var(--red) 55%,transparent)}
 
 /* ВАЖНОЕ событие (вет, день рождения…) — золотой акцент */
 [data-mod="walk"] .wk-evtbtn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;margin-top:12px;
-  min-height:54px;border-radius:16px;cursor:pointer;font-family:'Rubik',sans-serif;font-weight:800;font-size:15px;color:#ffe9a8;
-  background:rgba(255,210,59,.08);border:1.6px dashed rgba(255,210,59,.55)}
-[data-mod="walk"] .wk-evtbtn:active{transform:scale(.97);background:rgba(255,210,59,.16)}
+  min-height:54px;border-radius:16px;cursor:pointer;font-family:'Rubik',sans-serif;font-weight:800;font-size:15px;color:var(--gold-soft);
+  background:color-mix(in srgb,var(--gold) 8%,transparent);border:1.6px dashed color-mix(in srgb,var(--gold) 55%,transparent)}
+[data-mod="walk"] .wk-evtbtn:active{transform:scale(.97);background:color-mix(in srgb,var(--gold) 16%,transparent)}
 [data-mod="walk"] .wk-evtbtn .ic{width:20px;height:20px;flex:none}
 [data-mod="walk"] .wk-evtbtn .ic svg{width:100%;height:100%;display:block}
-[data-mod="walk"] .wk-card.gold{border-color:rgba(255,210,59,.45);box-shadow:0 12px 30px rgba(0,0,0,.5), 0 0 28px -10px #ffd23b;
-  background:linear-gradient(165deg, rgba(40,32,14,.55), rgba(9,8,24,.92))}
-[data-mod="walk"] .wk-card.gold .wk-card-title{color:#ffe9a8;text-shadow:0 0 12px rgba(255,210,59,.55)}
-.wk-chip.gold.on{color:#2b2206;background:#ffd23b;border-color:#ffd23b;box-shadow:0 0 14px -2px rgba(255,210,59,.8)}
+[data-mod="walk"] .wk-card.gold{border-color:color-mix(in srgb,var(--gold) 45%,transparent);box-shadow:0 12px 30px rgba(0,0,0,.5), 0 0 28px -10px var(--gold);
+  background:linear-gradient(165deg, rgba(var(--panel-rgb),.55), rgba(var(--panel-rgb),.92))}
+[data-mod="walk"] .wk-card.gold .wk-card-title{color:var(--gold-soft);text-shadow:0 0 12px color-mix(in srgb,var(--gold) 55%,transparent)}
+.wk-chip.gold.on{color:var(--on-bright);background:var(--gold);border-color:var(--gold);box-shadow:0 0 14px -2px color-mix(in srgb,var(--gold) 80%,transparent)}
 .wk-when{display:grid;grid-template-columns:1.4fr 1fr;gap:9px}
 .wk-note{width:100%;border:1.6px solid rgba(255,255,255,.14);border-radius:14px;padding:12px;
   font-family:inherit;font-size:15px;font-weight:600;color:var(--ink);background:rgba(255,255,255,.04);outline:none}
-.wk-note:focus{border-color:#ffd23b;box-shadow:0 0 0 3px rgba(255,210,59,.16)}
-[data-mod="walk"] .wk-card.gold .wk-time:focus{border-color:#ffd23b;box-shadow:0 0 0 3px rgba(255,210,59,.16)}
-.wk-det-note{color:#e7eeff;font-weight:600;font-size:15px;margin:2px 0 0;word-break:break-word}
+.wk-note:focus{border-color:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 16%,transparent)}
+[data-mod="walk"] .wk-card.gold .wk-time:focus{border-color:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 16%,transparent)}
+.wk-det-note{color:var(--ink-2);font-weight:600;font-size:15px;margin:2px 0 0;word-break:break-word}
 
 /* поле времени (детали прогулки и событие поведения) */
 .wk-time{width:100%;border:1.6px solid rgba(255,255,255,.14);border-radius:14px;padding:12px;
-  font-family:'Russo One',sans-serif;font-size:18px;color:var(--ink);background:rgba(255,255,255,.04);outline:none;
+  font-family:var(--font-display);font-size:18px;color:var(--ink);background:rgba(255,255,255,.04);outline:none;
   color-scheme:dark}
-.wk-time:focus{border-color:#38e8a0;box-shadow:0 0 0 3px rgba(56,232,160,.16)}
-[data-mod="walk"] .wk-card.warn .wk-time:focus{border-color:#ff4d6d;box-shadow:0 0 0 3px rgba(255,77,109,.16)}
+.wk-time:focus{border-color:var(--mint);box-shadow:0 0 0 3px color-mix(in srgb,var(--mint) 16%,transparent)}
+[data-mod="walk"] .wk-card.warn .wk-time:focus{border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 16%,transparent)}
 
 /* шаг 2: смайлики с подписями; позитив всегда справа */
 .wk-faces{display:flex;justify-content:center;gap:16px;margin:12px 0 6px}
-.wk-face{border:none;background:none;padding:6px;cursor:pointer;color:#3d4668;width:84px;
+.wk-face{border:none;background:none;padding:6px;cursor:pointer;color:var(--line-strong);width:84px;
   display:flex;flex-direction:column;align-items:center;gap:4px;
   transition:transform .12s ease, color .15s ease}
 .wk-face svg{width:64px;height:64px;display:block}
-.wk-face .nm{font-weight:800;font-size:13px;color:#9fb0d6}
-.wk-face.f-sad.on{color:#ff4d6d;filter:drop-shadow(0 0 10px rgba(255,77,109,.85))}
-.wk-face.f-mid.on{color:#ffd23b;filter:drop-shadow(0 0 10px rgba(255,210,59,.85))}
-.wk-face.f-happy.on{color:#38e8a0;filter:drop-shadow(0 0 10px rgba(56,232,160,.85))}
+.wk-face .nm{font-weight:800;font-size:13px;color:var(--muted-2)}
+.wk-face.f-sad.on{color:var(--red);filter:drop-shadow(0 0 10px color-mix(in srgb,var(--red) 85%,transparent))}
+.wk-face.f-mid.on{color:var(--gold);filter:drop-shadow(0 0 10px color-mix(in srgb,var(--gold) 85%,transparent))}
+.wk-face.f-happy.on{color:var(--mint);filter:drop-shadow(0 0 10px color-mix(in srgb,var(--mint) 85%,transparent))}
 .wk-face.on{transform:scale(1.08)}
-.wk-face.on .nm{color:#eaf2ff}
+.wk-face.on .nm{color:var(--ink)}
 .wk-face:active{transform:scale(1.12)}
 .wk-faces.mini .wk-face{width:64px}
 .wk-faces.mini .wk-face svg{width:46px;height:46px}
@@ -87,15 +87,15 @@
 /* шаг 3: чипы команд и непослушания (тап-таргет ≥44px) */
 .wk-chips{display:flex;flex-wrap:wrap;gap:8px}
 .wk-chip{min-height:44px;padding:9px 14px;border-radius:999px;cursor:pointer;
-  font-family:'Rubik',sans-serif;font-weight:700;font-size:14px;color:#c7d3ef;
+  font-family:'Rubik',sans-serif;font-weight:700;font-size:14px;color:var(--ink-3);
   background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.16);
   display:inline-flex;align-items:center}
 .wk-chip:active{transform:scale(.96)}
-.wk-chip.on{color:#06291b;background:#38e8a0;border-color:#38e8a0;
-  box-shadow:0 0 14px -2px rgba(56,232,160,.8)}
-.wk-chip.warn.on{color:#2b0712;background:#ff8aa3;border-color:#ff8aa3;
-  box-shadow:0 0 14px -2px rgba(255,77,109,.8)}
-.wk-chip.add{color:#bff5dd;border-style:dashed;border-color:rgba(56,232,160,.55);background:rgba(56,232,160,.07)}
+.wk-chip.on{color:var(--on-bright);background:var(--mint);border-color:var(--mint);
+  box-shadow:0 0 14px -2px color-mix(in srgb,var(--mint) 80%,transparent)}
+.wk-chip.warn.on{color:var(--on-bright);background:var(--red-soft);border-color:var(--red-soft);
+  box-shadow:0 0 14px -2px color-mix(in srgb,var(--red) 80%,transparent)}
+.wk-chip.add{color:var(--green-soft);border-style:dashed;border-color:color-mix(in srgb,var(--mint) 55%,transparent);background:color-mix(in srgb,var(--mint) 7%,transparent)}
 .wk-chips.ro .wk-chip{cursor:default}
 
 /* фото: сетка превью + плитка добавления */
@@ -103,9 +103,9 @@
 .wk-ph{position:relative;border-radius:14px;aspect-ratio:1/1;min-height:84px;cursor:pointer;
   background-size:cover;background-position:center;border:1.5px solid rgba(255,255,255,.16);overflow:hidden}
 .wk-ph>span{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:999px;
-  background:rgba(5,5,15,.78);color:#ffb3c0;font-weight:800;font-size:13px;display:grid;place-items:center}
+  background:rgba(var(--panel-rgb),.78);color:var(--red-soft);font-weight:800;font-size:13px;display:grid;place-items:center}
 .wk-ph.addp{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
-  background:rgba(56,232,160,.07);border:1.6px dashed rgba(56,232,160,.5);color:#bff5dd;font-weight:700;font-size:12px}
+  background:color-mix(in srgb,var(--mint) 7%,transparent);border:1.6px dashed color-mix(in srgb,var(--mint) 50%,transparent);color:var(--green-soft);font-weight:700;font-size:12px}
 .wk-ph.addp>span{position:static;width:auto;height:auto;background:none;color:inherit}
 .wk-ph.addp .pic{width:22px;height:22px}
 .wk-ph.addp .pic svg{width:100%;height:100%;display:block}
@@ -115,29 +115,29 @@
 
 /* цифровая клавиатура «Другое» (шторка) */
 .wk-numpad h2{text-align:center}
-.wk-num-disp{font-family:'Russo One',sans-serif;font-size:32px;color:#38e8a0;text-align:center;margin:4px 0 12px;
-  min-height:40px;text-shadow:0 0 16px rgba(56,232,160,.6)}
+.wk-num-disp{font-family:var(--font-display);font-size:32px;color:var(--mint);text-align:center;margin:4px 0 12px;
+  min-height:40px;text-shadow:0 0 16px color-mix(in srgb,var(--mint) 60%,transparent)}
 .wk-num-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.wk-num{min-height:58px;border-radius:16px;cursor:pointer;font-family:'Russo One',sans-serif;font-size:20px;color:#eaf2ff;
+.wk-num{min-height:58px;border-radius:16px;cursor:pointer;font-family:var(--font-display);font-size:20px;color:var(--ink);
   background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.16)}
 .wk-num:active{transform:scale(.95);background:rgba(255,255,255,.12)}
-.wk-num.bs{color:#ffb3c0}
-.wk-num.ok{color:#06291b;background:#38e8a0;border-color:#38e8a0;font-family:'Rubik',sans-serif;font-weight:800}
+.wk-num.bs{color:var(--red-soft)}
+.wk-num.ok{color:var(--on-bright);background:var(--mint);border-color:var(--mint);font-family:'Rubik',sans-serif;font-weight:800}
 
 /* настройки (шторка): тумблер «Щенок» + очки за прогулку (родитель) */
 .wk-setrow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-top:10px;
   border-radius:14px;padding:13px 14px;cursor:pointer;
   background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);color:inherit;font-family:inherit}
 .wk-setrow.stat{cursor:default}
-.wk-setrow .tx{flex:1;color:#e7eeff;font-weight:700;font-size:15px;display:flex;flex-direction:column;gap:2px}
-.wk-setrow .tx .hint{color:#9fb0d6;font-weight:600;font-size:12px}
+.wk-setrow .tx{flex:1;color:var(--ink-2);font-weight:700;font-size:15px;display:flex;flex-direction:column;gap:2px}
+.wk-setrow .tx .hint{color:var(--muted-2);font-weight:600;font-size:12px}
 .wk-tgl{flex:none;width:46px;height:27px;border-radius:999px;background:rgba(255,255,255,.14);position:relative;transition:background .15s}
 .wk-tgl::after{content:"";position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:999px;background:#fff;transition:left .15s}
-.wk-tgl.on{background:#38e8a0}
+.wk-tgl.on{background:var(--mint)}
 .wk-tgl.on::after{left:22px}
 .wk-step{flex:none;display:flex;align-items:center;gap:10px}
-.wk-step b{font-family:'Russo One',sans-serif;font-size:18px;color:#38e8a0;min-width:30px;text-align:center}
-.wk-stepb{width:40px;height:40px;border-radius:12px;cursor:pointer;font-size:18px;font-weight:800;color:#eaf2ff;
+.wk-step b{font-family:var(--font-display);font-size:18px;color:var(--mint);min-width:30px;text-align:center}
+.wk-stepb{width:40px;height:40px;border-radius:12px;cursor:pointer;font-size:18px;font-weight:800;color:var(--ink);
   background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.16)}
 .wk-stepb:active{transform:scale(.93)}
 
@@ -147,38 +147,38 @@
   background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)}
 [data-mod="walk"] .wk-row:active{transform:scale(.985)}
 [data-mod="walk"] .wk-thumb{flex:none;width:48px;height:48px;border-radius:12px;background-size:cover;background-position:center;
-  background-color:rgba(56,232,160,.1);display:grid;place-items:center;color:#3d4668}
+  background-color:color-mix(in srgb,var(--mint) 10%,transparent);display:grid;place-items:center;color:var(--line-strong)}
 [data-mod="walk"] .wk-thumb svg{width:28px;height:28px}
-[data-mod="walk"] .wk-thumb.f-happy{color:#38e8a0}
-[data-mod="walk"] .wk-thumb.f-mid{color:#ffd23b}
-[data-mod="walk"] .wk-thumb.f-sad{color:#ff4d6d}
-[data-mod="walk"] .wk-thumb.beh{color:#ff8aa3;background-color:rgba(255,77,109,.1)}
-[data-mod="walk"] .wk-row .s.warn{color:#ffb3c0}
-[data-mod="walk"] .wk-thumb.evt{color:#ffd23b;background-color:rgba(255,210,59,.1)}
+[data-mod="walk"] .wk-thumb.f-happy{color:var(--mint)}
+[data-mod="walk"] .wk-thumb.f-mid{color:var(--gold)}
+[data-mod="walk"] .wk-thumb.f-sad{color:var(--red)}
+[data-mod="walk"] .wk-thumb.beh{color:var(--red-soft);background-color:color-mix(in srgb,var(--red) 10%,transparent)}
+[data-mod="walk"] .wk-row .s.warn{color:var(--red-soft)}
+[data-mod="walk"] .wk-thumb.evt{color:var(--gold);background-color:color-mix(in srgb,var(--gold) 10%,transparent)}
 [data-mod="walk"] .wk-thumb.evt svg{width:24px;height:24px}
-[data-mod="walk"] .wk-row .s.gold{color:#ffe9a8}
+[data-mod="walk"] .wk-row .s.gold{color:var(--gold-soft)}
 [data-mod="walk"] .wk-row .m{flex:1;min-width:0}
-[data-mod="walk"] .wk-row .d{color:#e7eeff;font-weight:700;font-size:14px}
-[data-mod="walk"] .wk-row .s{color:#9fb0d6;font-weight:600;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;
+[data-mod="walk"] .wk-row .d{color:var(--ink-2);font-weight:700;font-size:14px}
+[data-mod="walk"] .wk-row .s{color:var(--muted-2);font-weight:600;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;
   display:flex;align-items:center;gap:5px}
-[data-mod="walk"] .wk-row .s i{font-style:normal;color:#6f80a6}
-[data-mod="walk"] .wk-empty{color:#6f80a6;font-weight:600;font-size:14px;text-align:center;padding:14px}
+[data-mod="walk"] .wk-row .s i{font-style:normal;color:var(--muted-dim)}
+[data-mod="walk"] .wk-empty{color:var(--muted-dim);font-weight:600;font-size:14px;text-align:center;padding:14px}
 
 /* маленький смайлик в строках — вне скоупа (используется и в шторках) */
 .wk-mini{display:inline-flex;flex:none;width:16px;height:16px}
 .wk-mini svg{width:100%;height:100%;display:block}
-.wk-mini.f-happy{color:#38e8a0}
-.wk-mini.f-mid{color:#ffd23b}
-.wk-mini.f-sad{color:#ff4d6d}
-.wk-mini.f-none{color:#6f80a6}
+.wk-mini.f-happy{color:var(--mint)}
+.wk-mini.f-mid{color:var(--gold)}
+.wk-mini.f-sad{color:var(--red)}
+.wk-mini.f-none{color:var(--muted-dim)}
 
 /* детальная шторка прогулки */
 .wk-detail h2{text-align:center}
-.wk-det-dur{font-family:'Russo One',sans-serif;font-size:30px;color:#38e8a0;text-align:center;margin:4px 0 0;
-  text-shadow:0 0 16px rgba(56,232,160,.6)}
-.wk-det-norate{text-align:center;color:#9fb0d6;font-weight:700;font-size:14px;margin:10px 0 2px}
+.wk-det-dur{font-family:var(--font-display);font-size:30px;color:var(--mint);text-align:center;margin:4px 0 0;
+  text-shadow:0 0 16px color-mix(in srgb,var(--mint) 60%,transparent)}
+.wk-det-norate{text-align:center;color:var(--muted-2);font-weight:700;font-size:14px;margin:10px 0 2px}
 .wk-detail .wk-sect{margin-top:14px}
 .wk-det-photos{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
 .wk-bigphoto{border-radius:16px;height:140px;background-size:cover;background-position:center;
   border:1px solid rgba(255,255,255,.14)}
-.wk-author{color:#9fb0d6;font-weight:600;font-size:12.5px;text-align:center;margin:12px 0 0}
+.wk-author{color:var(--muted-2);font-weight:600;font-size:12.5px;text-align:center;margin:12px 0 0}

@@ -1,29 +1,29 @@
-/* RobTop — модуль «Настроение дня». Скоуп [data-mod="mood"], классы md-*. Акцент плитки — золотой #ffd23b.
-   Смайлики: весёлый f-happy #38e8a0, средний f-mid #ffd23b, грустный f-sad #ff4d6d. */
+/* RobTop — модуль «Настроение дня». Скоуп [data-mod="mood"], классы md-*. Акцент плитки — золотой var(--gold).
+   Смайлики: весёлый f-happy var(--mint), средний f-mid var(--gold), грустный f-sad var(--red). */
 [data-mod="mood"] .md{padding-bottom:140px}
 [data-mod="mood"] .md-header{display:flex;align-items:center;gap:12px;padding:calc(20px + env(safe-area-inset-top)) 2px 8px}
 [data-mod="mood"] .md-head-main{flex:1;min-width:0}
-[data-mod="mood"] .md-title{font-family:'Russo One',sans-serif;font-size:24px;color:#fff;display:flex;align-items:center;gap:8px;
-  text-shadow:0 0 12px rgba(255,210,59,.75), 0 0 24px rgba(56,232,160,.35)}
-[data-mod="mood"] .md-title .sic{width:22px;height:22px;color:#ffd23b;flex:none}
-[data-mod="mood"] .md-title .sic svg{width:100%;height:100%;display:block;filter:drop-shadow(0 0 6px rgba(255,210,59,.8))}
+[data-mod="mood"] .md-title{font-family:var(--font-display);font-size:24px;color:#fff;display:flex;align-items:center;gap:8px;
+  text-shadow:0 0 12px color-mix(in srgb,var(--gold) 75%,transparent), 0 0 24px color-mix(in srgb,var(--mint) 35%,transparent)}
+[data-mod="mood"] .md-title .sic{width:22px;height:22px;color:var(--gold);flex:none}
+[data-mod="mood"] .md-title .sic svg{width:100%;height:100%;display:block;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--gold) 80%,transparent))}
 [data-mod="mood"] .md-sub{margin:0;color:var(--muted);font-weight:600;font-size:13px}
 
 /* карточка состояния (выбор / форма / сегодня / ожидание) */
 [data-mod="mood"] .md-card{margin-top:14px;border-radius:22px;padding:18px 16px;
-  background:linear-gradient(165deg, rgba(40,32,14,.55), rgba(9,8,24,.92));
-  border:1.5px solid rgba(255,210,59,.4);box-shadow:0 12px 30px rgba(0,0,0,.5), 0 0 28px -10px #ffd23b}
-[data-mod="mood"] .md-card-title{font-family:'Russo One',sans-serif;font-size:18px;color:#ffe9a8;text-align:center;margin:0 0 4px;
-  text-shadow:0 0 12px rgba(255,210,59,.55)}
-[data-mod="mood"] .md-hint{color:#9fb0d6;font-weight:600;font-size:13px;text-align:center;margin:0 0 8px}
+  background:linear-gradient(165deg, rgba(var(--panel-rgb),.55), rgba(var(--panel-rgb),.92));
+  border:1.5px solid color-mix(in srgb,var(--gold) 40%,transparent);box-shadow:0 12px 30px rgba(0,0,0,.5), 0 0 28px -10px var(--gold)}
+[data-mod="mood"] .md-card-title{font-family:var(--font-display);font-size:18px;color:var(--gold-soft);text-align:center;margin:0 0 4px;
+  text-shadow:0 0 12px color-mix(in srgb,var(--gold) 55%,transparent)}
+[data-mod="mood"] .md-hint{color:var(--muted-2);font-weight:600;font-size:13px;text-align:center;margin:0 0 8px}
 
 /* смайлики: цвета по настроению, выкл — приглушённый */
-.md-face{border:none;background:none;padding:6px;cursor:pointer;color:#3d4668;
+.md-face{border:none;background:none;padding:6px;cursor:pointer;color:var(--line-strong);
   transition:transform .12s ease, color .15s ease}
 .md-face svg{width:100%;height:100%;display:block}
-.md-face.f-happy.on{color:#38e8a0;filter:drop-shadow(0 0 10px rgba(56,232,160,.85))}
-.md-face.f-mid.on{color:#ffd23b;filter:drop-shadow(0 0 10px rgba(255,210,59,.85))}
-.md-face.f-sad.on{color:#ff4d6d;filter:drop-shadow(0 0 10px rgba(255,77,109,.85))}
+.md-face.f-happy.on{color:var(--mint);filter:drop-shadow(0 0 10px color-mix(in srgb,var(--mint) 85%,transparent))}
+.md-face.f-mid.on{color:var(--gold);filter:drop-shadow(0 0 10px color-mix(in srgb,var(--gold) 85%,transparent))}
+.md-face.f-sad.on{color:var(--red);filter:drop-shadow(0 0 10px color-mix(in srgb,var(--red) 85%,transparent))}
 .md-face:active{transform:scale(1.12)}
 .md-face.on{transform:scale(1.08)}
 @keyframes md-blink{0%,100%{opacity:1}50%{opacity:.4}}
@@ -38,66 +38,66 @@
 [data-mod="mood"] .md-faces.ro .md-face{cursor:default}
 
 /* форма */
-[data-mod="mood"] .md-lbl{display:block;color:#ffe9a8;font-weight:700;font-size:14px;margin:12px 0 6px}
+[data-mod="mood"] .md-lbl{display:block;color:var(--gold-soft);font-weight:700;font-size:14px;margin:12px 0 6px}
 [data-mod="mood"] .md-ta{width:100%;min-height:64px;resize:vertical;border:1.6px solid rgba(255,255,255,.14);border-radius:14px;
   padding:12px;font-family:inherit;font-size:15px;font-weight:600;color:var(--ink);background:rgba(255,255,255,.04);outline:none}
-[data-mod="mood"] .md-ta:focus{border-color:#ffd23b;box-shadow:0 0 0 3px rgba(255,210,59,.16)}
-[data-mod="mood"] .md-photo{margin-top:12px;min-height:52px;border-radius:14px;border:1.6px dashed rgba(255,210,59,.5);
-  background:rgba(255,210,59,.07);color:#ffe9a8;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;
+[data-mod="mood"] .md-ta:focus{border-color:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 16%,transparent)}
+[data-mod="mood"] .md-photo{margin-top:12px;min-height:52px;border-radius:14px;border:1.6px dashed color-mix(in srgb,var(--gold) 50%,transparent);
+  background:color-mix(in srgb,var(--gold) 7%,transparent);color:var(--gold-soft);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;
   cursor:pointer;padding:10px;position:relative;overflow:hidden}
 [data-mod="mood"] .md-photo .pic{width:20px;height:20px;flex:none}
 [data-mod="mood"] .md-photo .pic svg{width:100%;height:100%;display:block}
 [data-mod="mood"] .md-photo.has{min-height:120px;border-style:solid;background-size:cover;background-position:center}
-[data-mod="mood"] .md-photo.has span{background:rgba(5,5,15,.72);border-radius:10px;padding:6px 10px}
+[data-mod="mood"] .md-photo.has span{background:rgba(var(--panel-rgb),.72);border-radius:10px;padding:6px 10px}
 [data-mod="mood"] .md-photo.uploading{opacity:.55}
 [data-mod="mood"] .md-form-actions{display:flex;gap:10px;margin-top:14px}
 [data-mod="mood"] .md-form-actions .btn{flex:1}
 
 /* сегодняшняя запись и история */
-[data-mod="mood"] .md-text{color:#e7eeff;font-weight:600;font-size:15px;margin:2px 0 0;word-break:break-word}
-[data-mod="mood"] .md-text b{color:#ffe9a8}
+[data-mod="mood"] .md-text{color:var(--ink-2);font-weight:600;font-size:15px;margin:2px 0 0;word-break:break-word}
+[data-mod="mood"] .md-text b{color:var(--gold-soft)}
 [data-mod="mood"] .md-bigphoto{margin-top:12px;border-radius:16px;height:170px;background-size:cover;background-position:center;
   border:1px solid rgba(255,255,255,.14)}
-[data-mod="mood"] .md-note{color:#9fb0d6;font-weight:600;font-size:12.5px;text-align:center;margin:10px 0 0}
-[data-mod="mood"] .md-count{font-family:'Russo One',sans-serif;font-size:30px;color:#ffd23b;text-align:center;margin:6px 0 2px;
-  text-shadow:0 0 16px rgba(255,210,59,.6)}
+[data-mod="mood"] .md-note{color:var(--muted-2);font-weight:600;font-size:12.5px;text-align:center;margin:10px 0 0}
+[data-mod="mood"] .md-count{font-family:var(--font-display);font-size:30px;color:var(--gold);text-align:center;margin:6px 0 2px;
+  text-shadow:0 0 16px color-mix(in srgb,var(--gold) 60%,transparent)}
 [data-mod="mood"] .md-list{display:flex;flex-direction:column;gap:9px;margin-top:6px}
 [data-mod="mood"] .md-row{display:flex;align-items:center;gap:11px;border-radius:14px;padding:10px 12px;cursor:pointer;
   background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)}
 [data-mod="mood"] .md-row:active{transform:scale(.985)}
 [data-mod="mood"] .md-thumb{flex:none;width:48px;height:48px;border-radius:12px;background-size:cover;background-position:center;
-  background-color:rgba(255,210,59,.1);display:grid;place-items:center;color:#3d4668}
+  background-color:color-mix(in srgb,var(--gold) 10%,transparent);display:grid;place-items:center;color:var(--line-strong)}
 [data-mod="mood"] .md-thumb svg{width:28px;height:28px}
-[data-mod="mood"] .md-thumb.f-happy{color:#38e8a0}
-[data-mod="mood"] .md-thumb.f-mid{color:#ffd23b}
-[data-mod="mood"] .md-thumb.f-sad{color:#ff4d6d}
+[data-mod="mood"] .md-thumb.f-happy{color:var(--mint)}
+[data-mod="mood"] .md-thumb.f-mid{color:var(--gold)}
+[data-mod="mood"] .md-thumb.f-sad{color:var(--red)}
 [data-mod="mood"] .md-row .m{flex:1;min-width:0}
-[data-mod="mood"] .md-row .d{color:#e7eeff;font-weight:700;font-size:14px}
-[data-mod="mood"] .md-row .s{color:#9fb0d6;font-weight:600;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;
+[data-mod="mood"] .md-row .d{color:var(--ink-2);font-weight:700;font-size:14px}
+[data-mod="mood"] .md-row .s{color:var(--muted-2);font-weight:600;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;
   display:flex;align-items:center;gap:5px}
-[data-mod="mood"] .md-empty{color:#6f80a6;font-weight:600;font-size:14px;text-align:center;padding:14px}
+[data-mod="mood"] .md-empty{color:var(--muted-dim);font-weight:600;font-size:14px;text-align:center;padding:14px}
 
 /* маленький смайлик в строках (история, статистика) — вне скоупа: используется и в шторках */
 .md-mini{display:inline-flex;flex:none;width:16px;height:16px}
 .md-mini svg{width:100%;height:100%;display:block}
-.md-mini.f-happy{color:#38e8a0}
-.md-mini.f-mid{color:#ffd23b}
-.md-mini.f-sad{color:#ff4d6d}
+.md-mini.f-happy{color:var(--mint)}
+.md-mini.f-mid{color:var(--gold)}
+.md-mini.f-sad{color:var(--red)}
 .md-mini.big{width:30px;height:30px;filter:drop-shadow(0 0 6px currentColor)}
 
 /* статистика (шторка): три ряда — весёлые / средние / грустные */
 .md-stat-rows{display:flex;flex-direction:column;gap:9px;margin-top:8px}
 .md-stat-row{display:flex;align-items:center;gap:12px;border-radius:14px;padding:12px 13px;
   background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)}
-.md-stat-row .nm{flex:1;color:#e7eeff;font-weight:700;font-size:15px}
-.md-stat-row .n{font-family:'Russo One',sans-serif;font-size:16px;color:#e7eeff;white-space:nowrap}
+.md-stat-row .nm{flex:1;color:var(--ink-2);font-weight:700;font-size:15px}
+.md-stat-row .n{font-family:var(--font-display);font-size:16px;color:var(--ink-2);white-space:nowrap}
 
 /* детальная шторка дня */
 .md-detail h2{text-align:center}
 .md-detail .md-faces{display:flex;justify-content:center;margin:6px 0 0}
 .md-detail .md-face{width:64px;height:64px;padding:4px;cursor:default}
-.md-detail .md-mood-name{text-align:center;color:#ffe9a8;font-weight:700;font-size:14px;margin:2px 0 6px}
-.md-detail .md-lbl{color:#ffe9a8;font-weight:700;font-size:14px;margin:10px 0 2px;display:block}
-.md-detail .md-text{color:#e7eeff;font-weight:600;font-size:15px;word-break:break-word}
+.md-detail .md-mood-name{text-align:center;color:var(--gold-soft);font-weight:700;font-size:14px;margin:2px 0 6px}
+.md-detail .md-lbl{color:var(--gold-soft);font-weight:700;font-size:14px;margin:10px 0 2px;display:block}
+.md-detail .md-text{color:var(--ink-2);font-weight:600;font-size:15px;word-break:break-word}
 .md-detail .md-bigphoto{margin-top:10px;border-radius:16px;height:180px;background-size:cover;background-position:center;
   border:1px solid rgba(255,255,255,.14)}

@@ -24,6 +24,23 @@
   --accent-grad:linear-gradient(180deg,#ff5db0,#d51a82);
   --hud-grad:linear-gradient(0deg, rgba(5,4,15,.86), transparent);
   --tabbar-grad:linear-gradient(0deg, rgba(5,4,15,.94) 60%, transparent);
+  /* ---- расширенная палитра ДЛЯ МОДУЛЕЙ (значения = исходный неон; модули обязаны
+     использовать ТОЛЬКО токены — правило в ГАЙД-новое-субприложение.md и КОНТЕКСТ §8) ---- */
+  --orange:#ff7a3d;
+  --ink-2:#e7eeff;      /* яркий текст контента */
+  --ink-3:#cfe0ff;      /* мягкий светлый текст */
+  --muted-2:#9fb0d6;    /* вторичный серо-голубой */
+  --muted-dim:#6f80a6;  /* плейсхолдеры/совсем тихий */
+  --cyan-soft:#bdeeff;  --green-soft:#bff5dd; --purple-soft:#dcc2ff;
+  --pink-soft:#ff9ed1;  --red-soft:#ffb3c0;   --gold-soft:#ffe9a8;
+  --on-bright:#04212b;  /* тёмный текст/штрих на ярких заливках */
+  --panel-rgb:13,12,32; /* тёмные подложки модулей: rgba(var(--panel-rgb),A) */
+  --panel-2:#0b0a1e;    /* сплошной тёмный фон элементов */
+  --line-strong:#3d4668;
+  --ok-grad:linear-gradient(180deg,#3df0c0,#19c7e0);
+  --gold-grad:linear-gradient(180deg,#ffe08a,#ffc23b);
+  --purple-grad:linear-gradient(135deg,#a64bff,#7a2bd6);
+  --cyan-grad:linear-gradient(135deg,#19e3ff,#0e9fd6);
 }
 
 /* ===================== ТЕМЫ (body[data-theme], хранится на аккаунте) =====================
@@ -53,10 +70,34 @@ body[data-theme="tilley"]{
   --accent-grad:linear-gradient(180deg,#F25420,#C93A08);
   --hud-grad:linear-gradient(0deg, rgba(17,31,25,.88), transparent);
   --tabbar-grad:linear-gradient(0deg, rgba(17,31,25,.95) 60%, transparent);
+  /* расширенная палитра модулей — лес/лён/янтарь, спокойные тона */
+  --orange:#CE8A4A;
+  --ink-2:#D9D0B8; --ink-3:#CCC3A8;
+  --muted-2:#9C9480; --muted-dim:#7E7763;
+  --cyan-soft:#C2DCCD; --green-soft:#BCD8C6; --purple-soft:#D6C49A;
+  --pink-soft:#E8B49A; --red-soft:#E2A691; --gold-soft:#E4D6AC;
+  --on-bright:#1C1710;
+  --panel-rgb:18,33,27;
+  --panel-2:#16291F;
+  --line-strong:#43604F;
+  --ok-grad:linear-gradient(180deg,#6FB592,#49836A);
+  --gold-grad:linear-gradient(180deg,#E0C277,#C09A47);
+  --purple-grad:linear-gradient(135deg,#B89A5E,#8E7440);
+  --cyan-grad:linear-gradient(135deg,#74B49B,#4F8A72);
 }
-/* Tilley: плитки и витрина в едином фирменном оранжевом (вместо неоновых цветов модулей) */
-body[data-theme="tilley"] .tile{--c:#E8440A !important}
-body[data-theme="tilley"] .store-row{--c:#E8440A !important}
+/* Tilley: плитки и витрина — льняное «стекло» как в бренде (apps-tilley-menu), а НЕ оранжевый
+   неон: сплошной оранжевый --c делал плитки кричащими и слабочитаемыми (фидбек Джеффа).
+   Лён в --c (иконки/подписи) + мягкие брендовые рамки/тени вместо неонового свечения. */
+body[data-theme="tilley"] .tile{--c:#DED5BE !important;
+  border-color:rgba(222,213,190,.16);
+  box-shadow:inset 0 1px 0 rgba(222,213,190,.10), 0 2px 8px rgba(0,0,0,.18)}
+body[data-theme="tilley"] .tile .ic{filter:none;
+  background:radial-gradient(circle at 50% 38%, rgba(222,213,190,.13), transparent 72%)}
+body[data-theme="tilley"] .tile.active{box-shadow:inset 0 1px 0 rgba(222,213,190,.12), 0 4px 14px rgba(0,0,0,.24)}
+body[data-theme="tilley"] .tile.active .ring{border-color:rgba(222,213,190,.34);animation:none;opacity:1;box-shadow:none}
+body[data-theme="tilley"] .store-row{--c:#DED5BE !important}
+/* родительский дашборд: цвета модулей (--mc инлайном) тоже в лён */
+body[data-theme="tilley"] :is(.pd-mcard,.pd-mrow,.pd-ev,.pd-fchips button,.pd-mhead .mic){--mc:#DED5BE !important}
 /* Tilley: спокойный канвас — светлячки приглушённее неоновой платы */
 body[data-theme="tilley"] #bg{opacity:.85}
 
@@ -201,13 +242,20 @@ body.demo .demo-badge{display:block}
 .btn-danger{background:rgba(255,77,109,.14);color:#ffb3c0;border-color:rgba(255,77,109,.5)}
 
 /* ===================== TOAST ===================== */
+/* радиус 22px, НЕ 999px: на однострочном тосте (высота ~44px) выглядит той же капсулой,
+   а длинные сообщения переносятся на 2-3 строки и больше не вылезают из «облачка» углами */
 .toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);
   bottom:calc(120px + env(safe-area-inset-bottom));z-index:50;max-width:90%;
   display:flex;align-items:center;gap:12px;
-  background:rgba(10,10,28,.95);color:#eaf6ff;padding:11px 14px 11px 18px;border-radius:999px;font-weight:700;font-size:14.5px;
-  border:1.5px solid rgba(25,227,255,.5);box-shadow:0 0 24px -6px var(--cyan), 0 10px 30px rgba(0,0,0,.5);
+  background:rgba(10,10,28,.95);color:#eaf6ff;padding:11px 16px 11px 18px;border-radius:22px;font-weight:700;font-size:14.5px;
+  line-height:1.35;border:1.5px solid rgba(25,227,255,.5);box-shadow:0 0 24px -6px var(--cyan), 0 10px 30px rgba(0,0,0,.5);
   opacity:0;pointer-events:none;transition:opacity .25s, transform .25s}
+.toast span{min-width:0;overflow-wrap:break-word}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* верхняя позиция: пока активен режим перестановки, низ занят пилюлей «✓ Готово» —
+   подсказка и любые тосты уезжают наверх, чтобы не накладываться */
+.toast.top{top:calc(24px + env(safe-area-inset-top));bottom:auto;transform:translateX(-50%) translateY(-20px)}
+.toast.top.show{transform:translateX(-50%) translateY(0)}
 .toast.has-act{pointer-events:auto}
 .toast-act{border:none;cursor:pointer;font-family:inherit;font-weight:800;font-size:14px;color:#04121a;
   background:linear-gradient(180deg,#5af0d0,#16b893);padding:8px 14px;border-radius:999px;box-shadow:0 0 14px -3px var(--green)}

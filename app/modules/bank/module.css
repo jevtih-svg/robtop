@@ -1,45 +1,45 @@
-/* RobTop — модуль «Копилка». Скоуп [data-mod="bank"], классы bk-*. Акцент — неон-розовый/красный #ff4d6d. */
+/* RobTop — модуль «Копилка». Скоуп [data-mod="bank"], классы bk-*. Акцент — неон-розовый/красный var(--red). */
 [data-mod="bank"] .bk{padding-bottom:140px}
 [data-mod="bank"] .bk-header{display:flex;align-items:center;gap:12px;padding:calc(20px + env(safe-area-inset-top)) 2px 8px}
 [data-mod="bank"] .bk-head-main{flex:1;min-width:0}
-[data-mod="bank"] .bk-title{font-family:'Russo One',sans-serif;font-size:24px;color:#fff;
-  text-shadow:0 0 12px rgba(255,77,109,.8), 0 0 26px rgba(255,43,214,.35)}
+[data-mod="bank"] .bk-title{font-family:var(--font-display);font-size:24px;color:#fff;
+  text-shadow:0 0 12px color-mix(in srgb,var(--red) 80%,transparent), 0 0 26px color-mix(in srgb,var(--magenta) 35%,transparent)}
 [data-mod="bank"] .bk-sub{margin:0;color:var(--muted);font-weight:600;font-size:13px}
 
 /* сцена со свинкой */
 [data-mod="bank"] .bk-stage{position:relative;margin-top:14px;border-radius:22px;padding:30px 16px 22px;
-  background:linear-gradient(165deg, rgba(46,14,24,.55), rgba(9,8,24,.92));
-  border:1.5px solid rgba(255,77,109,.45);
-  box-shadow:0 12px 30px rgba(0,0,0,.5), 0 0 30px -10px #ff4d6d}
+  background:linear-gradient(165deg, rgba(var(--panel-rgb),.55), rgba(var(--panel-rgb),.92));
+  border:1.5px solid color-mix(in srgb,var(--red) 45%,transparent);
+  box-shadow:0 12px 30px rgba(0,0,0,.5), 0 0 30px -10px var(--red)}
 
 /* огонёк-винстрик (левый верхний угол, по эскизу); это КНОПКА — тап открывает «что такое огонёк?» */
 [data-mod="bank"] .bk-flame{position:absolute;left:12px;top:12px;display:flex;align-items:center;gap:6px;
-  min-height:44px;padding:7px 12px 7px 9px;border-radius:999px;background:rgba(20,12,8,.65);
-  border:1.5px solid rgba(255,210,59,.55);color:#ffd23b;cursor:pointer;
+  min-height:44px;padding:7px 12px 7px 9px;border-radius:999px;background:rgba(var(--panel-rgb),.65);
+  border:1.5px solid color-mix(in srgb,var(--gold) 55%,transparent);color:var(--gold);cursor:pointer;
   font:inherit;-webkit-tap-highlight-color:transparent;
-  box-shadow:0 0 18px -4px rgba(255,160,40,.7)}
+  box-shadow:0 0 18px -4px color-mix(in srgb,var(--gold) 70%,transparent)}
 [data-mod="bank"] .bk-flame-i{flex:none;width:17px;height:17px;border-radius:50%;margin-left:2px;
   display:flex;align-items:center;justify-content:center;
   font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:700;font-size:12px;line-height:1;
-  color:#0b0a1e;background:#ffd23b;box-shadow:0 0 10px -2px rgba(255,210,59,.9)}
-[data-mod="bank"] .bk-flame.off .bk-flame-i{background:#93a6cf;box-shadow:none}
-[data-mod="bank"] .bk-flame svg{width:20px;height:20px;filter:drop-shadow(0 0 6px rgba(255,170,40,.9))}
-[data-mod="bank"] .bk-flame-n{font-family:'Russo One',sans-serif;font-size:18px;line-height:1;color:#fff;
-  text-shadow:0 0 10px rgba(255,170,40,.9)}
+  color:var(--panel-2);background:var(--gold);box-shadow:0 0 10px -2px color-mix(in srgb,var(--gold) 90%,transparent)}
+[data-mod="bank"] .bk-flame.off .bk-flame-i{background:var(--muted);box-shadow:none}
+[data-mod="bank"] .bk-flame svg{width:20px;height:20px;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--gold) 90%,transparent))}
+[data-mod="bank"] .bk-flame-n{font-family:var(--font-display);font-size:18px;line-height:1;color:#fff;
+  text-shadow:0 0 10px color-mix(in srgb,var(--gold) 90%,transparent)}
 [data-mod="bank"] .bk-flame-l{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-[data-mod="bank"] .bk-flame.off{border-color:rgba(147,166,207,.35);color:#6f7fa3;box-shadow:none}
+[data-mod="bank"] .bk-flame.off{border-color:color-mix(in srgb,var(--muted) 35%,transparent);color:var(--muted-dim);box-shadow:none}
 [data-mod="bank"] .bk-flame.off svg{filter:none}
-[data-mod="bank"] .bk-flame.off .bk-flame-n{color:#93a6cf;text-shadow:none}
+[data-mod="bank"] .bk-flame.off .bk-flame-n{color:var(--muted);text-shadow:none}
 
 /* свинка */
-[data-mod="bank"] .bk-pig{position:relative;width:min(72%,280px);margin:18px auto 4px;color:#ff7a95;cursor:pointer;
+[data-mod="bank"] .bk-pig{position:relative;width:min(72%,280px);margin:18px auto 4px;color:var(--red-soft);cursor:pointer;
   -webkit-tap-highlight-color:transparent}
 [data-mod="bank"] .bk-pig svg{width:100%;height:auto;display:block;
-  filter:drop-shadow(0 0 10px rgba(255,77,109,.55)) drop-shadow(0 0 26px rgba(255,77,109,.25))}
-[data-mod="bank"] .bk-pig .bk-coin{color:#ffd23b;animation:bk-coin 2.6s ease-in-out infinite}
+  filter:drop-shadow(0 0 10px color-mix(in srgb,var(--red) 55%,transparent)) drop-shadow(0 0 26px color-mix(in srgb,var(--red) 25%,transparent))}
+[data-mod="bank"] .bk-pig .bk-coin{color:var(--gold);animation:bk-coin 2.6s ease-in-out infinite}
 [data-mod="bank"] .bk-pig-label{position:absolute;left:17%;top:48%;width:48%;text-align:center;
-  color:#fff;font-weight:800;font-size:14px;text-shadow:0 0 10px rgba(255,77,109,.8)}
-[data-mod="bank"] .bk-pig-label b{font-family:'Russo One',sans-serif;font-size:24px;display:block;line-height:1.1}
+  color:#fff;font-weight:800;font-size:14px;text-shadow:0 0 10px color-mix(in srgb,var(--red) 80%,transparent)}
+[data-mod="bank"] .bk-pig-label b{font-family:var(--font-display);font-size:24px;display:block;line-height:1.1}
 [data-mod="bank"] .bk-pig.wobble{animation:bk-wobble .5s ease}
 @keyframes bk-wobble{0%{transform:rotate(0)}25%{transform:rotate(-3deg) scale(1.02)}60%{transform:rotate(2.4deg)}100%{transform:rotate(0)}}
 @keyframes bk-coin{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
@@ -50,103 +50,103 @@
 
 /* вкладки Задания / Родители */
 [data-mod="bank"] .bk-tabs{display:flex;gap:8px;margin:16px 0 10px}
-[data-mod="bank"] .bk-tab{flex:1;min-height:46px;border-radius:14px;border:1.5px solid rgba(147,166,207,.35);
-  background:rgba(13,12,32,.7);color:var(--muted);font-weight:800;font-size:14px;cursor:pointer}
-[data-mod="bank"] .bk-tab.active{color:#fff;border-color:rgba(255,77,109,.65);
-  background:linear-gradient(165deg, rgba(255,77,109,.18), rgba(13,12,32,.8));
-  box-shadow:0 0 16px -6px #ff4d6d}
+[data-mod="bank"] .bk-tab{flex:1;min-height:46px;border-radius:14px;border:1.5px solid color-mix(in srgb,var(--muted) 35%,transparent);
+  background:rgba(var(--panel-rgb),.7);color:var(--muted);font-weight:800;font-size:14px;cursor:pointer}
+[data-mod="bank"] .bk-tab.active{color:#fff;border-color:color-mix(in srgb,var(--red) 65%,transparent);
+  background:linear-gradient(165deg, color-mix(in srgb,var(--red) 18%,transparent), rgba(var(--panel-rgb),.8));
+  box-shadow:0 0 16px -6px var(--red)}
 
 /* история транзакций */
 [data-mod="bank"] .bk-count{color:var(--muted);font-size:12px;font-weight:700;margin:2px 2px 8px}
 [data-mod="bank"] .bk-row{display:flex;align-items:center;gap:12px;padding:10px 12px;margin-bottom:8px;
-  border-radius:16px;background:rgba(13,12,32,.72);border:1px solid rgba(147,166,207,.22)}
+  border-radius:16px;background:rgba(var(--panel-rgb),.72);border:1px solid color-mix(in srgb,var(--muted) 22%,transparent)}
 [data-mod="bank"] .bk-badge{flex:none;min-width:54px;text-align:center;padding:7px 8px;border-radius:12px;
-  font-family:'Russo One',sans-serif;font-size:16px}
-[data-mod="bank"] .bk-badge.plus{color:#2bf0c0;background:rgba(43,240,192,.1);border:1px solid rgba(43,240,192,.45);
-  text-shadow:0 0 10px rgba(43,240,192,.7)}
-[data-mod="bank"] .bk-badge.minus{color:#ff4d6d;background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.45);
-  text-shadow:0 0 10px rgba(255,77,109,.7)}
+  font-family:var(--font-display);font-size:16px}
+[data-mod="bank"] .bk-badge.plus{color:var(--green);background:color-mix(in srgb,var(--green) 10%,transparent);border:1px solid color-mix(in srgb,var(--green) 45%,transparent);
+  text-shadow:0 0 10px color-mix(in srgb,var(--green) 70%,transparent)}
+[data-mod="bank"] .bk-badge.minus{color:var(--red);background:color-mix(in srgb,var(--red) 10%,transparent);border:1px solid color-mix(in srgb,var(--red) 45%,transparent);
+  text-shadow:0 0 10px color-mix(in srgb,var(--red) 70%,transparent)}
 [data-mod="bank"] .bk-row-main{flex:1;min-width:0}
-[data-mod="bank"] .bk-row-t{color:#eaf2ff;font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+[data-mod="bank"] .bk-row-t{color:var(--ink);font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 [data-mod="bank"] .bk-row-d{color:var(--muted);font-size:12px;font-weight:600;margin-top:2px}
 [data-mod="bank"] .bk-empty{text-align:center;color:var(--muted);font-weight:700;padding:26px 14px}
 [data-mod="bank"] .bk-empty .btn{margin-top:10px}
 
 /* счётчик на вкладке «Родители»: ребёнку — активные задания, родителю — ждущие проверки */
 [data-mod="bank"] .bk-tab-n{display:inline-block;min-width:20px;margin-left:7px;padding:2px 6px;border-radius:999px;
-  font-family:'Russo One',sans-serif;font-size:12px;line-height:1.2;color:#0b0a1e;background:#ffd23b;
-  box-shadow:0 0 10px -2px rgba(255,210,59,.9)}
+  font-family:var(--font-display);font-size:12px;line-height:1.2;color:var(--panel-2);background:var(--gold);
+  box-shadow:0 0 10px -2px color-mix(in srgb,var(--gold) 90%,transparent)}
 [data-mod="bank"] .bk-tab-n[hidden]{display:none}
 
 /* задания от родителей (вкладка «Родители», блок над историей) */
 [data-mod="bank"] .bk-addtask{width:100%;min-height:46px;margin-bottom:10px;border-style:dashed}
 [data-mod="bank"] .bk-task{display:flex;align-items:center;gap:12px;padding:11px 12px;margin-bottom:8px;
-  border-radius:16px;background:linear-gradient(165deg, rgba(255,77,109,.10), rgba(13,12,32,.82));
-  border:1.5px solid rgba(255,77,109,.4)}
+  border-radius:16px;background:linear-gradient(165deg, color-mix(in srgb,var(--red) 10%,transparent), rgba(var(--panel-rgb),.82));
+  border:1.5px solid color-mix(in srgb,var(--red) 40%,transparent)}
 [data-mod="bank"] .bk-task[data-act="edit"]{cursor:pointer}
-[data-mod="bank"] .bk-task.st-pending{border-color:rgba(255,210,59,.55);
-  background:linear-gradient(165deg, rgba(255,210,59,.08), rgba(13,12,32,.82))}
-[data-mod="bank"] .bk-task.st-done{opacity:.55;border-color:rgba(147,166,207,.3);background:rgba(13,12,32,.72)}
+[data-mod="bank"] .bk-task.st-pending{border-color:color-mix(in srgb,var(--gold) 55%,transparent);
+  background:linear-gradient(165deg, color-mix(in srgb,var(--gold) 8%,transparent), rgba(var(--panel-rgb),.82))}
+[data-mod="bank"] .bk-task.st-done{opacity:.55;border-color:color-mix(in srgb,var(--muted) 30%,transparent);background:rgba(var(--panel-rgb),.72)}
 [data-mod="bank"] .bk-task-main{flex:1;min-width:0}
 [data-mod="bank"] .bk-task-t{color:#fff;font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 [data-mod="bank"] .bk-task-m{color:var(--muted);font-size:11px;font-weight:700;margin-top:2px}
 [data-mod="bank"] .bk-tact{flex:none;display:flex;align-items:center;gap:6px}
 [data-mod="bank"] .bk-tbtn{min-height:40px;padding:0 12px;border-radius:12px;font-weight:800;font-size:13px;cursor:pointer;
-  border:1.5px solid rgba(147,166,207,.35);background:rgba(13,12,32,.8);color:#eaf2ff;
+  border:1.5px solid color-mix(in srgb,var(--muted) 35%,transparent);background:rgba(var(--panel-rgb),.8);color:var(--ink);
   -webkit-tap-highlight-color:transparent}
-[data-mod="bank"] .bk-tbtn.do{border-color:rgba(43,240,192,.6);color:#2bf0c0;
-  box-shadow:0 0 14px -6px #2bf0c0;font-family:'Russo One',sans-serif}
-[data-mod="bank"] .bk-tbtn.ok{border-color:rgba(43,240,192,.6);color:#2bf0c0;box-shadow:0 0 14px -6px #2bf0c0}
-[data-mod="bank"] .bk-tbtn.no{border-color:rgba(255,77,109,.5);color:#ff7a95;min-width:40px;padding:0 8px}
-[data-mod="bank"] .bk-tbtn.x{border-color:rgba(147,166,207,.3);color:#93a6cf;min-width:36px;padding:0 8px}
+[data-mod="bank"] .bk-tbtn.do{border-color:color-mix(in srgb,var(--green) 60%,transparent);color:var(--green);
+  box-shadow:0 0 14px -6px var(--green);font-family:var(--font-display)}
+[data-mod="bank"] .bk-tbtn.ok{border-color:color-mix(in srgb,var(--green) 60%,transparent);color:var(--green);box-shadow:0 0 14px -6px var(--green)}
+[data-mod="bank"] .bk-tbtn.no{border-color:color-mix(in srgb,var(--red) 50%,transparent);color:var(--red-soft);min-width:40px;padding:0 8px}
+[data-mod="bank"] .bk-tbtn.x{border-color:color-mix(in srgb,var(--muted) 30%,transparent);color:var(--muted);min-width:36px;padding:0 8px}
 [data-mod="bank"] .bk-chip{flex:none;padding:7px 10px;border-radius:999px;font-size:11px;font-weight:800;
-  color:#ffd23b;background:rgba(255,210,59,.1);border:1px solid rgba(255,210,59,.45)}
-[data-mod="bank"] .bk-chip.ok{color:#2bf0c0;background:rgba(43,240,192,.08);border-color:rgba(43,240,192,.4)}
+  color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,transparent);border:1px solid color-mix(in srgb,var(--gold) 45%,transparent)}
+[data-mod="bank"] .bk-chip.ok{color:var(--green);background:color-mix(in srgb,var(--green) 8%,transparent);border-color:color-mix(in srgb,var(--green) 40%,transparent)}
 
 /* шторка «что такое огонёк?» (объяснение для ребёнка) */
 .bk-info{margin:2px 0 6px}
-.bk-info-intro{margin:0 0 10px;text-align:center;color:#eaf2ff;font-weight:800;font-size:15px}
+.bk-info-intro{margin:0 0 10px;text-align:center;color:var(--ink);font-weight:800;font-size:15px}
 .bk-info-rule{display:flex;align-items:flex-start;gap:10px;padding:9px 11px;margin-bottom:8px;
-  border-radius:14px;background:rgba(13,12,32,.72);border:1px solid rgba(255,210,59,.3)}
+  border-radius:14px;background:rgba(var(--panel-rgb),.72);border:1px solid color-mix(in srgb,var(--gold) 30%,transparent)}
 .bk-info-rule .ic{flex:none;font-size:20px;line-height:1.3}
-.bk-info-rule p{margin:0;color:#cfe0ff;font-weight:600;font-size:13.5px;line-height:1.45}
+.bk-info-rule p{margin:0;color:var(--ink-3);font-weight:600;font-size:13.5px;line-height:1.45}
 .bk-info-ex{list-style:none;margin:0 0 10px;padding:0}
 .bk-info-ex li{padding:7px 11px 7px 30px;margin-bottom:6px;border-radius:12px;position:relative;
-  background:rgba(13,12,32,.72);border:1px solid rgba(43,240,192,.3);
-  color:#cfe0ff;font-weight:600;font-size:13px;line-height:1.4}
+  background:rgba(var(--panel-rgb),.72);border:1px solid color-mix(in srgb,var(--green) 30%,transparent);
+  color:var(--ink-3);font-weight:600;font-size:13px;line-height:1.4}
 .bk-info-ex li::before{content:"🔥";position:absolute;left:9px;top:7px;font-size:13px}
-.bk-info-ex li.out{border-color:rgba(147,166,207,.3);color:#93a6cf}
+.bk-info-ex li.out{border-color:color-mix(in srgb,var(--muted) 30%,transparent);color:var(--muted)}
 .bk-info-ex li.out::before{content:"💨"}
 .bk-info-note{margin:0 0 8px;padding:9px 11px;border-radius:12px;text-align:center;
-  color:#ffd23b;font-weight:800;font-size:13px;background:rgba(255,210,59,.08);
-  border:1px solid rgba(255,210,59,.4)}
-.bk-info-note.dim{color:var(--muted);background:rgba(13,12,32,.6);border-color:rgba(147,166,207,.3)}
+  color:var(--gold);font-weight:800;font-size:13px;background:color-mix(in srgb,var(--gold) 8%,transparent);
+  border:1px solid color-mix(in srgb,var(--gold) 40%,transparent)}
+.bk-info-note.dim{color:var(--muted);background:rgba(var(--panel-rgb),.6);border-color:color-mix(in srgb,var(--muted) 30%,transparent)}
 
 /* шторка создания/правки задания */
 .bk-tform{display:flex;flex-direction:column;gap:10px;margin:4px 0 8px}
-.bk-tform input{min-height:46px;border-radius:12px;border:1.5px solid rgba(147,166,207,.35);
-  background:rgba(13,12,32,.8);color:#eaf2ff;font-weight:700;padding:0 12px;font-size:15px}
-.bk-tform input:focus{outline:none;border-color:rgba(255,77,109,.7)}
+.bk-tform input{min-height:46px;border-radius:12px;border:1.5px solid color-mix(in srgb,var(--muted) 35%,transparent);
+  background:rgba(var(--panel-rgb),.8);color:var(--ink);font-weight:700;padding:0 12px;font-size:15px}
+.bk-tform input:focus{outline:none;border-color:color-mix(in srgb,var(--red) 70%,transparent)}
 .bk-tlbl{color:var(--muted);font-size:12px;font-weight:700;margin:2px 2px -4px}
 .bk-types{display:flex;gap:8px}
-.bk-type{flex:1;min-height:44px;border-radius:12px;border:1.5px solid rgba(147,166,207,.35);
-  background:rgba(13,12,32,.7);color:var(--muted);font-weight:800;font-size:13px;cursor:pointer}
-.bk-type.on{color:#fff;border-color:rgba(255,77,109,.65);
-  background:linear-gradient(165deg, rgba(255,77,109,.18), rgba(13,12,32,.8));
-  box-shadow:0 0 14px -6px #ff4d6d}
+.bk-type{flex:1;min-height:44px;border-radius:12px;border:1.5px solid color-mix(in srgb,var(--muted) 35%,transparent);
+  background:rgba(var(--panel-rgb),.7);color:var(--muted);font-weight:800;font-size:13px;cursor:pointer}
+.bk-type.on{color:#fff;border-color:color-mix(in srgb,var(--red) 65%,transparent);
+  background:linear-gradient(165deg, color-mix(in srgb,var(--red) 18%,transparent), rgba(var(--panel-rgb),.8));
+  box-shadow:0 0 14px -6px var(--red)}
 
 /* родительская панель (шторка) */
 .bk-pgrid{display:flex;gap:10px;margin:6px 0 4px}
-.bk-pstat{flex:1;text-align:center;border-radius:14px;padding:10px 6px;background:rgba(13,12,32,.72);
-  border:1px solid rgba(147,166,207,.25)}
-.bk-pstat .n{font-family:'Russo One',sans-serif;font-size:22px;color:#fff;text-shadow:0 0 10px rgba(255,77,109,.7)}
+.bk-pstat{flex:1;text-align:center;border-radius:14px;padding:10px 6px;background:rgba(var(--panel-rgb),.72);
+  border:1px solid color-mix(in srgb,var(--muted) 25%,transparent)}
+.bk-pstat .n{font-family:var(--font-display);font-size:22px;color:#fff;text-shadow:0 0 10px color-mix(in srgb,var(--red) 70%,transparent)}
 .bk-pstat .l{color:var(--muted);font-size:11px;font-weight:700;margin-top:2px}
 .bk-pbtns{display:flex;flex-direction:column;gap:8px}
 .bk-pbtns .btn{width:100%;min-height:48px}
 .bk-pbtns .bk-hint{display:block;font-size:10px;font-weight:700;color:var(--muted);margin-top:1px}
 .bk-custom{display:flex;gap:8px;margin-bottom:4px}
-.bk-custom input{min-height:46px;border-radius:12px;border:1.5px solid rgba(147,166,207,.35);
-  background:rgba(13,12,32,.8);color:#eaf2ff;font-weight:700;padding:0 12px;font-size:15px}
-.bk-custom input:focus{outline:none;border-color:rgba(255,77,109,.7)}
+.bk-custom input{min-height:46px;border-radius:12px;border:1.5px solid color-mix(in srgb,var(--muted) 35%,transparent);
+  background:rgba(var(--panel-rgb),.8);color:var(--ink);font-weight:700;padding:0 12px;font-size:15px}
+.bk-custom input:focus{outline:none;border-color:color-mix(in srgb,var(--red) 70%,transparent)}
 .bk-custom #bkAmt{flex:0 0 34%}
 .bk-custom #bkNote{flex:1;min-width:0}
