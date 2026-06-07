@@ -170,7 +170,8 @@ var SECTIONS=[
   ['Данные',[['content','Контент модулей'],['points','Очки'],['logs','Журнал']]],
   ['Система',[['apps','Приложения'],['mail','Письма'],['admins','Админы и баны']]]
 ];
-var view='dash';
+/* память раздела: обновление страницы возвращает в тот же раздел */
+var view=(function(){ try{ return localStorage.getItem('rt_admin_view')||'dash'; }catch(e){ return 'dash'; } })();
 /* Менеджеры паролей (1Password/LastPass/Bitwarden/Dashlane) не должны срабатывать ВНУТРИ панели:
    все поля вне экрана входа помечаем «это не логин-форма», кнопкам даём type=button.
    На экране входа атрибуты autocomplete оставлены как есть — там менеджер ДОЛЖЕН работать. */
@@ -188,6 +189,8 @@ function pmGuard(root){
 }
 
 function screenPanel(){
+  if(!VIEWS[view]) view='dash';
+  try{ localStorage.setItem('rt_admin_view',view); }catch(e){}
   var side='';
   SECTIONS.forEach(function(g){
     side+='<div class="grp">'+g[0]+'</div>';

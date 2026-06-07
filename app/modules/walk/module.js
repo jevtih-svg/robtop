@@ -803,5 +803,10 @@
     step="dur"; cur=null; beh=null; ev=null; saving=false; meta={id:null,puppy:1,reward:REWARD_DEF};
   }
 
-  RobTop.register({ id:"walk", mount:mount, unmount:unmount, messages:MESSAGES });
+  /* живое обновление (sync-поллер оболочки, v2026.06.07.47): общесемейный пул — прогулку
+     брата/родителя видно сразу. Только в покое: не во время мастера (cur), форм
+     поведения/события (beh/ev) и сохранения. */
+  function refresh(){ if(root && !saving && !cur && !beh && !ev) load(); }
+
+  RobTop.register({ id:"walk", mount:mount, unmount:unmount, refresh:refresh, messages:MESSAGES });
 })();

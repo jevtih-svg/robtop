@@ -483,15 +483,26 @@ body[data-view="parent"] .pd-tabbar{display:flex}
 .pd-dhead .ph[data-full]{cursor:zoom-in}
 
 /* ===== скрытый реордер (long-press → jiggle, 2026-06-07): плитки дома + карточки дашборда =====
+   .jgl-zone — контейнер реордера (ставит makeJiggle): выделение текста/лупа iOS выключены
+   ПОСТОЯННО, иначе long-press успевает начать выделение до входа в режим;
    .jgl-on — элемент в режиме перестановки (дрожит, скролл с него выключен);
-   .jgl-src — место, откуда тащат (полупрозрачный «слот»); .jgl-ghost — копия под пальцем;
+   .jgl-src — полупрозрачный «слот» (клон), двигается по сетке вместо src;
+   .jgl-hold — сам src во время драга: ВНЕ потока, но В DOM и НЕ display:none — iOS убивает
+   поток pointer-событий, если цель тача переместить/спрятать (фикс «прилипшего» призрака);
+   .jgl-ghost — копия под пальцем: transition заглушен (наследовался transform .14s от .tile —
+   «резинка»), движется только transform translate3d из rAF-цикла;
    .jgl-done — плавающая ✓ для выхода. Ghost под тостом (50), чтобы подсказку было видно. */
+.jgl-zone,.jgl-zone *{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 @keyframes jglShake{0%,100%{transform:rotate(-.8deg)}50%{transform:rotate(.8deg)}}
 .jgl-on{animation:jglShake .34s ease-in-out infinite;touch-action:none;
   user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .jgl-on:nth-child(2n){animation-duration:.30s;animation-direction:reverse}
-.jgl-src{opacity:.28;animation:none}
+.jgl-src{opacity:.28;animation:none;transition:none}
+.jgl-hold{position:fixed !important;left:-9999px !important;top:0 !important;
+  width:10px !important;height:10px !important;visibility:hidden !important;
+  pointer-events:none !important;animation:none !important;transition:none !important}
 .jgl-ghost{position:fixed;z-index:45;margin:0;pointer-events:none;opacity:.95;will-change:transform;
+  transition:none !important;animation:none !important;
   box-shadow:0 18px 44px rgba(0,0,0,.6),0 0 36px -6px var(--c,#19e3ff)}
 .jgl-done{position:fixed;left:50%;bottom:calc(120px + env(safe-area-inset-bottom));transform:translateX(-50%);
   z-index:46;border:0;border-radius:999px;padding:13px 24px;cursor:pointer;

@@ -125,11 +125,35 @@ window.RobTop = window.RobTop || {};
   /* ---- скрытый реордер (long-press ~0.55с → jiggle + drag): главный экран и дашборд ----
      Никакого видимого UI до жеста: удержал элемент — режим «дрожания», тащишь — порядок
      меняется, отпустил — onCommit(ids) сохраняет. Выход — плавающая кнопка ✓ или навигация
-     (вызвать .exit()). Делегировано на container, переживает перерисовку innerHTML. */
+     (вызвать .exit()). Делегировано на container, переживает перерисовку innerHTML.
+
+     iOS-КРИТИЧНО (фикс 2026-06-07 по багам Джеффа «призрак прилип / дёргается / выделяет текст»):
+     1) Элемент-ЦЕЛЬ тача нельзя перемещать по DOM (insertBefore) или прятать display:none во
+        время жеста — WebKit молча убивает поток pointer-событий: pointerup не приходит, драг
+        «умирает», а следующий startDrag перезаписывал ghost, оставляя старый призрак на экране.
+        Теперь src на время драга уходит из потока классом .jgl-hold (fixed за экраном, но
+        ОСТАЁТСЯ в DOM), по сетке двигается слот-клон, а src возвращается на место слота одним
+        replaceChild на отпускании.
+     2) Вся DOM/transform-работа — в rAF-цикле (события только пишут координаты), призраку CSS
+        глушит transition (клон .tile наследовал transform .14s — отсюда «резинка»), автоскролл
+        плавный покадровый, перестановка слота только при пересечении центра цели.
+     3) Контейнер получает класс .jgl-zone: user-select/touch-callout выключены ПОСТОЯННО —
+        иначе за 550мс удержания iOS успевает начать выделение текста/показать лупу.
+     Страховки: killGhosts() сметает все .jgl-ghost в документе, startDrag закрывает
+     «застрявший» прошлый драг, window-листенеры мёртвого жеста не копятся (gcleanup),
+     pointercancel откатывает без сохранения. */
   function makeJiggle(container, opts){
     var itemSel=opts.items, idAttr=opts.idAttr||"data-mod";
-    var mode=false, src=null, ghost=null, sx=0, sy=0, pressT=null, donePill=null, suppress=false;
+    var mode=false, src=null, slot=null, ghost=null, sx=0, sy=0, lx=0, ly=0,
+        pressT=null, donePill=null, suppress=false, gcleanup=null, rafOn=false;
+    container.classList.add("jgl-zone");
     function items(){ return Array.prototype.slice.call(container.querySelectorAll(itemSel)); }
+    function killGhosts(){
+      Array.prototype.forEach.call(document.querySelectorAll(".jgl-ghost"),function(g){
+        if(g.parentNode) g.parentNode.removeChild(g);
+      });
+      ghost=null;
+    }
     function enter(){
       if(mode) return; mode=true;
       container.classList.add("jgl");
@@ -150,48 +174,75 @@ window.RobTop = window.RobTop || {};
       donePill=null;
     }
     function startDrag(el,x,y){
-      src=el; sx=x; sy=y;
+      if(src) endDrag(false); // прошлый драг не закрылся (умер поток событий) — тихо закрыть
+      killGhosts();
+      src=el; sx=x; sy=y; lx=x; ly=y;
       var r=el.getBoundingClientRect();
       ghost=el.cloneNode(true);
       ghost.classList.add("jgl-ghost"); ghost.classList.remove("jgl-on","jgl-src");
       ghost.style.width=r.width+"px"; ghost.style.height=r.height+"px";
       ghost.style.left=r.left+"px"; ghost.style.top=r.top+"px";
       document.body.appendChild(ghost);
-      el.classList.add("jgl-src");
+      slot=el.cloneNode(true);                  // видимый «слот»: двигается по сетке ВМЕСТО src
+      slot.classList.add("jgl-src"); slot.classList.remove("jgl-on");
+      slot.removeAttribute(idAttr);             // чтобы слот не попал в onCommit
+      slot.style.pointerEvents="none";
+      el.parentNode.insertBefore(slot,el.nextSibling);
+      el.classList.add("jgl-hold");             // вне потока, но в DOM (iOS, см. шапку)
       buzz(12);
+      if(!rafOn){ rafOn=true; requestAnimationFrame(frame); }
     }
-    function moveDrag(x,y){
-      if(!ghost) return;
-      ghost.style.transform="translate("+(x-sx)+"px,"+(y-sy)+"px) scale(1.05)";
-      if(y<80) window.scrollBy(0,-14); else if(y>window.innerHeight-80) window.scrollBy(0,14);
-      var el=document.elementFromPoint(x,y); el=el&&el.closest?el.closest(itemSel):null;
-      if(!el||el===src||!container.contains(el)) return;
-      if(src.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) el.parentNode.insertBefore(src,el.nextSibling);
-      else el.parentNode.insertBefore(src,el);
+    /* весь драг в rAF: transform призрака, плавный автоскролл у краёв, перестановка слота */
+    function frame(){
+      if(!ghost){ rafOn=false; return; }
+      ghost.style.transform="translate3d("+(lx-sx)+"px,"+(ly-sy)+"px,0) scale(1.05)";
+      if(ly<80) window.scrollBy(0,-9); else if(ly>window.innerHeight-80) window.scrollBy(0,9);
+      try{ reorder(); }catch(e){} // сбой перестановки не должен убивать rAF-цикл (призрак бы «завис»)
+      requestAnimationFrame(frame);
+    }
+    function reorder(){
+      if(!slot) return;
+      var el=document.elementFromPoint(lx,ly); el=el&&el.closest?el.closest(itemSel):null;
+      if(!el||el===slot||el===src||!container.contains(el)) return;
+      var r=el.getBoundingClientRect();
+      /* слот двигаем только при пересечении центра цели (диагональная сумма работает и в
+         сетке 2 колонки, и на широких плитках) — нет дребезга на границах */
+      var after=((ly-(r.top+r.height/2))+(lx-(r.left+r.width/2)))>0;
+      if(after){ if(el.nextSibling!==slot) el.parentNode.insertBefore(slot,el.nextSibling); }
+      else if(slot.nextSibling!==el) el.parentNode.insertBefore(slot,el);
     }
     function endDrag(commit){
-      if(ghost&&ghost.parentNode) ghost.parentNode.removeChild(ghost); ghost=null;
-      if(src) src.classList.remove("jgl-src");
-      var was=src; src=null;
-      if(commit&&was&&opts.onCommit) opts.onCommit(items().map(function(el){ return el.getAttribute(idAttr); }));
+      killGhosts();
+      var was=src, sl=slot; src=null; slot=null;
+      if(was) was.classList.remove("jgl-hold","jgl-src");
+      if(sl&&sl.parentNode){
+        if(was) sl.parentNode.replaceChild(was,sl); // src встаёт на место слота
+        else sl.parentNode.removeChild(sl);
+      }
+      /* контейнер мог перерисоваться посреди жеста (innerHTML) — слот/src выброшены вместе
+         со старым DOM, коммитить нечего */
+      if(commit&&was&&container.contains(was)&&opts.onCommit)
+        opts.onCommit(items().map(function(el){ return el.getAttribute(idAttr); }));
     }
     container.addEventListener("pointerdown",function(e){
       if(e.button) return; // только основная кнопка/палец
       suppress=false;      // новый жест — прошлое подавление клика не «залипает»
       var el=e.target.closest(itemSel); if(!el||!container.contains(el)) return;
-      var pid=e.pointerId, x0=e.clientX, y0=e.clientY, lx=x0, ly=y0;
+      if(gcleanup) gcleanup(); // листенеры умершего жеста не копим
+      var pid=e.pointerId, x0=e.clientX, y0=e.clientY; lx=x0; ly=y0;
       function mv(e2){
         if(e2.pointerId!==pid) return; lx=e2.clientX; ly=e2.clientY;
-        if(src){ moveDrag(lx,ly); return; }
+        if(src) return; // DOM-работа в rAF-цикле; событие только пишет координаты
         if(Math.abs(lx-x0)>12||Math.abs(ly-y0)>12){ clearTimeout(pressT); pressT=null; if(!mode) cleanup(); }
       }
       function up(e2){
         if(e2.pointerId!==pid) return;
         clearTimeout(pressT); pressT=null;
-        if(src){ suppress=true; endDrag(true); }
+        if(src){ suppress=true; endDrag(e2.type==="pointerup"); } // cancel = откат без сохранения
         cleanup();
       }
-      function cleanup(){ window.removeEventListener("pointermove",mv); window.removeEventListener("pointerup",up); window.removeEventListener("pointercancel",up); }
+      function cleanup(){ window.removeEventListener("pointermove",mv); window.removeEventListener("pointerup",up); window.removeEventListener("pointercancel",up); gcleanup=null; }
+      gcleanup=cleanup;
       window.addEventListener("pointermove",mv); window.addEventListener("pointerup",up); window.addEventListener("pointercancel",up);
       if(mode){ suppress=true; startDrag(el,x0,y0); }
       else pressT=setTimeout(function(){ pressT=null; suppress=true; enter(); startDrag(el,lx,ly); },550);
@@ -242,13 +293,18 @@ window.RobTop = window.RobTop || {};
   function moduleViewEl(){ return moduleView; }
   function hideParent(){ if(parentView) parentView.classList.remove("active"); }
   function hideSettings(){ if(settingsView) settingsView.classList.remove("active"); }
+  /* ---- память экрана: обновление страницы возвращает туда же (rt_screen) ----
+     Пишем при каждом переходе; на буте читаем ДО первого showHome (иначе затрётся). */
+  function screenSave(st){ try{ lsSet("rt_screen",st); }catch(e){} }
+
   /* «домой» для РОДИТЕЛЯ = дашборд (а не детские плитки): один шов, через который
      возвращаются и RT.close() из модуля, и boot(). Детский путь не меняется. */
   function showHome(){
+    screenSave({v:"home"});
     if(!demo && isParent() && RT.Parent){ showParent(); return; }
     body.setAttribute("data-view","home"); if(lockView) lockView.classList.remove("active"); hideParent(); hideSettings(); moduleView.classList.remove("active"); homeView.classList.add("active"); window.scrollTo(0,0); fabDestroy(); homeHud();
   }
-  function showModule(){ body.setAttribute("data-view","module"); if(lockView) lockView.classList.remove("active"); hideParent(); hideSettings(); homeView.classList.remove("active"); moduleView.classList.add("active"); window.scrollTo(0,0); }
+  function showModule(){ screenSave({v:"module",id:RT._current||null}); body.setAttribute("data-view","module"); if(lockView) lockView.classList.remove("active"); hideParent(); hideSettings(); homeView.classList.remove("active"); moduleView.classList.add("active"); window.scrollTo(0,0); }
   /* родительский дашборд (core/parent.js); read-only поверхность вместо детского дома */
   function showParent(){
     body.setAttribute("data-view","parent");
@@ -511,6 +567,7 @@ window.RobTop = window.RobTop || {};
   function openSettings(){
     if(isSettingsOpen()) return;
     if(homeJgl) homeJgl.exit(); // уходим с главного — режим перестановки закрыт
+    screenSave({v:"settings"});
     renderSettings();
     body.setAttribute("data-view","settings");
     homeView.classList.remove("active"); moduleView.classList.remove("active"); hideParent();
@@ -1223,6 +1280,63 @@ window.RobTop = window.RobTop || {};
   }
   RT._shell_demoBundle=function(id){ var inst=getInstalled(); return inst[id]||null; };
 
+  /* ================= ЖИВОЕ ОБНОВЛЕНИЕ (sync, v2026.06.07.47) =================
+     Чужие изменения (задание родителя, прогулка брата, ответ поддержки, вкл/выкл плитки)
+     раньше появлялись только после перезагрузки. Теперь оболочка опрашивает api/sync.php
+     (лёгкий отпечаток изменений, без данных) каждые SYNC_MS — ТОЛЬКО при видимой вкладке —
+     и сразу при возврате в приложение (visibilitychange). WebSocket/SSE на shared-хостинге
+     не живут, поэтому поллинг — самое простое надёжное решение.
+     Реакции на смену отпечатков:
+       reg  → loadRegistry() (плитки главного экрана; дашборд перерисует refreshParentIfActive);
+       data → refresh() активного модуля (опциональный хук контракта RobTop.register),
+              RT.Parent.refresh() на дашборде, loadTickets() в открытых настройках;
+       ver  → тост «Доступно обновление → Обновить» (раз на версию за сессию).
+     Защита: при открытой шторке/фокусе в поле ввода НИЧЕГО не трогаем и отпечатки
+     НЕ сдвигаем — изменение подхватит следующий тик, когда форма закроется. */
+  var SYNC_MS=12000, syncTimer=null, syncBusy=false, syncLast=0, syncSeen=null, syncVerShown=null;
+  function syncFormOpen(){
+    var ae=document.activeElement;
+    if(ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return true;
+    return !!document.querySelector(".overlay.show");
+  }
+  function syncApply(){
+    var id=RT.current();
+    if(id){ var m=RT.modules[id]; if(m && m.def && typeof m.def.refresh==="function"){ try{ m.def.refresh(); }catch(e){} } }
+    if(RT.Parent && body.getAttribute("data-view")==="parent") RT.Parent.refresh();
+    if(isSettingsOpen()) loadTickets();
+  }
+  function syncTick(){
+    if(demo || document.hidden || syncBusy) return;
+    syncBusy=true; syncLast=Date.now();
+    fetch("api/sync.php",{headers:{"Accept":"application/json"},cache:"no-store"})
+      .then(function(r){ if(r.status===401){ syncStop(); throw new Error("401"); } if(!r.ok) throw new Error("http"); return r.json(); })
+      .then(function(r){
+        syncBusy=false;
+        if(!(r && r.ok)) return;
+        if(r.ver && window.RT_VER && r.ver!==window.RT_VER && syncVerShown!==r.ver){
+          syncVerShown=r.ver;
+          toast(t("sync.newVer"), t("sync.reload"), function(){ location.reload(); });
+        }
+        if(!syncSeen){ syncSeen={data:r.data, reg:r.reg}; return; } // первый тик — запомнить базу
+        var dataChanged=(r.data!==syncSeen.data), regChanged=(r.reg!==syncSeen.reg);
+        if(!dataChanged && !regChanged) return;
+        if(syncFormOpen()) return;            // форма открыта — отложить до следующего тика
+        if(regChanged) loadRegistry();
+        if(dataChanged) syncApply();
+        syncSeen={data:r.data, reg:r.reg};
+      })
+      .catch(function(){ syncBusy=false; });
+  }
+  function syncStop(){ if(syncTimer){ clearInterval(syncTimer); syncTimer=null; } }
+  function syncStart(){
+    if(demo || syncTimer) return;
+    syncTimer=setInterval(syncTick, SYNC_MS);
+    document.addEventListener("visibilitychange",function(){
+      if(!document.hidden && Date.now()-syncLast>3000) syncTick(); // вернулись — проверить сразу
+    });
+    syncTick();
+  }
+
   /* ================= BOOT ================= */
   function cacheDom(){
     body=document.body;
@@ -1280,18 +1394,34 @@ window.RobTop = window.RobTop || {};
     demoBundle:function(id){ return RT._shell_demoBundle(id); }
   };
 
+  /* Восстановить экран после обновления страницы (память rt_screen).
+     savedSt читается в boot ДО первого showHome — он пишет {v:home} и затёр бы сохранённое.
+     Модуль возвращаем только если он существует, активен и включён; иначе тихо остаёмся дома. */
+  function restoreScreen(savedSt){
+    try{
+      if(!savedSt || !savedSt.v || savedSt.v==="home") return;
+      if(savedSt.v==="settings"){ openSettings(); return; }
+      if(savedSt.v==="module" && savedSt.id){
+        var ok=false;
+        RT._registry.forEach(function(m){ if(m.id===savedSt.id && m.status==="active" && m.enabled!==0) ok=true; });
+        if(ok) RT.open(savedSt.id); else screenSave({v:"home"});
+      }
+    }catch(e){}
+  }
+
   function boot(){
     cacheDom(); wire();
     I.apply(document);                 // перевести статический DOM под активный язык
     I.onChange(onLocaleChange);        // реагировать на смену языка
     RT._shell.demo=demo; body.classList.toggle("demo",demo);
-    if(demo){ showHome(); loadRegistry(); loadAccount(); return; } // file:// — демо без входа
+    var savedSt=lsGet("rt_screen",null); // память экрана: читать ДО первого showHome
+    if(demo){ showHome(); loadRegistry().then(function(){ restoreScreen(savedSt); }); loadAccount(); return; } // file:// — демо без входа
     // СЕРВЕР: приложение закрыто до входа. Сначала проверяем сессию, плитки не показываем.
     showLock(true);
     loadAccount().then(function(a){
       if(a && a.authenticated){
         if(a.user && a.user.mustChangePassword){ showLock(true); renderForcePass(lockView); return; }
-        showHome(); loadRegistry();
+        showHome(); loadRegistry().then(function(){ restoreScreen(savedSt); }); syncStart(); // живое обновление — только для вошедших
       } else {
         renderLock(false); // форма входа
       }

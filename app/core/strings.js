@@ -19,6 +19,7 @@
       home: { tagline: "Choose an app", soonSep: "Coming soon" },
       reorder: { hint: "Drag to reorder" },
       hud: { apps: "apps", available: "available" },
+      sync: { newVer: "Update available", reload: "Update" },
       tile: {
         status: { open: "Open", soon: "Soon" },
         soonToast: "{name}: soon!",
@@ -185,6 +186,7 @@
       home: { tagline: "Выбери приложение", soonSep: "Скоро будут" },
       reorder: { hint: "Перетащи, чтобы поменять порядок" },
       hud: { apps: "приложений", available: "доступно" },
+      sync: { newVer: "Доступно обновление", reload: "Обновить" },
       tile: {
         status: { open: "Открыть", soon: "Скоро" },
         soonToast: "{name}: скоро!",
@@ -351,6 +353,7 @@
       home: { tagline: "Izvēlies lietotni", soonSep: "Drīz būs" },
       reorder: { hint: "Velc, lai mainītu secību" },
       hud: { apps: "lietotnes", available: "pieejamas" },
+      sync: { newVer: "Pieejams atjauninājums", reload: "Atjaunināt" },
       tile: {
         status: { open: "Atvērt", soon: "Drīz" },
         soonToast: "{name}: drīz!",
