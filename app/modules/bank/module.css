@@ -1,0 +1,83 @@
+/* RobTop — модуль «Копилка». Скоуп [data-mod="bank"], классы bk-*. Акцент — неон-розовый/красный #ff4d6d. */
+[data-mod="bank"] .bk{padding-bottom:140px}
+[data-mod="bank"] .bk-header{display:flex;align-items:center;gap:12px;padding:calc(20px + env(safe-area-inset-top)) 2px 8px}
+[data-mod="bank"] .bk-head-main{flex:1;min-width:0}
+[data-mod="bank"] .bk-title{font-family:'Russo One',sans-serif;font-size:24px;color:#fff;
+  text-shadow:0 0 12px rgba(255,77,109,.8), 0 0 26px rgba(255,43,214,.35)}
+[data-mod="bank"] .bk-sub{margin:0;color:var(--muted);font-weight:600;font-size:13px}
+
+/* сцена со свинкой */
+[data-mod="bank"] .bk-stage{position:relative;margin-top:14px;border-radius:22px;padding:30px 16px 22px;
+  background:linear-gradient(165deg, rgba(46,14,24,.55), rgba(9,8,24,.92));
+  border:1.5px solid rgba(255,77,109,.45);
+  box-shadow:0 12px 30px rgba(0,0,0,.5), 0 0 30px -10px #ff4d6d}
+
+/* огонёк-винстрик (левый верхний угол, по эскизу) */
+[data-mod="bank"] .bk-flame{position:absolute;left:12px;top:12px;display:flex;align-items:center;gap:6px;
+  padding:7px 12px 7px 9px;border-radius:999px;background:rgba(20,12,8,.65);
+  border:1.5px solid rgba(255,210,59,.55);color:#ffd23b;
+  box-shadow:0 0 18px -4px rgba(255,160,40,.7)}
+[data-mod="bank"] .bk-flame svg{width:20px;height:20px;filter:drop-shadow(0 0 6px rgba(255,170,40,.9))}
+[data-mod="bank"] .bk-flame-n{font-family:'Russo One',sans-serif;font-size:18px;line-height:1;color:#fff;
+  text-shadow:0 0 10px rgba(255,170,40,.9)}
+[data-mod="bank"] .bk-flame-l{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+[data-mod="bank"] .bk-flame.off{border-color:rgba(147,166,207,.35);color:#6f7fa3;box-shadow:none}
+[data-mod="bank"] .bk-flame.off svg{filter:none}
+[data-mod="bank"] .bk-flame.off .bk-flame-n{color:#93a6cf;text-shadow:none}
+
+/* свинка */
+[data-mod="bank"] .bk-pig{position:relative;width:min(72%,280px);margin:18px auto 4px;color:#ff7a95;cursor:pointer;
+  -webkit-tap-highlight-color:transparent}
+[data-mod="bank"] .bk-pig svg{width:100%;height:auto;display:block;
+  filter:drop-shadow(0 0 10px rgba(255,77,109,.55)) drop-shadow(0 0 26px rgba(255,77,109,.25))}
+[data-mod="bank"] .bk-pig .bk-coin{color:#ffd23b;animation:bk-coin 2.6s ease-in-out infinite}
+[data-mod="bank"] .bk-pig-label{position:absolute;left:17%;top:48%;width:48%;text-align:center;
+  color:#fff;font-weight:800;font-size:14px;text-shadow:0 0 10px rgba(255,77,109,.8)}
+[data-mod="bank"] .bk-pig-label b{font-family:'Russo One',sans-serif;font-size:24px;display:block;line-height:1.1}
+[data-mod="bank"] .bk-pig.wobble{animation:bk-wobble .5s ease}
+@keyframes bk-wobble{0%{transform:rotate(0)}25%{transform:rotate(-3deg) scale(1.02)}60%{transform:rotate(2.4deg)}100%{transform:rotate(0)}}
+@keyframes bk-coin{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@media (prefers-reduced-motion: reduce){
+  [data-mod="bank"] .bk-pig .bk-coin{animation:none}
+  [data-mod="bank"] .bk-pig.wobble{animation:none}
+}
+
+/* вкладки Задания / Родители */
+[data-mod="bank"] .bk-tabs{display:flex;gap:8px;margin:16px 0 10px}
+[data-mod="bank"] .bk-tab{flex:1;min-height:46px;border-radius:14px;border:1.5px solid rgba(147,166,207,.35);
+  background:rgba(13,12,32,.7);color:var(--muted);font-weight:800;font-size:14px;cursor:pointer}
+[data-mod="bank"] .bk-tab.active{color:#fff;border-color:rgba(255,77,109,.65);
+  background:linear-gradient(165deg, rgba(255,77,109,.18), rgba(13,12,32,.8));
+  box-shadow:0 0 16px -6px #ff4d6d}
+
+/* история транзакций */
+[data-mod="bank"] .bk-count{color:var(--muted);font-size:12px;font-weight:700;margin:2px 2px 8px}
+[data-mod="bank"] .bk-row{display:flex;align-items:center;gap:12px;padding:10px 12px;margin-bottom:8px;
+  border-radius:16px;background:rgba(13,12,32,.72);border:1px solid rgba(147,166,207,.22)}
+[data-mod="bank"] .bk-badge{flex:none;min-width:54px;text-align:center;padding:7px 8px;border-radius:12px;
+  font-family:'Russo One',sans-serif;font-size:16px}
+[data-mod="bank"] .bk-badge.plus{color:#2bf0c0;background:rgba(43,240,192,.1);border:1px solid rgba(43,240,192,.45);
+  text-shadow:0 0 10px rgba(43,240,192,.7)}
+[data-mod="bank"] .bk-badge.minus{color:#ff4d6d;background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.45);
+  text-shadow:0 0 10px rgba(255,77,109,.7)}
+[data-mod="bank"] .bk-row-main{flex:1;min-width:0}
+[data-mod="bank"] .bk-row-t{color:#eaf2ff;font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+[data-mod="bank"] .bk-row-d{color:var(--muted);font-size:12px;font-weight:600;margin-top:2px}
+[data-mod="bank"] .bk-empty{text-align:center;color:var(--muted);font-weight:700;padding:26px 14px}
+[data-mod="bank"] .bk-empty .btn{margin-top:10px}
+
+/* родительская панель (шторка) */
+.bk-pgrid{display:flex;gap:10px;margin:6px 0 4px}
+.bk-pstat{flex:1;text-align:center;border-radius:14px;padding:10px 6px;background:rgba(13,12,32,.72);
+  border:1px solid rgba(147,166,207,.25)}
+.bk-pstat .n{font-family:'Russo One',sans-serif;font-size:22px;color:#fff;text-shadow:0 0 10px rgba(255,77,109,.7)}
+.bk-pstat .l{color:var(--muted);font-size:11px;font-weight:700;margin-top:2px}
+.bk-pbtns{display:flex;flex-direction:column;gap:8px}
+.bk-pbtns .btn{width:100%;min-height:48px}
+.bk-pbtns .bk-hint{display:block;font-size:10px;font-weight:700;color:var(--muted);margin-top:1px}
+.bk-custom{display:flex;gap:8px;margin-bottom:4px}
+.bk-custom input{min-height:46px;border-radius:12px;border:1.5px solid rgba(147,166,207,.35);
+  background:rgba(13,12,32,.8);color:#eaf2ff;font-weight:700;padding:0 12px;font-size:15px}
+.bk-custom input:focus{outline:none;border-color:rgba(255,77,109,.7)}
+.bk-custom #bkAmt{flex:0 0 34%}
+.bk-custom #bkNote{flex:1;min-width:0}

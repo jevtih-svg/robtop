@@ -1,0 +1,16 @@
+{
+  "id": "bank",
+  "name": "Копилка",
+  "version": "1.0.0",
+  "color": "#ff4d6d",
+  "status": "active",
+  "wide": true,
+  "entry": "module.js",
+  "styles": "module.css",
+  "roles": { "edit": ["child"], "read": ["child", "parent"] },
+  "data": { "store": "generic", "collections": ["points", "meta"] },
+  "server": false,
+  "permissions": ["points"],
+  "min_shell": "2.0.0",
+  "sort": 120
+}

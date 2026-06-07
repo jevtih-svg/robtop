@@ -40,6 +40,69 @@ window.RobTop = window.RobTop || {};
     return API.post("data.php", Object.assign({op:op, module:mod, collection:coll||"default"}, payload||{}));
   }
 
+  /* ---- движок очков: леджер bank/points + винстрик в bank/meta (политика — ГАЙД-очки.md) ----
+     Транзакция: {n, reason, src, kind, note?}. Виды (kind):
+       win | loss   — победы/проигрыши в приложениях (винстрик НЕ трогают);
+       task_done    — задание родителей выполнено: винстрик +1 (макс 21) и бонус серии
+                      (винстрик−1 пунктов) ОТДЕЛЬНОЙ строкой kind=bonus;
+       task_fail    — задание родителей не выполнено: винстрик сгорает в 0;
+       daily_bonus  — все задания дня выполнены (+5);
+       parent       — произвольное начисление/снятие родителем (панель в Копилке);
+       manual       — ручные поправки (легаси reason *_manual, напр. teeth_manual);
+       bonus        — бонус серии (пишет только сам движок);
+       spend        — траты (Магазин, будущее).
+     Демо-режим работает через localStorage (dataOp) — паритет с сервером. */
+  var BANK_STREAK_MAX = 21;
+  function bankKind(n, reason, opts){
+    if(opts && opts.kind) return String(opts.kind);
+    if(/_manual$/.test(String(reason||""))) return "manual";
+    return n >= 0 ? "win" : "loss";
+  }
+  function bankMeta(){
+    return dataOp("bank","list","meta",null).then(function(r){
+      var items=(r&&r.items)||[], it=items.length?items[0]:null;
+      var s=it&&it.data?parseInt(it.data.streak,10):0;
+      return { id: it?it.id:null, streak: Math.min(Math.max(s||0,0), BANK_STREAK_MAX) };
+    });
+  }
+  function bankSetStreak(meta, streak){
+    if(meta.id!=null) return dataOp("bank","update","meta",{id:meta.id,patch:{streak:streak}});
+    return dataOp("bank","create","meta",{data:{streak:streak}});
+  }
+  function bankTxn(rec){ return dataOp("bank","create","points",{data:rec}); }
+  /* Добавить транзакцию; никогда не reject (модули зовут fire-and-forget).
+     → Promise<{ok, n, kind, streak|null, bonus}> */
+  function bankAdd(srcMod, n, reason, opts){
+    n = parseInt(n,10)||0; opts = opts||{};
+    var kind = bankKind(n, reason, opts);
+    var rec = { n:n, reason:String(reason||""), src:String(opts.src||srcMod||""), kind:kind };
+    if(opts.note) rec.note = String(opts.note).slice(0,80);
+    var out = { ok:true, n:n, kind:kind, streak:null, bonus:0 };
+    return bankTxn(rec).then(function(){
+      if(kind!=="task_done" && kind!=="task_fail") return out;
+      return bankMeta().then(function(meta){
+        if(kind==="task_fail"){
+          out.streak = 0;
+          return meta.streak>0 ? bankSetStreak(meta,0).then(function(){ return out; }) : out;
+        }
+        var s = Math.min(meta.streak+1, BANK_STREAK_MAX);
+        out.streak = s; out.bonus = Math.max(0, s-1);
+        return bankSetStreak(meta,s).then(function(){
+          if(!out.bonus) return out;
+          return bankTxn({ n:out.bonus, reason:"streak_bonus", src:"bank", kind:"bonus" }).then(function(){ return out; });
+        });
+      });
+    }).catch(function(){ out.ok=false; return out; });
+  }
+  /* Сводка копилки: баланс (сумма всех n), винстрик, все транзакции. Может reject (сеть). */
+  function bankSummary(){
+    return Promise.all([ dataOp("bank","list","points",null), bankMeta() ]).then(function(rr){
+      var items=(rr[0]&&rr[0].items)||[], sum=0, i, d;
+      for(i=0;i<items.length;i++){ d=items[i].data||{}; sum += parseInt(d.n,10)||0; }
+      return { balance:sum, streak:rr[1].streak, count:items.length, items:items };
+    });
+  }
+
   RT.createSdk = function(meta){
     var mod = meta.id;
     var shell = RT._shell || {};
@@ -79,8 +142,12 @@ window.RobTop = window.RobTop || {};
         enableDrag: function(sheet,close){ shell.enableDrag(sheet,close); }
       },
       points: {
-        add: function(n,reason){ if(RT.isDemo()) return Promise.resolve(); return API.post("data.php",{op:"create",module:"bank",collection:"points",data:{n:n,reason:reason||""}}).catch(function(){}); },
-        get: function(){ return Promise.resolve(0); }
+        /* add(n, reason, opts?) — opts:{kind, src, note}; kind по умолчанию: win (n≥0) / loss / manual (*_manual) */
+        add: function(n,reason,opts){ return bankAdd(mod,n,reason,opts); },
+        get: function(){ return bankSummary().then(function(s){ return s.balance; }).catch(function(){ return 0; }); },
+        summary: function(){ return bankSummary(); },
+        /* сжечь винстрик (будущий модуль заданий: «не все задания дня выполнены») */
+        streakReset: function(){ return bankMeta().then(function(m){ return m.streak>0 ? bankSetStreak(m,0) : true; }).then(function(){ return true; }).catch(function(){ return false; }); }
       },
       admin: {
         // Проверка PIN родителя/администратора. Демо: '1234'. Сервер: сверяет admin_pin.

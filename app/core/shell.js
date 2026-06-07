@@ -67,7 +67,7 @@ window.RobTop = window.RobTop || {};
     {id:"museum",name:"Home Museum",color:"#c0a0ff",status:"soon",source:"native",sort:90},
     {id:"rating",name:"Day Rating",color:"#ffd23b",status:"active",source:"native",sort:100},
     {id:"lost",name:"Lost & Found",color:"#2bf0c0",status:"soon",source:"native",sort:110},
-    {id:"bank",name:"Piggy Bank",color:"#ff4d6d",status:"soon",source:"native",wide:true,sort:120}
+    {id:"bank",name:"Piggy Bank",color:"#ff4d6d",status:"active",source:"native",wide:true,sort:120}
   ];
 
   /* ---- localStorage помощники (демо) ---- */
@@ -79,7 +79,7 @@ window.RobTop = window.RobTop || {};
   function setInstalled(o){ lsSet("robtop_installed",o); }
 
   /* ---- DOM ---- */
-  var body, appsEl, homeView, moduleView, lockView, fabEl, toastEl, demoBadge,
+  var body, appsEl, homeView, moduleView, lockView, parentView, fabEl, toastEl, demoBadge,
       hudL,hudCnum,hudClbl,hudRnum,hudRlbl, settingsOverlay, settingsBody,
       storeOverlay, storeBody, gearBtn;
 
@@ -148,13 +148,28 @@ window.RobTop = window.RobTop || {};
 
   /* ================= ВИДЫ ================= */
   function moduleViewEl(){ return moduleView; }
-  function showHome(){ body.setAttribute("data-view","home"); if(lockView) lockView.classList.remove("active"); moduleView.classList.remove("active"); homeView.classList.add("active"); window.scrollTo(0,0); fabDestroy(); homeHud(); }
-  function showModule(){ body.setAttribute("data-view","module"); if(lockView) lockView.classList.remove("active"); homeView.classList.remove("active"); moduleView.classList.add("active"); window.scrollTo(0,0); }
+  function hideParent(){ if(parentView) parentView.classList.remove("active"); }
+  /* «домой» для РОДИТЕЛЯ = дашборд (а не детские плитки): один шов, через который
+     возвращаются и RT.close() из модуля, и boot(). Детский путь не меняется. */
+  function showHome(){
+    if(!demo && isParent() && RT.Parent){ showParent(); return; }
+    body.setAttribute("data-view","home"); if(lockView) lockView.classList.remove("active"); hideParent(); moduleView.classList.remove("active"); homeView.classList.add("active"); window.scrollTo(0,0); fabDestroy(); homeHud();
+  }
+  function showModule(){ body.setAttribute("data-view","module"); if(lockView) lockView.classList.remove("active"); hideParent(); homeView.classList.remove("active"); moduleView.classList.add("active"); window.scrollTo(0,0); }
+  /* родительский дашборд (core/parent.js); read-only поверхность вместо детского дома */
+  function showParent(){
+    body.setAttribute("data-view","parent");
+    if(lockView) lockView.classList.remove("active");
+    homeView.classList.remove("active"); moduleView.classList.remove("active");
+    if(parentView) parentView.classList.add("active");
+    window.scrollTo(0,0); fabDestroy();
+    if(RT.Parent) RT.Parent.show();
+  }
 
   /* ---- экран входа (lock): на сервере без сессии приложение закрыто ---- */
   function showLock(loading){
     body.setAttribute("data-view","lock");
-    homeView.classList.remove("active"); moduleView.classList.remove("active");
+    homeView.classList.remove("active"); moduleView.classList.remove("active"); hideParent();
     lockView.classList.add("active");
     renderLock(loading);
     window.scrollTo(0,0);
@@ -255,12 +270,16 @@ window.RobTop = window.RobTop || {};
   }
   function visible(list){ return list.filter(function(m){ return m.enabled!==0; }); }
 
+  /* после обновления реестра перерисовать и родительский дашборд (если открыт):
+     закрывает гонку «parent.php ответил раньше registry.php» и обновляет дашборд
+     после вкл/выкл модулей в магазине */
+  function refreshParentIfActive(){ if(RT.Parent && body.getAttribute("data-view")==="parent") RT.Parent.render(); }
   function loadRegistry(){
     if(demo){ RT.setRegistry(visible(allModulesDemo())); renderHome(); return Promise.resolve(); }
     return RT.API.get("registry.php").then(function(res){
       var list=(res&&res.modules)||[]; if(!list.length) list=visible(DEFAULTS.map(function(m){return Object.assign({},m);}));
-      RT.setRegistry(list); renderHome();
-    }).catch(function(){ RT.setRegistry(visible(DEFAULTS.map(function(m){return Object.assign({},m);}))); renderHome(); });
+      RT.setRegistry(list); renderHome(); refreshParentIfActive();
+    }).catch(function(){ RT.setRegistry(visible(DEFAULTS.map(function(m){return Object.assign({},m);}))); renderHome(); refreshParentIfActive(); });
   }
 
   /* ================= НАСТРОЙКИ (аккаунт + язык; «приложения» — родителю, PIN как fallback) ================= */
@@ -591,6 +610,7 @@ window.RobTop = window.RobTop || {};
     homeView=document.getElementById("home");
     moduleView=document.getElementById("module-view");
     lockView=document.getElementById("lock");
+    parentView=document.getElementById("parent");
     fabEl=document.getElementById("fab");
     toastEl=document.getElementById("toast");
     demoBadge=document.getElementById("demoBadge");
@@ -617,6 +637,7 @@ window.RobTop = window.RobTop || {};
     if(lockView && lockView.classList.contains("active")) renderLock(false);
     if(settingsOverlay && settingsOverlay.classList.contains("show")) renderSettings();
     if(storeOverlay && storeOverlay.classList.contains("show")) renderStore();
+    if(RT.Parent && body.getAttribute("data-view")==="parent") RT.Parent.render();
   }
 
   RT._shell={
@@ -624,6 +645,8 @@ window.RobTop = window.RobTop || {};
     moduleView:moduleViewEl, showHome:showHome, showModule:showModule,
     toast:toast, buzz:buzz, chime:chime, hud:hud, fab:fab, fabDestroy:fabDestroy,
     confirm:confirm, sheet:sheet, enableDrag:enableDrag, setDemo:setDemo,
+    /* для родительского дашборда (core/parent.js): настройки, иконки плиток, роль */
+    openSettings:openSettings, iconHtml:iconHtml, isParent:isParent,
     demoBundle:function(id){ return RT._shell_demoBundle(id); }
   };
 

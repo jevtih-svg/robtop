@@ -157,6 +157,6 @@ INSERT INTO modules (id, name, version, manifest, source, trusted, server, enabl
  ('museum','Домашний музей','1.0.0','{"color":"#c0a0ff","status":"soon"}','native',1,0,1,90),
  ('rating','Оценка дня','1.0.0','{"color":"#ffd23b","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,100),
  ('lost','Бюро находок','1.0.0','{"color":"#2bf0c0","status":"soon"}','native',1,0,1,110),
- ('bank','Копилка','1.0.0','{"color":"#ff4d6d","status":"soon","wide":true}','native',1,0,1,120)
+ ('bank','Копилка','1.0.0','{"color":"#ff4d6d","status":"active","wide":true,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,120)
 ON DUPLICATE KEY UPDATE name=VALUES(name), manifest=VALUES(manifest), server=VALUES(server), updated_at=NOW();
 -- ============================================================
