@@ -433,9 +433,7 @@ window.RobTop = window.RobTop || {};
     var items=(data.items||[]), wWant=0,wBought=0;
     items.forEach(function(w){ if(w.status==="want")wWant++; if(w.status==="bought")wBought++; });
     h+='<div class="pd-sect">'+esc(t("parent.sect.byApp"))+'</div>';
-    (RT._registry||[]).filter(function(m){
-      return m.status==="active" && (m.id==="bank" || !SKIP_MOD[m.id]);
-    }).forEach(function(m){
+    function mcardLine(m){
       var line;
       if(m.id==="bank"){
         var pend=bankPending();
@@ -453,12 +451,28 @@ window.RobTop = window.RobTop || {};
       else if(m.id==="reverse") line=a.words?t("parent.sum.reverse",{c:a.words}):t("parent.sum.none");
       else if(m.id==="guess") line=a.guessCnt?t("parent.sum.guess",{w:a.guessWin,c:a.guessCnt}):t("parent.sum.none");
       else { var cc=a.perMod[m.id]||0; line=cc?I.plural(cc,"parent.sum.generic"):t("parent.sum.none"); }
-      h+='<button class="pd-mcard" data-mod="'+esc(m.id)+'" style="--mc:'+esc(modColor(m.id))+'">'
+      return line;
+    }
+    function mcardHtml(m){
+      var eye=(RT._shell&&RT._shell.jglEye)?RT._shell.jglEye(!!m.hidden):"";
+      return '<button class="pd-mcard'+(m.hidden?' hid':'')+'" data-mod="'+esc(m.id)+'" style="--mc:'+esc(modColor(m.id))+'">'
         +'<span class="ic">'+modIcon(m.id)+'</span>'
-        +'<span class="tx"><span class="t1">'+esc(modName(m.id))+'</span><span class="t2">'+esc(line)+'</span></span>'
+        +'<span class="tx"><span class="t1">'+esc(modName(m.id))+'</span><span class="t2">'+esc(mcardLine(m))+'</span></span>'
         +'<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>'
+        +eye
         +'</button>';
+    }
+    /* скрытые карточки (личное скрытие, как плитки ребёнка) — за разделителем «Скрытые»,
+       виден только в режиме перестановки (.jgl); CSS прячет .hid вне режима */
+    var cards=(RT._registry||[]).filter(function(m){
+      return m.status==="active" && (m.id==="bank" || !SKIP_MOD[m.id]);
     });
+    cards.forEach(function(m){ if(!m.hidden) h+=mcardHtml(m); });
+    var hidCards=cards.filter(function(m){ return !!m.hidden; });
+    if(hidCards.length){
+      h+='<div class="pd-sect hidsep">'+esc(t("reorder.hidden"))+'</div>';
+      hidCards.forEach(function(m){ h+=mcardHtml(m); });
+    }
     /* заметки */
     var ins=[];
     if(a.streak>=3) ins.push({e:"🔥",x:t("parent.ins.streak",{n:a.streak})});
@@ -821,15 +835,19 @@ window.RobTop = window.RobTop || {};
   }
 
   /* =================== сборка экрана =================== */
-  function render(){
+  /* keepJgl=true (скрытие/показ карточки глазом): режим перестановки НЕ сбрасывается —
+     после innerHTML заново навешиваем классы (root.__jgl.refresh в конце render) */
+  function render(keepJgl){
     var root=el(); if(!root) return;
     /* скрытый реордер карточек «По приложениям» (long-press → jiggle, как плитки ребёнка):
        вешается один раз (делегирование переживает innerHTML), порядок — личный, на аккаунт
-       родителя (RT._shell.applyTileOrder → accounts.php op tile_order) */
+       родителя (RT._shell.applyTileOrder → accounts.php op tile_order); скрытые карточки
+       (.hid) не двигаются, глаз (.jgl-eye) пропускается к своему обработчику */
     if(!root.__jgl && RT._shell && RT._shell.makeJiggle){
-      root.__jgl=RT._shell.makeJiggle(root,{ items:".pd-mcard", onCommit:function(ids){ RT._shell.applyTileOrder(ids); } });
+      root.__jgl=RT._shell.makeJiggle(root,{ items:".pd-mcard:not(.hid)", skip:".jgl-eye", onCommit:function(ids){ RT._shell.applyTileOrder(ids); } });
     }
-    if(root.__jgl) root.__jgl.exit(); // перерисовка сбрасывает режим перестановки
+    var keepMode=keepJgl && root.__jgl && root.__jgl.active();
+    if(root.__jgl && !keepMode) root.__jgl.exit(); // обычная перерисовка сбрасывает режим перестановки
     renderTabs();
     if(S.loading){
       root.innerHTML='<div class="pd-wrap"><div class="pd-empty" style="padding-top:80px">…</div></div>';
@@ -859,10 +877,28 @@ window.RobTop = window.RobTop || {};
     }
     root.innerHTML='<div class="pd-wrap">'+head+'<div class="pd-body">'+body+'</div></div>';
     wire(root);
+    if(keepMode) root.__jgl.refresh(); // режим перестановки пережил перерисовку (скрытие глазом)
   }
   function topbarNoChild(){
     return '<div class="pd-top"><span class="pd-badge">👁 '+esc(t("parent.badge"))+'</span>'
       +'<button class="hbtn" id="pdGear2" aria-label="'+esc(t("settings.open"))+'" style="margin-left:auto">⚙</button></div>';
+  }
+  /* тап по глазу на карточке дашборда: скрытие личное (аккаунт родителя, как у плиток
+     ребёнка); RT._shell.applyTileHidden сохраняет и перерисовывает главный экран,
+     дашборд перерисовываем сами С СОХРАНЕНИЕМ режима перестановки. Последнюю видимую
+     карточку скрыть нельзя — не на чем сделать long-press, чтобы вернуть скрытое. */
+  function toggleCardHidden(id){
+    var reg=RT._registry||[], m=null, vis=0;
+    reg.forEach(function(x){
+      if(x.id===id) m=x;
+      if(x.status==="active" && (x.id==="bank" || !SKIP_MOD[x.id]) && !x.hidden) vis++;
+    });
+    if(!m || !RT._shell || !RT._shell.applyTileHidden) return;
+    if(!m.hidden && vis<=1){ RT._shell.toast(t("reorder.lastNo")); return; }
+    m.hidden=m.hidden?0:1;
+    var ids=[]; reg.forEach(function(x){ if(x.hidden) ids.push(x.id); });
+    RT._shell.applyTileHidden(ids);
+    render(true);
   }
   function wire(root){
     var back=root.querySelector("#pdBack");
@@ -882,8 +918,10 @@ window.RobTop = window.RobTop || {};
       b.onclick=function(){ S.period=parseInt(b.getAttribute("data-p"),10)||7; render(); };
     });
     Array.prototype.forEach.call(root.querySelectorAll(".pd-mcard"),function(b){
-      b.onclick=function(){
+      b.onclick=function(e){
         var id=b.getAttribute("data-mod");
+        /* глаз скрытия (виден только в режиме перестановки) — раньше открытия карточки */
+        if(e && e.target && e.target.closest(".jgl-eye")){ toggleCardHidden(id); return; }
         if(id==="bank"){ if(RT.open) RT.open("bank"); return; } /* модуль с заданиями, как walk */
         if(id==="shop"){ if(RT.open) RT.open("shop"); return; } /* призы и подтверждение покупок — в самом модуле */
         if(id==="wishlist"){ S.tab="wishlist"; render(); }

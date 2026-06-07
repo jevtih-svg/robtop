@@ -148,7 +148,7 @@ window.RobTop = window.RobTop || {};
      «застрявший» прошлый драг, window-листенеры мёртвого жеста не копятся (gcleanup),
      pointercancel откатывает без сохранения. */
   function makeJiggle(container, opts){
-    var itemSel=opts.items, idAttr=opts.idAttr||"data-mod";
+    var itemSel=opts.items, idAttr=opts.idAttr||"data-mod", skipSel=opts.skip||null;
     var mode=false, src=null, slot=null, ghost=null, sx=0, sy=0, lx=0, ly=0,
         pressT=null, donePill=null, suppress=false, gcleanup=null, rafOn=false;
     container.classList.add("jgl-zone");
@@ -231,6 +231,8 @@ window.RobTop = window.RobTop || {};
     }
     container.addEventListener("pointerdown",function(e){
       if(e.button) return; // только основная кнопка/палец
+      /* skip-элементы (бейдж глаза): не драг, не вход в режим — обычный клик пройдёт сам */
+      if(skipSel && e.target.closest(skipSel)) return;
       suppress=false;      // новый жест — прошлое подавление клика не «залипает»
       var el=e.target.closest(itemSel); if(!el||!container.contains(el)) return;
       if(gcleanup) gcleanup(); // листенеры умершего жеста не копим
@@ -255,12 +257,17 @@ window.RobTop = window.RobTop || {};
     /* блокировка нативного скролла, когда уже тащим (режим мог включиться посреди жеста) */
     container.addEventListener("touchmove",function(e){ if(src) e.preventDefault(); },{passive:false});
     container.addEventListener("contextmenu",function(e){ if(mode||pressT) e.preventDefault(); });
-    /* capture: в режиме клики по элементам не «открывают» их; первый клик после жеста гасим */
+    /* capture: в режиме клики по элементам не «открывают» их; первый клик после жеста гасим;
+       skip-элементы (глаз скрытия) пропускаются к своим обработчикам */
     container.addEventListener("click",function(e){
+      if(skipSel && e.target.closest(skipSel)) return;
       if(suppress){ suppress=false; e.stopPropagation(); e.preventDefault(); return; }
       if(mode&&e.target.closest(itemSel)){ e.stopPropagation(); e.preventDefault(); }
     },true);
-    return { exit:exit, active:function(){ return mode; } };
+    /* refresh(): после перерисовки innerHTML внутри активного режима заново навесить
+       классы на свежие узлы (скрытие/показ плитки перерисовывает контейнер, режим живёт) */
+    function refresh(){ if(!mode) return; items().forEach(function(el){ el.classList.add("jgl-on"); }); }
+    return { exit:exit, active:function(){ return mode; }, refresh:refresh };
   }
   function fab(label,onClick){
     fabEl.innerHTML='<span class="plus">+</span> '+esc(label||"");
@@ -499,22 +506,42 @@ window.RobTop = window.RobTop || {};
     RT._registry.forEach(function(m){ if(m.status==="active") active++; });
     hud({ left:'RobTop · <b>beta</b>', cNum:total, cLbl:t("hud.apps"), rNum:active, rLbl:t("hud.available") });
   }
+  /* бейдж-глаз скрытия/показа: рисуется на каждой активной плитке/карточке, но CSS
+     показывает его ТОЛЬКО в режиме перестановки (.jgl .jgl-eye). span, не button —
+     плитка сама <button>, вложенные кнопки невалидны. makeJiggle пропускает клики
+     по нему (opts.skip), обработчик — у владельца контейнера (делегирование). */
+  var EYE_ON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12C4.2 7.9 7.8 5.2 12 5.2s7.8 2.7 9.5 6.8c-1.7 4.1-5.3 6.8-9.5 6.8S4.2 16.1 2.5 12z"/><circle cx="12" cy="12" r="3.1"/></svg>',
+      EYE_OFF='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12C4.2 7.9 7.8 5.2 12 5.2s7.8 2.7 9.5 6.8c-1.7 4.1-5.3 6.8-9.5 6.8S4.2 16.1 2.5 12z"/><circle cx="12" cy="12" r="3.1"/><path d="M4 4l16 16"/></svg>';
+  function jglEye(hidden){
+    return '<span class="jgl-eye" role="button" aria-label="'+esc(t(hidden?"reorder.show":"reorder.hide"))+'">'
+      +(hidden?EYE_ON:EYE_OFF)+'</span>';
+  }
   function tileHtml(m){
     var soon=m.status!=="active";
-    return '<button class="tile'+(soon?' soon':' active')+(m.wide?' wide':'')+'" style="--c:'+(m.color||"#19e3ff")+'" data-mod="'+esc(m.id)+'">'
+    return '<button class="tile'+(soon?' soon':' active')+(m.wide?' wide':'')+(!soon&&m.hidden?' hid':'')+'" style="--c:'+(m.color||"#19e3ff")+'" data-mod="'+esc(m.id)+'">'
       +(soon?'<span class="lock">'+ICONS.lock+'</span>':'<span class="ring"></span>')
       +'<span class="ic">'+iconHtml(m)+'</span>'
       +'<span class="txt"><span class="nm">'+esc(modName(m))+'</span><span class="st">'+(soon?esc(t("tile.status.soon")):esc(t("tile.status.open")))+'</span></span>'
+      +(soon?'':jglEye(!!m.hidden))
       +'</button>';
   }
-  /* активные плитки всегда сверху; группа «скоро» — ниже, за разделителем */
-  function renderHome(){
-    if(homeJgl) homeJgl.exit(); // перерисовка сбрасывает режим перестановки
-    var act=[], soon=[];
-    RT._registry.forEach(function(m){ (m.status==="active"?act:soon).push(m); });
+  /* активные плитки всегда сверху; скрытые — за разделителем «Скрытые» (виден только в
+     режиме перестановки); группа «скоро» — ниже, за своим разделителем.
+     keepJgl=true (скрытие/показ плитки): режим перестановки НЕ сбрасывается —
+     после innerHTML заново навешиваем классы (homeJgl.refresh). */
+  function renderHome(keepJgl){
+    var keep=keepJgl && homeJgl && homeJgl.active();
+    if(homeJgl && !keep) homeJgl.exit(); // обычная перерисовка сбрасывает режим перестановки
+    var act=[], soon=[], hid=[];
+    RT._registry.forEach(function(m){
+      if(m.status!=="active"){ soon.push(m); return; }
+      (m.hidden?hid:act).push(m);
+    });
     appsEl.innerHTML=act.map(tileHtml).join("")
+      +(hid.length?'<div class="apps-sep hidsep">'+esc(t("reorder.hidden"))+'</div>'+hid.map(tileHtml).join(""):"")
       +(soon.length?'<div class="apps-sep">'+esc(t("home.soonSep"))+'</div>'+soon.map(tileHtml).join(""):"");
     homeHud();
+    if(keep) homeJgl.refresh();
   }
 
   /* ================= РЕЕСТР ================= */
@@ -537,9 +564,39 @@ window.RobTop = window.RobTop || {};
     return RT.API.post("accounts.php",{op:"tile_order",order:ids})
       .catch(function(){ toast(t("common.failed")); });
   }
+  /* Личные скрытые плитки (глаз в режиме перестановки, миграция 022): ids — ПОЛНЫЙ список
+     скрытых. Обновить флаги в реестре, перерисовать главный с СОХРАНЕНИЕМ режима и
+     сохранить: демо → localStorage-overrides, сервер → accounts.php op tile_hidden
+     (на аккаунт; registry.php вернёт флаг hidden при загрузке). Дашборд родителя
+     перерисовывает сам вызывающий (core/parent.js) — тоже с сохранением режима. */
+  function applyTileHidden(ids){
+    var idx={}; (ids||[]).forEach(function(id){ idx[id]=1; });
+    RT._registry.forEach(function(m){ m.hidden=idx[m.id]?1:0; });
+    RT.setRegistry(RT._registry);
+    renderHome(true);
+    if(demo){
+      var ov=getOverrides();
+      RT._registry.forEach(function(m){ ov[m.id]=Object.assign({},ov[m.id],{hidden:idx[m.id]?1:0}); });
+      setOverrides(ov);
+      return Promise.resolve({ok:true});
+    }
+    return RT.API.post("accounts.php",{op:"tile_hidden",hidden:ids})
+      .catch(function(){ toast(t("common.failed")); });
+  }
+  /* тап по глазу на главном экране: последнюю видимую активную плитку скрыть нельзя —
+     иначе не на чем сделать long-press, чтобы вернуть скрытое */
+  function toggleTileHidden(id){
+    var m=null, vis=0;
+    RT._registry.forEach(function(x){ if(x.id===id) m=x; if(x.status==="active"&&!x.hidden) vis++; });
+    if(!m) return;
+    if(!m.hidden && vis<=1){ toast(t("reorder.lastNo")); return; }
+    m.hidden=m.hidden?0:1;
+    var ids=[]; RT._registry.forEach(function(x){ if(x.hidden) ids.push(x.id); });
+    applyTileHidden(ids);
+  }
   function mergeOverrides(list){
     var ov=getOverrides();
-    list.forEach(function(m){ var o=ov[m.id]; if(o){ if(o.enabled!=null) m.enabled=o.enabled; if(o.sort!=null) m.sort=o.sort; } });
+    list.forEach(function(m){ var o=ov[m.id]; if(o){ if(o.enabled!=null) m.enabled=o.enabled; if(o.sort!=null) m.sort=o.sort; if(o.hidden!=null) m.hidden=o.hidden; } });
     return list;
   }
   function allModulesDemo(){
@@ -1307,6 +1364,9 @@ window.RobTop = window.RobTop || {};
   function syncFormOpen(){
     var ae=document.activeElement;
     if(ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return true;
+    /* режим перестановки (✓ на экране): loadRegistry/перерисовка выбила бы из режима —
+       в т.ч. от СВОЕГО ЖЕ сохранения порядка/скрытия; отложить до выхода из режима */
+    if(document.querySelector(".jgl-done")) return true;
     return !!document.querySelector(".overlay.show");
   }
   /* Применить data-изменение к видимым поверхностям. Возвращает false, если КТО-ТО
@@ -1379,9 +1439,14 @@ window.RobTop = window.RobTop || {};
     storeOverlay=document.getElementById("storeOverlay"); storeBody=document.getElementById("storeBody"); gearBtn=document.getElementById("gearBtn");
   }
   function wire(){
-    appsEl.addEventListener("click",function(e){ var t=e.target.closest("[data-mod]"); if(t) RT.open(t.getAttribute("data-mod")); });
-    /* скрытый реордер плиток (только активные; «скоро» не двигаются) */
-    homeJgl=makeJiggle(appsEl,{ items:".tile:not(.soon)", onCommit:applyTileOrder });
+    appsEl.addEventListener("click",function(e){
+      /* глаз скрытия (виден только в режиме перестановки) — раньше открытия плитки */
+      var eye=e.target.closest(".jgl-eye");
+      if(eye){ var h=eye.closest("[data-mod]"); if(h) toggleTileHidden(h.getAttribute("data-mod")); return; }
+      var t=e.target.closest("[data-mod]"); if(t) RT.open(t.getAttribute("data-mod"));
+    });
+    /* скрытый реордер плиток (только активные; «скоро» и скрытые не двигаются) */
+    homeJgl=makeJiggle(appsEl,{ items:".tile:not(.soon):not(.hid)", skip:".jgl-eye", onCommit:applyTileOrder });
     gearBtn.addEventListener("click",openSettings);
     storeOverlay.addEventListener("click",function(e){ if(e.target===storeOverlay) closeStore(); });
     var sg=storeOverlay.querySelector(".grip"); if(sg) sg.addEventListener("click",closeStore);
@@ -1414,9 +1479,11 @@ window.RobTop = window.RobTop || {};
     toast:toast, buzz:buzz, chime:chime, hud:hud, fab:fab, fabDestroy:fabDestroy,
     confirm:confirm, sheet:sheet, enableDrag:enableDrag, setDemo:setDemo,
     /* для родительского дашборда (core/parent.js): настройки, иконки плиток, роль,
-       скрытый реордер (makeJiggle) + сохранение личного порядка (applyTileOrder) */
+       скрытый реордер (makeJiggle) + сохранение личного порядка (applyTileOrder) +
+       личное скрытие плиток (applyTileHidden) и бейдж-глаз (jglEye) */
     openSettings:openSettings, iconHtml:iconHtml, isParent:isParent,
     makeJiggle:makeJiggle, applyTileOrder:applyTileOrder,
+    applyTileHidden:applyTileHidden, jglEye:jglEye,
     /* для оповещений (core/notify.js): открыть переписку тикета из ссылки {view:"ticket",id} */
     openTicket:function(id){ openSettings(); openTicketThread(id); },
     demoBundle:function(id){ return RT._shell_demoBundle(id); }

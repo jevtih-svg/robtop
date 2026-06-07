@@ -11,6 +11,7 @@
  *   set_password   {new_password}               (обязательная смена 1234)
  *   set_theme      {theme}                       (тема оформления аккаунта; allowlist в case)
  *   tile_order     {order:[id,…]}                (личный порядок плиток; []/null = сброс)
+ *   tile_hidden    {hidden:[id,…]}               (личные скрытые плитки; []/null = ничего не скрыто)
  *   forgot         {email}                       (родителю; единый ответ)
  *   reset          {token,new_password}
  *   add_child      {nickname}                    (родитель → детский аккаунт, пароль 1234)
@@ -158,6 +159,27 @@ switch ($op) {
         $db->prepare(
             "INSERT INTO user_prefs (user_id, tile_order) VALUES (?, ?)
              ON DUPLICATE KEY UPDATE tile_order = VALUES(tile_order)"
+        )->execute([(int)$u['id'], $json]);
+        rt_json(['ok' => true]);
+    }
+
+    /* ---- личные скрытые плитки (режим перестановки, миграция 022) ----
+       Как tile_order: каждый аккаунт прячет СВОИ плитки (ребёнок — главный экран,
+       родитель — карточки дашборда); читает registry.php (флаг hidden у модуля).
+       Пустой массив/не массив = ничего не скрыто (NULL). */
+    case 'tile_hidden': {
+        $u   = rt_require_login($db);
+        $ids = [];
+        if (isset($b['hidden']) && is_array($b['hidden'])) {
+            foreach ($b['hidden'] as $id) {
+                if (is_string($id) && preg_match('/^[a-z0-9_-]{2,40}$/', $id)) $ids[] = $id;
+                if (count($ids) >= 100) break; // защита от мусора
+            }
+        }
+        $json = count($ids) ? json_encode(array_values(array_unique($ids))) : null;
+        $db->prepare(
+            "INSERT INTO user_prefs (user_id, hidden_tiles) VALUES (?, ?)
+             ON DUPLICATE KEY UPDATE hidden_tiles = VALUES(hidden_tiles)"
         )->execute([(int)$u['id'], $json]);
         rt_json(['ok' => true]);
     }

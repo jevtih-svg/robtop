@@ -17,7 +17,11 @@
         back: "Back", confirmTitle: "Confirm?"
       },
       home: { tagline: "Choose an app", soonSep: "Coming soon" },
-      reorder: { hint: "Drag to reorder" },
+      reorder: {
+        hint: "Drag to reorder",
+        hidden: "Hidden", hide: "Hide", show: "Show",
+        lastNo: "At least one app must stay visible"
+      },
       hud: { apps: "apps", available: "available" },
       sync: { newVer: "Update available", reload: "Update" },
       tile: {
@@ -184,7 +188,11 @@
         back: "Назад", confirmTitle: "Подтвердить?"
       },
       home: { tagline: "Выбери приложение", soonSep: "Скоро будут" },
-      reorder: { hint: "Перетащи, чтобы поменять порядок" },
+      reorder: {
+        hint: "Перетащи, чтобы поменять порядок",
+        hidden: "Скрытые", hide: "Скрыть", show: "Показать",
+        lastNo: "Хотя бы одно приложение должно остаться"
+      },
       hud: { apps: "приложений", available: "доступно" },
       sync: { newVer: "Доступно обновление", reload: "Обновить" },
       tile: {
@@ -351,7 +359,11 @@
         back: "Atpakaļ", confirmTitle: "Apstiprināt?"
       },
       home: { tagline: "Izvēlies lietotni", soonSep: "Drīz būs" },
-      reorder: { hint: "Velc, lai mainītu secību" },
+      reorder: {
+        hint: "Velc, lai mainītu secību",
+        hidden: "Paslēptās", hide: "Paslēpt", show: "Parādīt",
+        lastNo: "Vismaz vienai lietotnei jāpaliek redzamai"
+      },
       hud: { apps: "lietotnes", available: "pieejamas" },
       sync: { newVer: "Pieejams atjauninājums", reload: "Atjaunināt" },
       tile: {

@@ -11,7 +11,7 @@
  *          поэтому COUNT + MAX(id) + MAX(updated_at) ловят всё.
  *   reg  — отпечаток реестра плиток: id/enabled/sort_order всех модулей (точный
  *          GROUP_CONCAT: ловит вкл/выкл и реордер, у которых updated_at не бьётся)
- *          + личный порядок плиток аккаунта (user_prefs.tile_order).
+ *          + личные префы плиток аккаунта (user_prefs: tile_order и hidden_tiles).
  *   ver  — версия приложения из index.html (window.RT_VER): клиент сравнивает со своей
  *          и предлагает «Обновить» после деплоя. Отдельного файла версии нет нарочно —
  *          источник правды один, новых «мест версии» не добавляем.
@@ -81,9 +81,13 @@ try {
     $reg = (string)$q;
 } catch (Throwable $e) {}
 try {
-    $s = $db->prepare("SELECT tile_order FROM user_prefs WHERE user_id = ?");
+    /* SELECT * — hidden_tiles может не быть до миграции 022; в отпечатке оба личных префа:
+       и порядок (tile_order), и скрытые плитки (hidden_tiles) */
+    $s = $db->prepare("SELECT * FROM user_prefs WHERE user_id = ?");
     $s->execute([$uid]);
-    $reg .= '#' . (string)($s->fetchColumn() ?: '');
+    $row  = $s->fetch();
+    $reg .= '#' . (string)(($row && $row['tile_order']) ? $row['tile_order'] : '')
+          . '#' . (string)(($row && isset($row['hidden_tiles']) && $row['hidden_tiles']) ? $row['hidden_tiles'] : '');
 } catch (Throwable $e) {}
 $reg = md5($reg);
 

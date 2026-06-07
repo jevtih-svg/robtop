@@ -559,6 +559,29 @@ body[data-view="parent"] .pd-tabbar{display:flex}
 .jgl-done:active{transform:translateX(-50%) scale(.96)}
 @media (prefers-reduced-motion:reduce){ .jgl-on{animation:none} }
 
+/* ---------- скрытие плиток (глаз в режиме перестановки, миграция 022) ----------
+   .jgl-eye — бейдж на каждой активной плитке (главный экран) и карточке (дашборд
+   родителя): вне режима невидим (display:none), в режиме (.jgl на контейнере) —
+   кружок с глазом; перечёркнутый глаз = «скрыть», открытый = «показать».
+   .hid — скрытая плитка/карточка: вне режима не существует на экране, в режиме
+   видна приглушённой в секции «Скрытые» (.hidsep); в реордере не участвует
+   (items :not(.hid)), поэтому не дрожит и не таскается. */
+.jgl-eye{display:none;position:absolute;z-index:3;width:34px;height:34px;border-radius:50%;
+  place-items:center;color:#e6edff;background:rgba(7,11,22,.78);
+  border:1.5px solid rgba(255,255,255,.3);box-shadow:0 4px 14px rgba(0,0,0,.45)}
+.jgl-eye svg{width:19px;height:19px}
+.jgl .jgl-eye{display:grid}
+.tile .jgl-eye{top:7px;right:7px}
+.pd-mcard{position:relative}
+.pd-mcard .jgl-eye{top:50%;right:9px;transform:translateY(-50%)}
+.jgl .pd-mcard .chev{opacity:0} /* глаз встаёт на место шеврона, чтобы не наслаивались */
+.tile.hid,.pd-mcard.hid{display:none}
+.jgl .tile.hid{display:flex;opacity:.55;filter:saturate(.35)}
+.jgl .pd-mcard.hid{display:flex;opacity:.55;filter:saturate(.35)}
+.apps-sep.hidsep,.pd-sect.hidsep{display:none}
+.jgl .apps-sep.hidsep{display:flex}
+.jgl .pd-sect.hidsep{display:block}
+
 /* ---------- тикеты «Сообщить о проблеме» (Настройки → Помощь + кнопка под фото-кнопками модулей) ---------- */
 .tk-report{display:block;width:100%;grid-column:1/-1;margin:10px 0 2px;padding:11px 12px;border-radius:12px;
   border:1.5px dashed rgba(255,210,59,.45);background:rgba(255,210,59,.07);color:#ffe08a;
