@@ -290,18 +290,21 @@ window.RobTop = window.RobTop || {};
       +'<div class="h"><div class="n">'+a.per.length+'</div><div class="l">'+esc(I.plural(a.per.length,"parent.hud.events").replace(/\{n\}\s*/,"").replace(/^\d+\s*/,""))+'</div></div>'
       +'<div class="h"><div class="n">'+a.activeDays+'</div><div class="l">'+esc(I.plural(a.activeDays,"parent.hud.days").replace(/\{n\}\s*/,"").replace(/^\d+\s*/,""))+'</div></div>'
       +'<div class="h"><div class="n">'+(data.points||0)+'</div><div class="l">'+esc(t("parent.hud.points"))+'</div></div></div>';
-    /* график */
-    var n=S.period, max=1, d;
+    /* график: ряд баров (с базовой линией) + отдельный ряд подписей.
+       Нулевой день — точка на линии, не «чёрточка»: иначе при редких данных
+       нулевые бары сливались с подписями в ломаную пунктирную линию. */
+    var n=S.period, max=1, d, bars="", labels="";
     for(d=0;d<n;d++) if((a.perDay[d]||0)>max) max=a.perDay[d];
-    h+='<div class="pd-sect">'+esc(t("parent.sect.activity"))+'</div><div class="pd-card"><div class="pd-chart">';
     for(d=n-1;d>=0;d--){
-      var c=a.perDay[d]||0, hh=Math.max(2,Math.round(c/max*78));
+      var c=a.perDay[d]||0, hh=Math.max(3,Math.round(c/max*74));
+      bars+='<div class="c'+(d===0?' today':'')+'">'+(c>0?'<div class="b" style="height:'+hh+'px"></div>':'<div class="z"></div>')+'</div>';
       var lbl="";
       if(n===7) lbl=I.formatDate(dateForOff(d),{weekday:"short"});
       else if(d%5===0) lbl=fmtDayShort(d).replace(/\.$/,"");
-      h+='<div class="c'+(c===0?' zero':'')+(d===0?' today':'')+'"><div class="b" style="height:'+hh+'px"></div><div class="d">'+esc(lbl)+'</div></div>';
+      labels+='<div class="d'+(d===0?' today':'')+'">'+esc(lbl)+'</div>';
     }
-    h+='</div></div>';
+    h+='<div class="pd-sect">'+esc(t("parent.sect.activity"))+'</div><div class="pd-card">'
+      +'<div class="pd-chart">'+bars+'</div><div class="pd-chart-x">'+labels+'</div></div>';
     /* по приложениям */
     var mods=activeMods(), mx=1;
     mods.forEach(function(m){ if((a.perMod[m.id]||0)>mx) mx=a.perMod[m.id]; });

@@ -42,6 +42,7 @@ switch ($op) {
         if (!rt_valid_password($pass)) rt_json(['error' => 'weak password'], 422);
         if (rt_nickname_taken($db, $nick))  rt_json(['error' => 'nickname taken'], 409);
         if (rt_email_taken($db, $email))    rt_json(['error' => 'email taken'], 409);
+        if (rt_email_banned($db, $email))   rt_json(['error' => 'banned'], 403); // забаненные семьи не регистрируются повторно
         $uid = rt_create_user($db, $nick, 'parent', [
             'email' => rt_norm_email($email),
             'password_hash' => password_hash($pass, PASSWORD_DEFAULT),
@@ -279,6 +280,7 @@ switch ($op) {
         if (rt_nickname_taken($db, $nick)) rt_json(['error' => 'nickname taken'], 409);
         $email = $inv['email'];
         if ($email && rt_email_taken($db, $email)) rt_json(['error' => 'email taken'], 409);
+        if ($email && rt_email_banned($db, $email)) rt_json(['error' => 'banned'], 403); // бан сильнее приглашения
         $pid = rt_create_user($db, $nick, 'parent', [
             'email' => $email, 'password_hash' => password_hash($pass, PASSWORD_DEFAULT),
             'must_change' => 0, 'invited_by' => (int)$inv['inviter_id'],

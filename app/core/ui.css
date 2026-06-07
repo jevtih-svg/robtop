@@ -248,14 +248,20 @@ body[data-view="parent"] .fab{display:none}
 .pd-hud .h:nth-child(2) .n{color:var(--pink);text-shadow:0 0 14px rgba(255,61,176,.6)}
 .pd-hud .h:nth-child(3) .n{color:var(--gold);text-shadow:0 0 14px rgba(255,210,59,.6)}
 .pd-hud .l{font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);margin-top:5px}
-/* график активности */
-.pd-chart{display:flex;align-items:flex-end;gap:3px;height:96px;padding:4px 2px 0}
-.pd-chart .c{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+/* график активности: бары над базовой линией, подписи отдельным рядом под ней */
+.pd-chart{display:flex;align-items:flex-end;gap:3px;height:88px;padding:4px 2px 5px;
+  border-bottom:1px solid rgba(255,255,255,.12)}
+.pd-chart .c{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:0}
 .pd-chart .b{width:100%;max-width:22px;border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,#3ae6ff,#1577d4);
   box-shadow:0 0 10px -3px var(--cyan)}
-.pd-chart .c.zero .b{background:rgba(255,255,255,.08);box-shadow:none}
+.pd-chart .z{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.18);margin-bottom:-2px}
 .pd-chart .c.today .b{background:linear-gradient(180deg,#ffe57a,#ffb02e);box-shadow:0 0 12px -3px var(--gold)}
-.pd-chart .d{font-size:8.5px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:visible}
+.pd-chart .c.today .z{background:rgba(255,210,59,.55)}
+.pd-chart-x{display:flex;gap:3px;padding:5px 2px 0}
+.pd-chart-x .d{flex:1;min-width:0;text-align:center;font-size:8.5px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:visible}
+.pd-chart-x .d:first-child{text-align:left}
+.pd-chart-x .d:last-child{text-align:right}
+.pd-chart-x .d.today{color:var(--gold)}
 /* разбивка по модулям */
 .pd-mrow{display:flex;align-items:center;gap:9px;padding:7px 2px}
 .pd-mrow .ic{width:30px;height:30px;border-radius:9px;flex:0 0 30px;display:grid;place-items:center;color:var(--mc,#19e3ff);

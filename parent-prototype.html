@@ -65,14 +65,19 @@
   .hud .h:nth-child(2) .n{color:var(--pink);text-shadow:0 0 14px rgba(255,61,176,.6)}
   .hud .h:nth-child(3) .n{color:var(--gold);text-shadow:0 0 14px rgba(255,210,59,.6)}
   .hud .l{font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);margin-top:5px}
-  /* ── график по дням ── */
-  .chart{display:flex;align-items:flex-end;gap:3px;height:96px;padding:4px 2px 0}
-  .chart .c{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+  /* ── график по дням: бары над базовой линией, подписи отдельным рядом ── */
+  .chart{display:flex;align-items:flex-end;gap:3px;height:88px;padding:4px 2px 5px;border-bottom:1px solid rgba(255,255,255,.12)}
+  .chart .c{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:0}
   .chart .b{width:100%;max-width:22px;border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,#3ae6ff,#1577d4);
-    box-shadow:0 0 10px -3px var(--cyan);min-height:2px}
-  .chart .c.zero .b{background:rgba(255,255,255,.08);box-shadow:none}
+    box-shadow:0 0 10px -3px var(--cyan)}
+  .chart .z{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.18);margin-bottom:-2px}
   .chart .c.today .b{background:linear-gradient(180deg,#ffe57a,#ffb02e);box-shadow:0 0 12px -3px var(--gold)}
-  .chart .d{font-size:8.5px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:visible}
+  .chart .c.today .z{background:rgba(255,210,59,.55)}
+  .chart-x{display:flex;gap:3px;padding:5px 2px 0}
+  .chart-x .d{flex:1;min-width:0;text-align:center;font-size:8.5px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:visible}
+  .chart-x .d:first-child{text-align:left}
+  .chart-x .d:last-child{text-align:right}
+  .chart-x .d.today{color:var(--gold)}
   /* ── разбивка по модулям ── */
   .mrow{display:flex;align-items:center;gap:9px;padding:7px 2px}
   .mrow .ic{width:30px;height:30px;border-radius:9px;flex:0 0 30px;display:flex;align-items:center;justify-content:center;font-size:15px;
@@ -471,17 +476,19 @@ function renderOverview(){
     +'<div class="h"><div class="n">'+a.per.length+'</div><div class="l">'+esc(plural(a.per.length,t("hud.events")).replace(/^\d+\s*/,""))+'</div></div>'
     +'<div class="h"><div class="n">'+a.activeDays+'</div><div class="l">'+esc(plural(a.activeDays,t("hud.days")).replace(/^\d+\s*/,""))+'</div></div>'
     +'<div class="h"><div class="n">'+a.points+'</div><div class="l">'+esc(plural(a.points,t("hud.points")).replace(/^\d+\s*/,""))+'</div></div></div>';
-  /* график */
+  /* график: бары + отдельный ряд подписей (нулевой день — точка, не «чёрточка») */
   var n=S.period,max=1;for(var d=0;d<n;d++)max=Math.max(max,a.perDay[d]||0);
-  h+='<div class="sect">'+esc(t("sect.activity"))+'</div><div class="card"><div class="chart">';
+  var bars="",labels="";
   for(var d=n-1;d>=0;d--){
-    var c=a.perDay[d]||0,hh=Math.round(c/max*78);
+    var c=a.perDay[d]||0,hh=Math.max(3,Math.round(c/max*74));
+    bars+='<div class="c'+(d===0?' today':'')+'">'+(c>0?'<div class="b" style="height:'+hh+'px"></div>':'<div class="z"></div>')+'</div>';
     var lbl="";
     if(n===7){try{lbl=new Intl.DateTimeFormat(S.lang,{weekday:"short"}).format(dateFor(d))}catch(e){lbl=""}}
     else{lbl=(d%5===0)?fmtDayShort(d).replace(/\.$/,""):""}
-    h+='<div class="c'+(c===0?' zero':'')+(d===0?' today':'')+'"><div class="b" style="height:'+Math.max(hh,2)+'px"></div><div class="d">'+esc(lbl)+'</div></div>';
+    labels+='<div class="d'+(d===0?' today':'')+'">'+esc(lbl)+'</div>';
   }
-  h+='</div></div>';
+  h+='<div class="sect">'+esc(t("sect.activity"))+'</div><div class="card">'
+    +'<div class="chart">'+bars+'</div><div class="chart-x">'+labels+'</div></div>';
   /* по приложениям */
   var mx=1;Object.keys(MODS).forEach(function(m){mx=Math.max(mx,a.perMod[m]||0)});
   h+='<div class="sect">'+esc(t("sect.byApp"))+'</div><div class="card">';

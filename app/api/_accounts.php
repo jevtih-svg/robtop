@@ -251,6 +251,34 @@ function rt_block_if_must_change($u) {
     }
 }
 
+/* ---------- мастер-админ (таблица admins, миграция 008) ---------- */
+function rt_is_admin($db, $userId) {
+    $s = $db->prepare("SELECT 1 FROM admins WHERE user_id = ? AND status = 'active' LIMIT 1");
+    $s->execute([(int)$userId]);
+    return (bool)$s->fetch();
+}
+/** Гейт админки: активная РОДИТЕЛЬСКАЯ сессия + активная запись в admins. Всё прочее — 403. */
+function rt_require_admin($db) {
+    $u = rt_require_parent($db);
+    rt_block_if_must_change($u);
+    if (!rt_is_admin($db, (int)$u['id'])) rt_json(['error' => 'admin only'], 403);
+    return $u;
+}
+
+/* ---------- баны (таблица bans, миграция 008) ---------- */
+function rt_email_banned($db, $email) {
+    $h = hash('sha256', rt_norm_email($email));
+    $s = $db->prepare("SELECT 1 FROM bans WHERE kind = 'email' AND email_hash = ? AND lifted_at IS NULL LIMIT 1");
+    $s->execute([$h]);
+    return (bool)$s->fetch();
+}
+function rt_family_banned($db, $familyId) {
+    if (!$familyId) return false;
+    $s = $db->prepare("SELECT 1 FROM bans WHERE kind = 'family' AND family_id = ? AND lifted_at IS NULL LIMIT 1");
+    $s->execute([(int)$familyId]);
+    return (bool)$s->fetch();
+}
+
 /* ---------- безопасный вывод пользователя ---------- */
 function rt_public_user($row, $self = false) {
     $out = [
