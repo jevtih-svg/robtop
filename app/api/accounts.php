@@ -9,6 +9,7 @@
  *   logout         {}
  *   me             {}
  *   set_password   {new_password}               (обязательная смена 1234)
+ *   tile_order     {order:[id,…]}                (личный порядок плиток; []/null = сброс)
  *   forgot         {email}                       (родителю; единый ответ)
  *   reset          {token,new_password}
  *   add_child      {nickname}                    (родитель → детский аккаунт, пароль 1234)
@@ -137,6 +138,26 @@ switch ($op) {
         $wasMust = !empty($u['must_change_password']);
         rt_set_password($db, (int)$u['id'], $np, 0);
         rt_log('accounts', $wasMust ? 'first_password_set' : 'password_changed', (int)$u['id']);
+        rt_json(['ok' => true]);
+    }
+
+    /* ---- личный порядок плиток (скрытый реордер long-press, миграция 012) ----
+       Каждый аккаунт хранит СВОЙ порядок (ребёнок — главный экран, родитель — карточки
+       дашборда); читает его registry.php. Пустой массив/не массив = сброс к умолчанию. */
+    case 'tile_order': {
+        $u   = rt_require_login($db);
+        $ids = [];
+        if (isset($b['order']) && is_array($b['order'])) {
+            foreach ($b['order'] as $id) {
+                if (is_string($id) && preg_match('/^[a-z0-9_-]{2,40}$/', $id)) $ids[] = $id;
+                if (count($ids) >= 100) break; // защита от мусора
+            }
+        }
+        $json = count($ids) ? json_encode(array_values(array_unique($ids))) : null;
+        $db->prepare(
+            "INSERT INTO user_prefs (user_id, tile_order) VALUES (?, ?)
+             ON DUPLICATE KEY UPDATE tile_order = VALUES(tile_order)"
+        )->execute([(int)$u['id'], $json]);
         rt_json(['ok' => true]);
     }
 

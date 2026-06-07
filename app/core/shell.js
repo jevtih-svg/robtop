@@ -50,9 +50,10 @@ window.RobTop = window.RobTop || {};
     bank:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6.6" rx="7" ry="3"/><path d="M5 6.6v6.4c0 1.7 3.1 3 7 3s7-1.3 7-3V6.6"/><path d="M5 13c0 1.7 3.1 3 7 3s7-1.3 7-3"/></svg>',
     lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="5" y="11" width="14" height="9" rx="2.2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
     paw:'<svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="6.4" cy="10" rx="1.7" ry="2.3"/><ellipse cx="9.9" cy="7.3" rx="1.7" ry="2.4"/><ellipse cx="14.1" cy="7.3" rx="1.7" ry="2.4"/><ellipse cx="17.6" cy="10" rx="1.7" ry="2.3"/><path d="M12 11.2c2.9 0 5.3 2.1 5.7 4.8.3 1.9-1.1 3.4-3 3.4-1.3 0-1.9-.6-2.7-.6s-1.4.6-2.7.6c-1.9 0-3.3-1.5-3-3.4.4-2.7 2.8-4.8 5.7-4.8z"/></svg>',
+    snake:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.6 5.6h9.9a3.2 3.2 0 0 1 0 6.4H7.4a3.2 3.2 0 0 0 0 6.4h7.2"/><circle cx="16.8" cy="18.4" r="2.5" fill="currentColor" stroke="none"/><path d="M19.6 18.4l2.2-1.1M19.6 18.4l2.2 1.1" stroke-width="1.6"/></svg>',
     cube:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>'
   };
-  var TILE_ICON={ wishlist:"cherry", reverse:"reverse", mood:"smile", teeth:"tooth", guess:"quiz", names:"tag", days:"calendar", find:"search", museum:"museum", rating:"star", lost:"gem", walk:"paw", bank:"bank" };
+  var TILE_ICON={ wishlist:"cherry", reverse:"reverse", mood:"smile", teeth:"tooth", guess:"quiz", names:"tag", days:"calendar", find:"search", museum:"museum", rating:"star", lost:"gem", walk:"paw", snake:"snake", bank:"bank" };
   var BACK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg>';
 
   /* ---- встроенный список модулей (демо/фолбэк). name — фолбэк, отображается tile.<id> ---- */
@@ -69,6 +70,7 @@ window.RobTop = window.RobTop || {};
     {id:"rating",name:"Day Rating",color:"#ffd23b",status:"active",source:"native",sort:100},
     {id:"lost",name:"Lost & Found",color:"#2bf0c0",status:"soon",source:"native",sort:110},
     {id:"walk",name:"Dog Walk",color:"#38e8a0",status:"active",source:"native",sort:115},
+    {id:"snake",name:"Snake",color:"#19e3ff",status:"active",source:"native",sort:117},
     {id:"bank",name:"Piggy Bank",color:"#ff4d6d",status:"active",source:"native",wide:true,sort:120}
   ];
 
@@ -83,7 +85,7 @@ window.RobTop = window.RobTop || {};
   /* ---- DOM ---- */
   var body, appsEl, homeView, moduleView, lockView, parentView, settingsView, fabEl, toastEl, demoBadge,
       hudL,hudCnum,hudClbl,hudRnum,hudRlbl, settingsBody,
-      storeOverlay, storeBody, gearBtn;
+      storeOverlay, storeBody, gearBtn, homeJgl=null;
 
   /* ================= общие UI-сервисы ================= */
   function buzz(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
@@ -116,6 +118,89 @@ window.RobTop = window.RobTop || {};
     sheet.addEventListener("touchend",function(){ if(!dragging) return; dragging=false; sheet.style.transition="transform .22s ease"; if(dy>120){ sheet.style.transform="translateY(100%)"; setTimeout(function(){ sheet.style.transform=""; sheet.style.transition=""; close(); },200); } else { sheet.style.transform=""; setTimeout(function(){ sheet.style.transition=""; },220); } });
   }
   function hud(o){ o=o||{}; if(o.left!=null) hudL.innerHTML=o.left; if(o.cNum!=null) hudCnum.textContent=o.cNum; if(o.cLbl!=null) hudClbl.textContent=o.cLbl; if(o.rNum!=null) hudRnum.textContent=o.rNum; if(o.rLbl!=null) hudRlbl.textContent=o.rLbl; }
+  /* ---- скрытый реордер (long-press ~0.55с → jiggle + drag): главный экран и дашборд ----
+     Никакого видимого UI до жеста: удержал элемент — режим «дрожания», тащишь — порядок
+     меняется, отпустил — onCommit(ids) сохраняет. Выход — плавающая кнопка ✓ или навигация
+     (вызвать .exit()). Делегировано на container, переживает перерисовку innerHTML. */
+  function makeJiggle(container, opts){
+    var itemSel=opts.items, idAttr=opts.idAttr||"data-mod";
+    var mode=false, src=null, ghost=null, sx=0, sy=0, pressT=null, donePill=null, suppress=false;
+    function items(){ return Array.prototype.slice.call(container.querySelectorAll(itemSel)); }
+    function enter(){
+      if(mode) return; mode=true;
+      container.classList.add("jgl");
+      items().forEach(function(el){ el.classList.add("jgl-on"); });
+      buzz([14,40,14]);
+      donePill=document.createElement("button"); donePill.type="button"; donePill.className="jgl-done";
+      donePill.textContent="✓ "+t("common.done");
+      donePill.addEventListener("click",function(){ exit(); });
+      document.body.appendChild(donePill);
+      toast(t("reorder.hint"));
+    }
+    function exit(){
+      if(!mode) return; mode=false;
+      endDrag(false);
+      container.classList.remove("jgl");
+      items().forEach(function(el){ el.classList.remove("jgl-on","jgl-src"); });
+      if(donePill&&donePill.parentNode) donePill.parentNode.removeChild(donePill);
+      donePill=null;
+    }
+    function startDrag(el,x,y){
+      src=el; sx=x; sy=y;
+      var r=el.getBoundingClientRect();
+      ghost=el.cloneNode(true);
+      ghost.classList.add("jgl-ghost"); ghost.classList.remove("jgl-on","jgl-src");
+      ghost.style.width=r.width+"px"; ghost.style.height=r.height+"px";
+      ghost.style.left=r.left+"px"; ghost.style.top=r.top+"px";
+      document.body.appendChild(ghost);
+      el.classList.add("jgl-src");
+      buzz(12);
+    }
+    function moveDrag(x,y){
+      if(!ghost) return;
+      ghost.style.transform="translate("+(x-sx)+"px,"+(y-sy)+"px) scale(1.05)";
+      if(y<80) window.scrollBy(0,-14); else if(y>window.innerHeight-80) window.scrollBy(0,14);
+      var el=document.elementFromPoint(x,y); el=el&&el.closest?el.closest(itemSel):null;
+      if(!el||el===src||!container.contains(el)) return;
+      if(src.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) el.parentNode.insertBefore(src,el.nextSibling);
+      else el.parentNode.insertBefore(src,el);
+    }
+    function endDrag(commit){
+      if(ghost&&ghost.parentNode) ghost.parentNode.removeChild(ghost); ghost=null;
+      if(src) src.classList.remove("jgl-src");
+      var was=src; src=null;
+      if(commit&&was&&opts.onCommit) opts.onCommit(items().map(function(el){ return el.getAttribute(idAttr); }));
+    }
+    container.addEventListener("pointerdown",function(e){
+      if(e.button) return; // только основная кнопка/палец
+      var el=e.target.closest(itemSel); if(!el||!container.contains(el)) return;
+      var pid=e.pointerId, x0=e.clientX, y0=e.clientY, lx=x0, ly=y0;
+      function mv(e2){
+        if(e2.pointerId!==pid) return; lx=e2.clientX; ly=e2.clientY;
+        if(src){ moveDrag(lx,ly); return; }
+        if(Math.abs(lx-x0)>12||Math.abs(ly-y0)>12){ clearTimeout(pressT); pressT=null; if(!mode) cleanup(); }
+      }
+      function up(e2){
+        if(e2.pointerId!==pid) return;
+        clearTimeout(pressT); pressT=null;
+        if(src){ suppress=true; endDrag(true); }
+        cleanup();
+      }
+      function cleanup(){ window.removeEventListener("pointermove",mv); window.removeEventListener("pointerup",up); window.removeEventListener("pointercancel",up); }
+      window.addEventListener("pointermove",mv); window.addEventListener("pointerup",up); window.addEventListener("pointercancel",up);
+      if(mode){ suppress=true; startDrag(el,x0,y0); }
+      else pressT=setTimeout(function(){ pressT=null; suppress=true; enter(); startDrag(el,lx,ly); },550);
+    });
+    /* блокировка нативного скролла, когда уже тащим (режим мог включиться посреди жеста) */
+    container.addEventListener("touchmove",function(e){ if(src) e.preventDefault(); },{passive:false});
+    container.addEventListener("contextmenu",function(e){ if(mode||pressT) e.preventDefault(); });
+    /* capture: в режиме клики по элементам не «открывают» их; первый клик после жеста гасим */
+    container.addEventListener("click",function(e){
+      if(suppress){ suppress=false; e.stopPropagation(); e.preventDefault(); return; }
+      if(mode&&e.target.closest(itemSel)){ e.stopPropagation(); e.preventDefault(); }
+    },true);
+    return { exit:exit, active:function(){ return mode; } };
+  }
   function fab(label,onClick){
     fabEl.innerHTML='<span class="plus">+</span> '+esc(label||"");
     fabEl.setAttribute("aria-label", label||"");
@@ -357,6 +442,7 @@ window.RobTop = window.RobTop || {};
   }
   /* активные плитки всегда сверху; группа «скоро» — ниже, за разделителем */
   function renderHome(){
+    if(homeJgl) homeJgl.exit(); // перерисовка сбрасывает режим перестановки
     var act=[], soon=[];
     RT._registry.forEach(function(m){ (m.status==="active"?act:soon).push(m); });
     appsEl.innerHTML=act.map(tileHtml).join("")
@@ -365,6 +451,25 @@ window.RobTop = window.RobTop || {};
   }
 
   /* ================= РЕЕСТР ================= */
+  /* Личный порядок плиток (скрытый реордер): пересортировать RT._registry по ids
+     (неизвестные — после, в прежнем порядке) и сохранить: демо → localStorage-overrides,
+     сервер → accounts.php op tile_order (на аккаунт; registry.php применит при загрузке). */
+  function applyTileOrder(ids){
+    var idx={}; ids.forEach(function(id,i){ idx[id]=i; });
+    var list=RT._registry.slice(), n=ids.length;
+    list.forEach(function(m,i){ m._k=(idx[m.id]!=null)?idx[m.id]:n+i; });
+    list.sort(function(a,b){ return a._k-b._k; });
+    list.forEach(function(m){ delete m._k; });
+    RT.setRegistry(list);
+    if(demo){
+      var ov=getOverrides();
+      list.forEach(function(m,i){ ov[m.id]=Object.assign({},ov[m.id],{sort:(i+1)*10}); });
+      setOverrides(ov);
+      return Promise.resolve({ok:true});
+    }
+    return RT.API.post("accounts.php",{op:"tile_order",order:ids})
+      .catch(function(){ toast(t("common.failed")); });
+  }
   function mergeOverrides(list){
     var ov=getOverrides();
     list.forEach(function(m){ var o=ov[m.id]; if(o){ if(o.enabled!=null) m.enabled=o.enabled; if(o.sort!=null) m.sort=o.sort; } });
@@ -400,6 +505,7 @@ window.RobTop = window.RobTop || {};
   function isSettingsOpen(){ return body.getAttribute("data-view")==="settings"; }
   function openSettings(){
     if(isSettingsOpen()) return;
+    if(homeJgl) homeJgl.exit(); // уходим с главного — режим перестановки закрыт
     renderSettings();
     body.setAttribute("data-view","settings");
     homeView.classList.remove("active"); moduleView.classList.remove("active"); hideParent();
@@ -971,6 +1077,8 @@ window.RobTop = window.RobTop || {};
   }
   function wire(){
     appsEl.addEventListener("click",function(e){ var t=e.target.closest("[data-mod]"); if(t) RT.open(t.getAttribute("data-mod")); });
+    /* скрытый реордер плиток (только активные; «скоро» не двигаются) */
+    homeJgl=makeJiggle(appsEl,{ items:".tile:not(.soon)", onCommit:applyTileOrder });
     gearBtn.addEventListener("click",openSettings);
     storeOverlay.addEventListener("click",function(e){ if(e.target===storeOverlay) closeStore(); });
     var sg=storeOverlay.querySelector(".grip"); if(sg) sg.addEventListener("click",closeStore);
