@@ -1305,11 +1305,24 @@ window.RobTop = window.RobTop || {};
     if(ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return true;
     return !!document.querySelector(".overlay.show");
   }
+  /* Применить data-изменение к видимым поверхностям. Возвращает false, если КТО-ТО
+     отложил обновление (хук модуля вернул false: busy/шторка/мастер; дашборд уже грузится) —
+     тогда отпечаток data НЕ сдвигается и следующий тик повторит. Иначе изменение,
+     пришедшее в «занятый» модуль, терялось навсегда — баг подтверждения заданий
+     Копилки (v2026.06.07.55). Хук без возврата (undefined) = применено. */
   function syncApply(){
-    var id=RT.current();
-    if(id){ var m=RT.modules[id]; if(m && m.def && typeof m.def.refresh==="function"){ try{ m.def.refresh(); }catch(e){} } }
-    if(RT.Parent && body.getAttribute("data-view")==="parent") RT.Parent.refresh();
+    var ok=true, id=RT.current();
+    if(id){
+      var m=RT.modules[id];
+      if(m && m.def && typeof m.def.refresh==="function"){
+        try{ if(m.def.refresh()===false) ok=false; }catch(e){}
+      }
+    }
+    if(RT.Parent && body.getAttribute("data-view")==="parent"){
+      if(RT.Parent.refresh()===false) ok=false;
+    }
     if(isSettingsOpen()) loadTickets();
+    return ok;
   }
   function syncTick(){
     if(demo || document.hidden || syncBusy) return;
@@ -1327,9 +1340,10 @@ window.RobTop = window.RobTop || {};
         var dataChanged=(r.data!==syncSeen.data), regChanged=(r.reg!==syncSeen.reg);
         if(!dataChanged && !regChanged) return;
         if(syncFormOpen()) return;            // форма открыта — отложить до следующего тика
-        if(regChanged) loadRegistry();
-        if(dataChanged) syncApply();
-        syncSeen={data:r.data, reg:r.reg};
+        if(regChanged){ loadRegistry(); syncSeen.reg=r.reg; }
+        /* data-отпечаток сдвигается ТОЛЬКО если все видимые поверхности применили
+           обновление; отложенное (модуль занят, дашборд грузится) повторится */
+        if(dataChanged && syncApply()!==false) syncSeen.data=r.data;
       })
       .catch(function(){ syncBusy=false; });
   }

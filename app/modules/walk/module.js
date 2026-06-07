@@ -805,8 +805,13 @@
 
   /* живое обновление (sync-поллер оболочки, v2026.06.07.47): общесемейный пул — прогулку
      брата/родителя видно сразу. Только в покое: не во время мастера (cur), форм
-     поведения/события (beh/ev) и сохранения. */
-  function refresh(){ if(root && !saving && !cur && !beh && !ev) load(); }
+     поведения/события (beh/ev) и сохранения. Занят → false: shell повторит следующим
+     тиком, обновление не теряется (фикс v2026.06.07.55). */
+  function refresh(){
+    if(!root) return true;                    // демонтирован
+    if(saving || cur || beh || ev) return false; // мастер/форма/сохранение — позже
+    load(); return true;
+  }
 
   RobTop.register({ id:"walk", mount:mount, unmount:unmount, refresh:refresh, messages:MESSAGES });
 })();
