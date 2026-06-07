@@ -110,11 +110,10 @@ switch ($op) {
         if (rt_valid_email($email)) {
             $acc = rt_account_by_email($db, $email);
             if ($acc && $acc['kind'] === 'parent' && $acc['status'] !== 'disabled') {
-                $tok = rt_token();
+                $tok = rt_code(8); // короткий код; сброс живёт 1 час и одноразовый
                 $db->prepare("INSERT INTO password_resets (user_id, token_hash, created_at, expires_at) VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 1 HOUR))")
                    ->execute([(int)$acc['id'], rt_token_hash($tok)]);
-                // посадочная family.html — index.html параметр ?reset= не обрабатывает
-                rt_mail_send_tpl(rt_norm_email($email), 'password_reset', rt_mail_lang($b), ['link' => rt_app_url('family.html?reset=' . $tok)]);
+                rt_mail_send_tpl(rt_norm_email($email), 'password_reset', rt_mail_lang($b), ['link' => rt_short_url('r', $tok)]);
                 rt_log('accounts', 'password_reset_requested', (int)$acc['id']);
             }
         }
@@ -123,7 +122,7 @@ switch ($op) {
 
     /* ---------------- сброс по токену из письма ---------------- */
     case 'reset': {
-        $tok = isset($b['token']) ? (string)$b['token'] : '';
+        $tok = rt_norm_code(isset($b['token']) ? (string)$b['token'] : '');
         $np  = isset($b['new_password']) ? (string)$b['new_password'] : '';
         if (!rt_is_token($tok) || !rt_valid_password($np) || $np === '1234') rt_json(['error' => 'bad input'], 422);
         $s = $db->prepare("SELECT id, user_id FROM password_resets WHERE token_hash = ? AND used_at IS NULL AND expires_at > NOW() LIMIT 1");
@@ -202,13 +201,13 @@ switch ($op) {
                 if (!$targetChild || !rt_is_guardian($db, (int)$u['id'], $targetChild)) rt_json(['error' => 'not your child'], 403);
             }
         }
-        $tok = rt_token();
+        $tok = rt_code(6); // короткий код — ссылку легко продиктовать
         $db->prepare(
             "INSERT INTO invitations (type, inviter_id, family_id, target_child_id, email, token_hash, status, created_at, expires_at)
              VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY))"
         )->execute([$type, (int)$u['id'], $fid, $targetChild, $email, rt_token_hash($tok)]);
         $invId = (int)$db->lastInsertId();
-        $link = rt_app_url('family.html?invite=' . $tok); // посадочная family.html, index ?invite= не понимает
+        $link = rt_short_url('i', $tok); // /robtop/i/<КОД> → корневой .htaccess → family.html?invite=
         rt_invite_mail($db, $type, $email, (int)$u['id'], $targetChild, $link, rt_mail_lang($b));
         rt_log('accounts', 'invite_sent', $invId, $type, null, null, ['type' => $type, 'to' => $email]);
         rt_json(['ok' => true, 'invitation_id' => $invId, 'link' => $link, 'type' => $type]);
@@ -216,7 +215,7 @@ switch ($op) {
 
     /* ---------------- инфо о приглашении (для посадочной) ---------------- */
     case 'invite_info': {
-        $tok = isset($b['token']) ? (string)$b['token'] : '';
+        $tok = rt_norm_code(isset($b['token']) ? (string)$b['token'] : '');
         if (!rt_is_token($tok)) rt_json(['error' => 'bad token'], 422);
         $s = $db->prepare("SELECT i.*, u.name AS inviter_nick FROM invitations i JOIN users u ON u.id = i.inviter_id WHERE i.token_hash = ? LIMIT 1");
         $s->execute([rt_token_hash($tok)]);
@@ -229,7 +228,7 @@ switch ($op) {
 
     /* ---------------- принять приглашение ---------------- */
     case 'accept': {
-        $tok = isset($b['token']) ? (string)$b['token'] : '';
+        $tok = rt_norm_code(isset($b['token']) ? (string)$b['token'] : '');
         if (!rt_is_token($tok)) rt_json(['error' => 'bad token'], 422);
         $s = $db->prepare("SELECT * FROM invitations WHERE token_hash = ? LIMIT 1");
         $s->execute([rt_token_hash($tok)]);
@@ -347,13 +346,13 @@ switch ($op) {
         }
         if ($action === 'resend') {
             $db->prepare("UPDATE invitations SET status = 'revoked' WHERE id = ? AND status = 'pending'")->execute([$id]);
-            $tok = rt_token();
+            $tok = rt_code(6);
             $db->prepare(
                 "INSERT INTO invitations (type, inviter_id, family_id, target_child_id, email, token_hash, status, created_at, expires_at)
                  VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY))"
             )->execute([$inv['type'], (int)$u['id'], $inv['family_id'], $inv['target_child_id'], $inv['email'], rt_token_hash($tok)]);
             $newId = (int)$db->lastInsertId();
-            $link = rt_app_url('family.html?invite=' . $tok);
+            $link = rt_short_url('i', $tok);
             rt_invite_mail($db, (string)$inv['type'], !empty($inv['email']) ? (string)$inv['email'] : null,
                 (int)$u['id'], !empty($inv['target_child_id']) ? (int)$inv['target_child_id'] : null, $link, rt_mail_lang($b));
             rt_log('accounts', 'invite_sent', $newId, $inv['type'], null, null, ['resend_of' => $id]);

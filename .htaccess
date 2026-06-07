@@ -25,4 +25,10 @@ AddDefaultCharset UTF-8
   # Корень ведёт в приложение: /robtop/ → /robtop/app/
   # 302, а не 301: если позже переедем на deploy-ветку и чистый /robtop/, редирект не закэшируется.
   RewriteRule ^$ app/ [R=302,L]
+
+  # Короткие ссылки: /robtop/i/<КОД> — приглашение, /robtop/r/<КОД> — сброс пароля.
+  # Именно РЕДИРЕКТ (302), не внутренний rewrite: family.html грузит api/ по относительным
+  # путям, при внутреннем rewrite браузер остался бы на /i/... и пути бы сломались.
+  RewriteRule ^i/([A-Za-z0-9]{4,64})$ app/family.html?invite=$1 [R=302,L]
+  RewriteRule ^r/([A-Za-z0-9]{4,64})$ app/family.html?reset=$1 [R=302,L]
 </IfModule>

@@ -23,6 +23,19 @@ function rt_app_url($path) {
     return $base . $path;
 }
 
+/** Корень robtop/ (на уровень выше app/) — короткие ссылки живут там.
+ *  Работает при ОБОИХ значениях app_base_url (…/robtop/ и …/robtop/app/): хвост app/ срезается. */
+function rt_root_url() {
+    return preg_replace('#app/$#', '', rt_app_url(''));
+}
+
+/** Короткая ссылка: rt_short_url('i', $код) → https://…/robtop/i/A7F8KD
+ *  'i' = приглашение, 'r' = сброс пароля. Маршрут делает корневой .htaccess
+ *  (302-редирект на app/family.html?invite=/?reset= — там посадочные). */
+function rt_short_url($prefix, $code) {
+    return rt_root_url() . $prefix . '/' . $code;
+}
+
 /* ---------- язык ---------- */
 
 function rt_mail_langs() { return ['en', 'ru', 'lv']; }

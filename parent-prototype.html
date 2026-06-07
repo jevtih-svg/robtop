@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RobTop — Parent screen prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Rubik:wght@400;500;600;700;800&display=swap&subset=cyrillic,cyrillic-ext,latin,latin-ext" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root{--cyan:#19e3ff;--pink:#ff3db0;--purple:#a64bff;--mint:#38e8a0;--gold:#ffd23b;--red:#ff4d6d;--ink:#eaf2ff;--muted:#93a6cf}
+  html,body{margin:0;min-height:100%}
+  body{font-family:'Rubik',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink);background:#05050f;
+    background-image:radial-gradient(900px 600px at 12% 6%,rgba(166,75,255,.18),transparent 60%),
+      radial-gradient(900px 700px at 90% 18%,rgba(25,227,255,.13),transparent 60%),
+      radial-gradient(1000px 800px at 50% 110%,rgba(255,43,214,.15),transparent 60%),
+      linear-gradient(180deg,#070617,#05040f 60%,#07041a);min-height:100vh}
+  /* ── шапка страницы (как у других прототипов) ── */
+  .head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .head h1{font-family:'Russo One','Rubik',sans-serif;font-size:19px;margin:0;color:#fff;text-shadow:0 0 12px rgba(25,227,255,.6)}
+  .head h1 b{color:var(--pink);font-weight:400}
+  .head .sub{color:var(--muted);font-size:12px;font-weight:600;margin-top:2px}
+  .tools{display:flex;align-items:center;gap:10px}
+  .demo{font-size:10.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--gold);
+    background:rgba(255,210,59,.14);border:1px solid rgba(255,210,59,.45);padding:4px 9px;border-radius:999px}
+  .lang{display:flex;gap:4px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:3px}
+  .lang button{border:none;background:none;color:#cfe0ff;font-weight:800;font-size:12px;padding:5px 10px;border-radius:999px;cursor:pointer;font-family:inherit}
+  .lang button.on{color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0)}
+  .stagewrap{display:flex;flex-direction:column;align-items:center;padding:18px 16px 46px}
+  .hint{color:var(--muted);font-size:12px;font-weight:600;margin:0 0 14px;text-align:center;max-width:520px;line-height:1.55}
+  /* ── телефон ── */
+  .phone{width:390px;max-width:94vw;border-radius:40px;padding:12px;background:linear-gradient(160deg,#15132e,#0a0920);
+    border:1px solid rgba(255,255,255,.14);box-shadow:0 30px 70px rgba(0,0,0,.6),0 0 50px -16px var(--cyan)}
+  .screen{position:relative;height:700px;max-height:76vh;overflow:hidden;border-radius:30px;display:flex;flex-direction:column;
+    background:radial-gradient(700px 480px at 20% 0%,rgba(166,75,255,.12),transparent 60%),linear-gradient(180deg,#0a0920,#0b0822)}
+  .scroll{flex:1;overflow:auto;padding:14px 14px 16px}
+  .scroll::-webkit-scrollbar{width:0}
+  .anim{animation:sin .25s ease both}
+  @keyframes sin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  /* ── верхняя панель ── */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 16px 10px}
+  .kid{display:flex;align-items:center;gap:9px;min-width:0}
+  .kid .ava{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;
+    background:linear-gradient(150deg,rgba(25,227,255,.25),rgba(166,75,255,.3));border:1px solid rgba(25,227,255,.45);
+    box-shadow:0 0 14px -4px var(--cyan)}
+  .kid .nm{font-family:'Russo One','Rubik',sans-serif;font-size:16px;color:#fff;line-height:1.1}
+  .kid .st{font-size:10.5px;color:var(--muted);font-weight:700;margin-top:2px}
+  .viewbadge{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;
+    color:var(--cyan);background:rgba(25,227,255,.1);border:1px solid rgba(25,227,255,.4);padding:5px 9px;border-radius:999px;white-space:nowrap}
+  /* ── заголовки секций ── */
+  .sect{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);margin:16px 4px 8px}
+  .sect:first-child{margin-top:2px}
+  /* ── карточки ── */
+  .card{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:13px 14px;margin-bottom:10px}
+  /* ── сегмент-переключатели ── */
+  .seg{display:flex;gap:5px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:4px}
+  .seg button{flex:1;border:none;background:none;color:#cfe0ff;font-family:inherit;font-weight:800;font-size:12px;padding:7px 8px;border-radius:999px;cursor:pointer;transition:.15s;white-space:nowrap}
+  .seg button.on{color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0);box-shadow:0 0 14px -4px var(--cyan)}
+  /* ── HUD ── */
+  .hud{display:flex;gap:8px;margin-top:10px}
+  .hud .h{flex:1;text-align:center;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:15px;padding:11px 6px 9px}
+  .hud .n{font-family:'Russo One','Rubik',sans-serif;font-size:23px;color:#fff;line-height:1}
+  .hud .h:nth-child(1) .n{color:var(--cyan);text-shadow:0 0 14px rgba(25,227,255,.6)}
+  .hud .h:nth-child(2) .n{color:var(--pink);text-shadow:0 0 14px rgba(255,61,176,.6)}
+  .hud .h:nth-child(3) .n{color:var(--gold);text-shadow:0 0 14px rgba(255,210,59,.6)}
+  .hud .l{font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);margin-top:5px}
+  /* ── график по дням ── */
+  .chart{display:flex;align-items:flex-end;gap:3px;height:96px;padding:4px 2px 0}
+  .chart .c{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+  .chart .b{width:100%;max-width:22px;border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,#3ae6ff,#1577d4);
+    box-shadow:0 0 10px -3px var(--cyan);min-height:2px}
+  .chart .c.zero .b{background:rgba(255,255,255,.08);box-shadow:none}
+  .chart .c.today .b{background:linear-gradient(180deg,#ffe57a,#ffb02e);box-shadow:0 0 12px -3px var(--gold)}
+  .chart .d{font-size:8.5px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:visible}
+  /* ── разбивка по модулям ── */
+  .mrow{display:flex;align-items:center;gap:9px;padding:7px 2px}
+  .mrow .ic{width:30px;height:30px;border-radius:9px;flex:0 0 30px;display:flex;align-items:center;justify-content:center;font-size:15px;
+    background:rgba(255,255,255,.06);border:1px solid var(--mc,rgba(255,255,255,.2));box-shadow:0 0 10px -4px var(--mc,transparent)}
+  .mrow .mn{flex:0 0 112px;font-size:11.5px;font-weight:700;color:#dbe6ff;line-height:1.25}
+  .mrow .bar{flex:1;height:9px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}
+  .mrow .bar i{display:block;height:100%;border-radius:99px;background:var(--mc);box-shadow:0 0 8px -2px var(--mc)}
+  .mrow .ct{flex:0 0 26px;text-align:right;font-family:'Russo One','Rubik',sans-serif;font-size:13px;color:#fff}
+  /* ── сводные карточки модулей ── */
+  .mcard{display:flex;align-items:center;gap:11px;width:100%;text-align:left;font-family:inherit;cursor:pointer;
+    background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:11px 12px;margin-bottom:8px;color:var(--ink);transition:.15s}
+  .mcard:hover{border-color:var(--mc)}
+  .mcard .ic{width:42px;height:42px;border-radius:13px;flex:0 0 42px;display:flex;align-items:center;justify-content:center;font-size:21px;
+    background:rgba(255,255,255,.05);border:1px solid var(--mc);box-shadow:0 0 14px -5px var(--mc)}
+  .mcard .tx{flex:1;min-width:0}
+  .mcard .t1{font-weight:800;font-size:13px;color:#fff}
+  .mcard .t2{font-size:11.5px;font-weight:600;color:var(--muted);margin-top:3px;line-height:1.4}
+  .mcard .chev{color:var(--muted);flex:0 0 auto}
+  /* ── инсайты ── */
+  .ins{display:flex;gap:10px;align-items:flex-start;padding:9px 2px}
+  .ins+.ins{border-top:1px dashed rgba(255,255,255,.1)}
+  .ins .e{font-size:17px;flex:0 0 auto;margin-top:-1px}
+  .ins .x{font-size:12.5px;font-weight:600;color:#dbe6ff;line-height:1.45}
+  .ins .x b{color:#fff}
+  /* ── виш-лист ── */
+  .robanner{display:flex;gap:9px;align-items:center;background:rgba(25,227,255,.07);border:1px solid rgba(25,227,255,.3);
+    border-radius:13px;padding:9px 12px;margin-bottom:11px;font-size:11.5px;font-weight:700;color:#bdeeff;line-height:1.4}
+  .wseg{display:flex;gap:6px;margin-bottom:12px}
+  .wseg button{flex:1;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.04);color:#cfe0ff;font-family:inherit;
+    font-weight:800;font-size:12px;padding:8px 6px;border-radius:12px;cursor:pointer;transition:.15s}
+  .wseg button .c{display:inline-block;margin-left:5px;font-family:'Russo One','Rubik',sans-serif;font-weight:400}
+  .wseg button.on{color:#fff;border-color:var(--sc);background:rgba(255,255,255,.07);box-shadow:0 0 16px -7px var(--sc);text-shadow:0 0 10px var(--sc)}
+  .wcard{display:flex;gap:11px;width:100%;text-align:left;font-family:inherit;cursor:pointer;color:var(--ink);
+    background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-left:3px solid var(--sc);
+    border-radius:16px;padding:11px;margin-bottom:9px;transition:.15s}
+  .wcard:hover{border-color:var(--sc)}
+  .wcard .ph{width:58px;height:58px;border-radius:13px;flex:0 0 58px;display:flex;align-items:center;justify-content:center;font-size:30px;
+    background:linear-gradient(150deg,rgba(255,255,255,.1),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.14)}
+  .wcard .tx{flex:1;min-width:0}
+  .wcard .t1{font-weight:800;font-size:13.5px;color:#fff;display:flex;align-items:center;gap:6px}
+  .wcard .t1 .fav{color:var(--gold);text-shadow:0 0 8px rgba(255,210,59,.8);font-size:12px}
+  .wcard .nt{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+  .chip{font-size:10px;font-weight:800;color:#cfe0ff;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);
+    padding:3px 8px;border-radius:999px;white-space:nowrap}
+  .chip.buy{color:#b8ffe9;border-color:rgba(43,240,192,.45);background:rgba(43,240,192,.1)}
+  .chip.cm{color:#e9d4ff;border-color:rgba(166,75,255,.45);background:rgba(166,75,255,.12)}
+  .chip.lnk{color:#bdeeff;border-color:rgba(25,227,255,.4);background:rgba(25,227,255,.08)}
+  .wempty{text-align:center;color:var(--muted);font-size:12.5px;font-weight:600;padding:28px 10px;line-height:1.5}
+  /* ── журнал ── */
+  .fchips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+  .fchips::-webkit-scrollbar{display:none}
+  .fchips button{flex:0 0 auto;display:flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.04);
+    color:#cfe0ff;font-family:inherit;font-weight:800;font-size:11.5px;padding:6px 11px;border-radius:999px;cursor:pointer;transition:.15s}
+  .fchips button .dot{width:8px;height:8px;border-radius:50%;background:var(--mc);box-shadow:0 0 6px var(--mc)}
+  .fchips button.on{color:#fff;border-color:var(--mc,#3df0c0);background:rgba(255,255,255,.08)}
+  .jcount{font-size:11.5px;color:var(--muted);font-weight:700;margin:2px 4px 10px}
+  .dayhdr{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#9fb0d6;margin:13px 4px 7px;
+    display:flex;align-items:center;gap:8px}
+  .dayhdr::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.08)}
+  .ev{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;font-family:inherit;color:var(--ink);
+    background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:13px;padding:9px 11px;margin-bottom:6px}
+  button.ev{cursor:pointer;transition:.15s} button.ev:hover{border-color:var(--mc)}
+  .ev .ic{width:30px;height:30px;border-radius:9px;flex:0 0 30px;display:flex;align-items:center;justify-content:center;font-size:14px;
+    background:rgba(255,255,255,.05);border:1px solid var(--mc);box-shadow:0 0 9px -4px var(--mc)}
+  .ev .tx{flex:1;min-width:0}
+  .ev .t1{font-size:12.5px;font-weight:700;color:#e8f0ff;line-height:1.4}
+  .ev .t2{font-size:10.5px;font-weight:700;color:var(--muted);margin-top:2px}
+  .ev .tm{flex:0 0 auto;font-family:'Russo One','Rubik',sans-serif;font-size:11px;color:var(--muted);margin-top:2px}
+  /* ── таббар ── */
+  .tabbar{flex:0 0 auto;display:flex;gap:4px;padding:8px 12px calc(10px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg,rgba(10,9,32,.6),#0a0920 45%);border-top:1px solid rgba(255,255,255,.09);backdrop-filter:blur(8px)}
+  .tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;
+    font-family:inherit;font-size:10px;font-weight:800;letter-spacing:.3px;color:var(--muted);padding:6px 4px;border-radius:12px;transition:.15s}
+  .tabbar button svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .tabbar button.on{color:var(--cyan);text-shadow:0 0 10px rgba(25,227,255,.7)}
+  .tabbar button.on svg{filter:drop-shadow(0 0 5px rgba(25,227,255,.8))}
+  /* ── шторка детали (read-only) ── */
+  .ovl{position:absolute;inset:0;z-index:30;display:none;align-items:flex-end;border-radius:30px;overflow:hidden;
+    background:rgba(4,3,14,.66);backdrop-filter:blur(3px)}
+  .ovl.show{display:flex}
+  .sheet{width:100%;max-height:88%;overflow:auto;background:linear-gradient(180deg,#141231,#0c0a22);border-top:1px solid rgba(255,255,255,.16);
+    border-radius:24px 24px 0 0;padding:10px 16px 22px;animation:up .25s ease both}
+  .sheet::-webkit-scrollbar{width:0}
+  @keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+  .grip{width:46px;height:5px;border-radius:3px;background:rgba(255,255,255,.22);margin:4px auto 12px}
+  .dhead{display:flex;gap:13px;align-items:center}
+  .dhead .ph{width:74px;height:74px;border-radius:17px;flex:0 0 74px;display:flex;align-items:center;justify-content:center;font-size:38px;
+    background:linear-gradient(150deg,rgba(255,255,255,.1),rgba(255,255,255,.03));border:1px solid var(--sc)}
+  .dhead h2{font-family:'Russo One','Rubik',sans-serif;font-weight:400;font-size:18px;margin:0;color:#fff;line-height:1.25}
+  .dhead .sub{margin-top:5px}
+  .statuspill{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#04212b;
+    background:var(--sc);padding:3px 9px;border-radius:999px}
+  .dnote{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:13px;padding:10px 12px;
+    font-size:12.5px;font-weight:600;color:#dbe6ff;line-height:1.5;margin-top:13px}
+  .dnote b{display:block;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .dlink{display:inline-flex;align-items:center;gap:7px;margin-top:11px;font-size:12.5px;font-weight:800;color:var(--cyan);text-decoration:none}
+  .dcnt{display:flex;gap:8px;margin-top:14px}
+  .dcnt .h{flex:1;text-align:center;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:13px;padding:9px 4px}
+  .dcnt .n{font-family:'Russo One','Rubik',sans-serif;font-size:17px;color:#fff}
+  .dcnt .l{font-size:9.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--muted);margin-top:3px}
+  .tl{margin-top:8px}
+  .tlrow{display:flex;gap:10px;align-items:flex-start;padding:7px 2px}
+  .tlrow .dot{width:10px;height:10px;border-radius:50%;flex:0 0 10px;margin-top:4px;background:var(--tc);box-shadow:0 0 8px var(--tc)}
+  .tlrow .x{flex:1;font-size:12.5px;font-weight:700;color:#e8f0ff}
+  .tlrow .d{font-size:11px;font-weight:700;color:var(--muted)}
+  .closebtn{display:block;width:100%;margin-top:16px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);
+    color:#fff;font-family:inherit;font-weight:800;font-size:14px;padding:13px;border-radius:14px;cursor:pointer;min-height:44px}
+  .ro-note{display:flex;gap:7px;align-items:center;justify-content:center;margin-top:10px;font-size:10.5px;font-weight:700;color:var(--muted)}
+</style>
+</head>
+<body>
+<header class="head">
+  <div>
+    <h1>RobTop — <b data-i18n="page.title">Parent screen</b></h1>
+    <div class="sub" data-i18n="page.sub">Read-only: child's wishlist, usage stats, activity log</div>
+  </div>
+  <div class="tools">
+    <span class="demo" data-i18n="page.demo">demo data</span>
+    <div class="lang" id="lang">
+      <button data-l="en" class="on">EN</button><button data-l="ru">RU</button><button data-l="lv">LV</button>
+    </div>
+  </div>
+</header>
+
+<div class="stagewrap">
+  <p class="hint" data-i18n="page.hint">Interactive prototype: 3 tabs at the bottom. Everything is view-only — the parent cannot edit anything. Tap a wish for details, tap an app summary card to open its log.</p>
+  <div class="phone">
+    <div class="screen" id="screen">
+      <div class="topbar">
+        <div class="kid">
+          <div class="ava">🧑‍🚀</div>
+          <div>
+            <div class="nm">Артём</div>
+            <div class="st" id="lastSeen"></div>
+          </div>
+        </div>
+        <div class="viewbadge">👁 <span data-i18n="top.viewOnly">View only</span></div>
+      </div>
+      <div class="scroll" id="view"></div>
+      <nav class="tabbar" id="tabbar">
+        <button data-tab="overview" class="on">
+          <svg viewBox="0 0 24 24"><path d="M4 19V10M10 19V5M16 19v-7M21 19H3"/></svg>
+          <span data-i18n="tab.overview">Overview</span>
+        </button>
+        <button data-tab="wishlist">
+          <svg viewBox="0 0 24 24"><circle cx="9" cy="16" r="4"/><circle cx="17" cy="17" r="3.2"/><path d="M9 12c.5-4 2-6.5 5-8.5M17 13.8C17 9 15.5 6 14 3.5M14 3.5c2 .2 4-.3 5.5-1.5"/></svg>
+          <span data-i18n="tab.wishlist">Wishlist</span>
+        </button>
+        <button data-tab="journal">
+          <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.3"/><circle cx="3.5" cy="12" r="1.3"/><circle cx="3.5" cy="18" r="1.3"/></svg>
+          <span data-i18n="tab.journal">Log</span>
+        </button>
+      </nav>
+      <div class="ovl" id="ovl"><div class="sheet" id="sheet" role="dialog"></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* =================== i18n (en/ru/lv) — терминология 1-в-1 с приложением =================== */
+var L={
+en:{
+  page:{title:"Parent screen",sub:"Read-only: child's wishlist, usage stats, activity log",demo:"demo data",
+    hint:"Interactive prototype: 3 tabs at the bottom. Everything is view-only — the parent cannot edit anything. Tap a wish for details, tap an app summary card to open its log."},
+  top:{viewOnly:"View only",lastSeen:"last activity: {x}"},
+  tab:{overview:"Overview",wishlist:"Wishlist",journal:"Log"},
+  period:{d7:"7 days",d30:"30 days"},
+  hud:{events:{one:"event",other:"events"},days:{one:"active day",other:"active days"},points:{one:"point",other:"points"}},
+  sect:{activity:"Activity by day",byApp:"By app",summary:"App summary",insights:"Notes",log:"Latest"},
+  mod:{wishlist:"Wishlist",teeth:"Toothbrushing Timer",rating:"Day Rating",mood:"Mood of the Day",reverse:"Words Backwards"},
+  sum:{wishlist:"{total} wishes · {want} want · {bought} bought",teeth:"streak: {streak} {sd} 🔥 · {n} in period",
+    rating:"average: {avg}★ · {n} rated",mood:"most often: {e} ×{n}",reverse:"{n} words reversed",none:"no activity in period"},
+  sumDays:{one:"day",other:"days"},
+  ins:{streak:"Brushing streak: <b>{n} days in a row</b>",bought:"Wish fulfilled: <b>“{t}”</b> 🎉",
+    peak:{morning:"Most active in the <b>morning</b> (7–11)",day:"Most active in the <b>daytime</b> (11–17)",evening:"Most active in the <b>evening</b> (17–22)"}},
+  wl:{banner:"View mode. Only Артём can make changes.",tab:{want:"Want",thinking:"Thinking",bought:"Bought"},
+    empty:"Nothing in this section.",
+    chip:{changedMind:"changed ×{n}",days:{one:"in {n} day",other:"in {n} days"},link:"link"},
+    hist:{created:"Added",changed_mind:"Changed mind",purchased:"Bought",back_to_want:"Want again",favorite:"Marked ★"},
+    detail:{historyTitle:"Wish history",changedMind:"changed mind",purchased:"bought",returned:"returned",
+      note:"Why I want it",link:"Open link",close:"Close",ro:"View only — editing is available to Артём"}},
+  j:{all:"All",count:{one:"{n} event in 30 days",other:"{n} events in 30 days"},today:"Today",yesterday:"Yesterday",
+    ev:{created:"Added a wish: “{t}”",changed_mind:"Changed mind about “{t}”",back_to_want:"Wants “{t}” again",
+      purchased:"“{t}” — bought! 🎉",favorite:"Marked ★ “{t}”",viewed_stats:"Viewed wish stats",
+      teeth_done:"Brushed teeth · 2:00 · +10",day_rated:"Rated the day: {stars}",mood_set:"Mood of the day: {e}",
+      word:"Reversed a word: “{w}” → “{r}”"}}
+},
+ru:{
+  page:{title:"Родительский экран",sub:"Только просмотр: виш-лист ребёнка, статистика использования, журнал",demo:"демо-данные",
+    hint:"Интерактивный прототип: 3 вкладки внизу. Всё только для чтения — родитель ничего не редактирует. Тап по желанию — детали, тап по карточке приложения — его журнал."},
+  top:{viewOnly:"Только просмотр",lastSeen:"последняя активность: {x}"},
+  tab:{overview:"Обзор",wishlist:"Виш-лист",journal:"Журнал"},
+  period:{d7:"7 дней",d30:"30 дней"},
+  hud:{events:{one:"событие",few:"события",many:"событий"},days:{one:"активный день",few:"активных дня",many:"активных дней"},
+    points:{one:"очко",few:"очка",many:"очков"}},
+  sect:{activity:"Активность по дням",byApp:"По приложениям",summary:"Сводка приложений",insights:"Заметки",log:"Последнее"},
+  mod:{wishlist:"Виш-лист",teeth:"Таймер чистки зубов",rating:"Оценка дня",mood:"Настроение дня",reverse:"Слова наоборот"},
+  sum:{wishlist:"{total} желаний · {want} хочу · {bought} куплено",teeth:"серия: {streak} {sd} 🔥 · {n} за период",
+    rating:"средняя: {avg}★ · {n} оценок",mood:"чаще всего: {e} ×{n}",reverse:"{n} слов перевёрнуто",none:"нет активности за период"},
+  sumDays:{one:"день",few:"дня",many:"дней"},
+  ins:{streak:"Серия чистки зубов: <b>{n} дней подряд</b>",bought:"Исполнено желание: <b>«{t}»</b> 🎉",
+    peak:{morning:"Самое активное время — <b>утро</b> (7–11)",day:"Самое активное время — <b>день</b> (11–17)",evening:"Самое активное время — <b>вечер</b> (17–22)"}},
+  wl:{banner:"Режим просмотра. Изменения может вносить только Артём.",tab:{want:"Хочу",thinking:"Думаю",bought:"Купил"},
+    empty:"В этом разделе пусто.",
+    chip:{changedMind:"передумал ×{n}",days:{one:"за {n} день",few:"за {n} дня",many:"за {n} дней"},link:"ссылка"},
+    hist:{created:"Добавлено",changed_mind:"Передумал",purchased:"Куплено",back_to_want:"Снова хочу",favorite:"Отметил ★"},
+    detail:{historyTitle:"История желания",changedMind:"раз передумал",purchased:"раз куплено",returned:"раз вернул",
+      note:"Почему хочу",link:"Открыть ссылку",close:"Закрыть",ro:"Только просмотр — редактирует Артём"}},
+  j:{all:"Все",count:{one:"{n} событие за 30 дней",few:"{n} события за 30 дней",many:"{n} событий за 30 дней"},
+    today:"Сегодня",yesterday:"Вчера",
+    ev:{created:"Добавил желание «{t}»",changed_mind:"Передумал: «{t}»",back_to_want:"Снова хочет «{t}»",
+      purchased:"«{t}» — куплено! 🎉",favorite:"Отметил ★ «{t}»",viewed_stats:"Смотрел статистику желаний",
+      teeth_done:"Почистил зубы · 2:00 · +10",day_rated:"Оценил день: {stars}",mood_set:"Настроение дня: {e}",
+      word:"Перевернул слово: «{w}» → «{r}»"}}
+},
+lv:{
+  page:{title:"Vecāku ekrāns",sub:"Tikai skatīšanās: bērna vēlmju saraksts, lietošanas statistika, žurnāls",demo:"demo dati",
+    hint:"Interaktīvs prototips: 3 cilnes lejā. Viss tikai lasāms — vecāks neko nerediģē. Pieskaries vēlmei — detaļas, pieskaries lietotnes kartītei — tās žurnāls."},
+  top:{viewOnly:"Tikai skatīšanās",lastSeen:"pēdējā aktivitāte: {x}"},
+  tab:{overview:"Pārskats",wishlist:"Vēlmju saraksts",journal:"Žurnāls"},
+  period:{d7:"7 dienas",d30:"30 dienas"},
+  hud:{events:{zero:"notikumu",one:"notikums",other:"notikumi"},days:{zero:"aktīvu dienu",one:"aktīva diena",other:"aktīvas dienas"},
+    points:{zero:"punktu",one:"punkts",other:"punkti"}},
+  sect:{activity:"Aktivitāte pa dienām",byApp:"Pa lietotnēm",summary:"Lietotņu kopsavilkums",insights:"Piezīmes",log:"Pēdējais"},
+  mod:{wishlist:"Vēlmju saraksts",teeth:"Zobu tīrīšanas taimeris",rating:"Dienas vērtējums",mood:"Dienas garastāvoklis",reverse:"Vārdi otrādi"},
+  sum:{wishlist:"{total} vēlmes · {want} gribu · {bought} nopirkts",teeth:"sērija: {streak} {sd} 🔥 · {n} periodā",
+    rating:"vidēji: {avg}★ · {n} vērtējumi",mood:"visbiežāk: {e} ×{n}",reverse:"{n} vārdi apgriezti",none:"perioda aktivitātes nav"},
+  sumDays:{zero:"dienu",one:"diena",other:"dienas"},
+  ins:{streak:"Zobu tīrīšanas sērija: <b>{n} dienas pēc kārtas</b>",bought:"Vēlme piepildīta: <b>“{t}”</b> 🎉",
+    peak:{morning:"Aktīvākais laiks — <b>rīts</b> (7–11)",day:"Aktīvākais laiks — <b>diena</b> (11–17)",evening:"Aktīvākais laiks — <b>vakars</b> (17–22)"}},
+  wl:{banner:"Skatīšanās režīms. Izmaiņas var veikt tikai Артём.",tab:{want:"Gribu",thinking:"Domāju",bought:"Nopirku"},
+    empty:"Šajā sadaļā nekā nav.",
+    chip:{changedMind:"pārdomāju ×{n}",days:{zero:"{n} dienās",one:"{n} dienā",other:"{n} dienās"},link:"saite"},
+    hist:{created:"Pievienots",changed_mind:"Pārdomāju",purchased:"Nopirkts",back_to_want:"Atkal gribu",favorite:"Atzīmēja ★"},
+    detail:{historyTitle:"Vēlmes vēsture",changedMind:"reizes pārdomāja",purchased:"reizes nopirkts",returned:"reizes atgrieza",
+      note:"Kāpēc gribu",link:"Atvērt saiti",close:"Aizvērt",ro:"Tikai skatīšanās — rediģē Артём"}},
+  j:{all:"Visi",count:{zero:"{n} notikumu 30 dienās",one:"{n} notikums 30 dienās",other:"{n} notikumi 30 dienās"},
+    today:"Šodien",yesterday:"Vakar",
+    ev:{created:"Pievienoja vēlmi “{t}”",changed_mind:"Pārdomāja: “{t}”",back_to_want:"Atkal grib “{t}”",
+      purchased:"“{t}” — nopirkts! 🎉",favorite:"Atzīmēja ★ “{t}”",viewed_stats:"Skatījās vēlmju statistiku",
+      teeth_done:"Iztīrīja zobus · 2:00 · +10",day_rated:"Novērtēja dienu: {stars}",mood_set:"Dienas garastāvoklis: {e}",
+      word:"Apgrieza vārdu: “{w}” → “{r}”"}}
+}};
+
+/* названия желаний (контент ребёнка, в демо локализуем) */
+var WTITLES={
+  lego:{en:"LEGO Starship",ru:"LEGO Звездолёт",lv:"LEGO zvaigžņu kuģis"},
+  scooter:{en:"Stunt scooter",ru:"Трюковый самокат",lv:"Triku skrejritenis"},
+  magic:{en:"Magic kit",ru:"Набор фокусника",lv:"Burvju komplekts"},
+  whale:{en:"Plush whale",ru:"Плюшевый кит",lv:"Plīša valis"},
+  drone:{en:"Camera drone",ru:"Дрон с камерой",lv:"Drons ar kameru"},
+  fish:{en:"Aquarium",ru:"Аквариум",lv:"Akvārijs"},
+  sneakers:{en:"Light-up sneakers",ru:"Кроссовки с подсветкой",lv:"Mirgojošas botas"},
+  robot:{en:"Robot builder kit",ru:"Конструктор-робот",lv:"Robotu konstruktors"},
+  book:{en:"Space book",ru:"Книга про космос",lv:"Grāmata par kosmosu"}
+};
+var WNOTES={
+  lego:{en:"I'll build a space base",ru:"Построю космическую базу",lv:"Uzbūvēšu kosmosa bāzi"},
+  fish:{en:"I want real fish",ru:"Хочу настоящих рыбок",lv:"Gribu īstas zivtiņas"}
+};
+
+/* =================== модули (цвета/иконки как в приложении) =================== */
+var MODS={
+  wishlist:{color:"#ff3db0",icon:"🍒"},
+  teeth:{color:"#19e3ff",icon:"🦷"},
+  rating:{color:"#ffd23b",icon:"⭐"},
+  mood:{color:"#a64bff",icon:"😊"},
+  reverse:{color:"#38e8a0",icon:"🔁"}
+};
+var SECTC={want:"#ff3db0",thinking:"#a64bff",bought:"#2bf0c0"};
+var HISTC={created:"#19e3ff",changed_mind:"#a64bff",purchased:"#2bf0c0",back_to_want:"#ff3db0",favorite:"#ffd23b"};
+
+/* =================== демо-данные: виш-лист (history → события журнала) =================== */
+/* d = дней назад */
+var WISHES=[
+  {id:"lego",icon:"🚀",status:"want",fav:true,link:"https://www.lego.com",note:true,
+    history:[{t:"created",d:12},{t:"favorite",d:11},{t:"changed_mind",d:8},{t:"back_to_want",d:6}]},
+  {id:"scooter",icon:"🛴",status:"want",fav:false,link:"https://example.com/scooter",note:false,
+    history:[{t:"created",d:20}]},
+  {id:"magic",icon:"🎩",status:"want",fav:false,link:"",note:false,history:[{t:"created",d:4}]},
+  {id:"whale",icon:"🐋",status:"want",fav:true,link:"",note:false,
+    history:[{t:"created",d:2},{t:"favorite",d:2}]},
+  {id:"drone",icon:"🚁",status:"thinking",fav:false,link:"",note:false,
+    history:[{t:"created",d:18},{t:"changed_mind",d:15},{t:"back_to_want",d:13},{t:"changed_mind",d:5}]},
+  {id:"fish",icon:"🐠",status:"thinking",fav:false,link:"",note:true,
+    history:[{t:"created",d:9},{t:"changed_mind",d:3}]},
+  {id:"sneakers",icon:"👟",status:"bought",fav:false,link:"",note:false,
+    history:[{t:"created",d:16},{t:"purchased",d:7}]},
+  {id:"robot",icon:"🤖",status:"bought",fav:false,link:"https://example.com/robot",note:false,
+    history:[{t:"created",d:28},{t:"changed_mind",d:22},{t:"back_to_want",d:19},{t:"purchased",d:5}]},
+  {id:"book",icon:"📚",status:"bought",fav:false,link:"",note:false,
+    history:[{t:"created",d:6},{t:"purchased",d:3}]}
+];
+
+/* =================== демо-события (детерминированная генерация) =================== */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+var rnd=mulberry32(42);
+function ri(a,b){return a+Math.floor(rnd()*(b-a+1))}
+function pick(arr){return arr[Math.floor(rnd()*arr.length)]}
+
+var EVENTS=[];
+function ev(d,h,m,mod,type,p){EVENTS.push({d:d,h:h,m:m,mod:mod,type:type,p:p||{}})}
+
+/* виш-лист — из history карточек (источник один, журнал согласован с карточками) */
+var WLT={created:[17,19],changed_mind:[18,20],back_to_want:[17,19],purchased:[12,19],favorite:[17,19]};
+WISHES.forEach(function(w){w.history.forEach(function(h){
+  var hr=WLT[h.t]||[17,19];ev(h.d,ri(hr[0],hr[1]),ri(0,59),"wishlist",h.t,{wish:w.id});
+})});
+ev(1,19,42,"wishlist","viewed_stats",{});
+
+/* зубы: серия — последние 6 дней без пропусков (d=0..5), d=6 пропуск, дальше с пропусками */
+var MOODS=["😀","🤩","🙂","😎","😴","😢"];
+var WORDS=[["робот","тобор"],["тигр","ргит"],["космос","сомсок"],["saule","eluas"],["dino","onid"],["пицца","аццип"]];
+for(var d=0;d<30;d++){
+  var teethN = d<=5 ? 2 : (d===6?0:(rnd()<.25?0:(rnd()<.6?1:2)));
+  if(teethN>=1) ev(d,7,ri(25,50),"teeth","teeth_done",{});
+  if(teethN>=2) ev(d,20,ri(25,50),"teeth","teeth_done",{});
+  if(d>0&&rnd()<.72) ev(d,ri(20,21)===21?21:20,ri(20,59),"rating","day_rated",{stars:pick([3,4,4,5,5,2])});
+  if(rnd()<.55) ev(d,8,ri(5,55),"mood","mood_set",{e:pick(MOODS)});
+  if(rnd()<.32){var n=ri(1,3);for(var k=0;k<n;k++){var wd=pick(WORDS);ev(d,ri(16,18),ri(0,59),"reverse","word",{w:wd[0],r:wd[1]})}}
+}
+/* сегодня вечер ещё не наступил: убрать сегодняшние события позже 19:42 */
+EVENTS=EVENTS.filter(function(e){return !(e.d===0&&(e.h>19||(e.h===19&&e.m>42)))});
+EVENTS.sort(function(a,b){return a.d-b.d||(b.h-a.h)||(b.m-a.m)});
+
+/* =================== состояние =================== */
+var S={lang:"en",tab:"overview",period:7,wseg:"want",jfilter:"all"};
+
+/* =================== helpers =================== */
+function get(o,path){var p=path.split(".");for(var i=0;i<p.length&&o;i++)o=o[p[i]];return o}
+function t(path){return get(L[S.lang],path)!=null?get(L[S.lang],path):(get(L.en,path)!=null?get(L.en,path):path)}
+function fmt(s,p){return String(s).replace(/\{(\w+)\}/g,function(_,k){return p&&p[k]!=null?p[k]:"{"+k+"}"})}
+function plural(n,forms){var c="other";try{c=new Intl.PluralRules(S.lang).select(n)}catch(e){}
+  var f=forms[c]||forms.other||forms.many||forms.one;return fmt(f,{n:n})}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function wtitle(id){return (WTITLES[id]&&(WTITLES[id][S.lang]||WTITLES[id].en))||id}
+function wnote(id){return WNOTES[id]?(WNOTES[id][S.lang]||WNOTES[id].en):""}
+function modName(m){return t("mod."+m)}
+function dateFor(d){var x=new Date();x.setHours(12,0,0,0);x.setDate(x.getDate()-d);return x}
+function fmtDay(d){if(d===0)return t("j.today");if(d===1)return t("j.yesterday");
+  try{return new Intl.DateTimeFormat(S.lang,{day:"numeric",month:"long"}).format(dateFor(d))}catch(e){return dateFor(d).toLocaleDateString()}}
+function fmtDayShort(d){try{return new Intl.DateTimeFormat(S.lang,{day:"numeric",month:"short"}).format(dateFor(d))}catch(e){return dateFor(d).toLocaleDateString()}}
+function tm(e){return (e.h<10?"0":"")+e.h+":"+(e.m<10?"0":"")+e.m}
+function stars(n){var s="";for(var i=0;i<n;i++)s+="★";return s}
+function evText(e){
+  var tpl=t("j.ev."+e.type);var p={};
+  if(e.p.wish)p.t=wtitle(e.p.wish);
+  if(e.p.stars)p.stars=stars(e.p.stars)+" "+e.p.stars;
+  if(e.p.e)p.e=e.p.e;if(e.p.w){p.w=e.p.w;p.r=e.p.r}
+  return fmt(tpl,p);
+}
+
+/* =================== агрегаты =================== */
+function inPeriod(e){return e.d<S.period}
+function agg(){
+  var per=EVENTS.filter(inPeriod);
+  var perDay={},perMod={},hours={};
+  per.forEach(function(e){perDay[e.d]=(perDay[e.d]||0)+1;perMod[e.mod]=(perMod[e.mod]||0)+1;hours[e.h]=(hours[e.h]||0)+1});
+  var activeDays=Object.keys(perDay).length;
+  var points=per.filter(function(e){return e.type==="teeth_done"}).length*10;
+  /* серия зубов: подряд с сегодняшнего (или вчерашнего) дня */
+  var td={};EVENTS.forEach(function(e){if(e.type==="teeth_done")td[e.d]=1});
+  var streak=0,start=td[0]?0:1;if(td[start]){for(var d=start;d<30&&td[d];d++)streak++}
+  /* пиковое время */
+  var b={morning:0,day:0,evening:0};
+  Object.keys(hours).forEach(function(h){h=+h;var c=hours[h];if(h>=7&&h<11)b.morning+=c;else if(h>=11&&h<17)b.day+=c;else if(h>=17&&h<22)b.evening+=c});
+  var peak=Object.keys(b).sort(function(x,y){return b[y]-b[x]})[0];
+  /* оценка дня */
+  var rt=per.filter(function(e){return e.type==="day_rated"});
+  var avg=rt.length?(rt.reduce(function(s,e){return s+e.p.stars},0)/rt.length).toFixed(1):null;
+  /* настроение */
+  var mc={};per.forEach(function(e){if(e.type==="mood_set")mc[e.p.e]=(mc[e.p.e]||0)+1});
+  var topMood=Object.keys(mc).sort(function(x,y){return mc[y]-mc[x]})[0]||null;
+  /* последняя покупка в периоде */
+  var buy=per.filter(function(e){return e.type==="purchased"}).sort(function(a,b){return a.d-b.d})[0]||null;
+  var words=per.filter(function(e){return e.type==="word"}).length;
+  return {per:per,perDay:perDay,perMod:perMod,activeDays:activeDays,points:points,streak:streak,peak:peak,
+    avg:avg,rated:rt.length,topMood:topMood,topMoodN:topMood?mc[topMood]:0,buy:buy,words:words,
+    teethN:per.filter(function(e){return e.type==="teeth_done"}).length};
+}
+
+/* =================== рендеры =================== */
+var V=document.getElementById("view");
+
+function renderOverview(){
+  var a=agg();
+  var h='';
+  h+='<div class="seg" id="period">'
+    +'<button data-p="7"'+(S.period===7?' class="on"':'')+'>'+esc(t("period.d7"))+'</button>'
+    +'<button data-p="30"'+(S.period===30?' class="on"':'')+'>'+esc(t("period.d30"))+'</button></div>';
+  h+='<div class="hud">'
+    +'<div class="h"><div class="n">'+a.per.length+'</div><div class="l">'+esc(plural(a.per.length,t("hud.events")).replace(/^\d+\s*/,""))+'</div></div>'
+    +'<div class="h"><div class="n">'+a.activeDays+'</div><div class="l">'+esc(plural(a.activeDays,t("hud.days")).replace(/^\d+\s*/,""))+'</div></div>'
+    +'<div class="h"><div class="n">'+a.points+'</div><div class="l">'+esc(plural(a.points,t("hud.points")).replace(/^\d+\s*/,""))+'</div></div></div>';
+  /* график */
+  var n=S.period,max=1;for(var d=0;d<n;d++)max=Math.max(max,a.perDay[d]||0);
+  h+='<div class="sect">'+esc(t("sect.activity"))+'</div><div class="card"><div class="chart">';
+  for(var d=n-1;d>=0;d--){
+    var c=a.perDay[d]||0,hh=Math.round(c/max*78);
+    var lbl="";
+    if(n===7){try{lbl=new Intl.DateTimeFormat(S.lang,{weekday:"short"}).format(dateFor(d))}catch(e){lbl=""}}
+    else{lbl=(d%5===0)?fmtDayShort(d).replace(/\.$/,""):""}
+    h+='<div class="c'+(c===0?' zero':'')+(d===0?' today':'')+'"><div class="b" style="height:'+Math.max(hh,2)+'px"></div><div class="d">'+esc(lbl)+'</div></div>';
+  }
+  h+='</div></div>';
+  /* по приложениям */
+  var mx=1;Object.keys(MODS).forEach(function(m){mx=Math.max(mx,a.perMod[m]||0)});
+  h+='<div class="sect">'+esc(t("sect.byApp"))+'</div><div class="card">';
+  Object.keys(MODS).forEach(function(m){
+    var c=a.perMod[m]||0;
+    h+='<div class="mrow" style="--mc:'+MODS[m].color+'"><div class="ic">'+MODS[m].icon+'</div>'
+      +'<div class="mn">'+esc(modName(m))+'</div>'
+      +'<div class="bar"><i style="width:'+Math.round(c/mx*100)+'%"></i></div><div class="ct">'+c+'</div></div>';
+  });
+  h+='</div>';
+  /* сводка приложений */
+  var wTot=WISHES.length,wWant=0,wBought=0;
+  WISHES.forEach(function(w){if(w.status==="want")wWant++;if(w.status==="bought")wBought++});
+  var sums={
+    wishlist:fmt(t("sum.wishlist"),{total:wTot,want:wWant,bought:wBought}),
+    teeth:a.teethN?fmt(t("sum.teeth"),{streak:a.streak,sd:plural(a.streak,t("sumDays")).replace(/^\d+\s*/,""),n:a.teethN}):t("sum.none"),
+    rating:a.rated?fmt(t("sum.rating"),{avg:a.avg,n:a.rated}):t("sum.none"),
+    mood:a.topMood?fmt(t("sum.mood"),{e:a.topMood,n:a.topMoodN}):t("sum.none"),
+    reverse:a.words?fmt(t("sum.reverse"),{n:a.words}):t("sum.none")
+  };
+  h+='<div class="sect">'+esc(t("sect.summary"))+'</div>';
+  Object.keys(MODS).forEach(function(m){
+    h+='<button class="mcard" data-mod="'+m+'" style="--mc:'+MODS[m].color+'"><div class="ic">'+MODS[m].icon+'</div>'
+      +'<div class="tx"><div class="t1">'+esc(modName(m))+'</div><div class="t2">'+esc(sums[m])+'</div></div>'
+      +'<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>';
+  });
+  /* заметки */
+  var ins=[];
+  if(a.streak>=3)ins.push({e:"🔥",x:fmt(t("ins.streak"),{n:a.streak})});
+  if(a.buy)ins.push({e:"🎉",x:fmt(t("ins.bought"),{t:esc(wtitle(a.buy.p.wish))})});
+  ins.push({e:a.peak==="morning"?"🌅":(a.peak==="day"?"🌤":"🌙"),x:t("ins.peak."+a.peak)});
+  h+='<div class="sect">'+esc(t("sect.insights"))+'</div><div class="card">';
+  ins.forEach(function(i){h+='<div class="ins"><div class="e">'+i.e+'</div><div class="x">'+i.x+'</div></div>'});
+  h+='</div>';
+  V.innerHTML='<div class="anim">'+h+'</div>';
+  V.querySelectorAll("#period button").forEach(function(b){b.onclick=function(){S.period=+b.dataset.p;renderOverview();V.scrollTop=0}});
+  V.querySelectorAll(".mcard").forEach(function(b){b.onclick=function(){S.jfilter=b.dataset.mod;switchTab("journal")}});
+}
+
+function chipsFor(w){
+  var cm=w.history.filter(function(h){return h.t==="changed_mind"}).length;
+  var h="";
+  if(cm)h+='<span class="chip cm">'+esc(fmt(t("wl.chip.changedMind"),{n:cm}))+'</span>';
+  if(w.status==="bought"){
+    var cr=w.history.filter(function(x){return x.t==="created"})[0],bu=w.history.filter(function(x){return x.t==="purchased"})[0];
+    if(cr&&bu)h+='<span class="chip buy">'+esc(plural(cr.d-bu.d,t("wl.chip.days")))+'</span>';
+  }
+  if(w.link)h+='<span class="chip lnk">🔗 '+esc(t("wl.chip.link"))+'</span>';
+  return h;
+}
+
+function renderWishlist(){
+  var h='<div class="robanner">👁 <span>'+esc(t("wl.banner"))+'</span></div>';
+  var counts={want:0,thinking:0,bought:0};
+  WISHES.forEach(function(w){counts[w.status]++});
+  h+='<div class="wseg">';
+  ["want","thinking","bought"].forEach(function(s){
+    h+='<button data-s="'+s+'" style="--sc:'+SECTC[s]+'"'+(S.wseg===s?' class="on"':'')+'>'
+      +esc(t("wl.tab."+s))+'<span class="c">'+counts[s]+'</span></button>';
+  });
+  h+='</div>';
+  var list=WISHES.filter(function(w){return w.status===S.wseg});
+  /* избранные наверх, затем по свежести */
+  list.sort(function(a,b){return (b.fav?1:0)-(a.fav?1:0)||a.history[0].d-b.history[0].d});
+  if(!list.length)h+='<div class="wempty">'+esc(t("wl.empty"))+'</div>';
+  list.forEach(function(w){
+    h+='<button class="wcard" data-w="'+w.id+'" style="--sc:'+SECTC[w.status]+'">'
+      +'<div class="ph">'+w.icon+'</div><div class="tx">'
+      +'<div class="t1">'+(w.fav?'<span class="fav">★</span>':'')+esc(wtitle(w.id))+'</div>'
+      +(w.note?'<div class="nt">'+esc(wnote(w.id))+'</div>':'')
+      +'<div class="chips"><span class="chip">'+esc(t("wl.hist.created"))+' · '+esc(fmtDayShort(w.history[0].d))+'</span>'+chipsFor(w)+'</div>'
+      +'</div></button>';
+  });
+  V.innerHTML='<div class="anim">'+h+'</div>';
+  V.querySelectorAll(".wseg button").forEach(function(b){b.onclick=function(){S.wseg=b.dataset.s;renderWishlist()}});
+  V.querySelectorAll(".wcard").forEach(function(b){b.onclick=function(){openDetail(b.dataset.w)}});
+}
+
+function renderJournal(){
+  var h='<div class="fchips">';
+  h+='<button data-f="all"'+(S.jfilter==="all"?' class="on"':'')+'>'+esc(t("j.all"))+'</button>';
+  Object.keys(MODS).forEach(function(m){
+    h+='<button data-f="'+m+'" style="--mc:'+MODS[m].color+'"'+(S.jfilter===m?' class="on"':'')+'><span class="dot"></span>'+esc(modName(m))+'</button>';
+  });
+  h+='</div>';
+  var list=EVENTS.filter(function(e){return S.jfilter==="all"||e.mod===S.jfilter});
+  h+='<div class="jcount">'+esc(plural(list.length,t("j.count")))+'</div>';
+  var lastD=-1;
+  list.forEach(function(e,i){
+    if(e.d!==lastD){h+='<div class="dayhdr">'+esc(fmtDay(e.d))+'</div>';lastD=e.d}
+    var clickable=e.mod==="wishlist"&&e.p.wish;
+    var tag=clickable?'button':'div';
+    h+='<'+tag+' class="ev" style="--mc:'+MODS[e.mod].color+'"'+(clickable?' data-w="'+e.p.wish+'"':'')+'>'
+      +'<div class="ic">'+MODS[e.mod].icon+'</div>'
+      +'<div class="tx"><div class="t1">'+esc(evText(e))+'</div><div class="t2">'+esc(modName(e.mod))+'</div></div>'
+      +'<div class="tm">'+tm(e)+'</div></'+tag+'>';
+  });
+  V.innerHTML='<div class="anim">'+h+'</div>';
+  V.querySelectorAll(".fchips button").forEach(function(b){b.onclick=function(){S.jfilter=b.dataset.f;renderJournal();V.scrollTop=0}});
+  V.querySelectorAll("button.ev").forEach(function(b){b.onclick=function(){openDetail(b.dataset.w)}});
+}
+
+/* ── деталь желания (read-only) ── */
+var OVL=document.getElementById("ovl"),SHEET=document.getElementById("sheet");
+function openDetail(id){
+  var w=null;WISHES.forEach(function(x){if(x.id===id)w=x});if(!w)return;
+  var cm=w.history.filter(function(h){return h.t==="changed_mind"}).length;
+  var bu=w.history.filter(function(h){return h.t==="purchased"}).length;
+  var rt=w.history.filter(function(h){return h.t==="back_to_want"}).length;
+  var h='<div class="grip"></div><div class="dhead" style="--sc:'+SECTC[w.status]+'">'
+    +'<div class="ph">'+w.icon+'</div><div>'
+    +'<h2>'+(w.fav?'<span style="color:var(--gold)">★</span> ':'')+esc(wtitle(w.id))+'</h2>'
+    +'<div class="sub"><span class="statuspill">'+esc(t("wl.tab."+w.status))+'</span></div>'
+    +'</div></div>';
+  if(w.note)h+='<div class="dnote"><b>'+esc(t("wl.detail.note"))+'</b>'+esc(wnote(w.id))+'</div>';
+  if(w.link)h+='<a class="dlink" href="'+esc(w.link)+'" target="_blank" rel="noopener">🔗 '+esc(t("wl.detail.link"))+'</a>';
+  h+='<div class="dcnt">'
+    +'<div class="h"><div class="n">'+cm+'</div><div class="l">'+esc(t("wl.detail.changedMind"))+'</div></div>'
+    +'<div class="h"><div class="n">'+bu+'</div><div class="l">'+esc(t("wl.detail.purchased"))+'</div></div>'
+    +'<div class="h"><div class="n">'+rt+'</div><div class="l">'+esc(t("wl.detail.returned"))+'</div></div></div>';
+  h+='<div class="sect">'+esc(t("wl.detail.historyTitle"))+'</div><div class="tl">';
+  w.history.slice().reverse().forEach(function(x){
+    h+='<div class="tlrow" style="--tc:'+(HISTC[x.t]||"#fff")+'"><div class="dot"></div>'
+      +'<div class="x">'+esc(t("wl.hist."+x.t))+'</div><div class="d">'+esc(fmtDay(x.d))+'</div></div>';
+  });
+  h+='</div><button class="closebtn" id="dclose">'+esc(t("wl.detail.close"))+'</button>'
+    +'<div class="ro-note">👁 '+esc(t("wl.detail.ro"))+'</div>';
+  SHEET.innerHTML=h;OVL.classList.add("show");
+  document.getElementById("dclose").onclick=closeDetail;
+}
+function closeDetail(){OVL.classList.remove("show")}
+OVL.addEventListener("click",function(e){if(e.target===OVL)closeDetail()});
+
+/* =================== вкладки, язык =================== */
+function render(){
+  if(S.tab==="overview")renderOverview();
+  else if(S.tab==="wishlist")renderWishlist();
+  else renderJournal();
+}
+function switchTab(tab){
+  S.tab=tab;
+  document.querySelectorAll("#tabbar button").forEach(function(b){b.classList.toggle("on",b.dataset.tab===tab)});
+  closeDetail();render();V.scrollTop=0;
+}
+document.querySelectorAll("#tabbar button").forEach(function(b){b.onclick=function(){switchTab(b.dataset.tab)}});
+
+function applyStatic(){
+  document.querySelectorAll("[data-i18n]").forEach(function(el){el.textContent=t(el.dataset.i18n)});
+  var last=EVENTS.filter(function(e){return e.d===0})[0];
+  document.getElementById("lastSeen").textContent=fmt(t("top.lastSeen"),{x:last?(t("j.today").toLowerCase()+" "+tm(last)):"—"});
+  document.documentElement.lang=S.lang;
+}
+document.querySelectorAll("#lang button").forEach(function(b){
+  b.onclick=function(){
+    S.lang=b.dataset.l;
+    document.querySelectorAll("#lang button").forEach(function(x){x.classList.toggle("on",x===b)});
+    applyStatic();closeDetail();render();
+  };
+});
+
+applyStatic();render();
+})();
+</script>
+</body>
+</html>

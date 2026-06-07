@@ -1,0 +1,134 @@
+/* RobTop — модуль «Угадай число». Скоуп [data-mod="guess"], классы gn-*. Акцент — фиолетовый #a64bff. */
+[data-mod="guess"] .gn{padding-bottom:140px}
+[data-mod="guess"] .gn-header{display:flex;align-items:center;gap:12px;padding:calc(20px + env(safe-area-inset-top)) 2px 8px}
+[data-mod="guess"] .gn-head-main{flex:1;min-width:0}
+[data-mod="guess"] .gn-title{font-family:'Russo One',sans-serif;font-size:24px;color:#fff;
+  text-shadow:0 0 12px rgba(166,75,255,.8), 0 0 26px rgba(166,75,255,.4)}
+[data-mod="guess"] .gn-sub{margin:0;color:var(--muted);font-weight:600;font-size:13px}
+
+/* карточка игры */
+[data-mod="guess"] .gn-card{position:relative;margin-top:14px;border-radius:22px;padding:18px 16px 16px;text-align:center;
+  background:linear-gradient(165deg, rgba(40,18,58,.6), rgba(9,8,24,.92));
+  border:1.5px solid rgba(166,75,255,.45);box-shadow:0 12px 30px rgba(0,0,0,.5), 0 0 28px -10px #a64bff}
+[data-mod="guess"] .gn-card-title{font-family:'Russo One',sans-serif;font-size:20px;color:#e3ccff;margin:10px 0 4px;
+  text-shadow:0 0 12px rgba(166,75,255,.6)}
+[data-mod="guess"] .gn-hint{color:#9fb0d6;font-weight:600;font-size:13px;margin:6px 0 10px}
+[data-mod="guess"] .gn-note{color:#9fb0d6;font-weight:600;font-size:14px;margin:0;text-align:center}
+
+/* кружок с ответом (сверху, по эскизу) */
+[data-mod="guess"] .gn-circle{width:86px;height:86px;margin:4px auto 2px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Russo One',sans-serif;font-size:40px;color:#e3ccff;
+  border:3px solid rgba(166,75,255,.75);background:rgba(166,75,255,.12);
+  box-shadow:0 0 18px rgba(166,75,255,.45), inset 0 0 14px rgba(166,75,255,.25);
+  transition:color .15s ease, border-color .15s ease, box-shadow .15s ease}
+[data-mod="guess"] .gn-circle.win{color:#2bf0c0;border-color:#2bf0c0;background:rgba(43,240,192,.12);
+  box-shadow:0 0 22px rgba(43,240,192,.55), inset 0 0 14px rgba(43,240,192,.3);animation:gn-pop .35s ease}
+[data-mod="guess"] .gn-circle.lose{color:#ff4d6d;border-color:#ff4d6d;background:rgba(255,77,109,.12);
+  box-shadow:0 0 22px rgba(255,77,109,.5), inset 0 0 14px rgba(255,77,109,.3);animation:gn-shake .3s ease}
+[data-mod="guess"] .gn-circle.to{color:#ffd23b;border-color:#ffd23b;background:rgba(255,210,59,.1);
+  box-shadow:0 0 22px rgba(255,210,59,.45), inset 0 0 14px rgba(255,210,59,.25);font-size:34px}
+@keyframes gn-pop{0%{transform:scale(.85)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+@keyframes gn-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@media (prefers-reduced-motion: reduce){
+  [data-mod="guess"] .gn-circle.win,[data-mod="guess"] .gn-circle.lose{animation:none}
+}
+
+/* таймер 20 сек — правый верхний угол карточки (по эскизу) */
+[data-mod="guess"] .gn-timer{position:absolute;top:10px;right:10px;width:52px;height:52px}
+[data-mod="guess"] .gn-timer svg{width:100%;height:100%;transform:rotate(-90deg)}
+[data-mod="guess"] .gn-timer .track{fill:none;stroke:rgba(166,75,255,.18);stroke-width:4}
+[data-mod="guess"] .gn-timer .prog{fill:none;stroke:#19e3ff;stroke-width:4;stroke-linecap:round;
+  filter:drop-shadow(0 0 4px rgba(25,227,255,.8));transition:stroke-dashoffset .2s linear}
+[data-mod="guess"] .gn-timer .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:'Russo One',sans-serif;font-size:18px;color:#bfeaff;text-shadow:0 0 8px rgba(25,227,255,.7)}
+[data-mod="guess"] .gn-timer .u{position:absolute;left:0;right:0;bottom:-14px;text-align:center;
+  font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+[data-mod="guess"] .gn-timer.low .prog{stroke:#ff4d6d;filter:drop-shadow(0 0 5px rgba(255,77,109,.85))}
+[data-mod="guess"] .gn-timer.low .num{color:#ffb3c1;text-shadow:0 0 8px rgba(255,77,109,.8)}
+
+/* пример */
+[data-mod="guess"] .gn-expr{font-family:'Russo One',sans-serif;font-size:26px;color:#fff;margin:10px 4px 2px;line-height:1.25;
+  text-shadow:0 0 12px rgba(166,75,255,.55);word-wrap:break-word}
+[data-mod="guess"] .gn-expr .q{color:#19e3ff;text-shadow:0 0 12px rgba(25,227,255,.8)}
+[data-mod="guess"] .gn-expr .ans{color:#2bf0c0;text-shadow:0 0 12px rgba(43,240,192,.8)}
+
+/* итог раунда */
+[data-mod="guess"] .gn-res{font-family:'Russo One',sans-serif;font-size:19px;margin:8px 0 2px}
+[data-mod="guess"] .gn-res.win{color:#2bf0c0;text-shadow:0 0 12px rgba(43,240,192,.7)}
+[data-mod="guess"] .gn-res.wrong{color:#ff4d6d;text-shadow:0 0 12px rgba(255,77,109,.7)}
+[data-mod="guess"] .gn-res.timeout{color:#ffd23b;text-shadow:0 0 12px rgba(255,210,59,.7)}
+
+/* клавиатура 1–10 */
+[data-mod="guess"] .gn-pad{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:12px 0 4px}
+[data-mod="guess"] .gn-key{min-height:52px;border-radius:14px;border:1.5px solid rgba(166,75,255,.45);
+  background:rgba(166,75,255,.1);color:#e3ccff;font-family:'Russo One',sans-serif;font-size:21px;cursor:pointer;
+  transition:transform .1s ease, background .15s ease, border-color .15s ease;-webkit-tap-highlight-color:transparent}
+[data-mod="guess"] .gn-key:active{transform:scale(1.08);background:rgba(166,75,255,.3)}
+[data-mod="guess"] .gn-key.ok{border-color:#2bf0c0;color:#2bf0c0;background:rgba(43,240,192,.14);
+  box-shadow:0 0 14px rgba(43,240,192,.5)}
+[data-mod="guess"] .gn-key.bad{border-color:#ff4d6d;color:#ff4d6d;background:rgba(255,77,109,.14);
+  box-shadow:0 0 14px rgba(255,77,109,.5)}
+
+/* большие кнопки Играть / Дальше */
+[data-mod="guess"] .gn-bigbtn{display:block;width:100%;margin:12px 0 2px;padding:15px 18px;border:none;border-radius:16px;
+  font-family:'Russo One',sans-serif;font-size:19px;color:#fff;cursor:pointer;
+  background:linear-gradient(135deg,#a64bff,#7a2bd6);box-shadow:0 8px 22px rgba(166,75,255,.45);
+  -webkit-tap-highlight-color:transparent;transition:transform .1s ease}
+[data-mod="guess"] .gn-bigbtn:active{transform:scale(.97)}
+
+/* легенда очков (по эскизу: +10 / −5 / −5) */
+[data-mod="guess"] .gn-legend{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px 0 2px}
+[data-mod="guess"] .gn-legend .lg{font-size:12px;font-weight:700;padding:6px 11px;border-radius:999px;border:1px solid}
+[data-mod="guess"] .gn-legend .lg.win{color:#2bf0c0;border-color:rgba(43,240,192,.5);background:rgba(43,240,192,.08)}
+[data-mod="guess"] .gn-legend .lg.wrong{color:#ff8aa0;border-color:rgba(255,77,109,.5);background:rgba(255,77,109,.08)}
+[data-mod="guess"] .gn-legend .lg.to{color:#ffd23b;border-color:rgba(255,210,59,.5);background:rgba(255,210,59,.08)}
+
+/* фильтр истории (3 отдела + Все, как в зубах) */
+[data-mod="guess"] .gn-filter{display:flex;gap:8px;margin:10px 0 10px;flex-wrap:wrap}
+[data-mod="guess"] .gn-fchip{display:flex;align-items:center;gap:7px;padding:9px 13px;border-radius:999px;cursor:pointer;
+  border:1.5px solid rgba(166,75,255,.35);background:rgba(166,75,255,.07);color:#cfe0ff;font-weight:700;font-size:13px;
+  -webkit-tap-highlight-color:transparent}
+[data-mod="guess"] .gn-fchip .n{min-width:22px;padding:1px 7px;border-radius:999px;background:rgba(166,75,255,.25);
+  font-family:'Russo One',sans-serif;font-size:12px;text-align:center}
+[data-mod="guess"] .gn-fchip.active{border-color:#a64bff;background:rgba(166,75,255,.22);color:#fff;
+  box-shadow:0 0 14px rgba(166,75,255,.35)}
+
+/* история */
+[data-mod="guess"] .gn-list{display:flex;flex-direction:column;gap:8px}
+[data-mod="guess"] .gn-row{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:14px;
+  background:rgba(14,12,34,.72);border:1px solid rgba(166,75,255,.22)}
+[data-mod="guess"] .gn-row .when{flex:0 0 auto;display:flex;flex-direction:column;min-width:74px;
+  color:#cfe0ff;font-weight:700;font-size:12px}
+[data-mod="guess"] .gn-row .when small{color:var(--muted);font-weight:600;font-size:11px}
+[data-mod="guess"] .gn-row .ex{flex:1;min-width:0;font-family:'Russo One',sans-serif;font-size:14px;color:#fff;
+  display:flex;flex-direction:column;word-break:break-word}
+[data-mod="guess"] .gn-row .ex .pk{font-family:'Rubik',sans-serif;font-weight:600;font-size:11px;color:#ff8aa0}
+[data-mod="guess"] .gn-badge{flex:0 0 auto;font-size:11px;font-weight:800;padding:5px 9px;border-radius:999px;border:1px solid}
+[data-mod="guess"] .gn-badge.win{color:#2bf0c0;border-color:rgba(43,240,192,.5);background:rgba(43,240,192,.1)}
+[data-mod="guess"] .gn-badge.wrong{color:#ff8aa0;border-color:rgba(255,77,109,.5);background:rgba(255,77,109,.1)}
+[data-mod="guess"] .gn-badge.timeout{color:#ffd23b;border-color:rgba(255,210,59,.5);background:rgba(255,210,59,.1)}
+[data-mod="guess"] .gn-empty{padding:22px 14px;text-align:center;color:var(--muted);font-weight:600;font-size:14px;
+  border:1.5px dashed rgba(166,75,255,.3);border-radius:16px}
+
+/* статистика-шторка (по эскизу: всего / отгадал / не отгадал / не успел).
+   Шторка рендерится вне [data-mod] — скоуп через уникальный префикс gn- (как rd-/tt- у соседей). */
+.gn-pgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.gn-pstat{padding:14px 10px;border-radius:16px;text-align:center;background:rgba(166,75,255,.08);
+  border:1.5px solid rgba(166,75,255,.3)}
+.gn-pstat .n{font-family:'Russo One',sans-serif;font-size:30px;color:#fff}
+.gn-pstat .l{margin-top:2px;font-size:12px;font-weight:700;color:var(--muted)}
+.gn-pstat.total .n{color:#a64bff;text-shadow:0 0 12px rgba(166,75,255,.7)}
+.gn-pstat.win{border-color:rgba(43,240,192,.45)}
+.gn-pstat.win .n{color:#2bf0c0;text-shadow:0 0 12px rgba(43,240,192,.6)}
+.gn-pstat.wrong{border-color:rgba(255,77,109,.45)}
+.gn-pstat.wrong .n{color:#ff4d6d;text-shadow:0 0 12px rgba(255,77,109,.6)}
+.gn-pstat.to{border-color:rgba(255,210,59,.45)}
+.gn-pstat.to .n{color:#ffd23b;text-shadow:0 0 12px rgba(255,210,59,.6)}
+
+/* узкие экраны: клавиатура чуть плотнее */
+@media (max-width:360px){
+  [data-mod="guess"] .gn-pad{gap:6px}
+  [data-mod="guess"] .gn-key{min-height:48px;font-size:19px}
+  [data-mod="guess"] .gn-expr{font-size:22px}
+}

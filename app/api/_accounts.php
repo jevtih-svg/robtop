@@ -21,10 +21,26 @@ function rt_valid_nickname($n) {
 }
 function rt_valid_password($p) { return is_string($p) && strlen($p) >= 4 && strlen($p) <= 200; }
 
-/* ---------- токены ---------- */
-function rt_token() { return bin2hex(random_bytes(32)); }
+/* ---------- токены ----------
+   Короткий код для ссылок (ребёнку легко продиктовать вслух): заглавные без похожих
+   символов 0/O/1/I/L. 6 знаков ≈ 0.9 млрд комбинаций — для приглашений (живут 7 дней)
+   достаточно; для сброса пароля берём 8 (живёт 1 час, одноразовый). В БД, как и раньше,
+   хранится ТОЛЬКО sha256-хэш кода. Старые длинные 64-hex токены остаются валидными. */
+function rt_code($len = 6) {
+    $a = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+    $out = '';
+    for ($i = 0; $i < $len; $i++) $out .= $a[random_int(0, strlen($a) - 1)];
+    return $out;
+}
+function rt_token() { return rt_code(6); } // легаси-имя; новые вызовы используют rt_code напрямую
 function rt_token_hash($t) { return hash('sha256', (string)$t); }
-function rt_is_token($t) { return is_string($t) && preg_match('/^[a-f0-9]{64}$/', $t) === 1; }
+function rt_is_token($t) { return is_string($t) && preg_match('/^[A-Za-z0-9]{4,64}$/', $t) === 1; }
+/** Нормализация кода из ссылки/с клавиатуры: короткие приводим к ВЕРХНЕМУ регистру
+ *  (ребёнок может набрать строчными), легаси 64-hex не трогаем. */
+function rt_norm_code($t) {
+    $t = trim((string)$t);
+    return (strlen($t) <= 12) ? strtoupper($t) : $t;
+}
 
 /* ---------- чтение аккаунтов ---------- */
 function rt_account($db, $userId) {
