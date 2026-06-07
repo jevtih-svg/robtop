@@ -74,6 +74,14 @@ switch ($op) {
         rt_json(['ok' => true, 'user' => rt_public_user($acc, true), 'switchToken' => rt_switch_token_new($db, (int)$acc['id'])]);
     }
 
+    /* ---- мульти-аккаунты: токен для ТЕКУЩЕЙ сессии (самолечение списка устройства).
+           Нужен аккаунтам, вошедшим ДО фичи, и сессиям с посадочных приглашений —
+           иначе после переключения на другого вернуться обратно не к чему. ---- */
+    case 'switch_token': {
+        $u = rt_require_login($db);
+        rt_json(['ok' => true, 'switchToken' => rt_switch_token_new($db, (int)$u['id'])]);
+    }
+
     /* ---------------- мульти-аккаунты: переключение по токену устройства ---------------- */
     case 'switch': {
         $row = rt_switch_token_row($db, isset($b['token']) ? (string)$b['token'] : '');

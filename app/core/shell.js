@@ -19,6 +19,7 @@ window.RobTop = window.RobTop || {};
       acct=(r&&r.ok)?r:{authenticated:false};
       if(acct.authenticated && acct.user){
         RT._shell.user={ name:acct.user.nickname, role:(acct.user.kind==="parent"?"parent":"child") };
+        ensureDeviceToken(acct.user); // самолечение: текущий аккаунт всегда в списке устройства
       }
       return acct;
     }).catch(function(){ acct={authenticated:false}; return acct; });
@@ -186,6 +187,28 @@ window.RobTop = window.RobTop || {};
     lsSet("rt_accounts",l);
   }
   function devRemove(id){ lsSet("rt_accounts",devAccounts().filter(function(a){ return a.id!==id; })); }
+  /* Самолечение списка устройства: если ТЕКУЩЕЙ сессии нет в rt_accounts (вход был до фичи,
+     или сессия с посадочной приглашения) — выписываем ей токен через op switch_token, иначе
+     после переключения на другой аккаунт вернуться к этому будет не к чему (баг заказчика).
+     Заодно освежаем ник/роль, если их сменили. Повторных запросов нет: токен выписывается
+     только когда записи нет. */
+  var ensureBusy=false;
+  function ensureDeviceToken(u){
+    try{
+      var l=devAccounts(), hit=null;
+      l.forEach(function(a){ if(a.id===u.id) hit=a; });
+      if(hit){
+        if(hit.nick!==u.nickname || hit.kind!==u.kind){ hit.nick=u.nickname; hit.kind=u.kind; lsSet("rt_accounts",l); }
+        return;
+      }
+      if(ensureBusy) return;
+      ensureBusy=true;
+      RT.API.post("accounts.php",{op:"switch_token"}).then(function(r){
+        ensureBusy=false;
+        if(r&&r.ok&&r.switchToken) devUpsert(u,r.switchToken);
+      }).catch(function(){ ensureBusy=false; });
+    }catch(e){}
+  }
   function devSwitch(a,onFail){
     RT.API.post("accounts.php",{op:"switch",token:a.tok}).then(function(r){
       if(!(r&&r.ok&&r.user)){ throw new Error("bad"); }
