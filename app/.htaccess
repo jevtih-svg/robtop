@@ -13,8 +13,10 @@ AddDefaultCharset UTF-8
 # приложение открывалось и не было 404 на под-адресах.
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  # Базовый путь приложения. Если папка на сервере не /robtop — поменяй здесь.
-  RewriteBase /robtop/
+  # Базовый путь приложения. Раскладка вебхука Hostinger Git: в robtop/ лежит весь
+  # репозиторий, приложение в robtop/app/ → база /robtop/app/.
+  # Если приложение снова окажется прямо в /robtop/ (deploy-ветка), поменяй здесь.
+  RewriteBase /robtop/app/
 
   # Существующие файлы и папки — напрямую (API, ассеты, загрузки)
   RewriteCond %{REQUEST_FILENAME} -f [OR]

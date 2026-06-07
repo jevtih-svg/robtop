@@ -1,0 +1,28 @@
+# RobTop — корень клона репозитория на сервере (robtop/).
+# Раскладка: вебхук Hostinger Git кладёт сюда ВЕСЬ репозиторий, приложение живёт в app/
+# и открывается по адресу /robtop/app/. Этот файл закрывает служебные файлы от публичного
+# доступа и ведёт с корня в приложение. Публикуется как robtop/.htaccess.
+
+Options -Indexes
+AddDefaultCharset UTF-8
+
+# Документация и схема БД закрыты: КОНТЕКСТ.md, РЕЛИЗ.md, ПЛАН*.md, README.md, schema.sql, миграции.
+<FilesMatch "\.(md|sql)$">
+  Require all denied
+</FilesMatch>
+
+# Дотфайлы закрыты (.gitignore, .DS_Store и т.п.). .htaccess Apache не отдаёт и сам.
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Служебные папки git недоступны целиком.
+  RewriteRule (^|/)\.(git|github)(/|$) - [F]
+
+  # Корень ведёт в приложение: /robtop/ → /robtop/app/
+  # 302, а не 301: если позже переедем на deploy-ветку и чистый /robtop/, редирект не закэшируется.
+  RewriteRule ^$ app/ [R=302,L]
+</IfModule>
