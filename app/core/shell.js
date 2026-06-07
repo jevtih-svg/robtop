@@ -169,12 +169,40 @@ window.RobTop = window.RobTop || {};
       +'<input class="set-in" id="lockLogin" type="text" placeholder="'+esc(t("account.loginPh"))+'" autocomplete="username">'
       +'<input class="set-in" id="lockPass" type="password" placeholder="'+esc(t("account.passPh"))+'" autocomplete="current-password">'
       +'<button class="btn btn-primary" id="lockIn">'+esc(t("account.signIn"))+'</button>'
+      +'<button class="btn btn-cancel" id="lockReg" style="flex:none">'+esc(t("reg.link"))+'</button>'
       +'</div>';
     var lg=lockView.querySelector("#lockLogin"), ps=lockView.querySelector("#lockPass");
     var go=function(){ loginFlow((lg.value||"").trim(), ps.value||"", lockView.querySelector(".lockform")); };
     lockView.querySelector("#lockIn").onclick=go;
+    lockView.querySelector("#lockReg").onclick=renderLockRegister;
     ps.addEventListener("keydown",function(e){ if(e.key==="Enter") go(); });
     setTimeout(function(){ lg.focus(); },150);
+  }
+  /* регистрация нового родителя прямо с lock-экрана (создаёт НОВУЮ семью) */
+  function renderLockRegister(){
+    lockView.innerHTML='<div class="hometop"><h1 class="brand">Rob<b>Top</b></h1>'
+      +'<div class="tagline">'+esc(t("reg.title"))+'</div></div>'
+      +'<div class="lockform">'
+      +'<p class="set-note">'+esc(t("reg.hint"))+'</p>'
+      +'<input class="set-in" id="regNick" type="text" placeholder="'+esc(t("reg.nickPh"))+'" autocomplete="username">'
+      +'<input class="set-in" id="regEmail" type="email" placeholder="Email" autocomplete="email">'
+      +'<input class="set-in" id="regPass" type="password" placeholder="'+esc(t("account.passPh"))+'" autocomplete="new-password">'
+      +'<button class="btn btn-primary" id="regGo">'+esc(t("reg.btn"))+'</button>'
+      +'<button class="btn btn-cancel" id="regBack" style="flex:none">'+esc(t("common.back"))+'</button>'
+      +'</div>';
+    lockView.querySelector("#regBack").onclick=function(){ renderLock(false); };
+    lockView.querySelector("#regGo").onclick=function(){
+      var nick=(lockView.querySelector("#regNick").value||"").trim();
+      var em=(lockView.querySelector("#regEmail").value||"").trim();
+      var pw=lockView.querySelector("#regPass").value||"";
+      if(!nick||!em||!pw||pw.length<4){ toast(t("reg.fail")); return; }
+      RT.API.post("accounts.php",{op:"register_parent",nickname:nick,email:em,password:pw}).then(function(r){
+        if(!(r&&r.ok)){ toast(t("reg.fail")); return; }
+        toast(t("account.welcome",{name:nick}));
+        setTimeout(function(){ location.reload(); },500);
+      }).catch(function(){ toast(t("reg.fail")); });
+    };
+    setTimeout(function(){ lockView.querySelector("#regNick").focus(); },150);
   }
   /* общий поток входа: успех → reload (меняется rt_user_id); 1234 → обязательная смена в target */
   function loginFlow(loginV, passV, forceTarget){
@@ -296,24 +324,128 @@ window.RobTop = window.RobTop || {};
     setTimeout(function(){ inp.focus(); },150);
   }
 
+  /* ===== СЕМЬЯ в настройках (только родитель): дети, сброс, блокировка, добавить, пригласить ===== */
+  function famApi(bodyObj){ return RT.API.post("accounts.php", bodyObj); }
+  function famSectionHtml(){
+    if(demo || !isParent()) return '';
+    return '<div class="store-section">'+esc(t("family.title"))+'</div>'
+      +'<div id="famBox"><p class="set-note">'+esc(t("account.loading"))+'</p></div>';
+  }
+  function loadFamily(){
+    var box=settingsBody.querySelector("#famBox"); if(!box) return;
+    famApi({op:"members"}).then(function(r){
+      var kids=(r&&r.children)||[];
+      var rows=kids.map(function(k){
+        var blocked=(k.status==="disabled");
+        return '<button class="acct-row" data-kid="'+k.id+'" data-nick="'+esc(k.nickname)+'" data-blocked="'+(blocked?1:0)+'">'
+          +'<span class="nm">'+esc(k.nickname)+'</span>'
+          +'<span class="rl'+(blocked?' off':'')+'">'+esc(blocked?t("family.blocked"):t("account.roleChild"))+'</span></button>';
+      }).join("");
+      box.innerHTML=(rows||'<p class="set-note">'+esc(t("family.empty"))+'</p>')
+        +'<div class="store-install" id="famAdd">＋ '+esc(t("family.addChild"))+'</div>'
+        +'<div class="store-install" id="famInvite">✉ '+esc(t("family.invite"))+'</div>';
+      Array.prototype.forEach.call(box.querySelectorAll("[data-kid]"),function(b){
+        b.onclick=function(){ openChildSheet(parseInt(b.getAttribute("data-kid"),10), b.getAttribute("data-nick"), b.getAttribute("data-blocked")==="1"); };
+      });
+      box.querySelector("#famAdd").onclick=openAddChild;
+      box.querySelector("#famInvite").onclick=openInviteParent;
+    }).catch(function(){ box.innerHTML='<p class="set-note">'+esc(t("common.failed"))+'</p>'; });
+  }
+  function openChildSheet(id,nick,blocked){
+    var node=document.createElement("div");
+    node.innerHTML='<h2>'+esc(nick)+'</h2>'
+      +'<div class="store-install" id="kidReset">🔑 '+esc(t("family.resetPass"))+'</div>'
+      +'<div class="store-install" id="kidBlock">'+(blocked?'✅ '+esc(t("family.unblock")):'⛔ '+esc(t("family.block")))+'</div>'
+      +'<div class="sheet-actions"><button class="btn btn-cancel" id="kidClose" style="flex:1">'+esc(t("common.close"))+'</button></div>';
+    var ctl=sheet(node);
+    node.querySelector("#kidClose").onclick=ctl.close;
+    node.querySelector("#kidReset").onclick=function(){
+      confirm({title:t("family.resetPass"), text:t("family.resetConfirm",{name:nick}), ok:t("common.yes"), cancel:t("common.cancel")}).then(function(ok){
+        if(!ok) return;
+        famApi({op:"reset_child",child_id:id}).then(function(){ ctl.close(); toast(t("family.resetDone",{name:nick})); })
+          .catch(function(){ toast(t("common.failed")); });
+      });
+    };
+    node.querySelector("#kidBlock").onclick=function(){
+      var toBlocked=!blocked;
+      confirm({title:toBlocked?t("family.block"):t("family.unblock"),
+               text:toBlocked?t("family.blockConfirm",{name:nick}):t("family.unblockConfirm",{name:nick}),
+               ok:t("common.yes"), cancel:t("common.cancel")}).then(function(ok){
+        if(!ok) return;
+        famApi({op:"set_child_status",child_id:id,status:toBlocked?"disabled":"active"}).then(function(){
+          ctl.close(); toast(toBlocked?t("family.blockDone",{name:nick}):t("family.unblockDone",{name:nick})); loadFamily();
+        }).catch(function(){ toast(t("common.failed")); });
+      });
+    };
+  }
+  function openAddChild(){
+    var node=document.createElement("div");
+    node.innerHTML='<h2>'+esc(t("family.addChild"))+'</h2>'
+      +'<p class="set-note">'+esc(t("family.addHint"))+'</p>'
+      +'<input class="set-in" id="kidNick" type="text" placeholder="'+esc(t("family.nickPh"))+'">'
+      +'<div class="sheet-actions"><button class="btn btn-cancel" id="kidCancel" style="flex:0 0 38%">'+esc(t("common.cancel"))+'</button>'
+      +'<button class="btn btn-primary" id="kidGo" style="flex:1">'+esc(t("family.addBtn"))+'</button></div>'
+      +'<div id="kidOut"></div>';
+    var ctl=sheet(node);
+    node.querySelector("#kidCancel").onclick=ctl.close;
+    node.querySelector("#kidGo").onclick=function(){
+      var nick=(node.querySelector("#kidNick").value||"").trim(); if(!nick) return;
+      famApi({op:"add_child",nickname:nick}).then(function(){
+        node.querySelector("#kidOut").innerHTML='<p class="set-note" style="color:#ffe08a">'+esc(t("family.created",{name:nick}))+'</p>';
+        loadFamily();
+      }).catch(function(){ toast(t("family.nickTaken")); });
+    };
+    setTimeout(function(){ node.querySelector("#kidNick").focus(); },150);
+  }
+  function openInviteParent(){
+    var node=document.createElement("div");
+    node.innerHTML='<h2>'+esc(t("family.invite"))+'</h2>'
+      +'<p class="set-note">'+esc(t("family.inviteHint"))+'</p>'
+      +'<input class="set-in" id="invEmail" type="email" placeholder="Email">'
+      +'<div class="sheet-actions"><button class="btn btn-cancel" id="invCancel" style="flex:0 0 38%">'+esc(t("common.cancel"))+'</button>'
+      +'<button class="btn btn-primary" id="invGo" style="flex:1">'+esc(t("family.inviteBtn"))+'</button></div>'
+      +'<div id="invOut"></div>';
+    var ctl=sheet(node);
+    node.querySelector("#invCancel").onclick=ctl.close;
+    node.querySelector("#invGo").onclick=function(){
+      var em=(node.querySelector("#invEmail").value||"").trim(); if(!em) return;
+      famApi({op:"invite",type:"co_parent",email:em,lang:I.get()}).then(function(r){
+        node.querySelector("#invOut").innerHTML='<p class="set-note">'+esc(t("family.linkHint"))+'</p>'
+          +'<div class="invlink">'+esc(r.link||"")+'</div>'
+          +'<button class="btn btn-primary" id="invCopy" style="width:100%;margin-top:10px">'+esc(t("family.copy"))+'</button>';
+        node.querySelector("#invCopy").onclick=function(){
+          try{ if(navigator.clipboard) navigator.clipboard.writeText(r.link||""); }catch(e){}
+          toast(t("family.copied"));
+        };
+      }).catch(function(){ toast(t("common.failed")); });
+    };
+    setTimeout(function(){ node.querySelector("#invEmail").focus(); },150);
+  }
+
   function renderSettings(){
     var cur=I.get();
     var langBtns=I.supported.map(function(code){
       return '<button class="lang-opt'+(code===cur?" on":"")+'" data-lang="'+code+'">'+esc(I.native(code))+'</button>';
     }).join("");
+    var showManage = demo || isParent(); // ребёнок управление приложениями НЕ видит
     settingsBody.innerHTML='<h2>'+esc(t("settings.title"))+'</h2>'
       +accountSectionHtml()
+      +famSectionHtml()
       +'<div class="store-section">'+esc(t("settings.language"))+'</div>'
       +'<div class="lang-row">'+langBtns+'</div>'
-      +'<div class="store-section">'+esc(t("settings.manageApps"))+'</div>'
-      +'<div class="store-install" id="settingsManage">⚙ '+esc(t("settings.manageApps"))+'</div>'
+      +(showManage
+        ? '<div class="store-section">'+esc(t("settings.manageApps"))+'</div>'
+          +'<div class="store-install" id="settingsManage">⚙ '+esc(t("settings.manageApps"))+'</div>'
+        : '')
       +'<div class="sheet-actions"><button class="btn btn-cancel" id="settingsClose" style="flex:1">'+esc(t("common.close"))+'</button></div>';
     wireAccountSection();
+    if(settingsBody.querySelector("#famBox")) loadFamily();
     settingsBody.querySelector(".lang-row").addEventListener("click",function(e){
       var b=e.target.closest("[data-lang]"); if(!b) return;
       I.set(b.getAttribute("data-lang")); buzz(6);
     });
-    settingsBody.querySelector("#settingsManage").onclick=function(){ closeSettings(); openStore(); };
+    var mng=settingsBody.querySelector("#settingsManage");
+    if(mng) mng.onclick=function(){ closeSettings(); openStore(); };
     settingsBody.querySelector("#settingsClose").onclick=closeSettings;
   }
 

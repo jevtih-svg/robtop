@@ -30,6 +30,33 @@
         open: "Settings", title: "Settings", language: "Language",
         manageApps: "Manage apps"
       },
+      family: {
+        title: "Family",
+        empty: "No children yet.",
+        addChild: "Add a child", addHint: "Only a nickname. No email for children.",
+        nickPh: "Child's nickname", addBtn: "Create",
+        created: "{name} created. First sign-in password: 1234",
+        nickTaken: "This nickname is taken",
+        invite: "Invite second parent", inviteHint: "They get parent rights. Enter their email.",
+        inviteBtn: "Create invitation",
+        linkHint: "Send this link. It works once and expires in 7 days.",
+        copy: "Copy link", copied: "Copied",
+        resetPass: "Reset password", resetConfirm: "Reset {name}'s password to the one-time 1234?",
+        resetDone: "{name}: password is 1234 again, they will set a new one at sign-in",
+        block: "Block account", unblock: "Unblock account",
+        blockConfirm: "Block {name}? They won't be able to sign in. Data is kept.",
+        unblockConfirm: "Unblock {name}?",
+        blockDone: "{name} is blocked", unblockDone: "{name} can sign in again",
+        blocked: "blocked"
+      },
+      reg: {
+        link: "I am a new parent — create a family",
+        nickPh: "Your nickname",
+        title: "Create your family",
+        hint: "Parents sign up with email. You'll add children inside, they need only a nickname.",
+        btn: "Create family",
+        fail: "Couldn't create: check email and nickname (maybe taken)"
+      },
       lock: { hint: "Sign in to continue", title: "Who is signing in?" },
       account: {
         title: "Account",
@@ -107,6 +134,33 @@
         open: "Настройки", title: "Настройки", language: "Язык",
         manageApps: "Управление приложениями"
       },
+      family: {
+        title: "Семья",
+        empty: "Детей пока нет.",
+        addChild: "Добавить ребёнка", addHint: "Только никнейм. Email детям не нужен.",
+        nickPh: "Никнейм ребёнка", addBtn: "Создать",
+        created: "{name}: пароль для первого входа 1234",
+        nickTaken: "Этот никнейм занят",
+        invite: "Пригласить второго родителя", inviteHint: "Он получит права родителя. Укажите его email.",
+        inviteBtn: "Создать приглашение",
+        linkHint: "Отправьте эту ссылку. Работает один раз, действует 7 дней.",
+        copy: "Копировать ссылку", copied: "Скопировано",
+        resetPass: "Сбросить пароль", resetConfirm: "Сбросить пароль {name} на одноразовый 1234?",
+        resetDone: "{name}: пароль снова 1234, новый он задаст при входе",
+        block: "Заблокировать аккаунт", unblock: "Разблокировать аккаунт",
+        blockConfirm: "Заблокировать {name}? Он не сможет войти. Данные сохранятся.",
+        unblockConfirm: "Разблокировать {name}?",
+        blockDone: "{name} заблокирован", unblockDone: "{name} снова может войти",
+        blocked: "заблокирован"
+      },
+      reg: {
+        link: "Я новый родитель — создать семью",
+        nickPh: "Ваш никнейм",
+        title: "Создайте семью",
+        hint: "Родители регистрируются по email. Детей добавите внутри, им нужен только никнейм.",
+        btn: "Создать семью",
+        fail: "Не удалось: проверьте email и никнейм (возможно, заняты)"
+      },
       lock: { hint: "Войдите, чтобы продолжить", title: "Кто входит?" },
       account: {
         title: "Аккаунт",
@@ -183,6 +237,33 @@
       settings: {
         open: "Iestatījumi", title: "Iestatījumi", language: "Valoda",
         manageApps: "Pārvaldīt lietotnes"
+      },
+      family: {
+        title: "Ģimene",
+        empty: "Bērnu vēl nav.",
+        addChild: "Pievienot bērnu", addHint: "Tikai segvārds. Bērniem e-pasts nav vajadzīgs.",
+        nickPh: "Bērna segvārds", addBtn: "Izveidot",
+        created: "{name}: pirmās pieslēgšanās parole ir 1234",
+        nickTaken: "Šis segvārds ir aizņemts",
+        invite: "Ielūgt otru vecāku", inviteHint: "Viņš iegūs vecāka tiesības. Norādiet viņa e-pastu.",
+        inviteBtn: "Izveidot ielūgumu",
+        linkHint: "Nosūtiet šo saiti. Darbojas vienreiz, derīga 7 dienas.",
+        copy: "Kopēt saiti", copied: "Nokopēts",
+        resetPass: "Atiestatīt paroli", resetConfirm: "Atiestatīt {name} paroli uz vienreizējo 1234?",
+        resetDone: "{name}: parole atkal ir 1234, jauno viņš iestatīs pieslēdzoties",
+        block: "Bloķēt kontu", unblock: "Atbloķēt kontu",
+        blockConfirm: "Bloķēt {name}? Viņš nevarēs pieslēgties. Dati saglabāsies.",
+        unblockConfirm: "Atbloķēt {name}?",
+        blockDone: "{name} ir bloķēts", unblockDone: "{name} atkal var pieslēgties",
+        blocked: "bloķēts"
+      },
+      reg: {
+        link: "Esmu jauns vecāks — izveidot ģimeni",
+        nickPh: "Jūsu segvārds",
+        title: "Izveidojiet ģimeni",
+        hint: "Vecāki reģistrējas ar e-pastu. Bērnus pievienosiet iekšā, viņiem vajag tikai segvārdu.",
+        btn: "Izveidot ģimeni",
+        fail: "Neizdevās: pārbaudiet e-pastu un segvārdu (iespējams, aizņemti)"
       },
       lock: { hint: "Pieslēdzies, lai turpinātu", title: "Kurš pieslēdzas?" },
       account: {

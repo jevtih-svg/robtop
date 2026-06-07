@@ -166,6 +166,22 @@ switch ($op) {
         rt_json(['ok' => true, 'temp_password' => '1234']);
     }
 
+    /* ---------------- блокировка/разблокировка ребёнка (§4.9: любой родитель/опекун) ---------------- */
+    case 'set_child_status': {
+        $p = rt_require_parent($db); rt_block_if_must_change($p);
+        $cid = isset($b['child_id']) ? (int)$b['child_id'] : 0;
+        $status = (isset($b['status']) && $b['status'] === 'disabled') ? 'disabled' : 'active';
+        if (!$cid || !rt_can_manage_child($db, (int)$p['id'], $cid)) rt_json(['error' => 'forbidden'], 403);
+        $acc = rt_account($db, $cid);
+        if (!$acc || $acc['kind'] !== 'child') rt_json(['error' => 'not a child'], 422);
+        $db->prepare("UPDATE accounts SET status = ? WHERE user_id = ?")->execute([$status, $cid]);
+        if ($status === 'disabled') {
+            $db->prepare("DELETE FROM sessions WHERE user_id = ?")->execute([$cid]); // выкинуть активные сессии
+        }
+        rt_log('accounts', $status === 'disabled' ? 'account_blocked' : 'account_unblocked', $cid, null, null, null, ['by' => (int)$p['id']]);
+        rt_json(['ok' => true, 'status' => $status]);
+    }
+
     /* ---------------- создать приглашение ---------------- */
     case 'invite': {
         $u = rt_require_login($db); rt_block_if_must_change($u);

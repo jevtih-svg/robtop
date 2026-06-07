@@ -144,6 +144,18 @@ function rt_sever_provisional($db, $childId, $reason) {
     )->execute([substr((string)$reason, 0, 60), (int)$childId]);
 }
 
+/** Управление ребёнком (блокировка, §4.9): любой активный опекун (включая provisional) или родитель его семьи. */
+function rt_can_manage_child($db, $reqId, $childId) {
+    if (rt_is_guardian($db, $reqId, $childId)) return true;
+    $s = $db->prepare(
+        "SELECT 1 FROM family_members fm1 JOIN family_members fm2 ON fm1.family_id = fm2.family_id
+         WHERE fm1.user_id = ? AND fm1.role IN ('owner','parent') AND fm1.status='active'
+           AND fm2.user_id = ? AND fm2.role = 'child' AND fm2.status='active' LIMIT 1"
+    );
+    $s->execute([(int)$reqId, (int)$childId]);
+    return (bool)$s->fetch();
+}
+
 /** Может ли $reqId читать данные $targetId (себя, своих детей, детей своей семьи). */
 function rt_can_read($db, $reqId, $targetId) {
     if ((int)$reqId === (int)$targetId) return true;
