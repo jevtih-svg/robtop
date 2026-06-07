@@ -54,3 +54,23 @@ AddDefaultCharset UTF-8
 #   RewriteCond %{HTTPS} off
 #   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 # </IfModule>
+
+# ВЕСЬ HTML и манифест — без кэша без перепроверки (2026-06-07): прод отдавал
+# по явному адресу app/index.html копию ДВУХДНЕВНОЙ давности (v2026.06.05.9 при
+# актуальной v2026.06.07.37 на адресе каталога) — кэш LiteSpeed/браузера держит
+# «директорию» и «/index.html» как разные записи, и устройства с закладкой или
+# иконкой «на домашний экран» залипали на старом приложении («не вижу заданий»,
+# «очки не доходят»). HTML без ?v= кэшировать нельзя; JS/CSS обновляются сами —
+# их URL несут ?v=<версия> из index.html. no-cache (не no-store): браузер хранит,
+# но ВСЕГДА перепроверяет у сервера.
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|webmanifest)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
+# Серверный кэш LiteSpeed (Hostinger) для приложения выключаем целиком:
+# сайт семейный, нагрузки нет — корректность важнее скорости отдачи.
+<IfModule LiteSpeed>
+  CacheDisable public /
+</IfModule>
