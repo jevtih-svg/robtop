@@ -6,6 +6,9 @@
    возвращается в active) или возвращает (↩ = без очков, без штрафа — решение Джеффа);
    «одноразовое» — очки начисляются ребёнку СРАЗУ при отметке (решение Джеффа), статус done.
    Сумма очков — у каждого задания своя (деф. +10, канон ГАЙД-очки.md §4).
+   ВИНСТРИК (2026-06-07, v1.2.0): серия дней подряд с хотя бы одним выполненным заданием;
+   выводится движком из леджера (день без задания — огонёк гаснет сам). Кнопка-огонёк с «i»
+   открывает объяснение для ребёнка (openStreakInfo, простые правила + пример недели).
    Сам ничего не считает — читает леджер через sdk.points (движок в core/sdk.js, политика — ГАЙД-очки.md). */
 (function(){
   "use strict";
@@ -28,8 +31,20 @@
       r_spend:"Shop", r_other:"Points",
       parentTitle:"Parent panel", parentOnly:"Only for a signed-in parent.",
       balanceNow:"in the bank", streakNow:"win streak",
-      secTasks:"Parent tasks", btnTaskDone:"✓ Task done +10", btnTaskFail:"✗ Task not done −10",
-      taskFailHint:"burns the streak fire", btnDailyBonus:"★ All tasks today +5",
+      secBonus:"Bonus", btnDailyBonus:"★ All tasks today +5",
+      infoTitle:"What is the fire? 🔥",
+      infoIntro:"The fire is your streak of days with parent tasks.",
+      infoRule1:"Do at least one parent task in a day — the fire burns, and the number grows: +1 for every day in a row.",
+      infoRule2:"Skip a whole day without tasks — the fire goes out, and the count starts over from 0.",
+      infoRule3:"The bigger the fire, the bigger the gift: every finished task brings a bonus of “fire − 1” extra points.",
+      infoExTitle:"Example week",
+      infoEx1:"Mon — did a task → fire 1, no bonus yet",
+      infoEx2:"Tue — did a task → fire 2, bonus +1",
+      infoEx3:"Wed — did a task → fire 3, bonus +2",
+      infoEx4:"Thu — no tasks at all → the fire is out, 0",
+      infoEx5:"Fri — did a task → fire 1 again",
+      infoMax:"The biggest fire is 21 — then every task gives +20 bonus points!",
+      infoGames:"Games give points too, but only parent tasks light the fire.",
       secCustom:"Custom amount", amountPh:"How many", notePh:"What for (child will see it)",
       btnGive:"Give", btnTake:"Take", needAmount:"Enter a number first", doneToast:"Done!",
       streakToast:"Win streak: {n} 🔥", bonusToast:"Streak bonus +{n}!",
@@ -61,8 +76,20 @@
       r_spend:"Магазин", r_other:"Пункты",
       parentTitle:"Панель родителя", parentOnly:"Доступно родителю после входа в свой аккаунт.",
       balanceNow:"в копилке", streakNow:"винстрик",
-      secTasks:"Задания от родителей", btnTaskDone:"✓ Задание выполнено +10", btnTaskFail:"✗ Задание не выполнено −10",
-      taskFailHint:"сжигает огонёк", btnDailyBonus:"★ Все задания дня +5",
+      secBonus:"Бонус", btnDailyBonus:"★ Все задания дня +5",
+      infoTitle:"Что такое огонёк? 🔥",
+      infoIntro:"Огонёк — это твоя серия дней с заданиями от родителей.",
+      infoRule1:"Сделай хотя бы одно задание за день — огонёк горит, и число растёт: +1 за каждый день подряд.",
+      infoRule2:"Пропустил целый день без заданий — огонёк гаснет, и счёт начинается заново с 0.",
+      infoRule3:"Чем больше огонёк, тем больше подарок: за каждое выполненное задание даётся бонус «огонёк − 1» пунктов.",
+      infoExTitle:"Пример недели",
+      infoEx1:"Пн — сделал задание → огонёк 1, бонуса пока нет",
+      infoEx2:"Вт — сделал задание → огонёк 2, бонус +1",
+      infoEx3:"Ср — сделал задание → огонёк 3, бонус +2",
+      infoEx4:"Чт — заданий совсем не было → огонёк погас, 0",
+      infoEx5:"Пт — сделал задание → огонёк снова 1",
+      infoMax:"Самый большой огонёк — 21: тогда каждое задание даёт +20 бонусом!",
+      infoGames:"Игры тоже дают пункты, но огонёк зажигают только задания родителей.",
       secCustom:"Произвольная сумма", amountPh:"Сколько", notePh:"За что (увидит ребёнок)",
       btnGive:"Начислить", btnTake:"Снять", needAmount:"Сначала введи число", doneToast:"Готово!",
       streakToast:"Винстрик: {n} 🔥", bonusToast:"Бонус серии +{n}!",
@@ -94,8 +121,20 @@
       r_spend:"Veikals", r_other:"Punkti",
       parentTitle:"Vecāku panelis", parentOnly:"Pieejams vecākam pēc pieslēgšanās savā kontā.",
       balanceNow:"krājkasē", streakNow:"uzvaru sērija",
-      secTasks:"Vecāku uzdevumi", btnTaskDone:"✓ Uzdevums izpildīts +10", btnTaskFail:"✗ Nav izpildīts −10",
-      taskFailHint:"nodzēš uguntiņu", btnDailyBonus:"★ Visi dienas uzdevumi +5",
+      secBonus:"Bonuss", btnDailyBonus:"★ Visi dienas uzdevumi +5",
+      infoTitle:"Kas ir uguntiņa? 🔥",
+      infoIntro:"Uguntiņa ir tava dienu sērija ar vecāku uzdevumiem.",
+      infoRule1:"Izpildi vismaz vienu uzdevumu dienā — uguntiņa deg, un skaitlis aug: +1 par katru dienu pēc kārtas.",
+      infoRule2:"Izlaid veselu dienu bez uzdevumiem — uguntiņa nodziest, un skaits sākas no jauna ar 0.",
+      infoRule3:"Jo lielāka uguntiņa, jo lielāka dāvana: katrs izpildītais uzdevums dod bonusu «uguntiņa − 1» punkti.",
+      infoExTitle:"Nedēļas piemērs",
+      infoEx1:"Pr — izpildīji uzdevumu → uguntiņa 1, bonusa vēl nav",
+      infoEx2:"Ot — izpildīji uzdevumu → uguntiņa 2, bonuss +1",
+      infoEx3:"Tr — izpildīji uzdevumu → uguntiņa 3, bonuss +2",
+      infoEx4:"Ce — uzdevumu nebija → uguntiņa nodzisa, 0",
+      infoEx5:"Pk — izpildīji uzdevumu → uguntiņa atkal 1",
+      infoMax:"Lielākā uguntiņa ir 21 — tad katrs uzdevums dod +20 bonusā!",
+      infoGames:"Spēles arī dod punktus, bet uguntiņu iededz tikai vecāku uzdevumi.",
       secCustom:"Brīva summa", amountPh:"Cik daudz", notePh:"Par ko (bērns redzēs)",
       btnGive:"Pieskaitīt", btnTake:"Noņemt", needAmount:"Vispirms ievadi skaitli", doneToast:"Gatavs!",
       streakToast:"Uzvaru sērija: {n} 🔥", bonusToast:"Sērijas bonuss +{n}!",
@@ -403,6 +442,30 @@
     box.innerHTML=html;
   }
 
+  /* ---------- «что такое огонёк?» — объяснение для ребёнка (кнопка-огонёк с «i») ---------- */
+  function openStreakInfo(){
+    var box=document.createElement("div");
+    box.innerHTML='<h2>'+esc(t("infoTitle"))+'</h2>'
+      +'<div class="bk-info">'
+        +'<p class="bk-info-intro">'+esc(t("infoIntro"))+'</p>'
+        +'<div class="bk-info-rule"><span class="ic">🔥</span><p>'+esc(t("infoRule1"))+'</p></div>'
+        +'<div class="bk-info-rule"><span class="ic">💨</span><p>'+esc(t("infoRule2"))+'</p></div>'
+        +'<div class="bk-info-rule"><span class="ic">🎁</span><p>'+esc(t("infoRule3"))+'</p></div>'
+        +'<div class="store-section">'+esc(t("infoExTitle"))+'</div>'
+        +'<ul class="bk-info-ex">'
+          +'<li>'+esc(t("infoEx1"))+'</li>'
+          +'<li>'+esc(t("infoEx2"))+'</li>'
+          +'<li>'+esc(t("infoEx3"))+'</li>'
+          +'<li class="out">'+esc(t("infoEx4"))+'</li>'
+          +'<li>'+esc(t("infoEx5"))+'</li></ul>'
+        +'<p class="bk-info-note">'+esc(t("infoMax"))+'</p>'
+        +'<p class="bk-info-note dim">'+esc(t("infoGames"))+'</p>'
+      +'</div>'
+      +'<div class="sheet-actions"><button class="btn btn-primary" data-close>'+esc(t("common.done"))+'</button></div>';
+    var ctl=sdk.ui.sheet(box); curSheet=ctl;
+    box.querySelector("[data-close]").onclick=function(){ ctl.close(); };
+  }
+
   /* ---------- родительская панель ----------
      PIN упразднён (2026-06-07): панель открывает роль parent из сессии; демо — песочница без гейта.
      Ребёнку кнопка не рендерится (parentAllowed), тост — защитная ветка. */
@@ -417,10 +480,8 @@
       +'<div class="bk-pgrid">'
         +'<div class="bk-pstat"><div class="n" id="bkPBal">'+S.balance+'</div><div class="l">'+esc(t("balanceNow"))+'</div></div>'
         +'<div class="bk-pstat"><div class="n" id="bkPStr">'+S.streak+'</div><div class="l">'+esc(t("streakNow"))+'</div></div></div>'
-      +'<div class="store-section">'+esc(t("secTasks"))+'</div>'
+      +'<div class="store-section">'+esc(t("secBonus"))+'</div>'
       +'<div class="bk-pbtns">'
-        +'<button class="btn btn-primary" data-op="done">'+esc(t("btnTaskDone"))+'</button>'
-        +'<button class="btn btn-cancel" data-op="fail">'+esc(t("btnTaskFail"))+' <span class="bk-hint">'+esc(t("taskFailHint"))+'</span></button>'
         +'<button class="btn btn-cancel" data-op="daily">'+esc(t("btnDailyBonus"))+'</button></div>'
       +'<div class="store-section">'+esc(t("secCustom"))+'</div>'
       +'<div class="bk-custom"><input type="number" id="bkAmt" inputmode="numeric" placeholder="'+esc(t("amountPh"))+'">'
@@ -435,9 +496,7 @@
       b.onclick=function(){
         var op=b.getAttribute("data-op"), n, v;
         if(busy) return;
-        if(op==="done"){ n=[10,"task_done",{kind:"task_done",src:"parent"}]; }
-        else if(op==="fail"){ n=[-10,"task_fail",{kind:"task_fail",src:"parent"}]; }
-        else if(op==="daily"){ n=[5,"daily_bonus",{kind:"daily_bonus",src:"parent"}]; }
+        if(op==="daily"){ n=[5,"daily_bonus",{kind:"daily_bonus",src:"parent"}]; }
         else {
           v=val();
           if(!v){ sdk.ui.toast(t("needAmount")); return; }
@@ -467,8 +526,9 @@
         +'<div class="bk-head-main"><div class="bk-title">'+esc(t("title"))+'</div><div class="bk-sub">'+esc(t("subtitle"))+'</div></div>'
         +(parentAllowed()?'<button class="hbtn" id="bkParent" aria-label="'+esc(t("parentTitle"))+'">'+PARENT_IC+'</button>':'')+'</div>'
       +'<div class="bk-stage">'
-        +'<div class="bk-flame off" id="bkFlame" title="'+esc(t("streakLabel"))+'">'+FLAME_IC
-          +'<span class="bk-flame-n" id="bkFlameN">0</span><span class="bk-flame-l">'+esc(t("streakLabel"))+'</span></div>'
+        +'<button class="bk-flame off" id="bkFlame" aria-label="'+esc(t("infoTitle"))+'">'+FLAME_IC
+          +'<span class="bk-flame-n" id="bkFlameN">0</span><span class="bk-flame-l">'+esc(t("streakLabel"))+'</span>'
+          +'<span class="bk-flame-i" aria-hidden="true">i</span></button>'
         +'<div class="bk-pig" id="bkPig">'+PIG_IC
           +'<div class="bk-pig-label">'+esc(t("ptsWord"))+': <b id="bkPts">…</b></div></div></div>'
       +'<nav class="bk-tabs" id="bkTabs">'
@@ -482,6 +542,7 @@
         pig:el.querySelector("#bkPig"), tabs:el.querySelector("#bkTabs"), list:el.querySelector("#bkList"),
         tabN:el.querySelector("#bkTabN") };
     el.querySelector("#bkBack").onclick=function(){ sdk.ui.back(); };
+    E.flame.onclick=openStreakInfo;
     var pb=el.querySelector("#bkParent"); if(pb) pb.onclick=openParentGate;
     E.tabs.addEventListener("click",function(e){
       var b=e.target.closest(".bk-tab"); if(!b || !alive) return;
@@ -504,5 +565,10 @@
     curSheet=null; PE=null; E={};
   }
 
-  RobTop.register({ id:"bank", mount:mount, unmount:unmount, messages:MESSAGES });
+  /* живое обновление (sync-поллер оболочки, v2026.06.07.47): чужие изменения — задание
+     от родителя, начисление с другого устройства — подтягиваются без перезахода.
+     Не дёргаем во время своей операции (busy) и при открытой шторке (curSheet). */
+  function refresh(){ if(alive && !busy && !curSheet) load(); }
+
+  RobTop.register({ id:"bank", mount:mount, unmount:unmount, refresh:refresh, messages:MESSAGES });
 })();

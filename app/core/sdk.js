@@ -56,17 +56,22 @@ window.RobTop = window.RobTop || {};
     return API.post("data.php", body);
   }
 
-  /* ---- движок очков: леджер bank/points + винстрик в bank/meta (политика — ГАЙД-очки.md) ----
+  /* ---- движок очков: леджер bank/points (политика — ГАЙД-очки.md) ----
      Транзакция: {n, reason, src, kind, note?}. Виды (kind):
        win | loss   — победы/проигрыши в приложениях (винстрик НЕ трогают);
-       task_done    — задание родителей выполнено: винстрик +1 (макс 21) и бонус серии
+       task_done    — задание родителей выполнено: день засчитан в серию, бонус серии
                       (винстрик−1 пунктов) ОТДЕЛЬНОЙ строкой kind=bonus;
-       task_fail    — задание родителей не выполнено: винстрик сгорает в 0;
-       daily_bonus  — все задания дня выполнены (+5);
+       daily_bonus  — бонус «все задания дня» (+5, кнопка панели);
        parent       — произвольное начисление/снятие родителем (панель в Копилке);
        manual       — ручные поправки (легаси reason *_manual, напр. teeth_manual);
        bonus        — бонус серии (пишет только сам движок);
+       task_fail    — легаси-штраф старой панели (в UI упразднён, строки в истории живут);
        spend        — траты (Магазин, будущее).
+     ВИНСТРИК (2026-06-07, упрощение «как в Duolingo»): серия ДНЕЙ ПОДРЯД, в которых
+     выполнено хотя бы одно задание родителей (kind task_done). НЕ хранится — каждый раз
+     ВЫВОДИТСЯ из леджера (нечему рассинхронизироваться): идём от сегодня (или вчера,
+     если сегодня заданий ещё не было) назад по календарным дням устройства, пока дни
+     «с заданиями»; день без заданий гасит огонёк в 0. Кап 21 (бонус максимум 20).
      Демо-режим работает через localStorage (dataOp) — паритет с сервером. */
   var BANK_STREAK_MAX = 21;
   function bankKind(n, reason, opts){
@@ -74,20 +79,31 @@ window.RobTop = window.RobTop || {};
     if(/_manual$/.test(String(reason||""))) return "manual";
     return n >= 0 ? "win" : "loss";
   }
-  function bankMeta(){
-    return dataOp("bank","list","meta",null).then(function(r){
-      var items=(r&&r.items)||[], it=items.length?items[0]:null;
-      var s=it&&it.data?parseInt(it.data.streak,10):0;
-      return { id: it?it.id:null, streak: Math.min(Math.max(s||0,0), BANK_STREAK_MAX) };
-    });
+  function bankDayKey(d){ /* локальная дата устройства YYYY-MM-DD */
+    var m=d.getMonth()+1, day=d.getDate();
+    return d.getFullYear()+"-"+(m<10?"0":"")+m+"-"+(day<10?"0":"")+day;
   }
-  function bankSetStreak(meta, streak){
-    if(meta.id!=null) return dataOp("bank","update","meta",{id:meta.id,patch:{streak:streak}});
-    return dataOp("bank","create","meta",{data:{streak:streak}});
+  /* Серия дней по леджеру. items — строки bank/points; now — Date.now(). */
+  function bankStreakFrom(items, now){
+    var days={}, i, it, d;
+    for(i=0;i<items.length;i++){
+      it=items[i]; d=it.data||{};
+      if(d.kind==="task_done" && it.createdAt) days[bankDayKey(new Date(it.createdAt))]=1;
+    }
+    var cur=new Date(now);
+    if(!days[bankDayKey(cur)]){
+      cur.setDate(cur.getDate()-1);                 /* сегодня пусто? серия могла кончиться вчера */
+      if(!days[bankDayKey(cur)]) return 0;          /* и вчера пусто — огонёк погас */
+    }
+    var n=0;
+    while(days[bankDayKey(cur)] && n<BANK_STREAK_MAX){ n++; cur.setDate(cur.getDate()-1); }
+    return n;
   }
   function bankTxn(rec){ return dataOp("bank","create","points",{data:rec}); }
   /* Добавить транзакцию; никогда не reject (модули зовут fire-and-forget).
-     → Promise<{ok, n, kind, streak|null, bonus}> */
+     → Promise<{ok, n, kind, streak|null, bonus}>
+     task_done: после записи серия пересчитывается из леджера (включая эту строку),
+     бонус = винстрик−1 отдельной строкой streak_bonus. */
   function bankAdd(srcMod, n, reason, opts){
     n = parseInt(n,10)||0; opts = opts||{};
     var kind = bankKind(n, reason, opts);
@@ -95,27 +111,21 @@ window.RobTop = window.RobTop || {};
     if(opts.note) rec.note = String(opts.note).slice(0,80);
     var out = { ok:true, n:n, kind:kind, streak:null, bonus:0 };
     return bankTxn(rec).then(function(){
-      if(kind!=="task_done" && kind!=="task_fail") return out;
-      return bankMeta().then(function(meta){
-        if(kind==="task_fail"){
-          out.streak = 0;
-          return meta.streak>0 ? bankSetStreak(meta,0).then(function(){ return out; }) : out;
-        }
-        var s = Math.min(meta.streak+1, BANK_STREAK_MAX);
-        out.streak = s; out.bonus = Math.max(0, s-1);
-        return bankSetStreak(meta,s).then(function(){
-          if(!out.bonus) return out;
-          return bankTxn({ n:out.bonus, reason:"streak_bonus", src:"bank", kind:"bonus" }).then(function(){ return out; });
-        });
+      if(kind!=="task_done") return out;
+      return dataOp("bank","list","points",null).then(function(r){
+        var s = bankStreakFrom((r&&r.items)||[], Date.now());
+        out.streak = s; out.bonus = Math.max(0, Math.min(s,BANK_STREAK_MAX)-1);
+        if(!out.bonus) return out;
+        return bankTxn({ n:out.bonus, reason:"streak_bonus", src:"bank", kind:"bonus" }).then(function(){ return out; });
       });
     }).catch(function(){ out.ok=false; return out; });
   }
-  /* Сводка копилки: баланс (сумма всех n), винстрик, все транзакции. Может reject (сеть). */
+  /* Сводка копилки: баланс (сумма всех n), винстрик (из леджера), все транзакции. Может reject (сеть). */
   function bankSummary(){
-    return Promise.all([ dataOp("bank","list","points",null), bankMeta() ]).then(function(rr){
-      var items=(rr[0]&&rr[0].items)||[], sum=0, i, d;
+    return dataOp("bank","list","points",null).then(function(r){
+      var items=(r&&r.items)||[], sum=0, i, d;
       for(i=0;i<items.length;i++){ d=items[i].data||{}; sum += parseInt(d.n,10)||0; }
-      return { balance:sum, streak:rr[1].streak, count:items.length, items:items };
+      return { balance:sum, streak:bankStreakFrom(items, Date.now()), count:items.length, items:items };
     });
   }
 
@@ -161,9 +171,9 @@ window.RobTop = window.RobTop || {};
         /* add(n, reason, opts?) — opts:{kind, src, note}; kind по умолчанию: win (n≥0) / loss / manual (*_manual) */
         add: function(n,reason,opts){ return bankAdd(mod,n,reason,opts); },
         get: function(){ return bankSummary().then(function(s){ return s.balance; }).catch(function(){ return 0; }); },
-        summary: function(){ return bankSummary(); },
-        /* сжечь винстрик (будущий модуль заданий: «не все задания дня выполнены») */
-        streakReset: function(){ return bankMeta().then(function(m){ return m.streak>0 ? bankSetStreak(m,0) : true; }).then(function(){ return true; }).catch(function(){ return false; }); }
+        summary: function(){ return bankSummary(); }
+        /* streakReset упразднён 2026-06-07: винстрик выводится из леджера и гаснет сам
+           (день без задания); хранимого счётчика больше нет. */
       },
       /* sdk.admin.verify (PIN) упразднён 2026-06-07: роль даёт сессия аккаунта — модулям достаточно sdk.role / sdk.isDemo() */
       theme: { tokens: shell.tokens || {} },

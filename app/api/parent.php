@@ -233,28 +233,32 @@ foreach ($cq->fetchAll() as $r) {
 
 /* ---------- очки (копилка): сумма n по module_data bank/points ---------- */
 $pq = $db->prepare(
-    "SELECT data FROM module_data
+    "SELECT data, created_at FROM module_data
      WHERE user_id = ? AND module = 'bank' AND collection = 'points' AND deleted_at IS NULL"
 );
 $pq->execute([$childId]);
-$points = 0;
+$points   = 0;
+$taskDays = []; // даты (Y-m-d) с выполненными заданиями — для винстрика
 foreach ($pq->fetchAll() as $r) {
     $d = json_decode($r['data'], true);
-    if (is_array($d) && isset($d['n'])) $points += (int)$d['n'];
+    if (!is_array($d)) continue;
+    if (isset($d['n'])) $points += (int)$d['n'];
+    if (isset($d['kind']) && $d['kind'] === 'task_done' && !empty($r['created_at'])) {
+        $taskDays[substr((string)$r['created_at'], 0, 10)] = true;
+    }
 }
 
-/* ---------- винстрик (копилка): bank/meta {streak} ---------- */
-$sq = $db->prepare(
-    "SELECT data FROM module_data
-     WHERE user_id = ? AND module = 'bank' AND collection = 'meta' AND deleted_at IS NULL
-     ORDER BY id ASC LIMIT 1"
-);
-$sq->execute([$childId]);
+/* ---------- винстрик (копилка): серия дней подряд с выполненным заданием.
+   То же правило, что в движке core/sdk.js (bankStreakFrom): идём от сегодня
+   (или вчера, если сегодня заданий ещё нет) назад, пока дни «с заданиями»; кап 21.
+   Часовой пояс — серверный (у клиента — устройства): на границе суток возможен
+   сдвиг на день, для read-only дашборда это приемлемо. ---------- */
 $streak = 0;
-$sr = $sq->fetch();
-if ($sr) {
-    $d = json_decode($sr['data'], true);
-    if (is_array($d) && isset($d['streak'])) $streak = max(0, (int)$d['streak']);
+$cur = new DateTime('today');
+if (!isset($taskDays[$cur->format('Y-m-d')])) $cur->modify('-1 day');
+while (isset($taskDays[$cur->format('Y-m-d')]) && $streak < 21) {
+    $streak++;
+    $cur->modify('-1 day');
 }
 
 /* ---------- последняя активность (за всё время) ---------- */
