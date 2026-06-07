@@ -634,6 +634,7 @@ window.RobTop = window.RobTop || {};
       +'<div class="store-section">'+esc(t("settings.language"))+'</div>'
       +'<div class="lang-seg">'+langBtns+'</div>'
       +signOutHtml()
+      +'<div class="set-ver">RobTop '+esc(window.RT_VER?("v"+window.RT_VER):"")+'</div>'
       +'</div>';
     settingsBody=settingsView.querySelector("#settingsBody");
     settingsView.querySelector("#settingsBack").onclick=closeSettings;
