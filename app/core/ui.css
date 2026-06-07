@@ -530,3 +530,6 @@ body[data-view="parent"] .pd-tabbar{display:flex}
   place-items:center;font-size:13px;font-weight:800;color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0)}
 .theme-card.on{border-color:var(--cyan);box-shadow:0 0 18px -6px var(--cyan)}
 .theme-card.on .mark{display:grid}
+
+/* HUD, спрятанный модулем на время полноэкранной сцены: shell.hud({hidden:true}) (игра в змейке) */
+.hud.hud-off{display:none}

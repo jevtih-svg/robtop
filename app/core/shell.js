@@ -86,7 +86,7 @@ window.RobTop = window.RobTop || {};
 
   /* ---- DOM ---- */
   var body, appsEl, homeView, moduleView, lockView, parentView, settingsView, fabEl, toastEl, demoBadge,
-      hudL,hudCnum,hudClbl,hudRnum,hudRlbl, settingsBody,
+      hudEl,hudL,hudCnum,hudClbl,hudRnum,hudRlbl, settingsBody,
       storeOverlay, storeBody, gearBtn, homeJgl=null;
 
   /* ================= общие UI-сервисы ================= */
@@ -119,7 +119,9 @@ window.RobTop = window.RobTop || {};
     sheet.addEventListener("touchmove",function(e){ if(!dragging) return; dy=e.touches[0].clientY-startY; if(dy>0){ if(e.cancelable) e.preventDefault(); sheet.style.transform="translateY("+dy+"px)"; } },{passive:false});
     sheet.addEventListener("touchend",function(){ if(!dragging) return; dragging=false; sheet.style.transition="transform .22s ease"; if(dy>120){ sheet.style.transform="translateY(100%)"; setTimeout(function(){ sheet.style.transform=""; sheet.style.transition=""; close(); },200); } else { sheet.style.transform=""; setTimeout(function(){ sheet.style.transition=""; },220); } });
   }
-  function hud(o){ o=o||{}; if(o.left!=null) hudL.innerHTML=o.left; if(o.cNum!=null) hudCnum.textContent=o.cNum; if(o.cLbl!=null) hudClbl.textContent=o.cLbl; if(o.rNum!=null) hudRnum.textContent=o.rNum; if(o.rLbl!=null) hudRlbl.textContent=o.rLbl; }
+  /* hud({hidden:true}) прячет HUD на время полноэкранных сцен модуля (игра в змейке);
+     ЛЮБОЙ обычный вызов hud(values) снимает скрытие — чужой модуль не унаследует спрятанный HUD. */
+  function hud(o){ o=o||{}; if(hudEl) hudEl.classList.toggle("hud-off", o.hidden===true); if(o.left!=null) hudL.innerHTML=o.left; if(o.cNum!=null) hudCnum.textContent=o.cNum; if(o.cLbl!=null) hudClbl.textContent=o.cLbl; if(o.rNum!=null) hudRnum.textContent=o.rNum; if(o.rLbl!=null) hudRlbl.textContent=o.rLbl; }
   /* ---- скрытый реордер (long-press ~0.55с → jiggle + drag): главный экран и дашборд ----
      Никакого видимого UI до жеста: удержал элемент — режим «дрожания», тащишь — порядок
      меняется, отпустил — onCommit(ids) сохраняет. Выход — плавающая кнопка ✓ или навигация
@@ -1232,7 +1234,7 @@ window.RobTop = window.RobTop || {};
     fabEl=document.getElementById("fab");
     toastEl=document.getElementById("toast");
     demoBadge=document.getElementById("demoBadge");
-    hudL=document.getElementById("hudL"); hudCnum=document.getElementById("hudCnum"); hudClbl=document.getElementById("hudClbl"); hudRnum=document.getElementById("hudRnum"); hudRlbl=document.getElementById("hudRlbl");
+    hudEl=document.getElementById("hud"); hudL=document.getElementById("hudL"); hudCnum=document.getElementById("hudCnum"); hudClbl=document.getElementById("hudClbl"); hudRnum=document.getElementById("hudRnum"); hudRlbl=document.getElementById("hudRlbl");
     settingsView=document.getElementById("settings");
     storeOverlay=document.getElementById("storeOverlay"); storeBody=document.getElementById("storeBody"); gearBtn=document.getElementById("gearBtn");
   }

@@ -272,6 +272,8 @@
   }
   function renderStage(){
     if(!root||!E.stage) return;
+    /* полноэкранная партия: прячем всё лишнее (история, статистика, HUD) — только назад/пауза/поле */
+    if(E.sn) E.sn.classList.toggle("playing", mode==="play");
     if(!sdk.can("edit")){
       E.stage.innerHTML='<div class="sn-card"><p class="sn-note">'+esc(t("parentNote"))+'</p></div>';
       return;
@@ -317,9 +319,11 @@
         touchPt={x:p.clientX,y:p.clientY};
       },{passive:false});
       fitCanvas(); updatePlayInfo(); draw();
+      sdk.ui.hud({hidden:true}); /* цифры HUD не наезжают на игру */
       return;
     }
     /* mode === "over" */
+    sdk.ui.hud({hidden:false});
     E.stage.innerHTML='<div class="sn-card">'
       +'<div class="sn-circle'+(recJust?" rec":"")+'">'+(recJust?"🏆":"🐍")+'</div>'
       +'<h3 class="sn-card-title">'+esc(t("overTitle"))+'</h3>'
@@ -375,7 +379,7 @@
       +'<div class="store-section">'+esc(t("historyTitle"))+'</div>'
       +'<div class="sn-list" id="snList"></div>'
     +'</div>';
-    E.stage=root.querySelector("#snStage"); E.list=root.querySelector("#snList");
+    E.stage=root.querySelector("#snStage"); E.list=root.querySelector("#snList"); E.sn=root.querySelector(".sn");
     root.querySelector("#snBack").addEventListener("click",function(){ sdk.ui.back(); });
     root.querySelector("#snStats").addEventListener("click",openStats);
     /* делегирование — на внутреннем .sn (пересоздаётся при каждом mount), НЕ на root:
@@ -412,6 +416,7 @@
   }
   function unmount(){
     stopLoop();
+    if(sdk){ try{ sdk.ui.hud({hidden:false}); }catch(e){} } /* выход посреди партии не оставляет HUD спрятанным */
     if(E.onKey) document.removeEventListener("keydown",E.onKey);
     if(E.onVis) document.removeEventListener("visibilitychange",E.onVis);
     if(curSheet&&curSheet.close){ try{ curSheet.close(); }catch(e){} } curSheet=null;

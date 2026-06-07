@@ -44,6 +44,17 @@
 [data-mod="snake"] .sn-spd.active{border-color:#19e3ff;background:rgba(25,227,255,.25);color:#fff;
   box-shadow:0 0 14px rgba(25,227,255,.45)}
 
+/* ПОЛНОЭКРАННАЯ ПАРТИЯ (фидбек Джеффа): ничего, кроме «назад» и игры — история и кнопка
+   статистики спрятаны, отступ снизу убран, поле вписано в высоту экрана → скроллить нечего;
+   HUD оболочки модуль прячет через sdk.ui.hud({hidden:true}) */
+[data-mod="snake"] .sn.playing{padding-bottom:8px}
+[data-mod="snake"] .sn.playing .store-section,
+[data-mod="snake"] .sn.playing .sn-list,
+[data-mod="snake"] .sn.playing .hbtn{display:none}
+[data-mod="snake"] .sn.playing .sn-wrap{margin-left:auto;margin-right:auto;
+  width:min(100%, calc((100vh - 340px) * 0.8));
+  width:min(100%, calc((100dvh - 340px) * 0.8))}
+
 /* инфо-строка во время игры */
 [data-mod="snake"] .sn-info{display:flex;align-items:center;gap:10px;margin:2px 2px 10px}
 [data-mod="snake"] .sn-num{display:flex;flex-direction:column;align-items:flex-start;min-width:54px}
