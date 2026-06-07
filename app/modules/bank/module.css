@@ -66,6 +66,50 @@
 [data-mod="bank"] .bk-empty{text-align:center;color:var(--muted);font-weight:700;padding:26px 14px}
 [data-mod="bank"] .bk-empty .btn{margin-top:10px}
 
+/* счётчик на вкладке «Родители»: ребёнку — активные задания, родителю — ждущие проверки */
+[data-mod="bank"] .bk-tab-n{display:inline-block;min-width:20px;margin-left:7px;padding:2px 6px;border-radius:999px;
+  font-family:'Russo One',sans-serif;font-size:12px;line-height:1.2;color:#0b0a1e;background:#ffd23b;
+  box-shadow:0 0 10px -2px rgba(255,210,59,.9)}
+[data-mod="bank"] .bk-tab-n[hidden]{display:none}
+
+/* задания от родителей (вкладка «Родители», блок над историей) */
+[data-mod="bank"] .bk-addtask{width:100%;min-height:46px;margin-bottom:10px;border-style:dashed}
+[data-mod="bank"] .bk-task{display:flex;align-items:center;gap:12px;padding:11px 12px;margin-bottom:8px;
+  border-radius:16px;background:linear-gradient(165deg, rgba(255,77,109,.10), rgba(13,12,32,.82));
+  border:1.5px solid rgba(255,77,109,.4)}
+[data-mod="bank"] .bk-task[data-act="edit"]{cursor:pointer}
+[data-mod="bank"] .bk-task.st-pending{border-color:rgba(255,210,59,.55);
+  background:linear-gradient(165deg, rgba(255,210,59,.08), rgba(13,12,32,.82))}
+[data-mod="bank"] .bk-task.st-done{opacity:.55;border-color:rgba(147,166,207,.3);background:rgba(13,12,32,.72)}
+[data-mod="bank"] .bk-task-main{flex:1;min-width:0}
+[data-mod="bank"] .bk-task-t{color:#fff;font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+[data-mod="bank"] .bk-task-m{color:var(--muted);font-size:11px;font-weight:700;margin-top:2px}
+[data-mod="bank"] .bk-tact{flex:none;display:flex;align-items:center;gap:6px}
+[data-mod="bank"] .bk-tbtn{min-height:40px;padding:0 12px;border-radius:12px;font-weight:800;font-size:13px;cursor:pointer;
+  border:1.5px solid rgba(147,166,207,.35);background:rgba(13,12,32,.8);color:#eaf2ff;
+  -webkit-tap-highlight-color:transparent}
+[data-mod="bank"] .bk-tbtn.do{border-color:rgba(43,240,192,.6);color:#2bf0c0;
+  box-shadow:0 0 14px -6px #2bf0c0;font-family:'Russo One',sans-serif}
+[data-mod="bank"] .bk-tbtn.ok{border-color:rgba(43,240,192,.6);color:#2bf0c0;box-shadow:0 0 14px -6px #2bf0c0}
+[data-mod="bank"] .bk-tbtn.no{border-color:rgba(255,77,109,.5);color:#ff7a95;min-width:40px;padding:0 8px}
+[data-mod="bank"] .bk-tbtn.x{border-color:rgba(147,166,207,.3);color:#93a6cf;min-width:36px;padding:0 8px}
+[data-mod="bank"] .bk-chip{flex:none;padding:7px 10px;border-radius:999px;font-size:11px;font-weight:800;
+  color:#ffd23b;background:rgba(255,210,59,.1);border:1px solid rgba(255,210,59,.45)}
+[data-mod="bank"] .bk-chip.ok{color:#2bf0c0;background:rgba(43,240,192,.08);border-color:rgba(43,240,192,.4)}
+
+/* шторка создания/правки задания */
+.bk-tform{display:flex;flex-direction:column;gap:10px;margin:4px 0 8px}
+.bk-tform input{min-height:46px;border-radius:12px;border:1.5px solid rgba(147,166,207,.35);
+  background:rgba(13,12,32,.8);color:#eaf2ff;font-weight:700;padding:0 12px;font-size:15px}
+.bk-tform input:focus{outline:none;border-color:rgba(255,77,109,.7)}
+.bk-tlbl{color:var(--muted);font-size:12px;font-weight:700;margin:2px 2px -4px}
+.bk-types{display:flex;gap:8px}
+.bk-type{flex:1;min-height:44px;border-radius:12px;border:1.5px solid rgba(147,166,207,.35);
+  background:rgba(13,12,32,.7);color:var(--muted);font-weight:800;font-size:13px;cursor:pointer}
+.bk-type.on{color:#fff;border-color:rgba(255,77,109,.65);
+  background:linear-gradient(165deg, rgba(255,77,109,.18), rgba(13,12,32,.8));
+  box-shadow:0 0 14px -6px #ff4d6d}
+
 /* родительская панель (шторка) */
 .bk-pgrid{display:flex;gap:10px;margin:6px 0 4px}
 .bk-pstat{flex:1;text-align:center;border-radius:14px;padding:10px 6px;background:rgba(13,12,32,.72);

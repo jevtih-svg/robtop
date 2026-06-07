@@ -193,7 +193,7 @@ window.RobTop = window.RobTop || {};
   function saveChild(id){ try{ if(id) localStorage.setItem(CHILD_KEY,String(id)); else localStorage.removeItem(CHILD_KEY); }catch(e){} }
 
   var NOISE={ opened_app:1, opened_module:1, viewed_detail:1, viewed_stats:1 };
-  var SKIP_MOD={ bank:1, admin:1 };
+  var SKIP_MOD={ bank:1, admin:1, tickets:1 }; /* tickets: переписка с поддержкой приватна (автор+админ) */
   var WL_DOMAIN={ created:1, changed_mind:1, purchased:1, back_to_want:1, edited:1, favorite:1, unfavorite:1, deleted:1, restored:1,
     share_request:1, share_grant:1, share_revoke:1 }; /* шаринг: действия РЕБЁНКА — домен */
   /* тумблер шаринга включает РОДИТЕЛЬ — в журнале виден, но детским действием не считается */

@@ -1,0 +1,16 @@
+{
+  "id": "snake",
+  "name": "Змейка",
+  "version": "1.0.0",
+  "color": "#19e3ff",
+  "status": "active",
+  "wide": false,
+  "entry": "module.js",
+  "styles": "module.css",
+  "roles": { "edit": ["child"], "read": ["child", "parent"] },
+  "data": { "store": "generic", "collections": ["games", "meta"] },
+  "server": false,
+  "permissions": ["points"],
+  "min_shell": "2.0.0",
+  "sort": 117
+}

@@ -197,14 +197,17 @@ if ($before > 0) {
 
 /* ---------- контент модулей (то, что РЕАЛЬНО создал ребёнок) ----------
    Свежие записи generic-стора по модулям: оценки/настроения с текстами, раунды
-   угадайки, слова, чистки. Технические коллекции meta и копилка не отдаются.
+   угадайки, слова, чистки. Технические коллекции meta и леджер копилки не отдаются,
+   НО задания от родителей (bank/tasks, 2026-06-07) отдаются — карточка Копилки на
+   Обзоре показывает «ждут проверки: N» (status='pending').
    Фото внутри data — по тому же правилу приватности, что и виш-лист. */
 $cq = $db->prepare(
     "SELECT id, module, collection, status, favorite, data,
             UNIX_TIMESTAMP(created_at) * 1000 AS createdAt
      FROM module_data
      WHERE user_id = ? AND deleted_at IS NULL
-       AND module <> 'bank' AND collection <> 'meta'
+       AND collection <> 'meta'
+       AND (module <> 'bank' OR collection = 'tasks')
      ORDER BY id DESC
      LIMIT 400"
 );
