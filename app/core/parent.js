@@ -805,6 +805,13 @@ window.RobTop = window.RobTop || {};
   /* =================== сборка экрана =================== */
   function render(){
     var root=el(); if(!root) return;
+    /* скрытый реордер карточек «По приложениям» (long-press → jiggle, как плитки ребёнка):
+       вешается один раз (делегирование переживает innerHTML), порядок — личный, на аккаунт
+       родителя (RT._shell.applyTileOrder → accounts.php op tile_order) */
+    if(!root.__jgl && RT._shell && RT._shell.makeJiggle){
+      root.__jgl=RT._shell.makeJiggle(root,{ items:".pd-mcard", onCommit:function(ids){ RT._shell.applyTileOrder(ids); } });
+    }
+    if(root.__jgl) root.__jgl.exit(); // перерисовка сбрасывает режим перестановки
     renderTabs();
     if(S.loading){
       root.innerHTML='<div class="pd-wrap"><div class="pd-empty" style="padding-top:80px">…</div></div>';

@@ -17,6 +17,7 @@
         back: "Back", confirmTitle: "Confirm?"
       },
       home: { tagline: "Choose an app", soonSep: "Coming soon" },
+      reorder: { hint: "Drag to reorder" },
       hud: { apps: "apps", available: "available" },
       tile: {
         status: { open: "Open", soon: "Soon" },
@@ -164,6 +165,7 @@
         back: "Назад", confirmTitle: "Подтвердить?"
       },
       home: { tagline: "Выбери приложение", soonSep: "Скоро будут" },
+      reorder: { hint: "Перетащи, чтобы поменять порядок" },
       hud: { apps: "приложений", available: "доступно" },
       tile: {
         status: { open: "Открыть", soon: "Скоро" },
@@ -311,6 +313,7 @@
         back: "Atpakaļ", confirmTitle: "Apstiprināt?"
       },
       home: { tagline: "Izvēlies lietotni", soonSep: "Drīz būs" },
+      reorder: { hint: "Velc, lai mainītu secību" },
       hud: { apps: "lietotnes", available: "pieejamas" },
       tile: {
         status: { open: "Atvērt", soon: "Drīz" },

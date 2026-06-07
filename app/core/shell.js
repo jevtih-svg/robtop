@@ -173,6 +173,7 @@ window.RobTop = window.RobTop || {};
     }
     container.addEventListener("pointerdown",function(e){
       if(e.button) return; // только основная кнопка/палец
+      suppress=false;      // новый жест — прошлое подавление клика не «залипает»
       var el=e.target.closest(itemSel); if(!el||!container.contains(el)) return;
       var pid=e.pointerId, x0=e.clientX, y0=e.clientY, lx=x0, ly=y0;
       function mv(e2){
@@ -1107,8 +1108,10 @@ window.RobTop = window.RobTop || {};
     moduleView:moduleViewEl, showHome:showHome, showModule:showModule,
     toast:toast, buzz:buzz, chime:chime, hud:hud, fab:fab, fabDestroy:fabDestroy,
     confirm:confirm, sheet:sheet, enableDrag:enableDrag, setDemo:setDemo,
-    /* для родительского дашборда (core/parent.js): настройки, иконки плиток, роль */
+    /* для родительского дашборда (core/parent.js): настройки, иконки плиток, роль,
+       скрытый реордер (makeJiggle) + сохранение личного порядка (applyTileOrder) */
     openSettings:openSettings, iconHtml:iconHtml, isParent:isParent,
+    makeJiggle:makeJiggle, applyTileOrder:applyTileOrder,
     demoBundle:function(id){ return RT._shell_demoBundle(id); }
   };
 
