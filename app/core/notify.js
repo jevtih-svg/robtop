@@ -1,6 +1,7 @@
 /* RobTop — ОПОВЕЩЕНИЯ (ядро оболочки). Канон — ГАЙД-оповещения.md.
    Поверхности: колокольчик с бейджем (фиксирован вверху справа НА ВСЕХ экранах — решение
-   Джеффа 2026-06-07; на главном — слева от ⚙, прячется вместе с HUD и на lock/в демо),
+   Джеффа 2026-06-07; на главном ребёнка И дашборде родителя — кластер [🔔][⚙] в одном
+   хроме с глобальной шестерёнкой (v.65), прячется вместе с HUD и на lock/в демо),
    центр оповещений (шторка снизу: список, «прочитать все», тумблер Web Push),
    всплывающие баннеры как в iOS (поверх всего, тап = переход, свайп вверх = закрыть),
    бейджи непрочитанного у ДРУГИХ аккаунтов устройства (настройки и lock, op peek).
@@ -34,6 +35,13 @@ window.RobTop = window.RobTop || {};
       onToast:"Device notifications are on", offToast:"Device notifications are off" },
     ev:{
       tickets:{ reply:"Support replied: “{subject}”", closed:"Ticket “{subject}” is closed" },
+      /* задания: с миграции 024 шлёт движок sdk.tasks (src "tasks", link → модуль «Задания»);
+         дубль в bank.* живёт для СТАРЫХ сохранённых строк (src "bank") */
+      tasks:{
+        task_new:"New task “{title}” — +{n} points",
+        task_claim:"{name} says “{title}” is done — check it",
+        task_done:"{name} finished “{title}” (+{n})",
+        task_approved:"“{title}” approved — +{n} points!" },
       bank:{
         task_new:"New task “{title}” — +{n} points",
         task_claim:"{name} says “{title}” is done — check it",
@@ -61,6 +69,11 @@ window.RobTop = window.RobTop || {};
       onToast:"Уведомления на устройстве включены", offToast:"Уведомления на устройстве выключены" },
     ev:{
       tickets:{ reply:"Поддержка ответила: «{subject}»", closed:"Обращение «{subject}» закрыто" },
+      tasks:{
+        task_new:"Новое задание «{title}» — +{n} очков",
+        task_claim:"{name}: «{title}» сделано — проверь!",
+        task_done:"{name} выполнил(а) задание «{title}» (+{n})",
+        task_approved:"«{title}» подтверждено — +{n} очков!" },
       bank:{
         task_new:"Новое задание «{title}» — +{n} очков",
         task_claim:"{name}: «{title}» сделано — проверь!",
@@ -88,6 +101,11 @@ window.RobTop = window.RobTop || {};
       onToast:"Ierīces paziņojumi ieslēgti", offToast:"Ierīces paziņojumi izslēgti" },
     ev:{
       tickets:{ reply:"Atbalsts atbildēja: “{subject}”", closed:"Pieteikums “{subject}” ir slēgts" },
+      tasks:{
+        task_new:"Jauns uzdevums “{title}” — +{n} punkti",
+        task_claim:"{name}: “{title}” izpildīts — pārbaudi!",
+        task_done:"{name} izpildīja uzdevumu “{title}” (+{n})",
+        task_approved:"“{title}” apstiprināts — +{n} punkti!" },
       bank:{
         task_new:"Jauns uzdevums “{title}” — +{n} punkti",
         task_claim:"{name}: “{title}” izpildīts — pārbaudi!",

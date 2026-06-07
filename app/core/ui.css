@@ -124,9 +124,14 @@ body{
 .brand b{color:var(--pink);font-weight:400}
 .tagline{margin:8px 2px 0;color:var(--muted);font-weight:600;font-size:15px;letter-spacing:.2px}
 .tagline .spark{color:var(--cyan)}
-.gear{position:absolute;top:calc(30px + env(safe-area-inset-top));right:6px;width:42px;height:42px;border-radius:13px;
-  display:grid;place-items:center;cursor:pointer;font-size:20px;color:var(--chrome-ink);
+/* ⚙ — ГЛОБАЛЬНАЯ фиксированная кнопка (с v.65 живёт в <body>, не в .hometop): единый
+   кластер [🔔][⚙] вверху справа на главном экране ребёнка И родительском дашборде
+   (гармонизация по фидбеку Джеффа 2026-06-07). На остальных экранах скрыта
+   (настройки/модули/lock); в демо видна — настройки и магазин нужны и там. */
+.gear{position:fixed;top:calc(30px + env(safe-area-inset-top));right:6px;z-index:15;width:42px;height:42px;border-radius:13px;
+  display:none;place-items:center;cursor:pointer;font-size:20px;color:var(--chrome-ink);
   background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14);box-shadow:0 0 18px -7px var(--cyan)}
+body[data-view="home"] .gear,body[data-view="parent"] .gear{display:grid}
 .gear:active{transform:scale(.93)}
 
 .apps{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:18px}
@@ -620,15 +625,19 @@ body[data-view="parent"] .pd-tabbar{display:flex}
    Колокольчик фиксирован вверху справа на ВСЕХ экранах (решение Джеффа 2026-06-07);
    на главном сдвинут влево от ⚙; на lock и в демо его нет; модуль, спрятавший HUD
    (hud({hidden:true})), прячет и его (.ntf-hide ставит shell через RT.Notify.hide). */
+/* хром колокольчика = хром ⚙ (один кластер, гармонизация v.65) */
 .ntf-bell{position:fixed;top:calc(30px + env(safe-area-inset-top));right:6px;z-index:15;width:42px;height:42px;
-  border-radius:13px;background:rgba(var(--panel-rgb),.66);border:1.5px solid rgba(255,255,255,.16);
-  color:var(--ink-2);display:grid;place-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  border-radius:13px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14);
+  box-shadow:0 0 18px -7px var(--cyan);color:var(--chrome-ink);
+  display:grid;place-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .ntf-bell svg{width:21px;height:21px}
 .ntf-bell:active{transform:scale(.93)}
-body[data-view="home"] .ntf-bell{right:56px}
+/* там, где видна ⚙ (главный + дашборд), колокольчик встаёт слева от неё */
+body[data-view="home"] .ntf-bell,body[data-view="parent"] .ntf-bell{right:56px}
 body[data-view="lock"] .ntf-bell,body.demo .ntf-bell,.ntf-bell.ntf-hide{display:none}
-body[data-view="parent"] .pd-top{padding-right:48px}   /* кнопки дашборда не лезут под колокольчик */
+body[data-view="parent"] .pd-top{padding-right:100px;padding-top:calc(30px + env(safe-area-inset-top))} /* контент шапки не лезет под кластер [🔔][⚙]; верх выровнен с ним */
 body[data-view="settings"] .set-top{padding-right:48px}
+.pd-kid .st{white-space:nowrap;overflow:hidden;text-overflow:ellipsis} /* «👁 Только просмотр · активность…» не ломает строку */
 .ntf-badge{position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;border-radius:10px;display:none;
   place-items:center;background:var(--red);color:#fff;font-size:11px;font-weight:800;padding:0 5px;
   border:2px solid rgba(var(--panel-rgb),.9);box-shadow:0 0 12px -3px var(--red)}
