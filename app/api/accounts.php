@@ -13,11 +13,14 @@
  *   reset          {token,new_password}
  *   add_child      {nickname}                    (родитель → детский аккаунт, пароль 1234)
  *   reset_child    {child_id}                    (опекун сбрасывает пароль ребёнка → 1234)
- *   invite         {type,email?,target_child_id?}  type: child_to_child|co_parent|transfer_child
+ *   invite         {type,email?,target_child_id?}  type: child_to_child|co_parent|transfer_child|child_invite_parent
+ *                  child_invite_parent: РЕБЁНОК без primary-родителя зовёт своего родителя по email;
+ *                  одно живое приглашение, отзыв/повтор — invite_action; принятие = семья + primary (ветка transfer)
  *   invite_info    {token}                       (для посадочной: кто и куда зовёт)
  *   accept         {token,nickname?,password?}
  *   invites        {}                            (мои отправленные)
  *   invite_action  {id,action}                   action: revoke|resend
+ *   parent_status  {}                            (ребёнок: есть ли настоящий родитель + живое приглашение)
  *   members        {}                            (семья + дети)
  *
  * Дети без email и PII — только никнейм. Логи в events сохраняются.
@@ -219,11 +222,27 @@ switch ($op) {
     case 'invite': {
         $u = rt_require_login($db); rt_block_if_must_change($u);
         $type = isset($b['type']) ? (string)$b['type'] : '';
-        if (!in_array($type, ['child_to_child', 'co_parent', 'transfer_child'], true)) rt_json(['error' => 'bad type'], 422);
+        if (!in_array($type, ['child_to_child', 'co_parent', 'transfer_child', 'child_invite_parent'], true)) rt_json(['error' => 'bad type'], 422);
         $fid = rt_user_family_id($db, (int)$u['id']);
         $email = null; $targetChild = null;
         if ($type === 'child_to_child') {
             if ($u['kind'] !== 'child') rt_json(['error' => 'child only'], 403);
+        } elseif ($type === 'child_invite_parent') {
+            // Ребёнок БЕЗ настоящего родителя зовёт своего родителя по email (решение 2026-06-07).
+            // Как только primary-родитель появился — приглашать больше нельзя (управление у родителя).
+            if ($u['kind'] !== 'child') rt_json(['error' => 'child only'], 403);
+            if (rt_primary_guardian($db, (int)$u['id'])) rt_json(['error' => 'has_parent'], 409);
+            $email = isset($b['email']) ? (string)$b['email'] : '';
+            if (!rt_valid_email($email)) rt_json(['error' => 'bad email'], 422);
+            $email = rt_norm_email($email);
+            if (rt_email_banned($db, $email)) rt_json(['error' => 'banned'], 403);
+            // одно живое приглашение за раз: ребёнок может отозвать его и позвать заново
+            $s = $db->prepare("SELECT COUNT(*) AS n FROM invitations
+                               WHERE inviter_id = ? AND type = 'child_invite_parent' AND status = 'pending' AND expires_at > NOW()");
+            $s->execute([(int)$u['id']]);
+            $r = $s->fetch();
+            if ($r && (int)$r['n'] > 0) rt_json(['error' => 'invite_pending'], 409);
+            $targetChild = (int)$u['id']; // принятие пойдёт по ветке transfer: ребёнок = сам приглашающий
         } else {
             if ($u['kind'] !== 'parent') rt_json(['error' => 'parent only'], 403);
             $email = isset($b['email']) ? (string)$b['email'] : '';
@@ -306,13 +325,18 @@ switch ($op) {
             rt_json(['ok' => true, 'user' => rt_public_user($u, true), 'mustChangePassword' => true]);
         }
 
-        // co_parent и transfer_child — регистрируется новый РОДИТЕЛЬ (email из приглашения)
+        // co_parent, transfer_child и child_invite_parent — регистрируется новый РОДИТЕЛЬ (email из приглашения)
         if (!rt_valid_nickname($nick)) rt_json(['error' => 'bad nickname'], 422);
         if (!rt_valid_password($pass)) rt_json(['error' => 'weak password'], 422);
         if (rt_nickname_taken($db, $nick)) rt_json(['error' => 'nickname taken'], 409);
         $email = $inv['email'];
         if ($email && rt_email_taken($db, $email)) rt_json(['error' => 'email taken'], 409);
         if ($email && rt_email_banned($db, $email)) rt_json(['error' => 'banned'], 403); // бан сильнее приглашения
+        if ($type === 'child_invite_parent' && rt_primary_guardian($db, (int)$inv['target_child_id'])) {
+            // гонка: настоящий родитель уже появился, пока письмо шло — приглашение мертво (проверка ДО создания аккаунта)
+            $db->prepare("UPDATE invitations SET status = 'expired' WHERE id = ?")->execute([(int)$inv['id']]);
+            rt_json(['error' => 'has_parent'], 409);
+        }
         $pid = rt_create_user($db, $nick, 'parent', [
             'email' => $email, 'password_hash' => password_hash($pass, PASSWORD_DEFAULT),
             'must_change' => 0, 'invited_by' => (int)$inv['inviter_id'],
@@ -329,7 +353,7 @@ switch ($op) {
             rt_json(['ok' => true, 'user' => rt_public_user($u, true)]);
         }
 
-        // transfer_child: формируем нормальную семью ребёнка и рвём провизорную связь (с логом)
+        // transfer_child / child_invite_parent: формируем нормальную семью ребёнка и рвём провизорную связь (с логом)
         $child = (int)$inv['target_child_id'];
         if (!$child) rt_json(['error' => 'no target child'], 422);
         $fid = rt_create_family($db, $pid, 'Семья');
@@ -338,11 +362,12 @@ switch ($op) {
         $chk = $db->prepare("SELECT 1 FROM family_members WHERE family_id = ? AND user_id = ? LIMIT 1");
         $chk->execute([$fid, $child]);
         if (!$chk->fetch()) rt_add_member($db, $fid, $child, 'child');
+        // source='transfer' и для child_invite_parent: enum узкий, конкретный тип хранит source_invitation_id → invitations.type
         $gid = rt_add_guardianship($db, $child, $pid, $fid, 'primary', 'transfer', (int)$inv['id']);
         rt_sever_provisional($db, $child, 'real_parent_attached');
         $db->prepare("UPDATE invitations SET status = 'accepted', invited_user_id = ?, accepted_at = NOW() WHERE id = ?")->execute([$pid, (int)$inv['id']]);
         rt_start_session($db, $pid);
-        rt_log('accounts', 'account_created', $pid, 'parent', null, null, ['via' => 'transfer']);
+        rt_log('accounts', 'account_created', $pid, 'parent', null, null, ['via' => $type]);
         rt_log('accounts', 'family_created', $fid, null, null, null, ['owner' => $pid, 'for_child' => $child]);
         rt_log('accounts', 'guardianship_created', $gid, 'primary', null, null, ['child' => $child, 'guardian' => $pid]);
         rt_log('accounts', 'guardianship_severed', null, 'provisional', null, null, ['child' => $child, 'reason' => 'real_parent_attached']);
@@ -379,6 +404,8 @@ switch ($op) {
             rt_json(['ok' => true]);
         }
         if ($action === 'resend') {
+            // ребёнок не может переслать приглашение родителю, если настоящий родитель уже появился
+            if ($inv['type'] === 'child_invite_parent' && rt_primary_guardian($db, (int)$u['id'])) rt_json(['error' => 'has_parent'], 409);
             $db->prepare("UPDATE invitations SET status = 'revoked' WHERE id = ? AND status = 'pending'")->execute([$id]);
             $tok = rt_code(6);
             $db->prepare(
@@ -393,6 +420,33 @@ switch ($op) {
             rt_json(['ok' => true, 'invitation_id' => $newId, 'link' => $link]);
         }
         rt_json(['error' => 'bad action'], 422);
+    }
+
+    /* ---------------- ребёнок: мой родитель (для настроек и шаринга) ----------------
+       hasParent = есть НАСТОЯЩИЙ (primary) родитель. Если нет — ребёнок может позвать
+       своего родителя (invite type=child_invite_parent); pending — живое приглашение. */
+    case 'parent_status': {
+        $u = rt_require_login($db);
+        if ($u['kind'] !== 'child') rt_json(['error' => 'child only'], 403);
+        $gid = rt_primary_guardian($db, (int)$u['id']);
+        $parentNick = null;
+        if ($gid) {
+            $s = $db->prepare("SELECT name FROM users WHERE id = ? LIMIT 1");
+            $s->execute([$gid]);
+            $r = $s->fetch();
+            if ($r) $parentNick = (string)$r['name'];
+        }
+        $pending = null;
+        $s = $db->prepare(
+            "SELECT id, email, UNIX_TIMESTAMP(created_at)*1000 AS created, UNIX_TIMESTAMP(expires_at)*1000 AS expires
+             FROM invitations
+             WHERE inviter_id = ? AND type = 'child_invite_parent' AND status = 'pending' AND expires_at > NOW()
+             ORDER BY id DESC LIMIT 1"
+        );
+        $s->execute([(int)$u['id']]);
+        $r = $s->fetch();
+        if ($r) $pending = ['id' => (int)$r['id'], 'email' => $r['email'], 'created' => (int)$r['created'], 'expires' => (int)$r['expires']];
+        rt_json(['ok' => true, 'hasParent' => (bool)$gid, 'parentNick' => $parentNick, 'pending' => $pending]);
     }
 
     /* ---------------- члены семьи + дети ---------------- */
@@ -432,9 +486,12 @@ function rt_invite_mail($db, $type, $email, $inviterId, $targetChildId, $link, $
         $r = $s->fetch();
         return $r ? (string)$r['name'] : '';
     };
-    $action = ($type === 'transfer_child') ? 'transfer_child' : 'invite_co_parent';
+    $action = 'invite_co_parent';
+    if ($type === 'transfer_child') $action = 'transfer_child';
+    if ($type === 'child_invite_parent') $action = 'child_invite_parent';
     $data = ['link' => $link, 'inviter' => $nick($inviterId)];
     if ($type === 'transfer_child') $data['child'] = $nick($targetChildId);
+    if ($type === 'child_invite_parent') $data['child'] = $nick($inviterId); // приглашает сам ребёнок
     rt_mail_send_tpl($email, $action, $lang, $data);
 }
 

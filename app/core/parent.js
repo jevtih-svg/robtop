@@ -46,6 +46,9 @@ window.RobTop = window.RobTop || {};
       peak:{ morning:"Most active in the morning (7–11)", day:"Most active in the daytime (11–17)", evening:"Most active in the evening (17–22)" } },
     m:{ lastEvents:"Recent events", openJournal:"App log", empty:"Nothing here yet.",
       noText:"no comment", liked:"Liked: {x}", walkAdd:"🐾 Log a walk" },
+    give:{ btn:"⭐ Give points", title:"Give points", customPh:"How many", notePh:"What for? (the child will see it)",
+      submit:"Give +{n}", needAmount:"Enter the amount", needNote:"Write what it's for",
+      done:"+{n} points added", fail:"Couldn't save, try again" },
     g:{ win:"guessed it", wrong:"missed", timeout:"time ran out" },
     wl:{ banner:"View mode. Only {name} can make changes.",
       want:"Want", thinking:"Thinking", bought:"Bought", empty:"Nothing in this section.",
@@ -53,7 +56,7 @@ window.RobTop = window.RobTop || {};
       note:"Why I want it", openLink:"Open link", histTitle:"Wish history",
       hist:{ created:"Added", changed_mind:"Changed mind", purchased:"Bought", back_to_want:"Want again", edited:"Edited" },
       cnt:{ changed:"changed mind", bought:"bought", returned:"returned" },
-      ro:"View only — only {name} edits", close:"Close" },
+      ro:"View only — only {name} edits", close:"Close", fullPhoto:"Open full photo" },
     j:{ all:"All", count:{one:"{n} event in {d} days",other:"{n} events in {d} days"},
       today:"Today", yesterday:"Yesterday", empty:"No events yet.", more:"Show more", loading:"Loading…" },
     mood:{ happy:"Happy", mid:"So-so", sad:"Sad" },
@@ -62,7 +65,10 @@ window.RobTop = window.RobTop || {};
       accounts:{ login:"Signed in to the app" },
       wishlist:{ created:"Added a wish: “{t}”", changed_mind:"Changed mind: “{t}”", purchased:"“{t}” — bought! 🎉",
         back_to_want:"Wants “{t}” again", edited:"Edited the wish “{t}”", favorite:"Marked ★ “{t}”",
-        unfavorite:"Removed ★ “{t}”", deleted:"Removed the wish “{t}”", restored:"Brought back “{t}”", undo:"Undid an action" },
+        unfavorite:"Removed ★ “{t}”", deleted:"Removed the wish “{t}”", restored:"Brought back “{t}”", undo:"Undid an action",
+        share_request:"Asked to allow wishlist sharing 📨", share_grant:"Shared the wishlist with “{t}”",
+        share_revoke:"Removed wishlist access from “{t}”",
+        share_enabled:"Parent {n} enabled the public wishlist 🌐", share_disabled:"Parent {n} disabled the public wishlist 🔒" },
       teeth:{ done:"Brushed teeth · +10", skipped:"Skipped brushing", started:"Started brushing" },
       rating:{ day_rated:"Rated the day: {stars}" },
       mood:{ mood_set:"Mood of the day: {e} {name}" },
@@ -90,6 +96,9 @@ window.RobTop = window.RobTop || {};
       peak:{ morning:"Самое активное время — утро (7–11)", day:"Самое активное время — день (11–17)", evening:"Самое активное время — вечер (17–22)" } },
     m:{ lastEvents:"Последние события", openJournal:"Журнал приложения", empty:"Пока пусто.",
       noText:"без комментария", liked:"Понравилось: {x}", walkAdd:"🐾 Записать прогулку" },
+    give:{ btn:"⭐ Начислить очки", title:"Начислить очки", customPh:"Сколько", notePh:"За что? (увидит ребёнок)",
+      submit:"Начислить +{n}", needAmount:"Введи сумму", needNote:"Напиши, за что",
+      done:"+{n} пунктов начислено", fail:"Не получилось сохранить, попробуй ещё раз" },
     g:{ win:"угадал", wrong:"не угадал", timeout:"время вышло" },
     wl:{ banner:"Режим просмотра. Изменения может вносить только {name}.",
       want:"Хочу", thinking:"Думаю", bought:"Купил", empty:"В этом разделе пусто.",
@@ -97,7 +106,7 @@ window.RobTop = window.RobTop || {};
       note:"Почему хочу", openLink:"Открыть ссылку", histTitle:"История желания",
       hist:{ created:"Добавлено", changed_mind:"Передумал", purchased:"Куплено", back_to_want:"Снова хочу", edited:"Изменено" },
       cnt:{ changed:"раз передумал", bought:"раз куплено", returned:"раз вернул" },
-      ro:"Только просмотр — редактирует {name}", close:"Закрыть" },
+      ro:"Только просмотр — редактирует {name}", close:"Закрыть", fullPhoto:"Открыть фото полностью" },
     j:{ all:"Все", count:{one:"{n} событие за {d} дней",few:"{n} события за {d} дней",many:"{n} событий за {d} дней"},
       today:"Сегодня", yesterday:"Вчера", empty:"Событий пока нет.", more:"Показать ещё", loading:"Загрузка…" },
     mood:{ happy:"Весёлое", mid:"Среднее", sad:"Грустное" },
@@ -106,7 +115,10 @@ window.RobTop = window.RobTop || {};
       accounts:{ login:"Вошёл в приложение" },
       wishlist:{ created:"Добавил желание «{t}»", changed_mind:"Передумал: «{t}»", purchased:"«{t}» — куплено! 🎉",
         back_to_want:"Снова хочет «{t}»", edited:"Изменил желание «{t}»", favorite:"Отметил ★ «{t}»",
-        unfavorite:"Снял ★ «{t}»", deleted:"Удалил желание «{t}»", restored:"Вернул «{t}»", undo:"Отменил действие" },
+        unfavorite:"Снял ★ «{t}»", deleted:"Удалил желание «{t}»", restored:"Вернул «{t}»", undo:"Отменил действие",
+        share_request:"Попросил разрешить делиться виш-листом 📨", share_grant:"Поделился виш-листом с «{t}»",
+        share_revoke:"Убрал доступ к виш-листу у «{t}»",
+        share_enabled:"Родитель {n} включил публичный виш-лист 🌐", share_disabled:"Родитель {n} выключил публичный виш-лист 🔒" },
       teeth:{ done:"Почистил зубы · +10", skipped:"Пропустил чистку", started:"Начал чистку зубов" },
       rating:{ day_rated:"Оценил день: {stars}" },
       mood:{ mood_set:"Настроение дня: {e} {name}" },
@@ -134,6 +146,9 @@ window.RobTop = window.RobTop || {};
       peak:{ morning:"Aktīvākais laiks — rīts (7–11)", day:"Aktīvākais laiks — diena (11–17)", evening:"Aktīvākais laiks — vakars (17–22)" } },
     m:{ lastEvents:"Pēdējie notikumi", openJournal:"Lietotnes žurnāls", empty:"Vēl nekā nav.",
       noText:"bez komentāra", liked:"Patika: {x}", walkAdd:"🐾 Pierakstīt pastaigu" },
+    give:{ btn:"⭐ Piešķirt punktus", title:"Piešķirt punktus", customPh:"Cik daudz", notePh:"Par ko? (bērns redzēs)",
+      submit:"Piešķirt +{n}", needAmount:"Ievadi summu", needNote:"Uzraksti, par ko",
+      done:"+{n} punkti pieskaitīti", fail:"Neizdevās saglabāt, mēģini vēlreiz" },
     g:{ win:"uzminēja", wrong:"neuzminēja", timeout:"laiks beidzās" },
     wl:{ banner:"Skatīšanās režīms. Izmaiņas var veikt tikai {name}.",
       want:"Gribu", thinking:"Domāju", bought:"Nopirku", empty:"Šajā sadaļā nekā nav.",
@@ -141,7 +156,7 @@ window.RobTop = window.RobTop || {};
       note:"Kāpēc gribu", openLink:"Atvērt saiti", histTitle:"Vēlmes vēsture",
       hist:{ created:"Pievienots", changed_mind:"Pārdomāju", purchased:"Nopirkts", back_to_want:"Atkal gribu", edited:"Mainīts" },
       cnt:{ changed:"reizes pārdomāja", bought:"reizes nopirkts", returned:"reizes atgrieza" },
-      ro:"Tikai skatīšanās — rediģē {name}", close:"Aizvērt" },
+      ro:"Tikai skatīšanās — rediģē {name}", close:"Aizvērt", fullPhoto:"Atvērt foto pilnā izmērā" },
     j:{ all:"Visi", count:{zero:"{n} notikumu {d} dienās",one:"{n} notikums {d} dienās",other:"{n} notikumi {d} dienās"},
       today:"Šodien", yesterday:"Vakar", empty:"Notikumu vēl nav.", more:"Rādīt vairāk", loading:"Ielādē…" },
     mood:{ happy:"Priecīgs", mid:"Vidējs", sad:"Skumjš" },
@@ -150,7 +165,10 @@ window.RobTop = window.RobTop || {};
       accounts:{ login:"Pieslēdzās lietotnei" },
       wishlist:{ created:"Pievienoja vēlmi “{t}”", changed_mind:"Pārdomāja: “{t}”", purchased:"“{t}” — nopirkts! 🎉",
         back_to_want:"Atkal grib “{t}”", edited:"Mainīja vēlmi “{t}”", favorite:"Atzīmēja ★ “{t}”",
-        unfavorite:"Noņēma ★ “{t}”", deleted:"Dzēsa vēlmi “{t}”", restored:"Atgrieza “{t}”", undo:"Atcēla darbību" },
+        unfavorite:"Noņēma ★ “{t}”", deleted:"Dzēsa vēlmi “{t}”", restored:"Atgrieza “{t}”", undo:"Atcēla darbību",
+        share_request:"Palūdza atļauju dalīties ar vēlmju sarakstu 📨", share_grant:"Padalījās ar vēlmju sarakstu ar “{t}”",
+        share_revoke:"Noņēma vēlmju saraksta piekļuvi “{t}”",
+        share_enabled:"Vecāks {n} ieslēdza publisko vēlmju sarakstu 🌐", share_disabled:"Vecāks {n} izslēdza publisko vēlmju sarakstu 🔒" },
       teeth:{ done:"Iztīrīja zobus · +10", skipped:"Izlaida tīrīšanu", started:"Sāka tīrīt zobus" },
       rating:{ day_rated:"Novērtēja dienu: {stars}" },
       mood:{ mood_set:"Dienas garastāvoklis: {e} {name}" },
@@ -170,7 +188,10 @@ window.RobTop = window.RobTop || {};
 
   var NOISE={ opened_app:1, opened_module:1, viewed_detail:1, viewed_stats:1 };
   var SKIP_MOD={ bank:1, admin:1 };
-  var WL_DOMAIN={ created:1, changed_mind:1, purchased:1, back_to_want:1, edited:1, favorite:1, unfavorite:1, deleted:1, restored:1 };
+  var WL_DOMAIN={ created:1, changed_mind:1, purchased:1, back_to_want:1, edited:1, favorite:1, unfavorite:1, deleted:1, restored:1,
+    share_request:1, share_grant:1, share_revoke:1 }; /* шаринг: действия РЕБЁНКА — домен */
+  /* тумблер шаринга включает РОДИТЕЛЬ — в журнале виден, но детским действием не считается */
+  var WL_PARENT_EV={ share_enabled:1, share_disabled:1 };
   var GEN_DOMAIN={ created:1, edited:1, moved:1, favorite:1, unfavorite:1, deleted:1, restored:1 };
   var SECTC={ want:"#ff3db0", thinking:"#a64bff", bought:"#2bf0c0" };
   var HISTC={ created:"#19e3ff", changed_mind:"#a64bff", purchased:"#2bf0c0", back_to_want:"#ff3db0", edited:"#ffd23b" };
@@ -235,9 +256,10 @@ window.RobTop = window.RobTop || {};
       default:         return GEN_DOMAIN[e.type]===1 && coll!=="meta";
     }
   }
-  /* видимость в ленте журнала: домен + «Вошёл в приложение» */
+  /* видимость в ленте журнала: домен + «Вошёл в приложение» + тумблер шаринга (родитель) */
   function inJournal(e){
     if(e.module==="accounts") return e.type==="login";
+    if(e.module==="wishlist" && WL_PARENT_EV[e.type]===1) return true;
     return isDomain(e);
   }
 
@@ -255,6 +277,7 @@ window.RobTop = window.RobTop || {};
       var mk=(e.meta&&e.meta.mood)||"mid";
       p.e=MOOD_E[mk]||"🙂"; p.name=t("parent.mood."+mk,{fallback:mk});
     }
+    if(e.module==="wishlist" && WL_PARENT_EV[e.type]===1) p.n=(e.meta&&e.meta.by_nick)||"";
     var s=tIf(key,p);
     if(!s) s=tIf("parent.ev.generic."+e.type,p);
     if(!s) s=e.type;
@@ -361,6 +384,8 @@ window.RobTop = window.RobTop || {};
       +'<div class="h"><div class="n">'+a.per.length+'</div><div class="l">'+esc(I.plural(a.per.length,"parent.hud.acts").replace(/\{n\}\s*/,"").replace(/^\d+\s*/,""))+'</div></div>'
       +'<div class="h"><div class="n">'+a.activeDays+'</div><div class="l">'+esc(I.plural(a.activeDays,"parent.hud.days").replace(/\{n\}\s*/,"").replace(/^\d+\s*/,""))+'</div></div>'
       +'<div class="h"><div class="n">'+(data.points||0)+'</div><div class="l">'+esc(t("parent.hud.points"))+'</div></div></div>';
+    /* начисление очков родителем: шторка с быстрыми суммами (пишет в леджер Копилки) */
+    h+='<button class="btn btn-primary" id="pdGive" style="flex:none;width:100%;margin:10px 0 0">'+esc(t("parent.give.btn"))+'</button>';
     /* график: ряд баров + отдельный ряд подписей; считаются только домен-события */
     var n=S.period, max=1, d, bars="", labels="";
     for(d=0;d<n;d++) if((a.perDay[d]||0)>max) max=a.perDay[d];
@@ -631,8 +656,9 @@ window.RobTop = window.RobTop || {};
       if(w.history[i].type==="back_to_want")rt2++;
     }
     var node=document.createElement("div");
+    /* фото кликабельно: открывает ПОЛНОЕ изображение во весь экран (лайтбокс) */
     var ph=w.photo
-      ? '<span class="ph" style="background-image:url(\''+esc(w.photo)+'\')"></span>'
+      ? '<span class="ph" data-full="'+esc(w.photo)+'" role="button" tabindex="0" aria-label="'+esc(t("parent.wl.fullPhoto"))+'" style="background-image:url(\''+esc(w.photo)+'\')"></span>'
       : '<span class="ph emo">'+esc(w.icon||"🍒")+'</span>';
     var h='<div class="pd-dhead" style="--sc:'+SECTC[w.status]+'">'+ph
       +'<div><h2 style="text-align:left;margin:0 0 6px">'+(w.favorite?'<span style="color:var(--gold)">★</span> ':'')+esc(w.title||"")+'</h2>'
@@ -655,6 +681,81 @@ window.RobTop = window.RobTop || {};
     var ctl=(RT._shell&&RT._shell.sheet)?RT._shell.sheet(node):null;
     var cb=node.querySelector("[data-close]");
     if(cb&&ctl) cb.onclick=ctl.close;
+    var phEl=node.querySelector("[data-full]");
+    if(phEl){
+      phEl.onclick=function(){ openLightbox(phEl.getAttribute("data-full")); };
+      phEl.onkeydown=function(ev){ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); openLightbox(phEl.getAttribute("data-full")); } };
+    }
+  }
+
+  /* ---------- лайтбокс: полноэкранный просмотр фото желания (тап по фото в детали) ---------- */
+  function openLightbox(src){
+    if(!src) return;
+    var ov=document.createElement("div");
+    ov.className="pd-lightbox";
+    ov.innerHTML='<img alt="">';
+    ov.querySelector("img").src=src;
+    document.body.appendChild(ov);
+    function close(){ if(ov.parentNode) ov.parentNode.removeChild(ov); document.removeEventListener("keydown",onK); }
+    function onK(ev){ if(ev.key==="Escape") close(); }
+    ov.addEventListener("click",close);
+    document.addEventListener("keydown",onK);
+  }
+
+  /* ---------- начисление очков родителем (быстрые суммы + произвольная) ----------
+     Пишет ТОЛЬКО через движок sdk.points (ГАЙД-очки.md §8.3): транзакция
+     {n:+N, reason:"parent_give", kind:"parent", note} — винстрик не трогает,
+     история видна ребёнку в Копилке (вкладка «Родители»), note перебивает подпись.
+     Серверный путь: data.php → bank/points; роль parent скоупится на ребёнка
+     СЕМЬИ (rt_family_child_uid, общий пул — как walk), миграция 010 разрешает
+     edit роли parent в манифесте bank. */
+  var _bsdk=null, giveBusy=false;
+  function bankSdk(){ if(!_bsdk) _bsdk=RT.createSdk({id:"bank"}); return _bsdk; }
+  function openGive(){
+    var AMTS=[10,20,25,50];
+    var node=document.createElement("div");
+    var h='<h2>'+esc(t("parent.give.title"))+'</h2>';
+    h+='<div class="pd-gamts" id="pdGA">';
+    AMTS.forEach(function(a,i){ h+='<button type="button" data-a="'+a+'"'+(i===0?' class="on"':'')+'>+'+a+'</button>'; });
+    h+='<button type="button" data-a="0">+…</button></div>';
+    h+='<div class="field" id="pdGCW" style="display:none"><input type="number" id="pdGC" inputmode="numeric" min="1" max="9999" placeholder="'+esc(t("parent.give.customPh"))+'"></div>';
+    h+='<div class="field"><input type="text" id="pdGN" maxlength="60" placeholder="'+esc(t("parent.give.notePh"))+'"></div>';
+    h+='<div class="sheet-actions"><button class="btn btn-cancel" data-close style="flex:1">'+esc(t("parent.close"))+'</button>'
+      +'<button class="btn btn-primary" id="pdGGo" style="flex:1.4">'+esc(t("parent.give.submit",{n:AMTS[0]}))+'</button></div>';
+    node.innerHTML=h;
+    var ctl=RT._shell.sheet(node);
+    node.querySelector("[data-close]").onclick=ctl.close;
+    var amt=AMTS[0], custom=false;
+    var cw=node.querySelector("#pdGCW"), ci=node.querySelector("#pdGC"),
+        ni=node.querySelector("#pdGN"), go=node.querySelector("#pdGGo");
+    function val(){ return custom ? Math.max(0,parseInt((ci.value||"").trim(),10)||0) : amt; }
+    function lbl(){ var n=val(); go.textContent=t("parent.give.submit",{n:n||"…"}); }
+    Array.prototype.forEach.call(node.querySelectorAll("#pdGA [data-a]"),function(b){
+      b.onclick=function(){
+        Array.prototype.forEach.call(node.querySelectorAll("#pdGA [data-a]"),function(x){ x.classList.toggle("on",x===b); });
+        var a=parseInt(b.getAttribute("data-a"),10)||0;
+        custom=(a===0); cw.style.display=custom?"":"none";
+        if(custom) ci.focus(); else amt=a;
+        lbl();
+      };
+    });
+    ci.oninput=lbl;
+    go.onclick=function(){
+      if(giveBusy) return;
+      var n=val();
+      if(!n){ RT._shell.toast(t("parent.give.needAmount")); if(custom) ci.focus(); return; }
+      var note=(ni.value||"").trim();
+      if(!note){ RT._shell.toast(t("parent.give.needNote")); ni.focus(); return; }
+      giveBusy=true; go.disabled=true;
+      /* fire-and-forget по гайду нельзя: родителю нужен результат; add никогда не reject */
+      bankSdk().points.add(n,"parent_give",{kind:"parent",src:"parent",note:note}).then(function(out){
+        giveBusy=false; go.disabled=false;
+        if(!out || !out.ok){ RT._shell.toast(t("parent.give.fail")); return; }
+        ctl.close();
+        RT._shell.toast(t("parent.give.done",{n:n}));
+        fetchData(S.childId); /* обновить HUD очков */
+      });
+    };
   }
 
   function openChildSwitch(){
@@ -719,6 +820,8 @@ window.RobTop = window.RobTop || {};
     if(oj) oj.onclick=function(){ S.jfilter=S.mod; S.mod=null; S.tab="journal"; S.jshown=PAGE; render(); window.scrollTo(0,0); };
     var wa=root.querySelector("#pdWalkAdd");
     if(wa) wa.onclick=function(){ if(RT.open) RT.open("walk"); };
+    var gv=root.querySelector("#pdGive");
+    if(gv) gv.onclick=openGive;
     var g=root.querySelector("#pdGear");
     if(g) g.onclick=function(){ if(RT._shell.openSettings) RT._shell.openSettings(); };
     var rf=root.querySelector("#pdRefresh"); if(rf) rf.onclick=function(){ fetchData(S.childId); };

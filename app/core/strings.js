@@ -54,8 +54,25 @@
         invites: "Invitations", invitesEmpty: "No sent invitations.",
         revoke: "Revoke", revoked: "Invitation revoked",
         resend: "New link", resendDone: "Here is a fresh link:",
-        invType: { co_parent: "second parent", child_to_child: "friend", transfer_child: "child handover" },
-        st: { pending: "pending", accepted: "accepted", revoked: "revoked", expired: "expired" }
+        invType: { co_parent: "second parent", child_to_child: "friend", transfer_child: "child handover", child_invite_parent: "parent invitation" },
+        st: { pending: "pending", accepted: "accepted", revoked: "revoked", expired: "expired" },
+        share: "Public wishlist", shareOn: "on", shareOff: "off",
+        shareConfirmOn: "Open {name}'s wishlist to anyone with the link (photos included) and allow sharing with RobTop users?",
+        shareConfirmOff: "Close {name}'s wishlist? The link and all granted accesses stop working right away.",
+        shareOnDone: "Wishlist sharing is on", shareOffDone: "Wishlist sharing is off"
+      },
+      myparent: {
+        title: "My parent",
+        managed: "Your parent manages your account and family.",
+        hint: "You have no parent in the app yet. Enter your parent's email — they will get an invitation and become your parent here.",
+        inviteBtn: "Invite my parent", sent: "Invitation sent! 📨",
+        pendingHint: "The invitation has been sent to your parent. You can revoke it and send a new one.",
+        revoked: "Invitation revoked",
+        conflict: "Invitation already exists, or you already have a parent"
+      },
+      shared: {
+        title: "Shared with me",
+        empty: "No one has shared a wishlist with you yet."
       },
       friend: {
         title: "Friends",
@@ -184,8 +201,25 @@
         invites: "Приглашения", invitesEmpty: "Отправленных приглашений нет.",
         revoke: "Отозвать", revoked: "Приглашение отозвано",
         resend: "Новая ссылка", resendDone: "Вот свежая ссылка:",
-        invType: { co_parent: "второй родитель", child_to_child: "друг", transfer_child: "передача ребёнка" },
-        st: { pending: "ждёт", accepted: "принято", revoked: "отозвано", expired: "истекло" }
+        invType: { co_parent: "второй родитель", child_to_child: "друг", transfer_child: "передача ребёнка", child_invite_parent: "приглашение родителя" },
+        st: { pending: "ждёт", accepted: "принято", revoked: "отозвано", expired: "истекло" },
+        share: "Публичный виш-лист", shareOn: "включён", shareOff: "выключен",
+        shareConfirmOn: "Открыть виш-лист {name} всем, у кого есть ссылка (включая фото), и разрешить делиться с пользователями RobTop?",
+        shareConfirmOff: "Закрыть виш-лист {name}? Ссылка и все выданные доступы сразу перестанут работать.",
+        shareOnDone: "Шаринг виш-листа включён", shareOffDone: "Шаринг виш-листа выключен"
+      },
+      myparent: {
+        title: "Мой родитель",
+        managed: "Твоим аккаунтом и семьёй управляет родитель.",
+        hint: "У тебя пока нет родителя в приложении. Введи email своего родителя — он получит приглашение и станет твоим родителем здесь.",
+        inviteBtn: "Пригласить родителя", sent: "Приглашение отправлено! 📨",
+        pendingHint: "Приглашение родителю отправлено. Можно отозвать его и отправить новое.",
+        revoked: "Приглашение отозвано",
+        conflict: "Приглашение уже отправлено, или родитель уже есть"
+      },
+      shared: {
+        title: "Поделились со мной",
+        empty: "Пока никто не поделился с вами виш-листом."
       },
       friend: {
         title: "Друзья",
@@ -314,8 +348,25 @@
         invites: "Ielūgumi", invitesEmpty: "Nosūtītu ielūgumu nav.",
         revoke: "Atsaukt", revoked: "Ielūgums atsaukts",
         resend: "Jauna saite", resendDone: "Šeit ir jauna saite:",
-        invType: { co_parent: "otrs vecāks", child_to_child: "draugs", transfer_child: "bērna nodošana" },
-        st: { pending: "gaida", accepted: "pieņemts", revoked: "atsaukts", expired: "beidzies" }
+        invType: { co_parent: "otrs vecāks", child_to_child: "draugs", transfer_child: "bērna nodošana", child_invite_parent: "vecāka ielūgums" },
+        st: { pending: "gaida", accepted: "pieņemts", revoked: "atsaukts", expired: "beidzies" },
+        share: "Publiskais vēlmju saraksts", shareOn: "ieslēgts", shareOff: "izslēgts",
+        shareConfirmOn: "Atvērt {name} vēlmju sarakstu visiem, kam ir saite (ieskaitot foto), un atļaut dalīties ar RobTop lietotājiem?",
+        shareConfirmOff: "Aizvērt {name} vēlmju sarakstu? Saite un visas piešķirtās piekļuves uzreiz pārstās darboties.",
+        shareOnDone: "Dalīšanās ir ieslēgta", shareOffDone: "Dalīšanās ir izslēgta"
+      },
+      myparent: {
+        title: "Mans vecāks",
+        managed: "Tavu kontu un ģimeni pārvalda vecāks.",
+        hint: "Tev lietotnē vēl nav vecāka. Ievadi sava vecāka e-pastu — viņš saņems ielūgumu un kļūs par tavu vecāku šeit.",
+        inviteBtn: "Uzaicināt vecāku", sent: "Ielūgums nosūtīts! 📨",
+        pendingHint: "Ielūgums vecākam ir nosūtīts. Vari to atsaukt un nosūtīt jaunu.",
+        revoked: "Ielūgums atsaukts",
+        conflict: "Ielūgums jau pastāv, vai vecāks jau ir"
+      },
+      shared: {
+        title: "Ar mani dalījās",
+        empty: "Neviens vēl nav padalījies ar vēlmju sarakstu."
       },
       friend: {
         title: "Draugi",

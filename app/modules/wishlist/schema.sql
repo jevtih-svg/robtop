@@ -1,6 +1,10 @@
 -- RobTop — схема модуля «Виш-лист» (родной, dedicated-таблица).
 -- Уже входит в корневой schema.sql; дублируется здесь для самодостаточности модуля.
 -- Кодировка utf8mb4.
+--
+-- Шаринг (2026-06-07): таблицы wishlist_share_settings (флаг «можно делиться», включает
+-- только родитель) и wishlist_share_grants (адресные доступы пользователям платформы)
+-- создаёт авто-миграция api/migrations/011_wishlist_share.sql — единственный источник DDL.
 
 CREATE TABLE IF NOT EXISTS wishlist_items (
   id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

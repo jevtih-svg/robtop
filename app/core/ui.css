@@ -238,6 +238,10 @@ div.acct-row{margin-top:8px}
    Только для родительской сессии. Глобальный HUD скрыт — вместо него таббар .pd-tabbar. */
 body[data-view="parent"] .hud{display:none}
 body[data-view="parent"] .fab{display:none}
+/* фон-декор (канвас #bg: неоновые линии и орбы) просвечивал сквозь почти прозрачные
+   карточки дашборда (rgba(255,255,255,.045)) и визуально «ломал» график активности.
+   В родительском виде приглушаем канвас целиком — чинит все pd-поверхности разом. */
+body[data-view="parent"] #bg{opacity:.15;filter:saturate(.65)}
 #parent{padding-bottom:6px}
 .pd-wrap{padding-bottom:96px}
 .pd-top{display:flex;align-items:center;gap:8px;padding:calc(26px + env(safe-area-inset-top)) 0 10px}
@@ -260,6 +264,12 @@ body[data-view="parent"] .fab{display:none}
 .pd-seg{display:flex;gap:5px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:4px}
 .pd-seg button{flex:1;border:none;background:none;color:#cfe0ff;font-family:inherit;font-weight:800;font-size:12px;padding:7px 8px;border-radius:999px;cursor:pointer;transition:.15s}
 .pd-seg button.on{color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0);box-shadow:0 0 14px -4px var(--cyan)}
+/* начисление очков родителем: быстрые суммы в шторке */
+.pd-gamts{display:flex;gap:7px;margin-top:2px}
+.pd-gamts button{flex:1;border:1.6px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#cfe0ff;
+  font-family:'Russo One',sans-serif;font-size:16px;padding:13px 0;border-radius:14px;cursor:pointer;transition:.15s}
+.pd-gamts button.on{color:#2b1605;background:linear-gradient(180deg,#ffe57a,#ffb02e);border-color:transparent;
+  box-shadow:0 0 14px -4px var(--gold)}
 /* HUD-карточки обзора */
 .pd-hud{display:flex;gap:8px;margin-top:10px}
 .pd-hud .h{flex:1;text-align:center;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:15px;padding:11px 6px 9px}
@@ -418,3 +428,8 @@ body[data-view="parent"] .pd-tabbar{display:flex}
 .acct-go:active{transform:scale(.99)}
 .acct-x{flex:0 0 auto;width:34px;height:34px;margin-right:8px;border:1px solid rgba(255,77,109,.45);
   border-radius:10px;background:rgba(255,77,109,.12);color:#ffb3c0;font-weight:800;cursor:pointer}
+
+/* ===== лайтбокс: полноэкранный просмотр фото желания (родительский дашборд, 2026-06-07) ===== */
+.pd-lightbox{position:fixed;inset:0;z-index:60;background:rgba(3,3,12,.93);display:flex;align-items:center;justify-content:center;padding:18px;cursor:zoom-out}
+.pd-lightbox img{max-width:100%;max-height:100%;border-radius:14px;box-shadow:0 0 60px rgba(25,227,255,.25)}
+.pd-dhead .ph[data-full]{cursor:zoom-in}

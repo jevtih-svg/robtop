@@ -31,4 +31,9 @@ AddDefaultCharset UTF-8
   # путям, при внутреннем rewrite браузер остался бы на /i/... и пути бы сломались.
   RewriteRule ^i/([A-Za-z0-9]{4,64})$ app/family.html?invite=$1 [R=302,L]
   RewriteRule ^r/([A-Za-z0-9]{4,64})$ app/family.html?reset=$1 [R=302,L]
+
+  # Публичный виш-лист: /robtop/w/<ник> → app/w.html?u=<ник>.
+  # Ник может быть кириллицей/с пробелами: флаг B заново кодирует $1 в query string.
+  # Лимит в БАЙТАХ декодированного пути (24 кириллических символа = 48 байт) — поэтому 128.
+  RewriteRule ^w/([^/]{2,128})$ app/w.html?u=$1 [R=302,L,B]
 </IfModule>

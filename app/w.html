@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07061a">
+<meta name="robots" content="noindex">
+<title>RobTop — Wishlist</title>
+<link rel="icon" type="image/svg+xml" href="media/icon/icon.svg">
+<style>
+  /* ПУБЛИЧНАЯ страница виш-листа: /robtop/w/<ник> (корневой .htaccess → w.html?u=<ник>).
+     Доступна любому, у кого есть ссылка, ЕСЛИ родитель включил шаринг ребёнку
+     (api/share.php op=view; иначе единый 404 — существование пользователя не раскрываем).
+     Standalone, как family.html: без core/*, мини-i18n en/ru/lv внутри
+     (?lang → localStorage robtop_locale → язык браузера → en). Только чтение. */
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root{--cyan:#19e3ff;--pink:#ff3db0;--purple:#a64bff;--mint:#2bf0c0;--gold:#ffd23b;--ink:#eaf2ff;--muted:#93a6cf}
+  html,body{margin:0;min-height:100%}
+  body{font-family:'Rubik',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink);background:#05050f;
+    background-image:radial-gradient(820px 600px at 14% 8%,rgba(166,75,255,.20),transparent 60%),
+      radial-gradient(820px 680px at 88% 22%,rgba(25,227,255,.15),transparent 60%),
+      radial-gradient(900px 800px at 50% 108%,rgba(255,43,214,.18),transparent 60%),
+      linear-gradient(180deg,#070617 0%,#05040f 60%,#07041a 100%);min-height:100vh}
+  .wrap{max-width:460px;margin:0 auto;padding:calc(22px + env(safe-area-inset-top)) 16px 48px}
+  h1{font-family:'Russo One',sans-serif;font-size:26px;margin:0;color:#fff;text-shadow:0 0 12px rgba(25,227,255,.7),0 0 26px rgba(255,43,214,.5)}
+  h1 b{color:var(--pink);font-weight:400}
+  .sub{color:var(--muted);font-weight:600;font-size:13px;margin:2px 0 18px;display:flex;align-items:center;gap:7px}
+  .sub .cic{width:16px;height:16px;color:var(--pink);display:inline-flex}
+  .sub .cic svg{width:100%;height:100%}
+  .card{background:linear-gradient(162deg,rgba(26,23,56,.72),rgba(11,10,28,.74));border:1.5px solid rgba(255,255,255,.12);
+    border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 8px 26px rgba(0,0,0,.4)}
+  .muted{color:var(--muted);font-size:13px;font-weight:600;line-height:1.5}
+  .sect{display:flex;align-items:center;gap:8px;font-family:'Russo One',sans-serif;font-size:15px;color:#fff;margin:22px 2px 10px}
+  .sect .dot{width:9px;height:9px;border-radius:50%;background:var(--sc);box-shadow:0 0 10px var(--sc)}
+  .sect .n{margin-left:auto;font-family:'Rubik',sans-serif;font-weight:800;font-size:12.5px;color:var(--muted);
+    background:rgba(255,255,255,.07);border-radius:11px;padding:3px 10px}
+  .wcard{display:flex;gap:12px;align-items:flex-start;background:linear-gradient(162deg,rgba(26,23,56,.72),rgba(11,10,28,.74));
+    border:1.5px solid rgba(255,255,255,.12);border-left:4px solid var(--sc);border-radius:16px;padding:12px;margin-bottom:10px}
+  .ph{flex:0 0 64px;width:64px;height:64px;border-radius:13px;background-size:cover;background-position:center;
+    background-color:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);cursor:zoom-in}
+  .ph.emo{display:flex;align-items:center;justify-content:center;font-size:30px;cursor:default}
+  .tx{flex:1;min-width:0}
+  .t1{font-weight:800;font-size:15px;color:#fff;overflow-wrap:anywhere}
+  .t1 .fav{color:var(--gold);margin-right:3px}
+  .nt{display:block;color:var(--muted);font-size:12.5px;font-weight:600;margin-top:3px;overflow-wrap:anywhere}
+  .lnk{display:inline-flex;align-items:center;gap:5px;margin-top:8px;color:var(--cyan);font-size:12.5px;font-weight:800;
+    text-decoration:none;background:rgba(25,227,255,.1);border:1px solid rgba(25,227,255,.35);border-radius:11px;padding:5px 10px}
+  .bought{display:inline-flex;align-items:center;gap:5px;margin-top:8px;margin-left:6px;color:#04231c;font-size:11.5px;font-weight:800;
+    background:linear-gradient(180deg,#3df0c0,#19c7a0);border-radius:11px;padding:5px 10px}
+  .empty{color:var(--muted);font-weight:600;font-size:13px;padding:6px 2px 2px}
+  .foot{color:var(--muted);font-size:12px;font-weight:600;text-align:center;margin-top:26px}
+  .foot a{color:var(--cyan);text-decoration:none;font-weight:700}
+  /* лайтбокс: полноразмерное фото */
+  .lb{position:fixed;inset:0;background:rgba(3,3,12,.93);display:none;align-items:center;justify-content:center;z-index:50;cursor:zoom-out;padding:18px}
+  .lb.show{display:flex}
+  .lb img{max-width:100%;max-height:100%;border-radius:14px;box-shadow:0 0 60px rgba(25,227,255,.25)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div><h1>Rob<b>Top</b></h1></div>
+  <div class="sub" id="subline"></div>
+  <div id="app"><div class="card muted" id="loading">…</div></div>
+  <div class="foot">RobTop · <a href="index.html" id="toApp">apps.tilley.live/robtop</a></div>
+</div>
+<div class="lb" id="lb"><img id="lbImg" alt=""></div>
+
+<script>
+"use strict";
+/* ---------- мини-i18n (en по умолчанию, как в приложении) ---------- */
+var T={
+  en:{ title:"Wishlist", of:"Wishlist of {n}", want:"Want", thinking:"Thinking", bought:"Bought",
+    openLink:"Open link", boughtBadge:"Bought", empty:"Nothing here yet.",
+    nfH:"Wishlist not found", nfP:"There is no such list, or its owner has not opened it. Ask them for a correct link.",
+    errH:"Couldn't load", errP:"Check the connection and refresh the page.", listEmpty:"The wishlist is empty so far." },
+  ru:{ title:"Виш-лист", of:"Виш-лист — {n}", want:"Хочу", thinking:"Думаю", bought:"Купил",
+    openLink:"Открыть ссылку", boughtBadge:"Куплено", empty:"Здесь пока пусто.",
+    nfH:"Виш-лист не найден", nfP:"Такого списка нет, или владелец его не открыл. Попросите правильную ссылку.",
+    errH:"Не удалось загрузить", errP:"Проверьте связь и обновите страницу.", listEmpty:"В виш-листе пока пусто." },
+  lv:{ title:"Vēlmju saraksts", of:"Vēlmju saraksts — {n}", want:"Gribu", thinking:"Domāju", bought:"Nopirku",
+    openLink:"Atvērt saiti", boughtBadge:"Nopirkts", empty:"Šeit vēl nekā nav.",
+    nfH:"Vēlmju saraksts nav atrasts", nfP:"Šāda saraksta nav, vai īpašnieks to nav atvēris. Palūdziet pareizu saiti.",
+    errH:"Neizdevās ielādēt", errP:"Pārbaudiet savienojumu un atjaunojiet lapu.", listEmpty:"Vēlmju saraksts pagaidām ir tukšs." }
+};
+function lang(){
+  var q=new URLSearchParams(location.search).get('lang');
+  if(q && T[q]) return q;
+  try{ var s=localStorage.getItem('robtop_locale'); if(s && T[s]) return s; }catch(e){}
+  var langs=(navigator.languages&&navigator.languages.length)?navigator.languages:[navigator.language||""];
+  for(var i=0;i<langs.length;i++){ var c=String(langs[i]||"").slice(0,2).toLowerCase(); if(T[c]) return c; }
+  return 'en';
+}
+var L=T[lang()];
+function t(k,p){ var s=L[k]||k; if(p) for(var x in p) s=s.replace('{'+x+'}',p[x]); return s; }
+
+var APP=document.getElementById('app'), SUB=document.getElementById('subline');
+var CHERRY='<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="7.5" cy="17" r="3.6"/><circle cx="15.7" cy="17.6" r="3.6"/><path d="M8 14.4C9 8.4 13 5 18.4 3.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16.1 14.6C16.7 9.4 15 6 12 3.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M18.4 3.8c1-1.1 2.7-1.1 3.6.3-1.5.5-2.5.4-3.6-.3z"/></svg>';
+var SECTC={ want:'#ff3db0', thinking:'#a64bff', bought:'#2bf0c0' };
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function normUrl(u){ u=(u||"").trim(); if(!u) return ""; if(!/^https?:\/\//i.test(u)) u="https://"+u; return u; }
+
+document.title='RobTop — '+t('title');
+SUB.innerHTML='<span class="cic">'+CHERRY+'</span>'+esc(t('title'));
+
+/* ---------- лайтбокс (полное фото) ---------- */
+var LB=document.getElementById('lb'), LBI=document.getElementById('lbImg');
+LB.addEventListener('click',function(){ LB.classList.remove('show'); LBI.src=''; });
+document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ LB.classList.remove('show'); LBI.src=''; } });
+function openLb(src){ LBI.src=src; LB.classList.add('show'); }
+
+function cardHtml(w){
+  var ph=w.photo
+    ? '<span class="ph" data-full="'+esc(w.photo)+'" style="background-image:url(\''+esc(w.photo)+'\')"></span>'
+    : '<span class="ph emo">'+esc(w.icon||'🍒')+'</span>';
+  var link=normUrl(w.link);
+  return '<div class="wcard" style="--sc:'+SECTC[w.status]+'">'+ph
+    +'<span class="tx"><span class="t1">'+(w.favorite?'<span class="fav">★</span>':'')+esc(w.title||'')+'</span>'
+    +(w.note?'<span class="nt">'+esc(w.note)+'</span>':'')
+    +(link?'<a class="lnk" href="'+esc(link)+'" target="_blank" rel="noopener nofollow">🔗 '+esc(t('openLink'))+'</a>':'')
+    +(w.status==='bought'?'<span class="bought">✓ '+esc(t('boughtBadge'))+'</span>':'')
+    +'</span></div>';
+}
+function render(data){
+  SUB.innerHTML='<span class="cic">'+CHERRY+'</span>'+esc(t('of',{n:data.owner.nickname}));
+  document.title='RobTop — '+t('of',{n:data.owner.nickname});
+  var items=data.items||[];
+  if(!items.length){ APP.innerHTML='<div class="card muted">'+esc(t('listEmpty'))+'</div>'; return; }
+  var html='';
+  ['want','thinking','bought'].forEach(function(s){
+    var list=items.filter(function(w){ return w.status===s; });
+    html+='<div class="sect" style="--sc:'+SECTC[s]+'"><span class="dot"></span>'+esc(t(s))+'<span class="n">'+list.length+'</span></div>';
+    html+=list.length?list.map(cardHtml).join(''):'<div class="empty">'+esc(t('empty'))+'</div>';
+  });
+  APP.innerHTML=html;
+  APP.addEventListener('click',function(e){
+    var ph=e.target.closest('.ph[data-full]');
+    if(ph) openLb(ph.getAttribute('data-full'));
+  });
+}
+function fail(h,p){ APP.innerHTML='<div class="card"><b style="color:#fff">'+esc(h)+'</b><div class="muted" style="margin-top:6px">'+esc(p)+'</div></div>'; }
+
+var u=new URLSearchParams(location.search).get('u');
+if(!u){ fail(t('nfH'),t('nfP')); }
+else{
+  fetch('api/share.php?op=view&u='+encodeURIComponent(u),{headers:{'Accept':'application/json'},credentials:'same-origin'})
+    .then(function(r){
+      if(r.status===404) { fail(t('nfH'),t('nfP')); return null; }
+      if(!r.ok) throw new Error('http '+r.status);
+      return r.json();
+    })
+    .then(function(j){ if(j && j.ok) render(j); else if(j) fail(t('nfH'),t('nfP')); })
+    .catch(function(){ fail(t('errH'),t('errP')); });
+}
+</script>
+</body>
+</html>

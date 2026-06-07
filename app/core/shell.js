@@ -587,11 +587,38 @@ window.RobTop = window.RobTop || {};
     node.innerHTML='<h2>'+esc(nick)+'</h2>'
       +'<div class="store-install" id="kidReset">🔑 '+esc(t("family.resetPass"))+'</div>'
       +'<div class="store-install" id="kidTransfer">👪 '+esc(t("family.transfer"))+'</div>'
+      +'<div class="store-install" id="kidShare" style="display:none"></div>'
+      +'<div class="invlink" id="kidShareUrl" style="display:none"></div>'
       +'<div class="store-install" id="kidBlock">'+(blocked?'✅ '+esc(t("family.unblock")):'⛔ '+esc(t("family.block")))+'</div>'
       +'<div class="sheet-actions"><button class="btn btn-cancel" id="kidClose" style="flex:1">'+esc(t("common.close"))+'</button></div>';
     var ctl=sheet(node);
     node.querySelector("#kidClose").onclick=ctl.close;
     node.querySelector("#kidTransfer").onclick=function(){ ctl.close(); openTransferChild(id,nick); };
+    /* Публичный виш-лист (2026-06-07): включает ТОЛЬКО primary-родитель или родитель семьи
+       (сервер share.php op=set; provisional кнопку не видит — canToggle=false). */
+    (function(){
+      var row=node.querySelector("#kidShare"), urlEl=node.querySelector("#kidShareUrl");
+      RT.API.post("share.php",{op:"get",child_id:id}).then(function(r){
+        if(!(r&&r.ok&&r.canToggle)) return;
+        var on=!!r.enabled;
+        function paint(){
+          row.innerHTML=(on?'🌐 ':'🔒 ')+esc(t("family.share"))+': <b style="color:'+(on?'#3df0c0':'#ffb3c0')+'">'+esc(on?t("family.shareOn"):t("family.shareOff"))+'</b>';
+          if(on && r.url){ urlEl.textContent=r.url; urlEl.style.display=""; } else { urlEl.style.display="none"; }
+        }
+        paint(); row.style.display="";
+        row.onclick=function(){
+          var to=!on;
+          confirm({title:t("family.share"),
+                   text:to?t("family.shareConfirmOn",{name:nick}):t("family.shareConfirmOff",{name:nick}),
+                   ok:t("common.yes"), cancel:t("common.cancel")}).then(function(okc){
+            if(!okc) return;
+            RT.API.post("share.php",{op:"set",child_id:id,enabled:to?1:0}).then(function(){
+              on=to; paint(); toast(to?t("family.shareOnDone"):t("family.shareOffDone"));
+            }).catch(function(){ toast(t("common.failed")); });
+          });
+        };
+      }).catch(function(){});
+    })();
     node.querySelector("#kidReset").onclick=function(){
       confirm({title:t("family.resetPass"), text:t("family.resetConfirm",{name:nick}), ok:t("common.yes"), cancel:t("common.cancel")}).then(function(ok){
         if(!ok) return;
@@ -684,6 +711,78 @@ window.RobTop = window.RobTop || {};
     setTimeout(function(){ node.querySelector("#trEmail").focus(); },150);
   }
 
+  /* ===== МОЙ РОДИТЕЛЬ в настройках (только ребёнок, 2026-06-07) =====
+     Есть primary-родитель → показываем его, управление у него. Нет — ребёнок зовёт СВОЕГО
+     родителя по email (invite type=child_invite_parent); живое приглашение можно отозвать
+     и позвать заново. После принятия у ребёнка своя семья, провизорная опека рвётся (сервер). */
+  function myParentSectionHtml(){
+    if(demo || !acct || !acct.authenticated || !acct.user || acct.user.kind!=="child") return '';
+    return '<div class="store-section">'+esc(t("myparent.title"))+'</div>'
+      +'<div id="mpBox"><p class="set-note">'+esc(t("account.loading"))+'</p></div>';
+  }
+  function loadMyParent(){
+    var box=settingsBody?settingsBody.querySelector("#mpBox"):null; if(!box) return;
+    RT.API.post("accounts.php",{op:"parent_status"}).then(function(r){
+      if(!(r&&r.ok)){ box.innerHTML='<p class="set-note">'+esc(t("common.failed"))+'</p>'; return; }
+      if(r.hasParent){
+        box.innerHTML='<div class="acct-row"><span class="nm">'+esc(r.parentNick||"")+'</span><span class="rl">'+esc(t("account.roleParent"))+'</span></div>'
+          +'<p class="set-note">'+esc(t("myparent.managed"))+'</p>';
+        return;
+      }
+      if(r.pending){
+        box.innerHTML='<p class="set-note">'+esc(t("myparent.pendingHint"))+'</p>'
+          +'<div class="acct-row"><span class="nm">'+esc(r.pending.email||"")+'</span>'
+          +'<span class="rl warn">'+esc(t("family.st.pending"))+'</span>'
+          +'<button class="hbtn" id="mpRevoke" aria-label="'+esc(t("family.revoke"))+'" title="'+esc(t("family.revoke"))+'" style="width:34px;height:34px;color:#ffb3c0">✕</button></div>';
+        box.querySelector("#mpRevoke").onclick=function(){
+          confirm({title:t("family.revoke"),ok:t("common.yes"),cancel:t("common.cancel")}).then(function(ok){
+            if(!ok) return;
+            RT.API.post("accounts.php",{op:"invite_action",id:r.pending.id,action:"revoke"})
+              .then(function(){ toast(t("myparent.revoked")); loadMyParent(); })
+              .catch(function(){ toast(t("common.failed")); });
+          });
+        };
+        return;
+      }
+      box.innerHTML='<p class="set-note">'+esc(t("myparent.hint"))+'</p>'
+        +'<input class="set-in" id="mpEmail" type="email" placeholder="Email" autocomplete="off" data-1p-ignore data-lpignore="true" data-bwignore>'
+        +'<div class="sheet-actions"><button class="btn btn-primary" id="mpGo" style="flex:1">'+esc(t("myparent.inviteBtn"))+'</button></div>';
+      box.querySelector("#mpGo").onclick=function(){
+        var em=(box.querySelector("#mpEmail").value||"").trim(); if(!em) return;
+        RT.API.post("accounts.php",{op:"invite",type:"child_invite_parent",email:em,lang:I.get()}).then(function(r2){
+          box.innerHTML='<p class="set-note" style="color:#ffe08a">'+esc(t("myparent.sent"))+'</p>'
+            +'<p class="set-note">'+esc(t("family.linkHint"))+'</p>'
+            +'<div class="invlink">'+esc((r2&&r2.link)||"")+'</div>'
+            +'<button class="btn btn-primary" id="mpCopy" style="width:100%;margin-top:10px">'+esc(t("family.copy"))+'</button>';
+          box.querySelector("#mpCopy").onclick=function(){
+            try{ if(navigator.clipboard) navigator.clipboard.writeText((r2&&r2.link)||""); }catch(e){}
+            toast(t("family.copied"));
+          };
+        }).catch(function(e){
+          toast(/http 409/.test((e&&e.message)||"")?t("myparent.conflict"):t("common.failed"));
+        });
+      };
+    }).catch(function(){ box.innerHTML='<p class="set-note">'+esc(t("common.failed"))+'</p>'; });
+  }
+
+  /* ===== ПОДЕЛИЛИСЬ СО МНОЙ (только родитель; у ребёнка этот список — в самом Виш-листе 👥) ===== */
+  function sharedSectionHtml(){
+    if(demo || !isParent()) return '';
+    return '<div class="store-section">'+esc(t("shared.title"))+'</div>'
+      +'<div id="sharedBox"><p class="set-note">'+esc(t("account.loading"))+'</p></div>';
+  }
+  function loadShared(){
+    var box=settingsBody?settingsBody.querySelector("#sharedBox"):null; if(!box) return;
+    RT.API.post("share.php",{op:"shared_with_me"}).then(function(r){
+      var list=(r&&r.lists)||[];
+      if(!list.length){ box.innerHTML='<p class="set-note">'+esc(t("shared.empty"))+'</p>'; return; }
+      box.innerHTML=list.map(function(x){
+        return '<a class="acct-row" style="text-decoration:none" href="w.html?u='+encodeURIComponent(x.nickname)+'" target="_blank" rel="noopener">'
+          +'<span class="nm">'+esc(x.nickname)+'</span><span class="rl">👁</span></a>';
+      }).join("");
+    }).catch(function(){ box.innerHTML='<p class="set-note">'+esc(t("common.failed"))+'</p>'; });
+  }
+
   /* ===== ДРУЗЬЯ в настройках (только ребёнок): пригласить друга по ссылке (без email) ===== */
   function friendSectionHtml(){
     if(demo || !acct || !acct.authenticated || !acct.user || acct.user.kind!=="child") return '';
@@ -730,6 +829,8 @@ window.RobTop = window.RobTop || {};
       +'<div id="settingsBody">'
       +accountSectionHtml()
       +famSectionHtml()
+      +sharedSectionHtml()
+      +myParentSectionHtml()
       +friendSectionHtml()
       +(showManage
         ? '<div class="store-section">'+esc(t("store.title"))+'</div>'
@@ -744,6 +845,8 @@ window.RobTop = window.RobTop || {};
     settingsView.querySelector("#settingsBack").onclick=closeSettings;
     wireAccountSection();
     if(settingsBody.querySelector("#famBox")) loadFamily();
+    if(settingsBody.querySelector("#mpBox")) loadMyParent();
+    if(settingsBody.querySelector("#sharedBox")) loadShared();
     var fr=settingsBody.querySelector("#friendInvite");
     if(fr) fr.onclick=openInviteFriend;
     settingsBody.querySelector(".lang-seg").addEventListener("click",function(e){

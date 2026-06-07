@@ -73,6 +73,28 @@ return [
         ],
     ],
 
+    'child_invite_parent' => [
+        'desc'         => 'Ребёнок без настоящего родителя зовёт своего родителя по email (ссылка живёт 7 дней; принятие = своя семья + primary-опека).',
+        'file'         => 'child_invite_parent',
+        'placeholders' => ['{{child}}', '{{link}}'],
+        'subject'      => [
+            'en' => 'RobTop: your child invites you',
+            'ru' => 'RobTop: ваш ребёнок приглашает вас',
+            'lv' => 'RobTop: jūsu bērns jūs aicina',
+        ],
+    ],
+
+    'wishlist_share_request' => [
+        'desc'         => 'Ребёнок просит родителя разрешить делиться виш-листом (включается тумблером в Настройки → Семья → ребёнок).',
+        'file'         => 'wishlist_share_request',
+        'placeholders' => ['{{child}}', '{{link}}'],
+        'subject'      => [
+            'en' => 'RobTop: {{child}} asks to share the wishlist',
+            'ru' => 'RobTop: {{child}} просит разрешить делиться виш-листом',
+            'lv' => 'RobTop: {{child}} lūdz atļauju dalīties ar vēlmju sarakstu',
+        ],
+    ],
+
     'test' => [
         'desc'         => 'Тестовое письмо для проверки настройки почты (mail_test.php).',
         'file'         => 'test',

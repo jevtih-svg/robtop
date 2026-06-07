@@ -34,7 +34,20 @@
         photoFailedOffline:"Couldn't upload photo (offline)", noServer:"No server connection — change not saved",
         demoMode:"Demo mode: server unavailable" },
       seed:{ lego:{title:"LEGO Technic set",note:"I'll build robots and cars"}, scooter:{title:"Stunt scooter"},
-        book:{title:"Dinosaur book"}, headphones:{title:"Wireless headphones",note:"Listen to music outside"}, ball:{title:"Football"} }
+        book:{title:"Dinosaur book"}, headphones:{title:"Wireless headphones",note:"Listen to music outside"}, ball:{title:"Football"} },
+      share:{ aria:"Share the wishlist", ariaFriends:"Friends' wishlists",
+        shTitle:"Share the wishlist", frTitle:"Friends' wishlists",
+        frEmpty:"No one has shared a wishlist with you yet.",
+        linkHint:"Anyone with this link can see your wishlist:",
+        copy:"Copy link", copied:"Copied",
+        grantTitle:"Who can see it", grantPh:"Friend's nickname", grantBtn:"Share",
+        grantEmpty:"You haven't shared with anyone yet.", granted:"Now {name} can see your wishlist!",
+        revoke:"Remove access", revoked:"Access removed",
+        askText:"Sharing needs permission from your parent {name}. Send them a request?",
+        askBtn:"Ask my parent", askSent:"Request sent to your parent 📨", askToo:"You already asked recently — wait a bit",
+        noParentText:"You don't have a parent in the app yet. Invite them in Settings — sharing works only with their permission.",
+        openSettings:"Open Settings", demoOnly:"Works only on the server",
+        errUser:"User not found", errGrant:"Can't share with this user", loadFail:"Couldn't load" }
     }},
     ru:{ wishlist:{
       title:"Виш-лист", subtitle:"Список моих желаний",
@@ -63,7 +76,20 @@
         photoFailedOffline:"Не удалось загрузить фото (нет связи)", noServer:"Нет связи с сервером — изменение не сохранено",
         demoMode:"Демо-режим: сервер недоступен" },
       seed:{ lego:{title:"Конструктор LEGO Технік",note:"Буду строить роботов и машины"}, scooter:{title:"Самокат трюковой"},
-        book:{title:"Книга про динозавров"}, headphones:{title:"Беспроводные наушники",note:"Слушать музыку на улице"}, ball:{title:"Футбольный мяч"} }
+        book:{title:"Книга про динозавров"}, headphones:{title:"Беспроводные наушники",note:"Слушать музыку на улице"}, ball:{title:"Футбольный мяч"} },
+      share:{ aria:"Поделиться виш-листом", ariaFriends:"Виш-листы друзей",
+        shTitle:"Поделиться виш-листом", frTitle:"Виш-листы друзей",
+        frEmpty:"Пока никто не поделился с тобой виш-листом.",
+        linkHint:"Любой, у кого есть эта ссылка, увидит твой виш-лист:",
+        copy:"Скопировать ссылку", copied:"Скопировано",
+        grantTitle:"Кому открыт доступ", grantPh:"Никнейм друга", grantBtn:"Поделиться",
+        grantEmpty:"Ты ещё ни с кем не поделился.", granted:"Теперь {name} видит твой виш-лист!",
+        revoke:"Убрать доступ", revoked:"Доступ убран",
+        askText:"Чтобы делиться, нужно разрешение родителя {name}. Отправить просьбу?",
+        askBtn:"Попросить родителя", askSent:"Просьба отправлена родителю 📨", askToo:"Ты уже просил недавно — подожди немного",
+        noParentText:"У тебя в приложении пока нет родителя. Пригласи его в Настройках — делиться можно только с его разрешения.",
+        openSettings:"Открыть настройки", demoOnly:"Работает только на сервере",
+        errUser:"Пользователь не найден", errGrant:"С этим пользователем поделиться нельзя", loadFail:"Не удалось загрузить" }
     }},
     lv:{ wishlist:{
       title:"Vēlmju saraksts", subtitle:"Mans vēlmju saraksts",
@@ -92,7 +118,20 @@
         photoFailedOffline:"Neizdevās augšupielādēt foto (nav savienojuma)", noServer:"Nav savienojuma ar serveri — izmaiņas nesaglabātas",
         demoMode:"Demo režīms: serveris nav pieejams" },
       seed:{ lego:{title:"LEGO Technic komplekts",note:"Būvēšu robotus un mašīnas"}, scooter:{title:"Triku skrejritenis"},
-        book:{title:"Grāmata par dinozauriem"}, headphones:{title:"Bezvadu austiņas",note:"Klausīties mūziku ārā"}, ball:{title:"Futbola bumba"} }
+        book:{title:"Grāmata par dinozauriem"}, headphones:{title:"Bezvadu austiņas",note:"Klausīties mūziku ārā"}, ball:{title:"Futbola bumba"} },
+      share:{ aria:"Dalīties ar vēlmju sarakstu", ariaFriends:"Draugu vēlmju saraksti",
+        shTitle:"Dalīties ar vēlmju sarakstu", frTitle:"Draugu vēlmju saraksti",
+        frEmpty:"Neviens vēl nav padalījies ar tevi.",
+        linkHint:"Ikviens ar šo saiti redzēs tavu vēlmju sarakstu:",
+        copy:"Kopēt saiti", copied:"Nokopēts",
+        grantTitle:"Kam ir piekļuve", grantPh:"Drauga segvārds", grantBtn:"Dalīties",
+        grantEmpty:"Tu vēl ne ar vienu neesi padalījies.", granted:"Tagad {name} redz tavu sarakstu!",
+        revoke:"Noņemt piekļuvi", revoked:"Piekļuve noņemta",
+        askText:"Lai dalītos, vajadzīga vecāka {name} atļauja. Nosūtīt lūgumu?",
+        askBtn:"Palūgt vecākam", askSent:"Lūgums nosūtīts vecākam 📨", askToo:"Tu nesen jau lūdzi — uzgaidi mazliet",
+        noParentText:"Tev lietotnē vēl nav vecāka. Uzaicini viņu Iestatījumos — dalīties var tikai ar viņa atļauju.",
+        openSettings:"Atvērt iestatījumus", demoOnly:"Darbojas tikai serverī",
+        errUser:"Lietotājs nav atrasts", errGrant:"Ar šo lietotāju dalīties nevar", loadFail:"Neizdevās ielādēt" }
     }}
   };
 
@@ -112,6 +151,8 @@
   };
   var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
   var STATS_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>';
+  var SHARE_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.4 10.8l7.2-3.7M8.4 13.2l7.2 3.7"/></svg>';
+  var FRIENDS_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.6" r="3.1"/><path d="M3.6 19c1.1-2.8 3-4.2 5.4-4.2s4.3 1.4 5.4 4.2"/><circle cx="17.2" cy="9.6" r="2.5"/><path d="M15.8 14.9c2.1.2 3.7 1.4 4.6 3.5"/></svg>';
   var TITLE_CHERRY='<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="7.5" cy="17" r="3.6"/><circle cx="15.7" cy="17.6" r="3.6"/><path d="M8 14.4C9 8.4 13 5 18.4 3.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16.1 14.6C16.7 9.4 15 6 12 3.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M18.4 3.8c1-1.1 2.7-1.1 3.6.3-1.5.5-2.5.4-3.6-.3z"/></svg>';
 
   /* эмодзи событий истории (язык-нейтральны); тексты — sdk.t("hist.<type>") */
@@ -350,6 +391,96 @@
     E.statsOverlay.classList.add("show");
   }
 
+  /* ----- ШАРИНГ (2026-06-07): публичная ссылка + доступы пользователям платформы -----
+     Сервер: api/share.php. Делиться можно ТОЛЬКО если родитель включил флаг ребёнку.
+     Нет флага + есть родитель → просьба родителю письмом (op=request).
+     Нет флага + нет родителя → в Настройки (пригласить родителя; op=invite child_invite_parent).
+     Демо-режим: только тост (нужен сервер). Ошибки HTTP мапим по коду из sdk.api. */
+  function httpCode(e){ var m=/http (\d+)/.exec(e&&e.message||""); return m?+m[1]:0; }
+  function openShare(){
+    if(sdk.isDemo()){ sdk.ui.toast(t("share.demoOnly")); return; }
+    var node=document.createElement("div");
+    node.innerHTML='<h2>'+esc(t("share.shTitle"))+'</h2><div id="wlShBody"><p class="set-note">…</p></div>';
+    var ctl=sdk.ui.sheet(node);
+    var body=node.querySelector("#wlShBody");
+    function load(){
+      sdk.api.post("share.php",{op:"status"}).then(function(r){
+        if(r&&r.ok) renderShare(body,r,ctl,load);
+        else body.innerHTML='<p class="set-note">'+esc(t("share.loadFail"))+'</p>';
+      }).catch(function(){ body.innerHTML='<p class="set-note">'+esc(t("share.loadFail"))+'</p>'; });
+    }
+    load();
+  }
+  function renderShare(body,st,ctl,reload){
+    if(!st.enabled){
+      if(st.hasParent){
+        body.innerHTML='<p class="set-note">'+esc(t("share.askText",{name:st.parentNick||""}))+'</p>'
+          +'<div class="sheet-actions"><button class="btn btn-primary" id="wlShAsk" style="flex:1">📨 '+esc(t("share.askBtn"))+'</button></div>';
+        body.querySelector("#wlShAsk").onclick=function(){
+          sdk.api.post("share.php",{op:"request",lang:sdk.i18n.get()})
+            .then(function(r){
+              // сервер может ответить 200 + ok:false (лимит почты) — не врём ребёнку
+              if(r&&r.ok){ sdk.ui.toast(t("share.askSent")); ctl.close(); }
+              else sdk.ui.toast(t("share.askToo"));
+            })
+            .catch(function(e){ sdk.ui.toast(httpCode(e)===429?t("share.askToo"):t("toast.noServer")); });
+        };
+      } else {
+        body.innerHTML='<p class="set-note">'+esc(t("share.noParentText"))+'</p>'
+          +'<div class="sheet-actions"><button class="btn btn-primary" id="wlShSet" style="flex:1">'+esc(t("share.openSettings"))+'</button></div>';
+        body.querySelector("#wlShSet").onclick=function(){
+          ctl.close(); sdk.ui.back(); // закрыть модуль, затем настройки (раздел «Мой родитель»)
+          if(window.RobTop&&window.RobTop._shell&&window.RobTop._shell.openSettings) window.RobTop._shell.openSettings();
+        };
+      }
+      return;
+    }
+    var grants=st.grants||[];
+    var rows=grants.length?grants.map(function(g){
+      return '<div class="acct-row"><span class="nm">'+esc(g.nickname)+'</span>'
+        +'<button class="hbtn" data-rm="'+g.id+'" aria-label="'+esc(t("share.revoke"))+'" title="'+esc(t("share.revoke"))+'" style="width:34px;height:34px;color:#ffb3c0">✕</button></div>';
+    }).join(""):'<p class="set-note">'+esc(t("share.grantEmpty"))+'</p>';
+    body.innerHTML='<p class="set-note">'+esc(t("share.linkHint"))+'</p>'
+      +'<div class="invlink">'+esc(st.url||"")+'</div>'
+      +'<button class="btn btn-primary" id="wlShCopy" style="width:100%;margin-top:10px">'+esc(t("share.copy"))+'</button>'
+      +'<div class="store-section">'+esc(t("share.grantTitle"))+'</div>'
+      +'<input class="set-in" id="wlShNick" type="text" placeholder="'+esc(t("share.grantPh"))+'" autocomplete="off" data-1p-ignore data-lpignore="true" data-bwignore>'
+      +'<div class="sheet-actions"><button class="btn btn-primary" id="wlShGrant" style="flex:1">'+esc(t("share.grantBtn"))+'</button></div>'
+      +'<div id="wlShGrants">'+rows+'</div>';
+    body.querySelector("#wlShCopy").onclick=function(){
+      try{ if(navigator.clipboard) navigator.clipboard.writeText(st.url||""); }catch(e){}
+      sdk.ui.toast(t("share.copied")); sdk.ui.haptics(8);
+    };
+    body.querySelector("#wlShGrant").onclick=function(){
+      var nick=(body.querySelector("#wlShNick").value||"").trim(); if(!nick) return;
+      sdk.api.post("share.php",{op:"grant",nickname:nick})
+        .then(function(r){ sdk.ui.toast(t("share.granted",{name:(r&&r.nickname)||nick})); reload(); })
+        .catch(function(e){ sdk.ui.toast(httpCode(e)===404?t("share.errUser"):t("share.errGrant")); });
+    };
+    Array.prototype.forEach.call(body.querySelectorAll("[data-rm]"),function(b){
+      b.onclick=function(){
+        sdk.api.post("share.php",{op:"revoke",id:parseInt(b.getAttribute("data-rm"),10)})
+          .then(function(){ sdk.ui.toast(t("share.revoked")); reload(); })
+          .catch(function(){ sdk.ui.toast(t("toast.noServer")); });
+      };
+    });
+  }
+  function openFriends(){
+    if(sdk.isDemo()){ sdk.ui.toast(t("share.demoOnly")); return; }
+    var node=document.createElement("div");
+    node.innerHTML='<h2>'+esc(t("share.frTitle"))+'</h2><div id="wlFrBody"><p class="set-note">…</p></div>';
+    sdk.ui.sheet(node);
+    var body=node.querySelector("#wlFrBody");
+    sdk.api.post("share.php",{op:"shared_with_me"}).then(function(r){
+      var list=(r&&r.lists)||[];
+      if(!list.length){ body.innerHTML='<p class="set-note">'+esc(t("share.frEmpty"))+'</p>'; return; }
+      body.innerHTML=list.map(function(x){
+        return '<a class="acct-row" style="text-decoration:none" href="w.html?u='+encodeURIComponent(x.nickname)+'" target="_blank" rel="noopener">'
+          +'<span class="nm">'+esc(x.nickname)+'</span><span class="rl">👁</span></a>';
+      }).join("");
+    }).catch(function(){ body.innerHTML='<p class="set-note">'+esc(t("share.loadFail"))+'</p>'; });
+  }
+
   /* ----- add/edit sheet ----- */
   function showPreview(src){ if(src){ E.photoPick.classList.add("has-photo"); E.ppreview.style.backgroundImage="url('"+src+"')"; } else { E.photoPick.classList.remove("has-photo"); E.ppreview.style.backgroundImage=""; } }
   function setFormPhoto(d){ formPhoto=d||null; showPreview(formPhoto); }
@@ -395,6 +526,8 @@
       +'<div class="wl-header">'
         +'<button class="back" id="wlBack" aria-label="'+esc(t("common.back"))+'">'+BACK_IC+'</button>'
         +'<div class="wl-head-main"><div class="wl-title"><span class="cic">'+TITLE_CHERRY+'</span> '+esc(t("title"))+'</div><div class="wl-sub">'+esc(t("subtitle"))+'</div></div>'
+        +'<button class="hbtn" id="wlFriends" aria-label="'+esc(t("share.ariaFriends"))+'">'+FRIENDS_IC+'</button>'
+        +'<button class="hbtn" id="wlShare" aria-label="'+esc(t("share.aria"))+'">'+SHARE_IC+'</button>'
         +'<button class="hbtn" id="wlStats" aria-label="'+esc(t("aria.stats"))+'">'+STATS_IC+'</button>'
       +'</div>'
       +'<nav class="tabs" id="wlTabs">'
@@ -445,6 +578,8 @@
   function wire(){
     root.querySelector("#wlBack").addEventListener("click",function(){ sdk.ui.back(); });
     root.querySelector("#wlStats").addEventListener("click",openStats);
+    root.querySelector("#wlShare").addEventListener("click",openShare);
+    root.querySelector("#wlFriends").addEventListener("click",openFriends);
     E.tabs.addEventListener("click",function(e){ var tb=e.target.closest(".tab"); if(tb) setTab(tb.getAttribute("data-tab")); });
     E.list.addEventListener("click",function(e){
       var btn=e.target.closest("[data-action]");

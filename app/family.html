@@ -138,8 +138,15 @@ function screenInvite(token){
         }).catch(function(e){ qs('msg').innerHTML=errBox(e.message); });
       };
     } else {
-      h('<div class="card"><h2>Вас пригласил(а) '+who+'</h2>'+
-        '<div class="muted small">Создайте родительский аккаунт. Email берётся из приглашения. Дальше всё — в настройках приложения.</div>'+
+      // child_invite_parent: приглашает САМ ребёнок — родитель получает свою семью и primary-опеку
+      var head = (info.type==='child_invite_parent')
+        ? 'Ваш ребёнок '+who+' приглашает вас 👪'
+        : 'Вас пригласил(а) '+who;
+      var hint = (info.type==='child_invite_parent')
+        ? 'Создайте родительский аккаунт — вы станете настоящим родителем '+who+' в RobTop: своя семья, статистика и управление. Email берётся из приглашения.'
+        : 'Создайте родительский аккаунт. Email берётся из приглашения. Дальше всё — в настройках приложения.';
+      h('<div class="card"><h2>'+head+'</h2>'+
+        '<div class="muted small">'+hint+'</div>'+
         '<label>Ваш никнейм</label><input id="nick">'+
         '<label>Пароль</label><input id="pass" type="password" autocomplete="new-password">'+
         '<button class="btn pink" id="go">Принять приглашение</button><div id="msg"></div></div>');
