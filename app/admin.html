@@ -280,7 +280,9 @@ function askJson(title,defObj,extraHtml){
     m.root.querySelector('#dlgOk').onclick=function(){
       try{ var data=JSON.parse(m.root.querySelector('#dlgJ').value); }
       catch(e){ toast('Некорректный JSON'); return; }
-      m.close(); res(data);
+      var extras={}; // значения доп. полей из extraHtml собираем ДО закрытия модалки
+      Array.prototype.forEach.call(m.root.querySelectorAll('input'),function(i){ if(i.id) extras[i.id]=i.value; });
+      m.close(); res({data:data,extras:extras});
     };
   });
 }
@@ -403,15 +405,21 @@ users:function(){
       btn.onclick=function(){
         var id=parseInt(btn.getAttribute('data-id'),10), n=btn.getAttribute('data-n'), a=btn.getAttribute('data-a');
         var done=function(){ toast('Готово'); load(q,page); };
-        if(a==='rename'){ var nn=prompt('Новый никнейм для '+n+':',n); if(nn&&nn.trim()) api('user_update',{user_id:id,nickname:nn.trim()}).then(done).catch(fail); }
-        if(a==='reset'&&confirm('Сбросить пароль «'+n+'» на одноразовый 1234?')) api('user_reset_pass',{user_id:id}).then(function(){ toast(n+': пароль 1234, сменит при входе'); }).catch(fail);
-        if(a==='block'&&confirm('Заблокировать «'+n+'»? Сессии будут разорваны.')) api('user_block',{user_id:id}).then(done).catch(fail);
+        if(a==='rename') askText('Переименовать','Новый никнейм для «'+n+'»',n).then(function(nn){
+          if(nn&&nn.trim()) api('user_update',{user_id:id,nickname:nn.trim()}).then(done).catch(fail); });
+        if(a==='reset') askConfirm('Сброс пароля','Сбросить пароль «'+n+'» на одноразовый 1234? Сменит при первом входе.','Сбросить').then(function(ok){
+          if(ok) api('user_reset_pass',{user_id:id}).then(function(){ toast(n+': пароль 1234, сменит при входе'); }).catch(fail); });
+        if(a==='block') askConfirm('Блокировка','Заблокировать «'+n+'»? Сессии будут разорваны, данные сохранятся.','Заблокировать',true).then(function(ok){
+          if(ok) api('user_block',{user_id:id}).then(done).catch(fail); });
         if(a==='unblock') api('user_unblock',{user_id:id}).then(done).catch(fail);
-        if(a==='grant'&&confirm('Выдать «'+n+'» ПОЛНЫЕ права администратора?')) api('admin_grant',{user_id:id}).then(done).catch(fail);
-        if(a==='revoke'&&confirm('Снять с «'+n+'» права администратора?')) api('admin_revoke',{user_id:id}).then(done).catch(fail);
-        if(a==='pts'){ var v=prompt('Сколько очков начислить «'+n+'»? (можно отрицательное)','10');
-          if(v&&parseInt(v,10)){ var why=prompt('Причина:','подарок от админа')||''; api('points_grant',{user_id:id,n:parseInt(v,10),reason:why}).then(function(){ toast('Очки начислены'); }).catch(fail); } }
-        if(a==='del'&&confirm('Удалить аккаунт «'+n+'»? Вход закроется навсегда, данные и логи останутся в базе.')) api('user_delete',{user_id:id}).then(done).catch(fail);
+        if(a==='grant') askConfirm('Права админа','Выдать «'+n+'» ПОЛНЫЕ права администратора?','Выдать').then(function(ok){
+          if(ok) api('admin_grant',{user_id:id}).then(done).catch(fail); });
+        if(a==='revoke') askConfirm('Права админа','Снять с «'+n+'» права администратора?','Снять',true).then(function(ok){
+          if(ok) api('admin_revoke',{user_id:id}).then(done).catch(fail); });
+        if(a==='pts') askPoints(n).then(function(p){
+          if(p) api('points_grant',{user_id:id,n:p.n,reason:p.reason}).then(function(){ toast('Очки начислены'); }).catch(fail); });
+        if(a==='del') askConfirm('Удаление аккаунта','Удалить аккаунт «'+n+'»? Вход закроется навсегда, данные и логи останутся в базе.','Удалить',true).then(function(ok){
+          if(ok) api('user_delete',{user_id:id}).then(done).catch(fail); });
       };
     });
   }
@@ -425,7 +433,7 @@ families:function(){
         var st=m.status==='active'?'':' <span class="pill warn">блок</span>';
         var acts='';
         if(m.kind==='parent'&&m.role!=='owner') acts+='<button class="btn danger xs" data-a="detach" data-f="'+f.id+'" data-u="'+m.id+'" data-n="'+esc(m.nickname)+'">Отвязать</button>';
-        if(m.kind==='child') acts+='<button class="btn ghost xs" data-a="move" data-u="'+m.id+'" data-n="'+esc(m.nickname)+'">Перенести →</button>';
+        if(m.kind==='child') acts+='<button class="btn ghost xs" data-a="move" data-f="'+f.id+'" data-u="'+m.id+'" data-n="'+esc(m.nickname)+'">Перенести →</button>';
         return '<div class="mrow"><span class="nm"><b>'+esc(m.nickname)+'</b>'+st+'</span><span class="pill">'+role+'</span>'+
           (m.email?'<span style="color:var(--muted)">'+esc(m.email)+'</span>':'')+'<span style="flex:1"></span>'+acts+'</div>';
       }).join('');
@@ -445,23 +453,31 @@ families:function(){
             u=parseInt(btn.getAttribute('data-u')||'0',10), n=btn.getAttribute('data-n')||'';
         var done=function(){ toast('Готово'); VIEWS.families(); };
         if(a==='stats') return VIEWS.familyStats(f);
-        if(a==='rename'){ var v=prompt('Название семьи:',n); if(v&&v.trim()) api('family_rename',{family_id:f,label:v.trim()}).then(done).catch(fail); }
+        if(a==='rename') askText('Название семьи','',n,'Например: Семья Ивановых').then(function(v){
+          if(v&&v.trim()) api('family_rename',{family_id:f,label:v.trim()}).then(done).catch(fail); });
         if(a==='attach') return openAttachParent(f);
-        if(a==='detach'&&confirm('Отвязать родителя «'+n+'» от этой семьи? Его опекунства над детьми семьи будут разорваны (с логом).'))
-          api('parent_detach',{family_id:f,user_id:u}).then(done).catch(fail);
-        if(a==='move'){ var fid=prompt('Перенести «'+n+'» в семью с ID (владелец станет его основным родителем):');
-          if(fid&&parseInt(fid,10)&&confirm('Точно перенести «'+n+'» в семью #'+fid+'? Старые опекунства будут разорваны.'))
-            api('child_move',{child_id:u,to_family_id:parseInt(fid,10)}).then(done).catch(fail); }
-        if(a==='ban'){ var why=prompt('Причина бана семьи «'+n+'» (увидите её в журнале и списке банов):','по просьбе семьи');
-          if(why!==null&&confirm('ЗАБАНИТЬ семью «'+n+'» полностью? Все аккаунты блокируются, email родителей попадают в стоп-лист.'))
-            api('family_ban',{family_id:f,reason:why||''}).then(done).catch(fail); }
-        if(a==='unban'&&confirm('Снять бан с семьи? Аккаунты снова станут активными.')) api('family_unban',{family_id:f}).then(done).catch(fail);
-        if(a==='wipe'){
-          var word=prompt('УДАЛИТЬ семью «'+n+'» НАВСЕГДА: все дети, их данные, файлы и события будут стёрты; родители без других семей — тоже. Это нельзя отменить.\n\nНапишите УДАЛИТЬ чтобы подтвердить:');
-          if(word!==null && word.trim().toUpperCase()==='УДАЛИТЬ')
-            api('family_delete',{family_id:f}).then(function(r){ toast('Удалено: '+(r.wiped||[]).join(', ')); VIEWS.families(); }).catch(fail);
-          else if(word!==null) toast('Не подтверждено — ничего не удалено');
-        }
+        if(a==='detach') askConfirm('Отвязать родителя','Отвязать «'+n+'» от этой семьи? Его опекунства над детьми семьи будут разорваны (с логом). Владельца семьи отвязать нельзя.','Отвязать',true).then(function(ok){
+          if(ok) api('parent_detach',{family_id:f,user_id:u}).then(done).catch(fail); });
+        if(a==='move') askPickFamily('Куда перенести «'+n+'»?',f).then(function(fam){
+          if(!fam) return;
+          askConfirm('Перенос ребёнка','Перенести «'+n+'» в семью «'+fam.label+'» (#'+fam.id+')? Владелец этой семьи станет его основным родителем, старые опекунства будут разорваны.','Перенести').then(function(ok){
+            if(ok) api('child_move',{child_id:u,to_family_id:fam.id}).then(done).catch(fail);
+          });
+        });
+        if(a==='ban') askText('Бан семьи «'+n+'»','Причина (увидите её в журнале и списке банов):','по просьбе семьи').then(function(why){
+          if(why===null) return;
+          askConfirm('Бан семьи','ЗАБАНИТЬ «'+n+'» полностью? Все аккаунты блокируются, email родителей попадают в стоп-лист — повторная регистрация невозможна.','Забанить',true).then(function(ok){
+            if(ok) api('family_ban',{family_id:f,reason:why||''}).then(done).catch(fail);
+          });
+        });
+        if(a==='unban') askConfirm('Снятие бана','Снять бан с семьи? Аккаунты снова станут активными.','Снять бан').then(function(ok){
+          if(ok) api('family_unban',{family_id:f}).then(done).catch(fail); });
+        if(a==='wipe') askText('Удалить семью «'+n+'» НАВСЕГДА','Все дети, их данные, файлы и события будут стёрты; родители без других семей — тоже. Отменить нельзя. Напишите УДАЛИТЬ для подтверждения:','','УДАЛИТЬ').then(function(word){
+          if(word===null) return;
+          if(word.trim().toUpperCase()==='УДАЛИТЬ')
+            api('family_delete',{family_id:f}).then(function(r){ toast('Удалено: '+((r.wiped||[]).join(', ')||'—')); VIEWS.families(); }).catch(fail);
+          else toast('Не подтверждено — ничего не удалено');
+        });
       };
     });
   }).catch(fail);
@@ -569,8 +585,10 @@ invites:function(){
     }).join('');
     V('<div class="card"><h2>Приглашения</h2><p class="lead">Все приглашения системы. Действующие можно отозвать.</p>'+
       '<table><thead><tr><th>№</th><th>Тип</th><th>Кто позвал</th><th>Email</th><th>Статус</th><th>До</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>');
-    on('[data-id]',function(b){ b.onclick=function(){ if(confirm('Отозвать приглашение #'+b.getAttribute('data-id')+'?'))
-      api('invite_revoke',{id:parseInt(b.getAttribute('data-id'),10)}).then(function(){ toast('Отозвано'); VIEWS.invites(); }).catch(fail); }; });
+    on('[data-id]',function(b){ b.onclick=function(){
+      var id=parseInt(b.getAttribute('data-id'),10);
+      askConfirm('Отзыв приглашения','Отозвать приглашение #'+id+'? Ссылка перестанет работать.','Отозвать',true).then(function(ok){
+        if(ok) api('invite_revoke',{id:id}).then(function(){ toast('Отозвано'); VIEWS.invites(); }).catch(fail); }); }; });
   }).catch(fail);
 },
 
@@ -624,8 +642,9 @@ ticketThread:function(id,backSt){
       api('ticket_reply',{id:id,text:v}).then(function(){ toast('Ответ отправлен'); VIEWS.ticketThread(id,backSt); }).catch(fail);
     };
     var cl=document.getElementById('tkClose');
-    if(cl) cl.onclick=function(){ if(confirm('Закрыть тикет #'+id+'? Автор сможет переоткрыть его своим ответом.'))
-      api('ticket_close',{id:id}).then(function(){ toast('Закрыт'); VIEWS.ticketThread(id,backSt); }).catch(fail); };
+    if(cl) cl.onclick=function(){
+      askConfirm('Закрытие тикета','Закрыть тикет #'+id+'? Автор сможет переоткрыть его своим ответом.','Закрыть').then(function(ok){
+        if(ok) api('ticket_close',{id:id}).then(function(){ toast('Закрыт'); VIEWS.ticketThread(id,backSt); }).catch(fail); }); };
     var ro=document.getElementById('tkReopen');
     if(ro) ro.onclick=function(){ api('ticket_reopen',{id:id}).then(function(){ toast('Переоткрыт'); VIEWS.ticketThread(id,backSt); }).catch(fail); };
   }).catch(fail);
@@ -663,23 +682,30 @@ content:function(){
       document.getElementById('back').onclick=VIEWS.content;
       var add=document.getElementById('add');
       if(add) add.onclick=function(){
-        var uid=prompt('ID пользователя-владельца записи:'); if(!uid||!parseInt(uid,10)) return;
-        var js=prompt('Данные записи (JSON), например {"n":5,"reason":"тест"}:','{}');
-        try{ var data=JSON.parse(js||'{}'); }catch(e){ toast('Некорректный JSON'); return; }
-        api('record_add',{module:mod,collection:col||'default',user_id:parseInt(uid,10),data:data})
-          .then(function(){ toast('Добавлено'); openRecords(mod,col); }).catch(fail);
+        askJson('Новая запись · '+mod+(col?'/'+col:''),{},
+          '<input id="dlgUid" type="number" placeholder="ID пользователя-владельца (см. Пользователи)" style="width:100%;margin-bottom:8px">')
+        .then(function(r){
+          if(r===null) return;
+          var uid=parseInt((r.extras&&r.extras.dlgUid)||'0',10);
+          if(!uid){ toast('Укажите ID владельца'); return; }
+          api('record_add',{module:mod,collection:col||'default',user_id:uid,data:r.data})
+            .then(function(){ toast('Добавлено'); openRecords(mod,col); }).catch(fail);
+        });
       };
       on('[data-a]',function(b){
         b.onclick=function(){
           var id=parseInt(b.getAttribute('data-id'),10), a=b.getAttribute('data-a');
-          if(a==='del'&&confirm('Удалить запись #'+id+'? (мягкое удаление, останется в базе)'))
-            api('record_delete',{id:id,module:mod}).then(function(){ toast('Удалено'); openRecords(mod,col); }).catch(fail);
-          if(a==='delimg'&&confirm('Убрать картинку у записи #'+id+'? Файл будет удалён с диска.'))
-            api('image_delete',{id:id}).then(function(){ toast('Картинка удалена'); openRecords(mod,col); }).catch(fail);
-          if(a==='edit'){ var js=prompt('Новый JSON записи #'+id+':',b.getAttribute('data-json'));
-            if(js===null) return;
-            try{ var data=JSON.parse(js); }catch(e){ toast('Некорректный JSON'); return; }
-            api('record_update',{id:id,data:data}).then(function(){ toast('Сохранено'); openRecords(mod,col); }).catch(fail); }
+          if(a==='del') askConfirm('Удаление записи','Удалить запись #'+id+'? (мягкое удаление, останется в базе)','Удалить',true).then(function(ok){
+            if(ok) api('record_delete',{id:id,module:mod}).then(function(){ toast('Удалено'); openRecords(mod,col); }).catch(fail); });
+          if(a==='delimg') askConfirm('Картинка','Убрать картинку у записи #'+id+'? Файл будет удалён с диска. Содержимое никто не видел.','Убрать',true).then(function(ok){
+            if(ok) api('image_delete',{id:id}).then(function(){ toast('Картинка удалена'); openRecords(mod,col); }).catch(fail); });
+          if(a==='edit'){
+            try{ var cur=JSON.parse(b.getAttribute('data-json')); }catch(e){ cur={}; }
+            askJson('Запись #'+id,cur).then(function(r){
+              if(r===null) return;
+              api('record_update',{id:id,data:r.data}).then(function(){ toast('Сохранено'); openRecords(mod,col); }).catch(fail);
+            });
+          }
         };
       });
     }).catch(fail);
@@ -701,20 +727,17 @@ points:function(){
       '<div class="card"><h2>Транзакции</h2><table><thead><tr><th>№</th><th>Кто</th><th>Очки</th><th>Причина</th><th>Когда</th><th></th></tr></thead><tbody>'+
       (rows||'<tr><td colspan="6" class="lead">пока пусто</td></tr>')+'</tbody></table></div>');
     on('[data-grant]',function(b){ b.onclick=function(){
-      var v=prompt('Сколько очков «'+b.getAttribute('data-n')+'»? (отрицательное = списать)','10');
-      if(!v||!parseInt(v,10)) return;
-      var why=prompt('Причина:','от админа')||'';
-      api('points_grant',{user_id:parseInt(b.getAttribute('data-grant'),10),n:parseInt(v,10),reason:why})
-        .then(function(){ toast('Готово'); VIEWS.points(); }).catch(fail); }; });
+      askPoints(b.getAttribute('data-n')).then(function(p){
+        if(p) api('points_grant',{user_id:parseInt(b.getAttribute('data-grant'),10),n:p.n,reason:p.reason})
+          .then(function(){ toast('Готово'); VIEWS.points(); }).catch(fail);
+      }); }; });
     on('[data-a]',function(b){ b.onclick=function(){
       var id=parseInt(b.getAttribute('data-id'),10);
-      if(b.getAttribute('data-a')==='del'&&confirm('Удалить транзакцию #'+id+'? Баланс пересчитается.'))
-        api('points_delete',{id:id}).then(function(){ toast('Удалено'); VIEWS.points(); }).catch(fail);
-      if(b.getAttribute('data-a')==='edit'){
-        var n=prompt('Сумма:',b.getAttribute('data-vn')); if(!n||!parseInt(n,10)) return;
-        var why=prompt('Причина:',b.getAttribute('data-vr'))||'';
-        api('points_update',{id:id,n:parseInt(n,10),reason:why}).then(function(){ toast('Сохранено'); VIEWS.points(); }).catch(fail);
-      } }; });
+      if(b.getAttribute('data-a')==='del') askConfirm('Удаление транзакции','Удалить транзакцию #'+id+'? Баланс пересчитается.','Удалить',true).then(function(ok){
+        if(ok) api('points_delete',{id:id}).then(function(){ toast('Удалено'); VIEWS.points(); }).catch(fail); });
+      if(b.getAttribute('data-a')==='edit') askPoints('транзакция #'+id,b.getAttribute('data-vn'),b.getAttribute('data-vr')).then(function(p){
+        if(p) api('points_update',{id:id,n:p.n,reason:p.reason}).then(function(){ toast('Сохранено'); VIEWS.points(); }).catch(fail); });
+      }; });
   }).catch(fail);
 },
 
@@ -821,8 +844,9 @@ admins:function(){
       '<div class="card"><h2>Баны</h2><p class="lead">Стоп-лист семей и email (хранится только хэш адреса). Снять бан семьи — в разделе «Семьи».</p>'+
       '<table><thead><tr><th>№</th><th>Что</th><th>Причина</th><th>Когда</th><th>Статус</th></tr></thead><tbody>'+(brows||'<tr><td colspan="5" class="lead">банов нет</td></tr>')+'</tbody></table></div>');
     on('[data-id]',function(b){ b.onclick=function(){
-      if(confirm('Снять права администратора с «'+b.getAttribute('data-n')+'»?'))
-        api('admin_revoke',{user_id:parseInt(b.getAttribute('data-id'),10)}).then(function(){ toast('Снято'); VIEWS.admins(); }).catch(fail); }; });
+      var id=parseInt(b.getAttribute('data-id'),10), n=b.getAttribute('data-n');
+      askConfirm('Права админа','Снять права администратора с «'+n+'»?','Снять',true).then(function(ok){
+        if(ok) api('admin_revoke',{user_id:id}).then(function(){ toast('Снято'); VIEWS.admins(); }).catch(fail); }); }; });
   }).catch(fail);
 },
 
