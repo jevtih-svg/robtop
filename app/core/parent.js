@@ -40,7 +40,7 @@ window.RobTop = window.RobTop || {};
     sum:{ wishlist:"{total} wishes · {want} want · {bought} bought",
       teeth:"streak: {n} 🔥 · {c} in period", rating:"average: {avg}★ · {c} rated",
       mood:"most often: {e} {name} ×{c}", reverse:"{c} words reversed", guess:"guessed {w} of {c}",
-      bank:"{p} points total · streak {s} 🔥",
+      bank:"{p} points total · streak {s} 🔥", bankTasks:"⏳ waiting for check: {n}",
       generic:{one:"{n} action in period",other:"{n} actions in period"}, none:"no activity in period" },
     ins:{ streak:"Brushing streak: {n} days in a row", bought:"Wish fulfilled: “{t}” 🎉",
       peak:{ morning:"Most active in the morning (7–11)", day:"Most active in the daytime (11–17)", evening:"Most active in the evening (17–22)" } },
@@ -90,7 +90,7 @@ window.RobTop = window.RobTop || {};
     sum:{ wishlist:"{total} желаний · {want} хочу · {bought} куплено",
       teeth:"серия: {n} 🔥 · {c} за период", rating:"средняя: {avg}★ · {c} оценок",
       mood:"чаще всего: {e} {name} ×{c}", reverse:"{c} слов перевёрнуто", guess:"угадано {w} из {c}",
-      bank:"{p} пунктов всего · винстрик {s} 🔥",
+      bank:"{p} пунктов всего · винстрик {s} 🔥", bankTasks:"⏳ ждут проверки: {n}",
       generic:{one:"{n} действие за период",few:"{n} действия за период",many:"{n} действий за период"}, none:"нет активности за период" },
     ins:{ streak:"Серия чистки зубов: {n} дней подряд", bought:"Исполнено желание: «{t}» 🎉",
       peak:{ morning:"Самое активное время — утро (7–11)", day:"Самое активное время — день (11–17)", evening:"Самое активное время — вечер (17–22)" } },
@@ -140,7 +140,7 @@ window.RobTop = window.RobTop || {};
     sum:{ wishlist:"{total} vēlmes · {want} gribu · {bought} nopirkts",
       teeth:"sērija: {n} 🔥 · {c} periodā", rating:"vidēji: {avg}★ · {c} vērtējumi",
       mood:"visbiežāk: {e} {name} ×{c}", reverse:"{c} vārdi apgriezti", guess:"uzminēti {w} no {c}",
-      bank:"{p} punkti kopā · sērija {s} 🔥",
+      bank:"{p} punkti kopā · sērija {s} 🔥", bankTasks:"⏳ gaida pārbaudi: {n}",
       generic:{zero:"{n} darbību periodā",one:"{n} darbība periodā",other:"{n} darbības periodā"}, none:"perioda aktivitātes nav" },
     ins:{ streak:"Zobu tīrīšanas sērija: {n} dienas pēc kārtas", bought:"Vēlme piepildīta: “{t}” 🎉",
       peak:{ morning:"Aktīvākais laiks — rīts (7–11)", day:"Aktīvākais laiks — diena (11–17)", evening:"Aktīvākais laiks — vakars (17–22)" } },
@@ -185,6 +185,12 @@ window.RobTop = window.RobTop || {};
           tab:"overview", mod:null, period:7, wseg:"want", jfilter:"all",
           jshown:80, jMoreBusy:false };
   var PAGE=80;
+
+  /* ---- запомненный выбор ребёнка (фикс: обновление страницы сбрасывало на первого) ----
+     Ключ устройства; если ребёнок стал недоступен (смена семьи) — 403 и откат на первого. */
+  var CHILD_KEY="rt_parent_child";
+  function savedChild(){ try{ var v=parseInt(localStorage.getItem(CHILD_KEY)||"",10); return v>0?v:null; }catch(e){ return null; } }
+  function saveChild(id){ try{ if(id) localStorage.setItem(CHILD_KEY,String(id)); else localStorage.removeItem(CHILD_KEY); }catch(e){} }
 
   var NOISE={ opened_app:1, opened_module:1, viewed_detail:1, viewed_stats:1 };
   var SKIP_MOD={ bank:1, admin:1 };
@@ -335,6 +341,12 @@ window.RobTop = window.RobTop || {};
 
   /* =================== рендер =================== */
   function kidName(){ return (S.data&&S.data.child&&S.data.child.nickname)||""; }
+  /* задания Копилки, ждущие подтверждения родителя (bank/tasks, status=pending) */
+  function bankPending(){
+    var rows=(S.data&&S.data.content&&S.data.content.bank)||[], n=0, i;
+    for(i=0;i<rows.length;i++) if(rows[i].collection==="tasks" && rows[i].status==="pending") n++;
+    return n;
+  }
 
   function topbarHtml(){
     var last=S.data&&S.data.lastActivityAt;
@@ -418,6 +430,20 @@ window.RobTop = window.RobTop || {};
         +'<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>'
         +'</button>';
     });
+    /* Копилка: спец-карточка (bank в SKIP_MOD — скрыт из метрик/журнала, но родителю нужен
+       вход к заданиям и подтверждениям). Тап открывает САМ модуль через RobTop.open —
+       прецедент walk: родитель видит то же, что ребёнок, плюс свои кнопки (задания, панель).
+       Строка: «⏳ ждут проверки: N» (bank/tasks из content), иначе пункты+винстрик. */
+    if(RT.metaFor && RT.metaFor("bank")){
+      var pend=bankPending();
+      var bline=pend>0 ? t("parent.sum.bankTasks",{n:pend})
+                       : t("parent.sum.bank",{p:(data.points||0),s:(data.streak||0)});
+      h+='<button class="pd-mcard" data-mod="bank" style="--mc:'+esc(modColor("bank"))+'">'
+        +'<span class="ic">'+modIcon("bank")+'</span>'
+        +'<span class="tx"><span class="t1">'+esc(modName("bank"))+'</span><span class="t2">'+esc(bline)+'</span></span>'
+        +'<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>'
+        +'</button>';
+    }
     /* заметки */
     var ins=[];
     if(a.streak>=3) ins.push({e:"🔥",x:t("parent.ins.streak",{n:a.streak})});
@@ -833,6 +859,7 @@ window.RobTop = window.RobTop || {};
     Array.prototype.forEach.call(root.querySelectorAll(".pd-mcard"),function(b){
       b.onclick=function(){
         var id=b.getAttribute("data-mod");
+        if(id==="bank"){ if(RT.open) RT.open("bank"); return; } /* модуль с заданиями, как walk */
         if(id==="wishlist"){ S.tab="wishlist"; render(); }
         else { S.mod=id; render(); }
         window.scrollTo(0,0);
@@ -875,9 +902,14 @@ window.RobTop = window.RobTop || {};
       if(!(r&&r.ok)){ S.error=true; render(); return; }
       if(r.events&&r.events.sort) r.events.sort(function(a,b){ return b.at-a.at; }); // не полагаемся на порядок сервера
       S.data=r; S.childId=r.child?r.child.id:null;
+      saveChild(S.childId); /* помним выбор между перезагрузками */
       S.jshown=PAGE;
       render();
-    }).catch(function(){ S.loading=false; S.error=true; render(); });
+    }).catch(function(err){
+      /* сохранённый/запрошенный ребёнок недоступен → сброс и откат на первого */
+      if(childId && err && /^http 403/.test(err.message||"")){ saveChild(null); fetchData(null); return; }
+      S.loading=false; S.error=true; render();
+    });
   }
 
   window.addEventListener("scroll", onScroll, {passive:true});
@@ -887,7 +919,7 @@ window.RobTop = window.RobTop || {};
     /* показать дашборд (вызывает shell.showParent после переключения вида) */
     show: function(){
       wireTabs();
-      if(!S.data && !S.loading) fetchData(null);
+      if(!S.data && !S.loading) fetchData(savedChild());
       else render();
     },
     render: render,
