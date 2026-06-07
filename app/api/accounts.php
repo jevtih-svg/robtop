@@ -9,6 +9,7 @@
  *   logout         {}
  *   me             {}
  *   set_password   {new_password}               (обязательная смена 1234)
+ *   set_theme      {theme}                       (тема оформления аккаунта; allowlist в case)
  *   tile_order     {order:[id,…]}                (личный порядок плиток; []/null = сброс)
  *   forgot         {email}                       (родителю; единый ответ)
  *   reset          {token,new_password}
@@ -159,6 +160,19 @@ switch ($op) {
              ON DUPLICATE KEY UPDATE tile_order = VALUES(tile_order)"
         )->execute([(int)$u['id'], $json]);
         rt_json(['ok' => true]);
+    }
+
+    /* ---- тема оформления аккаунта (users.theme, миграция 016) ----
+       Каждый аккаунт (родитель и ребёнок) выбирает тему СЕБЕ в Настройках;
+       применяется на любом устройстве после входа. Allowlist держим здесь,
+       клиентский реестр тем — core/bg.js (RTTheme). */
+    case 'set_theme': {
+        $u  = rt_require_login($db);
+        $th = isset($b['theme']) ? (string)$b['theme'] : '';
+        if (!in_array($th, ['neon', 'tilley'], true)) rt_json(['error' => 'bad theme'], 422);
+        $db->prepare("UPDATE users SET theme = ? WHERE id = ?")->execute([$th, (int)$u['id']]);
+        rt_log('accounts', 'theme_changed', (int)$u['id'], null, null, null, ['theme' => $th]);
+        rt_json(['ok' => true, 'theme' => $th]);
     }
 
     /* ---------------- забыл пароль (родитель, по email) ---------------- */

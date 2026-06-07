@@ -88,6 +88,13 @@
     background:#0c1330;border:1px solid rgba(43,240,192,.5);color:#dffaf0;font-size:13px;font-weight:700;
     padding:11px 16px;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.5);z-index:60;pointer-events:none;max-width:84vw;text-align:center}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  /* тикеты: переписка (репортёр слева, админ справа) */
+  .tmsg{max-width:74%;align-self:flex-start;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.13);
+    border-radius:12px 12px 12px 4px;padding:8px 11px;margin:4px 0}
+  .tmsg.adm{align-self:flex-end;background:rgba(43,240,192,.08);border-color:rgba(43,240,192,.4);border-radius:12px 12px 4px 12px}
+  .tmsg .tw{font-size:9.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+  .tmsg .tb{font-size:13px;font-weight:600;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+  .tthread{display:flex;flex-direction:column;max-height:48vh;overflow:auto;padding:2px}
   .auth{max-width:420px;margin:8vh auto;padding:0 16px}
   .auth input{width:100%;margin-top:10px}
   .auth .btn{width:100%;height:48px;font-size:15px;margin-top:14px;border-radius:24px}
@@ -159,7 +166,7 @@ function screenNoAccess(me){
 
 /* ================= каркас панели ================= */
 var SECTIONS=[
-  ['Консоль',[['dash','Дашборд'],['users','Пользователи'],['families','Семьи'],['invites','Приглашения']]],
+  ['Консоль',[['dash','Дашборд'],['users','Пользователи'],['families','Семьи'],['invites','Приглашения'],['tickets','Тикеты']]],
   ['Данные',[['content','Контент модулей'],['points','Очки'],['logs','Журнал']]],
   ['Система',[['apps','Приложения'],['mail','Письма'],['admins','Админы и баны']]]
 ];
@@ -218,6 +225,81 @@ function wirePager(page,go){
   if(p) p.onclick=function(){ go(page-1); };
   if(n) n.onclick=function(){ go(page+1); };
 }
+
+/* ===== СВОИ диалоги вместо native prompt/confirm =====
+   Браузер может молча глушить нативные диалоги (галка «не создавать дополнительные
+   диалоги» в Chrome) — тогда все кнопки «не работают». В панели native-диалогов НЕТ. */
+function askConfirm(title,text,okLabel,danger){
+  return new Promise(function(res){
+    var m=modal('<h3>'+esc(title)+'</h3><p class="lead">'+esc(text)+'</p>'+
+      '<div class="row" style="margin-top:14px"><button class="btn ghost" id="dlgNo">Отмена</button>'+
+      '<button class="btn'+(danger?' danger':'')+'" id="dlgOk" style="flex:1">'+esc(okLabel||'Да')+'</button></div>');
+    m.root.querySelector('#dlgNo').onclick=function(){ m.close(); res(false); };
+    m.root.querySelector('#dlgOk').onclick=function(){ m.close(); res(true); };
+  });
+}
+function askText(title,hint,def,ph){
+  return new Promise(function(res){
+    var m=modal('<h3>'+esc(title)+'</h3>'+(hint?'<p class="lead">'+esc(hint)+'</p>':'')+
+      '<input id="dlgIn" style="width:100%" value="'+esc(def==null?'':def)+'" placeholder="'+esc(ph||'')+'">'+
+      '<div class="row" style="margin-top:14px"><button class="btn ghost" id="dlgNo">Отмена</button>'+
+      '<button class="btn" id="dlgOk" style="flex:1">ОК</button></div>');
+    var inp=m.root.querySelector('#dlgIn');
+    var ok=function(){ var v=inp.value; m.close(); res(v); };
+    m.root.querySelector('#dlgNo').onclick=function(){ m.close(); res(null); };
+    m.root.querySelector('#dlgOk').onclick=ok;
+    inp.addEventListener('keydown',function(e){ if(e.key==='Enter') ok(); });
+    setTimeout(function(){ inp.focus(); inp.select(); },80);
+  });
+}
+/* очки: сумма + причина одним окном; вернёт {n,reason} или null */
+function askPoints(who,defN,defReason){
+  return new Promise(function(res){
+    var m=modal('<h3>Очки · '+esc(who)+'</h3><p class="lead">Отрицательное значение спишет очки.</p>'+
+      '<input id="dlgN" type="number" style="width:100%" value="'+esc(defN!=null?defN:'10')+'" placeholder="Сколько">'+
+      '<input id="dlgR" style="width:100%;margin-top:8px" value="'+esc(defReason!=null?defReason:'подарок от админа')+'" placeholder="Причина">'+
+      '<div class="row" style="margin-top:14px"><button class="btn ghost" id="dlgNo">Отмена</button>'+
+      '<button class="btn" id="dlgOk" style="flex:1">Применить</button></div>');
+    m.root.querySelector('#dlgNo').onclick=function(){ m.close(); res(null); };
+    m.root.querySelector('#dlgOk').onclick=function(){
+      var n=parseInt(m.root.querySelector('#dlgN').value,10);
+      if(!n){ toast('Введите число, не ноль'); return; }
+      var reason=m.root.querySelector('#dlgR').value.trim();
+      m.close(); res({n:n,reason:reason});
+    };
+  });
+}
+/* JSON-редактор записи: textarea + валидация; вернёт объект или null */
+function askJson(title,defObj,extraHtml){
+  return new Promise(function(res){
+    var m=modal('<h3>'+esc(title)+'</h3>'+(extraHtml||'')+
+      '<textarea id="dlgJ" rows="6" style="width:100%;font-family:monospace;font-size:12px">'+esc(JSON.stringify(defObj||{},null,1))+'</textarea>'+
+      '<div class="row" style="margin-top:14px"><button class="btn ghost" id="dlgNo">Отмена</button>'+
+      '<button class="btn" id="dlgOk" style="flex:1">Сохранить</button></div>');
+    m.root.querySelector('#dlgNo').onclick=function(){ m.close(); res(null); };
+    m.root.querySelector('#dlgOk').onclick=function(){
+      try{ var data=JSON.parse(m.root.querySelector('#dlgJ').value); }
+      catch(e){ toast('Некорректный JSON'); return; }
+      m.close(); res(data);
+    };
+  });
+}
+/* выбор семьи списком (никаких ID руками); вернёт id или null */
+function askPickFamily(title,excludeId){
+  return new Promise(function(res){
+    var m=modal('<h3>'+esc(title)+'</h3><div id="dlgFam"><p class="lead">Загрузка…</p></div>');
+    api('families').then(function(r){
+      var fams=r.families.filter(function(f){ return f.id!==excludeId && !f.banned; });
+      m.root.querySelector('#dlgFam').innerHTML=fams.length?fams.map(function(f){
+        var who=f.members.map(function(x){ return x.nickname; }).slice(0,4).join(', ');
+        return '<button class="pick" data-fid="'+f.id+'" data-fl="'+esc(f.label||'Семья')+'">🏠 <b>#'+f.id+' · '+esc(f.label||'Семья')+'</b> <small>'+esc(who)+'</small></button>';
+      }).join(''):'<p class="lead">Других семей нет.</p>';
+      Array.prototype.forEach.call(m.root.querySelectorAll('[data-fid]'),function(b){
+        b.onclick=function(){ var id=parseInt(b.getAttribute('data-fid'),10), lb=b.getAttribute('data-fl'); m.close(); res({id:id,label:lb}); };
+      });
+    }).catch(function(e){ m.close(); res(null); fail(e); });
+  });
+}
 function on(sel,fn){ Array.prototype.forEach.call(document.getElementById('view').querySelectorAll(sel),fn); }
 
 /* ================= разделы ================= */
@@ -228,7 +310,8 @@ dash:function(){
     var s=r.stats;
     var tiles=[['Семьи',s.families],['Родители',s.parents],['Дети',s.children],['Заблокированы',s.blocked],
       ['Админы',s.admins],['Баны',s.bans],['Приглашения ждут',s.invitesPending],['Сессии',s.sessions],
-      ['Желания',s.wishes],['Записи модулей',s.records],['Картинки 🔒',s.images],['Очки всего',s.pointsTotal],['Событий за 7 дней',s.events7d]];
+      ['Желания',s.wishes],['Записи модулей',s.records],['Картинки 🔒',s.images],['Очки всего',s.pointsTotal],['Событий за 7 дней',s.events7d],
+      ['Тикеты открыты',s.ticketsOpen||0],['Тикеты: новые ✉',s.ticketsNew||0]];
     var grid=tiles.map(function(t){ return '<div class="stat"><div class="n">'+t[1]+'</div><div class="l">'+t[0]+'</div></div>'; }).join('');
     var mx=1; s.activity14d.forEach(function(d){ if(d.n>mx) mx=d.n; });
     var spark=s.activity14d.map(function(d){ return '<i style="height:'+Math.max(3,Math.round(d.n/mx*100))+'%" title="'+d.day+': '+d.n+'"></i>'; }).join('');
@@ -488,6 +571,63 @@ invites:function(){
       '<table><thead><tr><th>№</th><th>Тип</th><th>Кто позвал</th><th>Email</th><th>Статус</th><th>До</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>');
     on('[data-id]',function(b){ b.onclick=function(){ if(confirm('Отозвать приглашение #'+b.getAttribute('data-id')+'?'))
       api('invite_revoke',{id:parseInt(b.getAttribute('data-id'),10)}).then(function(){ toast('Отозвано'); VIEWS.invites(); }).catch(fail); }; });
+  }).catch(fail);
+},
+
+tickets:function(st){ st=st||'open';
+  api('tickets',{status:st==='all'?'':st}).then(function(r){
+    var tabs=[['open','Открытые'],['closed','Закрытые'],['all','Все']].map(function(x){
+      return '<button class="btn '+(x[0]===st?'':'ghost ')+'xs" data-st="'+x[0]+'">'+x[1]+'</button>';
+    }).join(' ');
+    var rows=r.tickets.map(function(k){
+      var who=esc(k.owner)+' '+(k.kind==='parent'?'<span class="pill">родитель</span>':'<span class="pill g">ребёнок</span>');
+      var stp=k.status==='open'?'<span class="pill ok">открыт</span>':'<span class="pill">закрыт</span>';
+      var nw=k.unread?' <span class="pill warn">новое ✉</span>':'';
+      var src=k.source&&k.source.indexOf('module:')===0?'<code>'+esc(k.source.slice(7))+'</code>':'настройки';
+      return '<tr><td>#'+k.id+'</td><td>'+who+'</td><td><b>'+esc(k.subject)+'</b></td><td>'+src+'</td>'+
+        '<td>'+stp+nw+'</td><td>'+k.msgs+'</td><td>'+dt(k.updated)+'</td>'+
+        '<td><button class="btn ghost xs" data-tk="'+k.id+'">Открыть</button></td></tr>';
+    }).join('');
+    V('<div class="card"><h2>Тикеты</h2><p class="lead">Обращения «Сообщить о проблеме» от детей и родителей (Настройки → Помощь и кнопка под «Добавить фото» в модулях). '+
+      'Ответ увидит только автор — у него в приложении загорится «новое». Ответ автора переоткрывает закрытый тикет.</p>'+
+      '<div class="row" style="margin-bottom:10px">'+tabs+'</div>'+
+      '<table><thead><tr><th>№</th><th>Кто</th><th>Тема</th><th>Откуда</th><th>Статус</th><th>Сообщ.</th><th>Обновлён</th><th></th></tr></thead><tbody>'+
+      (rows||'<tr><td colspan="8" class="lead">пусто</td></tr>')+'</tbody></table></div>');
+    on('[data-st]',function(b){ b.onclick=function(){ VIEWS.tickets(b.getAttribute('data-st')); }; });
+    on('[data-tk]',function(b){ b.onclick=function(){ VIEWS.ticketThread(parseInt(b.getAttribute('data-tk'),10),st); }; });
+  }).catch(fail);
+},
+
+ticketThread:function(id,backSt){
+  api('ticket_view',{id:id}).then(function(r){
+    var k=r.ticket;
+    var msgs=r.messages.map(function(m){
+      return '<div class="tmsg'+(m.admin?' adm':'')+'"><div class="tw">'+(m.admin?'админ · '+esc(m.author||''):esc(m.author||''))+' · '+dt(m.created)+'</div>'+
+        '<div class="tb">'+esc(m.body)+'</div></div>';
+    }).join('');
+    var open=k.status==='open';
+    var src=k.source&&k.source.indexOf('module:')===0?'модуль <code>'+esc(k.source.slice(7))+'</code>':'настройки';
+    V('<div class="card"><button class="btn ghost xs" id="back">‹ Тикеты</button>'+
+      '<h2 style="margin-top:10px">#'+k.id+' · '+esc(k.subject)+'</h2>'+
+      '<p class="lead">От: <b>'+esc(k.owner)+'</b> ('+(k.kind==='parent'?'родитель':'ребёнок')+') · откуда: '+src+' · создан '+dt(k.created)+' · '+
+      (open?'<span class="pill ok">открыт</span>':'<span class="pill">закрыт</span>')+'</p>'+
+      '<div class="tthread">'+msgs+'</div>'+
+      '<textarea id="tkTxt" rows="3" placeholder="Ответ автору (увидит только он)…" style="width:100%;margin-top:10px"></textarea>'+
+      '<div class="row" style="margin-top:10px"><button class="btn" id="tkReply">Ответить</button>'+
+      (open?'<button class="btn danger" id="tkClose">Закрыть тикет</button>':'<button class="btn ghost" id="tkReopen">Переоткрыть</button>')+
+      '</div></div>');
+    var th=document.querySelector('.tthread'); if(th) th.scrollTop=th.scrollHeight;
+    document.getElementById('back').onclick=function(){ VIEWS.tickets(backSt||'open'); };
+    document.getElementById('tkReply').onclick=function(){
+      var v=document.getElementById('tkTxt').value.trim();
+      if(!v){ toast('Напишите ответ'); return; }
+      api('ticket_reply',{id:id,text:v}).then(function(){ toast('Ответ отправлен'); VIEWS.ticketThread(id,backSt); }).catch(fail);
+    };
+    var cl=document.getElementById('tkClose');
+    if(cl) cl.onclick=function(){ if(confirm('Закрыть тикет #'+id+'? Автор сможет переоткрыть его своим ответом.'))
+      api('ticket_close',{id:id}).then(function(){ toast('Закрыт'); VIEWS.ticketThread(id,backSt); }).catch(fail); };
+    var ro=document.getElementById('tkReopen');
+    if(ro) ro.onclick=function(){ api('ticket_reopen',{id:id}).then(function(){ toast('Переоткрыт'); VIEWS.ticketThread(id,backSt); }).catch(fail); };
   }).catch(fail);
 },
 

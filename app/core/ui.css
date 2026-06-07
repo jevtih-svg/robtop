@@ -8,17 +8,64 @@
   --blue:#3b6bff; --green:#2bf0c0; --mint:#38e8a0; --gold:#ffd23b; --red:#ff4d6d;
   --ink:#eaf2ff; --muted:#93a6cf;
   --accent:#ff3db0; --accent-2:#a64bff;
-}
-html{background:#05050f}
-html,body{margin:0;padding:0;min-height:100%;overscroll-behavior:none}
-body{
-  font-family:'Rubik',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  color:var(--ink); background:#05050f; min-height:100vh; overflow-x:hidden;
-  background-image:
+  /* ---- токены ТЕМЫ (дефолт = «Неон»; миграция 016, выбор в Настройках) ---- */
+  --font-display:'Russo One',sans-serif;
+  --font-body:'Rubik',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --chrome-ink:#bfe9ff;                /* иконки-кнопки оболочки (⚙, назад, hbtn) */
+  --bg0:#05050f;                       /* базовый цвет страницы (и за пределами градиентов) */
+  --bg-img:
     radial-gradient(820px 600px at 14% 8%, rgba(166,75,255,.20), transparent 60%),
     radial-gradient(820px 680px at 88% 22%, rgba(25,227,255,.15), transparent 60%),
     radial-gradient(900px 800px at 50% 108%, rgba(255,43,214,.18), transparent 60%),
     linear-gradient(180deg,#070617 0%, #05040f 60%, #07041a 100%);
+  --tile-bg:linear-gradient(162deg, rgba(26,23,56,.72), rgba(11,10,28,.74));
+  --sheet-bg:linear-gradient(180deg, rgba(24,21,52,.97), rgba(10,9,26,.99));
+  --brand-glow:0 0 12px rgba(25,227,255,.7), 0 0 28px rgba(255,43,214,.6);
+  --accent-grad:linear-gradient(180deg,#ff5db0,#d51a82);
+  --hud-grad:linear-gradient(0deg, rgba(5,4,15,.86), transparent);
+  --tabbar-grad:linear-gradient(0deg, rgba(5,4,15,.94) 60%, transparent);
+}
+
+/* ===================== ТЕМЫ (body[data-theme], хранится на аккаунте) =====================
+   Тема полностью меняет оболочку: фон, канвас-арт (реестр канваса — core/bg.js RTTheme),
+   шрифты, акценты, поверхности. Все темы на тёмной базе — модули не переделываются.
+   Новая тема = блок токенов здесь + THEMES в core/bg.js + allowlist в accounts.php (set_theme)
+   + карточка появится в Настройках автоматически (shell строит список из RTTheme.list()). */
+body[data-theme="tilley"]{
+  /* Tilley Live: глубокий лес, лён, оранжевый акцент; Playfair Display + DM Sans */
+  --cyan:#5FBF9E; --magenta:#E8440A; --pink:#E8440A; --purple:#C9A86A;
+  --blue:#5B8FA8; --green:#5FBF9E; --mint:#7FD0AE; --gold:#D9A441; --red:#E05B3A;
+  --ink:#DED5BE; --muted:#A89F87;
+  --accent:#E8440A; --accent-2:#C93A08;
+  --font-display:'Playfair Display',Georgia,serif;
+  --font-body:'DM Sans','Rubik',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --chrome-ink:#DED5BE;
+  --bg0:#14261F;
+  --bg-img:
+    radial-gradient(720px 720px at 50% -14%, rgba(232,68,10,.10), transparent 70%),
+    radial-gradient(640px 640px at 50% 114%, rgba(222,213,190,.05), transparent 70%),
+    linear-gradient(180deg,#1B332B 0%, #192E28 55%, #14261F 100%);
+  --tile-bg:
+    linear-gradient(170deg, rgba(222,213,190,.08) 0%, rgba(222,213,190,.03) 30%, transparent 55%),
+    linear-gradient(145deg, rgba(47,90,72,.92) 0%, rgba(36,62,53,.88) 55%, rgba(28,51,41,.85) 100%);
+  --sheet-bg:linear-gradient(180deg, rgba(42,74,68,.97), rgba(20,38,31,.99));
+  --brand-glow:0 0 40px rgba(222,213,190,.16), 0 0 80px rgba(222,213,190,.08);
+  --accent-grad:linear-gradient(180deg,#F25420,#C93A08);
+  --hud-grad:linear-gradient(0deg, rgba(17,31,25,.88), transparent);
+  --tabbar-grad:linear-gradient(0deg, rgba(17,31,25,.95) 60%, transparent);
+}
+/* Tilley: плитки и витрина в едином фирменном оранжевом (вместо неоновых цветов модулей) */
+body[data-theme="tilley"] .tile{--c:#E8440A !important}
+body[data-theme="tilley"] .store-row{--c:#E8440A !important}
+/* Tilley: спокойный канвас — светлячки приглушённее неоновой платы */
+body[data-theme="tilley"] #bg{opacity:.85}
+
+html{background:var(--bg0)}
+html,body{margin:0;padding:0;min-height:100%;overscroll-behavior:none}
+body{
+  font-family:var(--font-body);
+  color:var(--ink); background:var(--bg0); min-height:100vh; overflow-x:hidden;
+  background-image:var(--bg-img);
 }
 #bg{position:fixed;inset:0;z-index:0;display:block}
 #root{position:relative;z-index:1;max-width:480px;margin:0 auto;min-height:100vh}
@@ -30,7 +77,7 @@ body{
 /* ===================== HOME ===================== */
 #home{padding-bottom:46px}
 .hometop{padding:calc(30px + env(safe-area-inset-top)) 6px 14px;position:relative}
-.brand{font-family:'Russo One',sans-serif;font-size:40px;letter-spacing:1px;line-height:1;margin:0;color:#fff;
+.brand{font-family:var(--font-display);font-size:40px;letter-spacing:1px;line-height:1;margin:0;color:#fff;
   text-shadow:0 0 12px rgba(25,227,255,.7), 0 0 28px rgba(255,43,214,.6)}
 .brand b{color:var(--pink);font-weight:400}
 .tagline{margin:8px 2px 0;color:var(--muted);font-weight:600;font-size:15px;letter-spacing:.2px}
@@ -87,7 +134,7 @@ body[data-view="settings"] .fab{display:none}
   max-width:480px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;
   padding:0 22px calc(16px + env(safe-area-inset-bottom));
   background:linear-gradient(0deg, rgba(5,4,15,.86), transparent)}
-.hud .big{font-family:'Russo One',sans-serif;font-size:34px;color:#fff;line-height:.95;text-shadow:0 0 14px rgba(255,255,255,.22)}
+.hud .big{font-family:var(--font-display);font-size:34px;color:#fff;line-height:.95;text-shadow:0 0 14px rgba(255,255,255,.22)}
 .hud .lbl{font-weight:700;font-size:13px;letter-spacing:.4px;margin-top:3px}
 .hud-l{font-weight:800;font-size:14px;color:var(--mint);text-shadow:0 0 12px rgba(56,232,160,.5);padding-bottom:3px}
 .hud-l b{color:#dffaef}
@@ -98,7 +145,7 @@ body[data-view="settings"] .fab{display:none}
 .fab{position:fixed;z-index:20;display:none;align-items:center;gap:10px;
   bottom:calc(70px + env(safe-area-inset-bottom));right:max(18px, calc(50vw - 222px));
   height:58px;padding:0 22px 0 18px;border:none;border-radius:30px;cursor:pointer;color:#fff;
-  font-family:'Russo One',sans-serif;font-size:15px;letter-spacing:.3px;
+  font-family:var(--font-display);font-size:15px;letter-spacing:.3px;
   background:linear-gradient(180deg,#ff5db0,#d51a82);
   box-shadow:0 0 28px -3px var(--pink), 0 12px 26px rgba(0,0,0,.5)}
 .fab.show{display:flex}
@@ -129,7 +176,7 @@ body.demo .demo-badge{display:block}
   font-family:'Rubik',sans-serif;font-size:9px;font-weight:600;letter-spacing:.3px;color:rgba(147,166,207,.26);
   pointer-events:none;user-select:none}
 .set-ver{margin-top:18px;text-align:center;font-size:11px;font-weight:600;letter-spacing:.4px;color:rgba(147,166,207,.55)}
-.sheet h2{font-family:'Russo One',sans-serif;font-weight:400;font-size:21px;margin:0 0 14px;text-align:center;color:#fff;
+.sheet h2{font-family:var(--font-display);font-weight:400;font-size:21px;margin:0 0 14px;text-align:center;color:#fff;
   text-shadow:0 0 12px rgba(255,61,176,.6)}
 .field{margin-top:14px}
 .field label{display:block;font-weight:800;font-size:14px;color:#c3d2f2;margin-bottom:6px;padding-left:4px}
@@ -188,7 +235,7 @@ body.demo .demo-badge{display:block}
 /* ===================== ЭКРАН НАСТРОЕК (#settings) ===================== */
 #settings{padding-bottom:46px}
 .set-top{display:flex;align-items:center;gap:12px;padding:calc(26px + env(safe-area-inset-top)) 0 8px}
-.set-top h1{font-family:'Russo One',sans-serif;font-weight:400;font-size:23px;margin:0;color:#fff;
+.set-top h1{font-family:var(--font-display);font-weight:400;font-size:23px;margin:0;color:#fff;
   text-shadow:0 0 12px rgba(255,61,176,.6)}
 /* язык: сегмент-контрол в одну строку вместо стопки кнопок */
 .lang-seg{display:flex;gap:6px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.12);
@@ -252,7 +299,7 @@ body[data-view="parent"] #bg{opacity:.15;filter:saturate(.65)}
   background:linear-gradient(150deg,rgba(25,227,255,.22),rgba(166,75,255,.26));
   border:1.5px solid rgba(25,227,255,.45);box-shadow:0 0 14px -4px var(--cyan)}
 .pd-kid .ktx{min-width:0;display:flex;flex-direction:column;gap:2px}
-.pd-kid .nm{font-family:'Russo One',sans-serif;font-size:16px;color:#fff;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pd-kid .nm{font-family:var(--font-display);font-size:16px;color:#fff;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pd-kid .st{font-size:10.5px;color:var(--muted);font-weight:700}
 .pd-badge{flex:none;display:flex;align-items:center;gap:5px;font-size:9.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;
   color:var(--cyan);background:rgba(25,227,255,.1);border:1px solid rgba(25,227,255,.4);padding:5px 8px;border-radius:999px;white-space:nowrap}
@@ -267,13 +314,13 @@ body[data-view="parent"] #bg{opacity:.15;filter:saturate(.65)}
 /* начисление очков родителем: быстрые суммы в шторке */
 .pd-gamts{display:flex;gap:7px;margin-top:2px}
 .pd-gamts button{flex:1;border:1.6px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#cfe0ff;
-  font-family:'Russo One',sans-serif;font-size:16px;padding:13px 0;border-radius:14px;cursor:pointer;transition:.15s}
+  font-family:var(--font-display);font-size:16px;padding:13px 0;border-radius:14px;cursor:pointer;transition:.15s}
 .pd-gamts button.on{color:#2b1605;background:linear-gradient(180deg,#ffe57a,#ffb02e);border-color:transparent;
   box-shadow:0 0 14px -4px var(--gold)}
 /* HUD-карточки обзора */
 .pd-hud{display:flex;gap:8px;margin-top:10px}
 .pd-hud .h{flex:1;text-align:center;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:15px;padding:11px 6px 9px}
-.pd-hud .n{font-family:'Russo One',sans-serif;font-size:23px;color:#fff;line-height:1}
+.pd-hud .n{font-family:var(--font-display);font-size:23px;color:#fff;line-height:1}
 .pd-hud .h:nth-child(1) .n{color:var(--cyan);text-shadow:0 0 14px rgba(25,227,255,.6)}
 .pd-hud .h:nth-child(2) .n{color:var(--pink);text-shadow:0 0 14px rgba(255,61,176,.6)}
 .pd-hud .h:nth-child(3) .n{color:var(--gold);text-shadow:0 0 14px rgba(255,210,59,.6)}
@@ -300,7 +347,7 @@ body[data-view="parent"] #bg{opacity:.15;filter:saturate(.65)}
 .pd-mrow .mn{flex:0 0 116px;font-size:11.5px;font-weight:700;color:#dbe6ff;line-height:1.25}
 .pd-mrow .bar{flex:1;height:9px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}
 .pd-mrow .bar i{display:block;height:100%;border-radius:99px;background:var(--mc);box-shadow:0 0 8px -2px var(--mc)}
-.pd-mrow .ct{flex:0 0 26px;text-align:right;font-family:'Russo One',sans-serif;font-size:13px;color:#fff}
+.pd-mrow .ct{flex:0 0 26px;text-align:right;font-family:var(--font-display);font-size:13px;color:#fff}
 /* сводные карточки модулей */
 .pd-mcard{display:flex;align-items:center;gap:11px;width:100%;text-align:left;font-family:inherit;cursor:pointer;
   background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:11px 12px;margin-bottom:8px;color:var(--ink);transition:border-color .15s, transform .1s}
@@ -323,7 +370,7 @@ body[data-view="parent"] #bg{opacity:.15;filter:saturate(.65)}
 .pd-wseg{display:flex;gap:6px;margin-bottom:12px}
 .pd-wseg button{flex:1;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.04);color:#cfe0ff;font-family:inherit;
   font-weight:800;font-size:12px;padding:8px 6px;border-radius:12px;cursor:pointer;transition:.15s}
-.pd-wseg button .c{display:inline-block;margin-left:5px;font-family:'Russo One',sans-serif;font-weight:400}
+.pd-wseg button .c{display:inline-block;margin-left:5px;font-family:var(--font-display);font-weight:400}
 .pd-wseg button.on{color:#fff;border-color:var(--sc);background:rgba(255,255,255,.07);box-shadow:0 0 16px -7px var(--sc);text-shadow:0 0 10px var(--sc)}
 .pd-wcard{display:flex;gap:11px;width:100%;text-align:left;font-family:inherit;cursor:pointer;color:var(--ink);
   background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-left:3px solid var(--sc);
@@ -363,7 +410,7 @@ button.pd-ev{cursor:pointer;transition:border-color .15s} button.pd-ev:active{bo
 .pd-ev .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .pd-ev .t1{font-size:12.5px;font-weight:700;color:#e8f0ff;line-height:1.4}
 .pd-ev .t2{font-size:10.5px;font-weight:700;color:var(--muted)}
-.pd-ev .tm{flex:0 0 auto;font-family:'Russo One',sans-serif;font-size:11px;color:var(--muted);margin-top:2px}
+.pd-ev .tm{flex:0 0 auto;font-family:var(--font-display);font-size:11px;color:var(--muted);margin-top:2px}
 /* деталь желания (в общем .sheet) */
 .pd-dhead{display:flex;gap:13px;align-items:center;margin-bottom:4px}
 .pd-dhead .ph{width:74px;height:74px;border-radius:17px;flex:0 0 74px;border-color:var(--sc)}
@@ -376,7 +423,7 @@ button.pd-ev{cursor:pointer;transition:border-color .15s} button.pd-ev:active{bo
 .pd-dlink{display:inline-flex;align-items:center;gap:7px;margin-top:11px;font-size:12.5px;font-weight:800;color:var(--cyan);text-decoration:none}
 .pd-dcnt{display:flex;gap:8px;margin-top:14px}
 .pd-dcnt .h{flex:1;text-align:center;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:13px;padding:9px 4px;display:flex;flex-direction:column;gap:3px}
-.pd-dcnt .n{font-family:'Russo One',sans-serif;font-size:17px;color:#fff}
+.pd-dcnt .n{font-family:var(--font-display);font-size:17px;color:#fff}
 .pd-dcnt .l{font-size:9.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--muted)}
 .pd-tl{margin-top:6px}
 .pd-tl .row{display:flex;gap:10px;align-items:flex-start;padding:7px 2px}
@@ -402,7 +449,7 @@ body[data-view="parent"] .pd-tabbar{display:flex}
 .pd-mhead .mic{width:40px;height:40px;border-radius:12px;flex:0 0 40px;display:grid;place-items:center;color:var(--mc,#19e3ff);
   background:rgba(255,255,255,.05);border:1px solid var(--mc,rgba(255,255,255,.2));box-shadow:0 0 12px -4px var(--mc,transparent)}
 .pd-mhead .mic svg{width:22px;height:22px}.pd-mhead .mic img{width:24px;height:24px;border-radius:6px}
-.pd-mhead .mttl{flex:1;min-width:0;font-family:'Russo One',sans-serif;font-size:17px;color:#fff;line-height:1.15;
+.pd-mhead .mttl{flex:1;min-width:0;font-family:var(--font-display);font-size:17px;color:#fff;line-height:1.15;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pd-crow{display:flex;gap:11px;align-items:flex-start;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);
   border-radius:13px;padding:10px 12px;margin-bottom:7px}
@@ -451,3 +498,18 @@ body[data-view="parent"] .pd-tabbar{display:flex}
   background:linear-gradient(135deg,#19e3ff,#38e8a0);box-shadow:0 10px 30px rgba(0,0,0,.55)}
 .jgl-done:active{transform:translateX(-50%) scale(.96)}
 @media (prefers-reduced-motion:reduce){ .jgl-on{animation:none} }
+
+/* ---------- тикеты «Сообщить о проблеме» (Настройки → Помощь + кнопка под фото-кнопками модулей) ---------- */
+.tk-report{display:block;width:100%;grid-column:1/-1;margin:10px 0 2px;padding:11px 12px;border-radius:12px;
+  border:1.5px dashed rgba(255,210,59,.45);background:rgba(255,210,59,.07);color:#ffe08a;
+  font-family:inherit;font-weight:700;font-size:13.5px;cursor:pointer;text-align:center}
+.tk-report:active{transform:scale(.98)}
+.tk-text{resize:vertical;min-height:84px;line-height:1.45}
+.tk-dot{flex:0 0 9px;width:9px;height:9px;border-radius:50%;background:var(--pink,#ff3db0);box-shadow:0 0 8px rgba(255,61,176,.8)}
+.tk-thread{max-height:42vh;overflow:auto;display:flex;flex-direction:column;gap:8px;margin:6px 0 4px;padding:2px}
+.tk-msg{max-width:88%;align-self:flex-end;background:rgba(25,227,255,.10);border:1px solid rgba(25,227,255,.35);
+  border-radius:13px 13px 4px 13px;padding:8px 11px}
+.tk-msg.adm{align-self:flex-start;background:rgba(166,75,255,.12);border-color:rgba(166,75,255,.4);border-radius:13px 13px 13px 4px}
+.tk-msg .who{font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#93a6cf;margin-bottom:3px}
+.tk-msg .body{font-size:13.5px;font-weight:600;color:#eaf2ff;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+.tk-msg .when{font-size:9.5px;font-weight:700;color:#93a6cf;margin-top:3px;text-align:right}

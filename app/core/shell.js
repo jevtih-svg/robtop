@@ -890,6 +890,119 @@ window.RobTop = window.RobTop || {};
     }).catch(function(){ box.innerHTML='<p class="set-note">'+esc(t("common.failed"))+'</p>'; });
   }
 
+  /* ===== ПОМОЩЬ: «Сообщить о проблеме» + мои обращения (тикеты, 2026-06-07) =====
+     Видят ВСЕ вошедшие (ребёнок и родитель); сервер — api/tickets.php, ответы админа
+     приходят сюда же (флаг unread). В демо секции нет (тикеты только на сервере). */
+  function helpSectionHtml(){
+    if(demo || !(acct && acct.authenticated)) return '';
+    return '<div class="store-section">'+esc(t("helpdesk.title"))+'</div>'
+      +'<div class="store-install" id="helpReport">🛟 '+esc(t("helpdesk.report"))+'</div>'
+      +'<div id="helpBox"></div>';
+  }
+  function loadTickets(){
+    var box=settingsBody?settingsBody.querySelector("#helpBox"):null; if(!box) return;
+    RT.API.post("tickets.php",{op:"list"}).then(function(r){
+      var list=(r&&r.tickets)||[];
+      if(!list.length){ box.innerHTML=''; return; }
+      box.innerHTML='<p class="set-note">'+esc(t("helpdesk.mine"))+'</p>'+list.map(function(x){
+        return '<button type="button" class="acct-row tk-row" data-tk="'+x.id+'">'
+          +(x.unread?'<span class="tk-dot" aria-label="'+esc(t("helpdesk.newReply"))+'"></span>':'')
+          +'<span class="nm">'+esc(x.subject)+'</span>'
+          +'<span class="rl'+(x.status==="open"?'':' off')+'">'+esc(x.status==="open"?t("helpdesk.stOpen"):t("helpdesk.stClosed"))+'</span></button>';
+      }).join("");
+      Array.prototype.forEach.call(box.querySelectorAll("[data-tk]"),function(bn){
+        bn.onclick=function(){ openTicketThread(parseInt(bn.getAttribute("data-tk"),10)); };
+      });
+    }).catch(function(){ box.innerHTML='<p class="set-note">'+esc(t("common.failed"))+'</p>'; });
+  }
+  /* шторка нового обращения; source: "settings" или "module:<id>" (кнопка под «Добавить фото») */
+  function openTicketReport(source){
+    var node=document.createElement("div");
+    node.innerHTML='<h2>'+esc(t("helpdesk.report"))+'</h2>'
+      +'<p class="set-note" style="text-align:center">'+esc(t("helpdesk.hint"))+'</p>'
+      +'<textarea class="set-in tk-text" id="tkText" rows="4" maxlength="2000" placeholder="'+esc(t("helpdesk.ph"))+'"></textarea>'
+      +'<div class="sheet-actions"><button class="btn btn-cancel" id="tkCancel" style="flex:0 0 38%">'+esc(t("common.cancel"))+'</button>'
+      +'<button class="btn btn-primary" id="tkSend" style="flex:1">'+esc(t("helpdesk.send"))+'</button></div>';
+    var ctl=sheet(node), ta=node.querySelector("#tkText"), btn=node.querySelector("#tkSend");
+    node.querySelector("#tkCancel").onclick=ctl.close;
+    btn.onclick=function(){
+      var v=(ta.value||"").trim();
+      if(v.length<3){ toast(t("helpdesk.tooShort")); return; }
+      btn.disabled=true;
+      RT.API.post("tickets.php",{op:"create",text:v,source:source||"settings"}).then(function(){
+        ctl.close(); buzz(8); toast(t("helpdesk.sent"));
+        if(isSettingsOpen()) loadTickets();
+      }).catch(function(e){
+        btn.disabled=false;
+        toast(/http 429/.test((e&&e.message)||"")?t("helpdesk.tooMany"):t("common.failed"));
+      });
+    };
+    setTimeout(function(){ ta.focus(); },150);
+  }
+  /* переписка по обращению: сообщения (мои справа, поддержка слева) + ответ + «проблема решена» */
+  function openTicketThread(id){
+    RT.API.post("tickets.php",{op:"view",id:id}).then(function(r){
+      if(!(r&&r.ok&&r.ticket)){ toast(t("common.failed")); return; }
+      var tk=r.ticket, open=tk.status==="open";
+      var msgs=(r.messages||[]).map(function(m){
+        return '<div class="tk-msg'+(m.admin?' adm':'')+'">'
+          +'<div class="who">'+esc(m.admin?t("helpdesk.support"):t("helpdesk.you"))+'</div>'
+          +'<div class="body">'+esc(m.body)+'</div>'
+          +'<div class="when">'+esc(String(m.created||"").slice(0,16))+'</div></div>';
+      }).join("");
+      var node=document.createElement("div");
+      node.innerHTML='<h2>'+esc(t("helpdesk.threadTitle"))+'</h2>'
+        +'<p class="set-note" style="text-align:center">'+esc(open?t("helpdesk.stOpen"):t("helpdesk.stClosed"))+'</p>'
+        +'<div class="tk-thread">'+msgs+'</div>'
+        +'<textarea class="set-in tk-text" id="tkReply" rows="3" maxlength="2000" placeholder="'+esc(t("helpdesk.replyPh"))+'"></textarea>'
+        +(open?'':'<p class="set-note">'+esc(t("helpdesk.reopenHint"))+'</p>')
+        +'<div class="sheet-actions">'
+        +(open?'<button class="btn btn-cancel" id="tkSolve" style="flex:0 0 44%">'+esc(t("helpdesk.solve"))+'</button>':'')
+        +'<button class="btn btn-primary" id="tkGo" style="flex:1">'+esc(t("helpdesk.reply"))+'</button></div>';
+      var ctl=sheet(node);
+      var th=node.querySelector(".tk-thread"); th.scrollTop=th.scrollHeight;
+      node.querySelector("#tkGo").onclick=function(){
+        var v=(node.querySelector("#tkReply").value||"").trim();
+        if(v.length<3){ toast(t("helpdesk.tooShort")); return; }
+        RT.API.post("tickets.php",{op:"reply",id:id,text:v}).then(function(){
+          ctl.close(); toast(t("helpdesk.sent"));
+          if(isSettingsOpen()) loadTickets();
+        }).catch(function(){ toast(t("common.failed")); });
+      };
+      var sv=node.querySelector("#tkSolve");
+      if(sv) sv.onclick=function(){
+        confirm({title:t("helpdesk.solveConfirm"),ok:t("common.yes"),cancel:t("common.cancel")}).then(function(ok){
+          if(!ok) return;
+          RT.API.post("tickets.php",{op:"close",id:id}).then(function(){
+            ctl.close(); toast(t("helpdesk.solved"));
+            if(isSettingsOpen()) loadTickets();
+          }).catch(function(){ toast(t("common.failed")); });
+        });
+      };
+      if(isSettingsOpen()) loadTickets(); // сервер снял unread — обновить точки в списке
+    }).catch(function(){ toast(t("common.failed")); });
+  }
+  /* кнопка «Сообщить о проблеме» ПОД КАЖДОЙ кнопкой «Добавить фото» (заказ Джеффа):
+     shell дорисовывает её после известных фото-кнопок модулей (wishlist/mood/rating/walk) —
+     сами модули не трогаем; вставка идемпотентна, повторные рендеры переживает MutationObserver. */
+  var TK_PHOTO_SEL="#wlPhotoPick,#mdPhotoPick,#rdPhotoPick,#wkAddPhoto";
+  function injectReportBtns(){
+    if(demo || !(acct && acct.authenticated)) return;
+    var picks=document.querySelectorAll(TK_PHOTO_SEL);
+    Array.prototype.forEach.call(picks,function(p){
+      var n=p.nextElementSibling;
+      if(n && n.classList && n.classList.contains("tk-report")) return;
+      var bb=document.createElement("button");
+      bb.type="button"; bb.className="tk-report";
+      bb.textContent="🛟 "+t("helpdesk.report");
+      bb.onclick=function(ev){
+        ev.preventDefault(); ev.stopPropagation();
+        openTicketReport(RT.current()?("module:"+RT.current()):"settings");
+      };
+      p.parentNode.insertBefore(bb,p.nextSibling);
+    });
+  }
+
   /* ===== ДРУЗЬЯ в настройках (только ребёнок): пригласить друга по ссылке (без email) ===== */
   function friendSectionHtml(){
     if(demo || !acct || !acct.authenticated || !acct.user || acct.user.kind!=="child") return '';
@@ -939,6 +1052,7 @@ window.RobTop = window.RobTop || {};
       +sharedSectionHtml()
       +myParentSectionHtml()
       +friendSectionHtml()
+      +helpSectionHtml()
       +(showManage
         ? '<div class="store-section">'+esc(t("store.title"))+'</div>'
           +'<div class="store-install" id="settingsManage">⚙ '+esc(t("settings.manageApps"))+'</div>'
@@ -956,6 +1070,9 @@ window.RobTop = window.RobTop || {};
     if(settingsBody.querySelector("#sharedBox")) loadShared();
     var fr=settingsBody.querySelector("#friendInvite");
     if(fr) fr.onclick=openInviteFriend;
+    var hr=settingsBody.querySelector("#helpReport");
+    if(hr) hr.onclick=function(){ openTicketReport("settings"); };
+    if(settingsBody.querySelector("#helpBox")) loadTickets();
     settingsBody.querySelector(".lang-seg").addEventListener("click",function(e){
       var b=e.target.closest("[data-lang]"); if(!b) return;
       I.set(b.getAttribute("data-lang")); buzz(6);
@@ -1091,6 +1208,9 @@ window.RobTop = window.RobTop || {};
       if(isSettingsOpen()){ closeSettings(); return; }
       if(RT.current()) RT.close();
     });
+    /* тикеты: дорисовывать «Сообщить о проблеме» под фото-кнопками модулей при любом рендере
+       (вставка идемпотентна — наблюдатель не зацикливается) */
+    try{ new MutationObserver(function(){ injectReportBtns(); }).observe(document.body,{childList:true,subtree:true}); }catch(e){}
   }
 
   /* смена языка: перевести статический DOM, перерисовать главный экран и открытые шторки */

@@ -45,7 +45,7 @@ function rt_norm_code($t) {
 /* ---------- чтение аккаунтов ---------- */
 function rt_account($db, $userId) {
     $s = $db->prepare(
-        "SELECT u.id, u.name AS nickname, u.role, a.kind, a.email, a.password_hash,
+        "SELECT u.id, u.name AS nickname, u.role, u.theme, a.kind, a.email, a.password_hash,
                 a.must_change_password, a.status, a.invited_by
          FROM users u JOIN accounts a ON a.user_id = u.id WHERE u.id = ? LIMIT 1"
     );
@@ -306,6 +306,7 @@ function rt_public_user($row, $self = false) {
         'nickname'           => $row['nickname'],
         'kind'               => $row['kind'],
         'role'               => $row['role'],
+        'theme'              => (isset($row['theme']) && $row['theme'] !== '') ? $row['theme'] : 'neon',
         'mustChangePassword' => ((int)$row['must_change_password'] === 1),
     ];
     if ($self && !empty($row['email'])) $out['email'] = $row['email'];

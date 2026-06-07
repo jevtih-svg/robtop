@@ -58,6 +58,8 @@ switch ($op) {
             'records'        => $n("SELECT COUNT(*) n FROM module_data WHERE deleted_at IS NULL"),
             'images'         => $n("SELECT COUNT(*) n FROM uploaded_files WHERE deleted_at IS NULL"),
             'events7d'       => $n("SELECT COUNT(*) n FROM events WHERE created_at > DATE_SUB(NOW(), INTERVAL 7 DAY)"),
+            'ticketsOpen'    => $n("SELECT COUNT(*) n FROM tickets WHERE status='open'"),
+            'ticketsNew'     => $n("SELECT COUNT(*) n FROM tickets WHERE status='open' AND admin_unread=1"),
         ];
         $pt = $db->query("SELECT COALESCE(SUM(CAST(JSON_EXTRACT(data,'$.n') AS SIGNED)),0) n
                           FROM module_data WHERE module='bank' AND collection='points' AND deleted_at IS NULL")->fetch();
@@ -694,6 +696,87 @@ switch ($op) {
         if (!$id) rt_json(['error' => 'bad input'], 422);
         $db->prepare("UPDATE module_data SET deleted_at = NOW() WHERE id = ? AND module='bank' AND collection='points'")->execute([$id]);
         alog('points_deleted', $id);
+        rt_json(['ok' => true]);
+    }
+
+    /* ================= ТИКЕТЫ (обращения «Сообщить о проблеме», миграция 015) =================
+       Пользовательская сторона — api/tickets.php (Настройки → Помощь). Здесь — сторона админа:
+       список с фильтром, переписка, ответ (у репортёра загорается «новое»), закрыть/переоткрыть. */
+    case 'tickets': {
+        $st = isset($b['status']) ? (string)$b['status'] : '';
+        $where = ''; $args = [];
+        if ($st === 'open' || $st === 'closed') { $where = " WHERE t.status = ?"; $args[] = $st; }
+        $sql = "SELECT t.id, t.user_id, u.name AS owner, a.kind, t.subject, t.source, t.status,
+                       t.admin_unread, t.created_at, t.updated_at,
+                       (SELECT COUNT(*) FROM ticket_messages m WHERE m.ticket_id = t.id) AS msgs
+                FROM tickets t JOIN users u ON u.id = t.user_id JOIN accounts a ON a.user_id = t.user_id"
+               . $where . " ORDER BY (t.status='open') DESC, t.admin_unread DESC, t.updated_at DESC LIMIT 200";
+        $s = $db->prepare($sql); $s->execute($args);
+        $rows = [];
+        foreach ($s->fetchAll() as $r) {
+            $rows[] = ['id' => (int)$r['id'], 'userId' => (int)$r['user_id'], 'owner' => $r['owner'],
+                       'kind' => $r['kind'], 'subject' => $r['subject'], 'source' => $r['source'],
+                       'status' => $r['status'], 'unread' => (int)$r['admin_unread'] === 1,
+                       'msgs' => (int)$r['msgs'], 'created' => $r['created_at'], 'updated' => $r['updated_at']];
+        }
+        rt_json(['ok' => true, 'tickets' => $rows]);
+    }
+
+    case 'ticket_view': {
+        $id = (int)($b['id'] ?? 0);
+        if (!$id) rt_json(['error' => 'bad input'], 422);
+        $s = $db->prepare("SELECT t.*, u.name AS owner, a.kind FROM tickets t
+                           JOIN users u ON u.id = t.user_id JOIN accounts a ON a.user_id = t.user_id
+                           WHERE t.id = ? LIMIT 1");
+        $s->execute([$id]);
+        $tk = $s->fetch();
+        if (!$tk) rt_json(['error' => 'not found'], 404);
+        if ((int)$tk['admin_unread'] === 1) {
+            $db->prepare("UPDATE tickets SET admin_unread = 0 WHERE id = ?")->execute([$id]);
+        }
+        $msgs = [];
+        $m = $db->prepare("SELECT m.id, m.author_id, m.is_admin, m.body, m.created_at, u.name AS author
+                           FROM ticket_messages m LEFT JOIN users u ON u.id = m.author_id
+                           WHERE m.ticket_id = ? ORDER BY m.id");
+        $m->execute([$id]);
+        foreach ($m->fetchAll() as $r) {
+            $msgs[] = ['id' => (int)$r['id'], 'admin' => (int)$r['is_admin'] === 1,
+                       'author' => $r['author'], 'body' => $r['body'], 'created' => $r['created_at']];
+        }
+        rt_json(['ok' => true, 'ticket' => ['id' => (int)$tk['id'], 'userId' => (int)$tk['user_id'],
+                 'owner' => $tk['owner'], 'kind' => $tk['kind'], 'subject' => $tk['subject'],
+                 'source' => $tk['source'], 'status' => $tk['status'], 'created' => $tk['created_at']],
+                 'messages' => $msgs]);
+    }
+
+    case 'ticket_reply': {
+        $id = (int)($b['id'] ?? 0);
+        $text = isset($b['text']) ? trim((string)$b['text']) : '';
+        if (!$id || $text === '') rt_json(['error' => 'bad input'], 422);
+        $text = mb_substr($text, 0, 2000);
+        $s = $db->prepare("SELECT id, subject FROM tickets WHERE id = ? LIMIT 1"); $s->execute([$id]);
+        $tk = $s->fetch();
+        if (!$tk) rt_json(['error' => 'not found'], 404);
+        $db->prepare("INSERT INTO ticket_messages (ticket_id, author_id, is_admin, body) VALUES (?, ?, 1, ?)")
+           ->execute([$id, $AID, $text]);
+        // ответ админа: репортёру загорается «новое», закрытый тикет переоткрывается
+        $db->prepare("UPDATE tickets SET status = 'open', closed_at = NULL, user_unread = 1, admin_unread = 0, updated_at = NOW() WHERE id = ?")
+           ->execute([$id]);
+        alog('ticket_replied', $id, $tk['subject']);
+        rt_json(['ok' => true]);
+    }
+
+    case 'ticket_close': case 'ticket_reopen': {
+        $id = (int)($b['id'] ?? 0);
+        if (!$id) rt_json(['error' => 'bad input'], 422);
+        if ($op === 'ticket_close') {
+            // закрытие видно репортёру (user_unread=1 — статус изменился)
+            $db->prepare("UPDATE tickets SET status = 'closed', closed_at = NOW(), user_unread = 1, admin_unread = 0, updated_at = NOW() WHERE id = ?")->execute([$id]);
+            alog('ticket_closed', $id);
+        } else {
+            $db->prepare("UPDATE tickets SET status = 'open', closed_at = NULL, updated_at = NOW() WHERE id = ?")->execute([$id]);
+            alog('ticket_reopened', $id);
+        }
         rt_json(['ok' => true]);
     }
 

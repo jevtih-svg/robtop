@@ -83,6 +83,23 @@
         makeLink: "Create link",
         sendHint: "Send this link to your friend. It works for 7 days."
       },
+      helpdesk: {
+        title: "Help",
+        report: "Report a problem",
+        hint: "Tell us what went wrong. The RobTop team will read it and reply right here in the app.",
+        ph: "What happened?",
+        send: "Send", sent: "Sent! The reply will appear in Settings → Help",
+        tooShort: "Tell us a little more",
+        tooMany: "Too many reports — please try later",
+        mine: "My reports:", newReply: "new reply",
+        stOpen: "open", stClosed: "closed",
+        threadTitle: "My report",
+        you: "Me", support: "RobTop team",
+        replyPh: "Write a reply…", reply: "Reply",
+        reopenHint: "Your reply will reopen this report.",
+        solve: "Solved ✓", solveConfirm: "Mark the problem as solved?",
+        solved: "Marked as solved"
+      },
       reg: {
         link: "I am a new parent — create a family",
         nickPh: "Your nickname",
@@ -231,6 +248,23 @@
         makeLink: "Создать ссылку",
         sendHint: "Отправь эту ссылку другу. Она работает 7 дней."
       },
+      helpdesk: {
+        title: "Помощь",
+        report: "Сообщить о проблеме",
+        hint: "Расскажи, что пошло не так. Команда RobTop прочитает и ответит прямо здесь, в приложении.",
+        ph: "Что случилось?",
+        send: "Отправить", sent: "Отправлено! Ответ появится в Настройках → Помощь",
+        tooShort: "Расскажи чуть подробнее",
+        tooMany: "Слишком много обращений — попробуй позже",
+        mine: "Мои обращения:", newReply: "новый ответ",
+        stOpen: "открыт", stClosed: "закрыт",
+        threadTitle: "Моё обращение",
+        you: "Я", support: "Команда RobTop",
+        replyPh: "Написать ответ…", reply: "Ответить",
+        reopenHint: "Ответ снова откроет обращение.",
+        solve: "Решено ✓", solveConfirm: "Отметить проблему решённой?",
+        solved: "Отмечено решённым"
+      },
       reg: {
         link: "Я новый родитель — создать семью",
         nickPh: "Ваш никнейм",
@@ -378,6 +412,23 @@
         sheetHint: "Draugs izdomās sev segvārdu (ne īsto vārdu!) un saņems savu RobTop. Kamēr viņa vecāks nav pievienojies, par viņa kontu rūpējas tavs vecāks.",
         makeLink: "Izveidot saiti",
         sendHint: "Nosūti šo saiti draugam. Tā darbojas 7 dienas."
+      },
+      helpdesk: {
+        title: "Palīdzība",
+        report: "Ziņot par problēmu",
+        hint: "Pastāsti, kas nogāja greizi. RobTop komanda izlasīs un atbildēs tepat lietotnē.",
+        ph: "Kas notika?",
+        send: "Nosūtīt", sent: "Nosūtīts! Atbilde parādīsies Iestatījumi → Palīdzība",
+        tooShort: "Pastāsti mazliet vairāk",
+        tooMany: "Pārāk daudz ziņojumu — pamēģini vēlāk",
+        mine: "Mani ziņojumi:", newReply: "jauna atbilde",
+        stOpen: "atvērts", stClosed: "aizvērts",
+        threadTitle: "Mans ziņojums",
+        you: "Es", support: "RobTop komanda",
+        replyPh: "Rakstīt atbildi…", reply: "Atbildēt",
+        reopenHint: "Atbilde atkal atvērs ziņojumu.",
+        solve: "Atrisināts ✓", solveConfirm: "Atzīmēt problēmu kā atrisinātu?",
+        solved: "Atzīmēts kā atrisināts"
       },
       reg: {
         link: "Esmu jauns vecāks — izveidot ģimeni",

@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
   name       VARCHAR(60)  NOT NULL,
   role       ENUM('child','parent') NOT NULL DEFAULT 'child',
   pin_hash   VARCHAR(255) DEFAULT NULL,            -- для будущего входа по PIN
+  theme      VARCHAR(20)  NOT NULL DEFAULT 'neon', -- тема оформления аккаунта (миграция 016)
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
