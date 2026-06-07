@@ -1,12 +1,12 @@
 <?php
-/** POST /api/store/reorder.php — переместить модуль выше/ниже (только админ). {pin,id,dir:-1|1} */
+/** POST /api/store/reorder.php — переместить модуль выше/ниже (только родитель). {id,dir:-1|1} */
 
 require __DIR__ . '/../_bootstrap.php';
 rt_guard();
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') rt_json(['error' => 'method'], 405);
 
 $b = rt_body();
-if (!rt_admin_gate($b)) rt_json(['error' => 'unauthorized'], 401); // родительская сессия ИЛИ PIN (fallback), §4.10
+if (!rt_admin_gate()) rt_json(['error' => 'unauthorized'], 401); // только родительская сессия (PIN упразднён 2026-06-07)
 
 $id  = isset($b['id']) ? (string)$b['id'] : '';
 $dir = (isset($b['dir']) && (int)$b['dir'] < 0) ? -1 : 1;

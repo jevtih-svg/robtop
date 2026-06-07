@@ -384,34 +384,110 @@ window.RobTop = window.RobTop || {};
     return '<div class="store-section">'+esc(t("family.title"))+'</div>'
       +'<div id="famBox"><p class="set-note">'+esc(t("account.loading"))+'</p></div>';
   }
+  /* Полный центр семьи (2026-06-07, слияние с консолью family.html):
+     родители семьи, дети (гость-пилюля у provisional), добавить/пригласить,
+     отправленные приглашения с отзывом и новой ссылкой. */
   function loadFamily(){
     var box=settingsBody.querySelector("#famBox"); if(!box) return;
     famApi({op:"members"}).then(function(r){
+      var meId=(acct&&acct.user)?acct.user.id:0;
+      var parents=((r&&r.members)||[]).filter(function(m){ return m.kind==="parent"; });
       var kids=(r&&r.children)||[];
-      var rows=kids.map(function(k){
-        var blocked=(k.status==="disabled");
+      var html="";
+      if(parents.length){
+        html+='<div class="fam-sub">'+esc(t("family.parents"))+'</div>'
+          +parents.map(function(p){
+            var role=(p.role==="owner")?t("family.roleOwner"):t("account.roleParent");
+            return '<div class="acct-row"><span class="nm">'+esc(p.nickname)+(p.id===meId?' · '+esc(t("family.you")):'')+'</span>'
+              +'<span class="rl">'+esc(role)+'</span></div>';
+          }).join("");
+      }
+      html+='<div class="fam-sub">'+esc(t("family.kids"))+'</div>';
+      html+=kids.length?kids.map(function(k){
+        var blocked=(k.status==="disabled"), guest=(k.type==="provisional");
         return '<button class="acct-row" data-kid="'+k.id+'" data-nick="'+esc(k.nickname)+'" data-blocked="'+(blocked?1:0)+'">'
           +'<span class="nm">'+esc(k.nickname)+'</span>'
+          +(guest?'<span class="rl warn">'+esc(t("family.guest"))+'</span>':'')
           +'<span class="rl'+(blocked?' off':'')+'">'+esc(blocked?t("family.blocked"):t("account.roleChild"))+'</span></button>';
-      }).join("");
-      box.innerHTML=(rows||'<p class="set-note">'+esc(t("family.empty"))+'</p>')
-        +'<div class="store-install" id="famAdd">＋ '+esc(t("family.addChild"))+'</div>'
-        +'<div class="store-install" id="famInvite">✉ '+esc(t("family.invite"))+'</div>';
+      }).join(""):'<p class="set-note">'+esc(t("family.empty"))+'</p>';
+      html+='<div class="store-install" id="famAdd">＋ '+esc(t("family.addChild"))+'</div>'
+        +'<div class="store-install" id="famInvite">✉ '+esc(t("family.invite"))+'</div>'
+        +'<div class="fam-sub">'+esc(t("family.invites"))+'</div>'
+        +'<div id="famInv"><p class="set-note">'+esc(t("account.loading"))+'</p></div>';
+      box.innerHTML=html;
       Array.prototype.forEach.call(box.querySelectorAll("[data-kid]"),function(b){
         b.onclick=function(){ openChildSheet(parseInt(b.getAttribute("data-kid"),10), b.getAttribute("data-nick"), b.getAttribute("data-blocked")==="1"); };
       });
       box.querySelector("#famAdd").onclick=openAddChild;
       box.querySelector("#famInvite").onclick=openInviteParent;
+      loadInvites();
     }).catch(function(){ box.innerHTML='<p class="set-note">'+esc(t("common.failed"))+'</p>'; });
+  }
+  /* отправленные приглашения: статус, отозвать, новая ссылка (resend) */
+  function invStatusPill(st){
+    var cls=(st==="pending")?" warn":(st==="accepted"?"":" off");
+    return '<span class="rl'+cls+'">'+esc(t("family.st."+st,{fallback:st}))+'</span>';
+  }
+  function loadInvites(){
+    var box=settingsBody?settingsBody.querySelector("#famInv"):null; if(!box) return;
+    famApi({op:"invites"}).then(function(r){
+      var list=(r&&r.invites)||[];
+      if(!list.length){ box.innerHTML='<p class="set-note">'+esc(t("family.invitesEmpty"))+'</p>'; return; }
+      box.innerHTML=list.map(function(i){
+        var tp=t("family.invType."+i.type,{fallback:i.type});
+        return '<div class="acct-row"><span class="nm">'+esc(tp)
+          +(i.email?'<span class="fam-em">'+esc(i.email)+'</span>':'')+'</span>'
+          +invStatusPill(i.status)
+          +(i.status==="pending"
+            ? '<button class="hbtn" data-resend="'+i.id+'" aria-label="'+esc(t("family.resend"))+'" style="width:34px;height:34px">↻</button>'
+              +'<button class="hbtn" data-revoke="'+i.id+'" aria-label="'+esc(t("family.revoke"))+'" style="width:34px;height:34px;color:#ffb3c0">✕</button>'
+            : '')
+          +'</div>';
+      }).join("");
+      Array.prototype.forEach.call(box.querySelectorAll("[data-revoke]"),function(b){
+        b.onclick=function(){
+          confirm({title:t("family.revoke"),ok:t("common.yes"),cancel:t("common.cancel")}).then(function(ok){
+            if(!ok) return;
+            famApi({op:"invite_action",id:parseInt(b.getAttribute("data-revoke"),10),action:"revoke"})
+              .then(function(){ toast(t("family.revoked")); loadInvites(); })
+              .catch(function(){ toast(t("common.failed")); });
+          });
+        };
+      });
+      Array.prototype.forEach.call(box.querySelectorAll("[data-resend]"),function(b){
+        b.onclick=function(){
+          famApi({op:"invite_action",id:parseInt(b.getAttribute("data-resend"),10),action:"resend",lang:I.get()})
+            .then(function(r2){ showLinkSheet(t("family.resendDone"), r2&&r2.link); loadInvites(); })
+            .catch(function(){ toast(t("common.failed")); });
+        };
+      });
+    }).catch(function(){ box.innerHTML='<p class="set-note">'+esc(t("common.failed"))+'</p>'; });
+  }
+  /* общая шторка «вот ссылка» (resend и т.п.) */
+  function showLinkSheet(title, link){
+    var node=document.createElement("div");
+    node.innerHTML='<h2>'+esc(title)+'</h2>'
+      +'<p class="set-note">'+esc(t("family.linkHint"))+'</p>'
+      +'<div class="invlink">'+esc(link||"")+'</div>'
+      +'<button class="btn btn-primary" id="lkCopy" style="width:100%;margin-top:10px">'+esc(t("family.copy"))+'</button>'
+      +'<div class="sheet-actions"><button class="btn btn-cancel" id="lkClose" style="flex:1">'+esc(t("common.close"))+'</button></div>';
+    var ctl=sheet(node);
+    node.querySelector("#lkClose").onclick=ctl.close;
+    node.querySelector("#lkCopy").onclick=function(){
+      try{ if(navigator.clipboard) navigator.clipboard.writeText(link||""); }catch(e){}
+      toast(t("family.copied"));
+    };
   }
   function openChildSheet(id,nick,blocked){
     var node=document.createElement("div");
     node.innerHTML='<h2>'+esc(nick)+'</h2>'
       +'<div class="store-install" id="kidReset">🔑 '+esc(t("family.resetPass"))+'</div>'
+      +'<div class="store-install" id="kidTransfer">👪 '+esc(t("family.transfer"))+'</div>'
       +'<div class="store-install" id="kidBlock">'+(blocked?'✅ '+esc(t("family.unblock")):'⛔ '+esc(t("family.block")))+'</div>'
       +'<div class="sheet-actions"><button class="btn btn-cancel" id="kidClose" style="flex:1">'+esc(t("common.close"))+'</button></div>';
     var ctl=sheet(node);
     node.querySelector("#kidClose").onclick=ctl.close;
+    node.querySelector("#kidTransfer").onclick=function(){ ctl.close(); openTransferChild(id,nick); };
     node.querySelector("#kidReset").onclick=function(){
       confirm({title:t("family.resetPass"), text:t("family.resetConfirm",{name:nick}), ok:t("common.yes"), cancel:t("common.cancel")}).then(function(ok){
         if(!ok) return;
@@ -470,9 +546,38 @@ window.RobTop = window.RobTop || {};
           try{ if(navigator.clipboard) navigator.clipboard.writeText(r.link||""); }catch(e){}
           toast(t("family.copied"));
         };
+        loadInvites();
       }).catch(function(){ toast(t("common.failed")); });
     };
     setTimeout(function(){ node.querySelector("#invEmail").focus(); },150);
+  }
+
+  /* передать ребёнка настоящему родителю (transfer_child): email → ссылка-приглашение;
+     после принятия у ребёнка появляется своя семья, провизорная опека рвётся (сервер) */
+  function openTransferChild(id,nick){
+    var node=document.createElement("div");
+    node.innerHTML='<h2>'+esc(t("family.transfer"))+' · '+esc(nick)+'</h2>'
+      +'<p class="set-note">'+esc(t("family.transferHint"))+'</p>'
+      +'<input class="set-in" id="trEmail" type="email" placeholder="Email">'
+      +'<div class="sheet-actions"><button class="btn btn-cancel" id="trCancel" style="flex:0 0 38%">'+esc(t("common.cancel"))+'</button>'
+      +'<button class="btn btn-primary" id="trGo" style="flex:1">'+esc(t("friend.makeLink"))+'</button></div>'
+      +'<div id="trOut"></div>';
+    var ctl=sheet(node);
+    node.querySelector("#trCancel").onclick=ctl.close;
+    node.querySelector("#trGo").onclick=function(){
+      var em=(node.querySelector("#trEmail").value||"").trim(); if(!em) return;
+      famApi({op:"invite",type:"transfer_child",email:em,target_child_id:id,lang:I.get()}).then(function(r){
+        node.querySelector("#trOut").innerHTML='<p class="set-note">'+esc(t("family.linkHint"))+'</p>'
+          +'<div class="invlink">'+esc(r.link||"")+'</div>'
+          +'<button class="btn btn-primary" id="trCopy" style="width:100%;margin-top:10px">'+esc(t("family.copy"))+'</button>';
+        node.querySelector("#trCopy").onclick=function(){
+          try{ if(navigator.clipboard) navigator.clipboard.writeText(r.link||""); }catch(e){}
+          toast(t("family.copied"));
+        };
+        loadInvites();
+      }).catch(function(){ toast(t("common.failed")); });
+    };
+    setTimeout(function(){ node.querySelector("#trEmail").focus(); },150);
   }
 
   /* ===== ДРУЗЬЯ в настройках (только ребёнок): пригласить друга по ссылке (без email) ===== */

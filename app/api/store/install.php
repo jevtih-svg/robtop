@@ -1,10 +1,10 @@
 <?php
 /**
- * POST /api/store/install.php — установка модуля в рантайме (только админ).
- * Тело: { pin, manifest:{id,name,version,color,icon,status,roles,...}, files:{ "module.js":"...", "module.css":"...", "icon.svg":"..." } }
+ * POST /api/store/install.php — установка модуля в рантайме (только родитель).
+ * Тело: { manifest:{id,name,version,color,icon,status,roles,...}, files:{ "module.js":"...", "module.css":"...", "icon.svg":"..." } }
  *
  * БЕЗОПАСНОСТЬ (жёстко):
- *  - только админ-PIN;
+ *  - только родительская сессия (rt_admin_gate; PIN упразднён 2026-06-07);
  *  - установленные модули — ТОЛЬКО статика: серверный код запрещён (server=0);
  *  - whitelist расширений файлов; запрет .php/.phtml/.phar/.cgi/.pl/.py/.sh;
  *  - лимиты размера; валидный уникальный id; запрет перезаписи родного модуля.
@@ -15,7 +15,7 @@ rt_guard();
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') rt_json(['error' => 'method'], 405);
 
 $b = rt_body();
-if (!rt_admin_gate($b)) rt_json(['error' => 'unauthorized'], 401); // родительская сессия ИЛИ PIN (fallback), §4.10
+if (!rt_admin_gate()) rt_json(['error' => 'unauthorized'], 401); // только родительская сессия (PIN упразднён 2026-06-07)
 
 $man   = isset($b['manifest']) && is_array($b['manifest']) ? $b['manifest'] : null;
 $files = isset($b['files']) && is_array($b['files']) ? $b['files'] : null;

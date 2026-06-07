@@ -47,7 +47,15 @@
         blockConfirm: "Block {name}? They won't be able to sign in. Data is kept.",
         unblockConfirm: "Unblock {name}?",
         blockDone: "{name} is blocked", unblockDone: "{name} can sign in again",
-        blocked: "blocked"
+        blocked: "blocked",
+        parents: "Parents", kids: "Children", guest: "guest", roleOwner: "owner", you: "you",
+        transfer: "Hand over to their parent",
+        transferHint: "Enter the real parent's email. They will register and get parental rights for this child; your temporary guardianship will end.",
+        invites: "Invitations", invitesEmpty: "No sent invitations.",
+        revoke: "Revoke", revoked: "Invitation revoked",
+        resend: "New link", resendDone: "Here is a fresh link:",
+        invType: { co_parent: "second parent", child_to_child: "friend", transfer_child: "child handover" },
+        st: { pending: "pending", accepted: "accepted", revoked: "revoked", expired: "expired" }
       },
       friend: {
         title: "Friends",
@@ -80,7 +88,10 @@
         weakPass: "At least 4 characters, and not 1234",
         demoNote: "Sign-in works in the server version of the app.",
         welcome: "Welcome, {name}!", signedOut: "Signed out",
-        guestNote: "Without sign-in the app runs in family mode."
+        guestNote: "Without sign-in the app runs in family mode.",
+        forgot: "Forgot password?",
+        forgotHint: "For parents only: a child's password is reset by their parent. Enter your email — we'll send a reset link.",
+        forgotSend: "Send the link", forgotSent: "If this email is registered, the link has been sent."
       },
       store: {
         title: "Apps", adminNote: "App management is for a parent.",
@@ -88,11 +99,10 @@
         pickBundle: "📦 Pick a bundle (.robtop.json)",
         up: "Up", down: "Down", remove: "Remove", toggle: "On / off",
         srcInstalled: "installed", srcBuiltin: "built-in", soonSuffix: " · soon",
-        failPin: "Couldn't (PIN?)", installedToast: "Installed: {name}",
+        installedToast: "Installed: {name}",
         uninstallTitle: "Remove app?", uninstallText: "Data and events will be kept."
       },
       err: {
-        bad_pin: "Wrong PIN",
         install_failed: "Couldn't install", install_error: "Install error",
         bundle_not_json: "Broken bundle (not JSON)",
         bundle_no_manifest: "Bundle has no manifest/files",
@@ -159,7 +169,15 @@
         blockConfirm: "Заблокировать {name}? Он не сможет войти. Данные сохранятся.",
         unblockConfirm: "Разблокировать {name}?",
         blockDone: "{name} заблокирован", unblockDone: "{name} снова может войти",
-        blocked: "заблокирован"
+        blocked: "заблокирован",
+        parents: "Родители", kids: "Дети", guest: "гость", roleOwner: "владелец", you: "вы",
+        transfer: "Передать родителю",
+        transferHint: "Email настоящего родителя: он зарегистрируется и получит права на этого ребёнка, ваша временная опека завершится.",
+        invites: "Приглашения", invitesEmpty: "Отправленных приглашений нет.",
+        revoke: "Отозвать", revoked: "Приглашение отозвано",
+        resend: "Новая ссылка", resendDone: "Вот свежая ссылка:",
+        invType: { co_parent: "второй родитель", child_to_child: "друг", transfer_child: "передача ребёнка" },
+        st: { pending: "ждёт", accepted: "принято", revoked: "отозвано", expired: "истекло" }
       },
       friend: {
         title: "Друзья",
@@ -192,7 +210,10 @@
         weakPass: "Минимум 4 символа, и не 1234",
         demoNote: "Вход работает в серверной версии приложения.",
         welcome: "Привет, {name}!", signedOut: "Вы вышли",
-        guestNote: "Без входа приложение работает в семейном режиме."
+        guestNote: "Без входа приложение работает в семейном режиме.",
+        forgot: "Забыли пароль?",
+        forgotHint: "Только для родителя: ребёнку пароль сбрасывает родитель. Введите email — пришлём ссылку для смены пароля.",
+        forgotSend: "Отправить ссылку", forgotSent: "Если такой email зарегистрирован, ссылка отправлена."
       },
       store: {
         title: "Приложения", adminNote: "Управление приложениями — для родителя.",
@@ -200,11 +221,10 @@
         pickBundle: "📦 Выбрать бандл (.robtop.json)",
         up: "Выше", down: "Ниже", remove: "Удалить", toggle: "Вкл / выкл",
         srcInstalled: "установлено", srcBuiltin: "встроено", soonSuffix: " · скоро",
-        failPin: "Не удалось (PIN?)", installedToast: "Установлено: {name}",
+        installedToast: "Установлено: {name}",
         uninstallTitle: "Удалить приложение?", uninstallText: "Данные и события сохранятся."
       },
       err: {
-        bad_pin: "Неверный PIN",
         install_failed: "Не удалось установить", install_error: "Ошибка установки",
         bundle_not_json: "Битый бандл (не JSON)",
         bundle_no_manifest: "В бандле нет manifest/files",
@@ -271,7 +291,15 @@
         blockConfirm: "Bloķēt {name}? Viņš nevarēs pieslēgties. Dati saglabāsies.",
         unblockConfirm: "Atbloķēt {name}?",
         blockDone: "{name} ir bloķēts", unblockDone: "{name} atkal var pieslēgties",
-        blocked: "bloķēts"
+        blocked: "bloķēts",
+        parents: "Vecāki", kids: "Bērni", guest: "viesis", roleOwner: "īpašnieks", you: "jūs",
+        transfer: "Nodot vecākam",
+        transferHint: "Īstā vecāka e-pasts: viņš reģistrēsies un saņems vecāka tiesības uz šo bērnu; jūsu pagaidu aizbildnība beigsies.",
+        invites: "Ielūgumi", invitesEmpty: "Nosūtītu ielūgumu nav.",
+        revoke: "Atsaukt", revoked: "Ielūgums atsaukts",
+        resend: "Jauna saite", resendDone: "Šeit ir jauna saite:",
+        invType: { co_parent: "otrs vecāks", child_to_child: "draugs", transfer_child: "bērna nodošana" },
+        st: { pending: "gaida", accepted: "pieņemts", revoked: "atsaukts", expired: "beidzies" }
       },
       friend: {
         title: "Draugi",
@@ -304,7 +332,10 @@
         weakPass: "Vismaz 4 rakstzīmes, un ne 1234",
         demoNote: "Pieslēgšanās darbojas lietotnes servera versijā.",
         welcome: "Sveiks, {name}!", signedOut: "Jūs izgājāt",
-        guestNote: "Bez pieslēgšanās lietotne darbojas ģimenes režīmā."
+        guestNote: "Bez pieslēgšanās lietotne darbojas ģimenes režīmā.",
+        forgot: "Aizmirsi paroli?",
+        forgotHint: "Tikai vecākiem: bērna paroli atiestata vecāks. Ievadi e-pastu — atsūtīsim saiti paroles maiņai.",
+        forgotSend: "Nosūtīt saiti", forgotSent: "Ja šāds e-pasts ir reģistrēts, saite ir nosūtīta."
       },
       store: {
         title: "Lietotnes", adminNote: "Lietotņu pārvaldība ir vecākiem.",
@@ -312,11 +343,10 @@
         pickBundle: "📦 Izvēlies pakotni (.robtop.json)",
         up: "Augšup", down: "Lejup", remove: "Noņemt", toggle: "Ieslēgt / izslēgt",
         srcInstalled: "instalēts", srcBuiltin: "iebūvēts", soonSuffix: " · drīz",
-        failPin: "Neizdevās (PIN?)", installedToast: "Instalēts: {name}",
+        installedToast: "Instalēts: {name}",
         uninstallTitle: "Noņemt lietotni?", uninstallText: "Dati un notikumi tiks saglabāti."
       },
       err: {
-        bad_pin: "Nepareizs PIN",
         install_failed: "Neizdevās instalēt", install_error: "Instalēšanas kļūda",
         bundle_not_json: "Bojāta pakotne (nav JSON)",
         bundle_no_manifest: "Pakotnē nav manifest/files",

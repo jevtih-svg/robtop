@@ -181,12 +181,6 @@ body.demo .demo-badge{display:block}
 .store-section{font-weight:800;font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:#9fb0d6;margin:16px 0 8px;padding-left:2px}
 .store-install{border:2px dashed rgba(25,227,255,.45);border-radius:16px;padding:16px;text-align:center;color:#bdeeff;font-weight:700;cursor:pointer;margin-top:6px}
 .store-install:active{transform:scale(.99)}
-.pin-row{display:flex;gap:10px;margin-top:8px;align-items:stretch}
-/* font-size:16px обязателен: иначе iOS делает авто-зум при фокусе и ломает раскладку */
-.pin-row input{flex:1;min-width:0;border:1.6px solid rgba(255,255,255,.14);border-radius:14px;padding:13px 14px;
-  font-family:inherit;font-size:16px;font-weight:700;letter-spacing:4px;text-align:center;
-  color:var(--ink);background:rgba(255,255,255,.04);outline:none;transition:border-color .15s, box-shadow .15s}
-.pin-row input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(25,227,255,.18)}
 
 /* ===================== ЭКРАН НАСТРОЕК (#settings) ===================== */
 #settings{padding-bottom:46px}
@@ -225,6 +219,15 @@ button.acct-row{width:100%;margin-top:8px;cursor:pointer;font-family:inherit;tex
 button.acct-row:active{transform:scale(.985)}
 .invlink{margin-top:10px;padding:11px 12px;border-radius:12px;background:rgba(255,255,255,.05);
   border:1.5px solid rgba(25,227,255,.35);font-size:12.5px;font-weight:600;color:#cdeeff;word-break:break-all;line-height:1.5}
+/* центр семьи в настройках (слияние с консолью family.html, 2026-06-07) */
+.fam-sub{font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#8aa0c8;margin:14px 2px 2px}
+.fam-em{display:block;font-size:11px;font-weight:600;color:#8aa0c8;margin-top:2px;overflow:hidden;text-overflow:ellipsis}
+.acct-row .rl.warn{background:rgba(255,210,59,.14);color:#ffe08a;border-color:rgba(255,210,59,.45)}
+div.acct-row{margin-top:8px}
+/* текстовая ссылка на lock-экране («Забыли пароль?») */
+.lock-link{display:block;width:100%;margin-top:14px;border:none;background:none;cursor:pointer;
+  font-family:inherit;font-size:13px;font-weight:700;color:var(--cyan);text-align:center;padding:6px}
+.lock-link:active{opacity:.7}
 
 @media (max-width:360px){ .tile .nm{font-size:14px} .brand{font-size:34px} }
 

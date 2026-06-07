@@ -1,12 +1,12 @@
 <?php
 /**
- * RobTop — тест отправки почты (только с admin_pin из config.php).
+ * RobTop — тест отправки почты (только мастер-админ; PIN упразднён 2026-06-07).
  *
- * Пример:
- *   https://apps.tilley.live/robtop/api/mail_test.php?pin=ВАШ_PIN&to=adres@example.com&lang=ru
+ * Использование: войти в приложение аккаунтом родителя-админа (таблица admins),
+ * затем В ТОМ ЖЕ браузере открыть:
+ *   https://apps.tilley.live/robtop/api/mail_test.php?to=adres@example.com&lang=ru
  *
  * Параметры:
- *   pin  — admin_pin из config.php (обязателен; пустой admin_pin = тест запрещён);
  *   to   — куда отправить (валидный email);
  *   lang — язык письма: en | ru | lv (необязателен; фолбэк mail_default_lang → en).
  *
@@ -14,8 +14,7 @@
  */
 require __DIR__ . '/_bootstrap.php';
 
-$pin = isset($_GET['pin']) ? (string)$_GET['pin'] : '';
-if (!rt_admin_ok($pin)) rt_json(['error' => 'forbidden: нужен admin_pin из config.php'], 403);
+rt_require_admin(rt_db()); // активная родительская сессия + флаг в admins; иначе 401/403
 
 $to   = isset($_GET['to']) ? trim((string)$_GET['to']) : '';
 $lang = isset($_GET['lang']) ? strtolower(trim((string)$_GET['lang'])) : null;

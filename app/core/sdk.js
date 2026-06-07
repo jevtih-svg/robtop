@@ -149,13 +149,7 @@ window.RobTop = window.RobTop || {};
         /* сжечь винстрик (будущий модуль заданий: «не все задания дня выполнены») */
         streakReset: function(){ return bankMeta().then(function(m){ return m.streak>0 ? bankSetStreak(m,0) : true; }).then(function(){ return true; }).catch(function(){ return false; }); }
       },
-      admin: {
-        // Проверка PIN родителя/администратора. Демо: '1234'. Сервер: сверяет admin_pin.
-        verify: function(pin){
-          if(RT.isDemo()) return Promise.resolve(pin==="1234");
-          return API.post("store/enable.php",{pin:pin,verify:1}).then(function(r){ return !!(r&&r.ok); }).catch(function(){ return false; });
-        }
-      },
+      /* sdk.admin.verify (PIN) упразднён 2026-06-07: роль даёт сессия аккаунта — модулям достаточно sdk.role / sdk.isDemo() */
       theme: { tokens: shell.tokens || {} },
       storage: { local:function(key){ var k="robtop_"+mod+"_"+key; return {
         get:function(){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },

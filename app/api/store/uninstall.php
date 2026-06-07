@@ -1,5 +1,5 @@
 <?php
-/** POST /api/store/uninstall.php — удалить установленный модуль (только админ). {pin,id}
+/** POST /api/store/uninstall.php — удалить установленный модуль (только родитель). {id}
  *  Удаляет файлы из apps/<id>/ и строку реестра. Данные (module_data) и события сохраняются. */
 
 require __DIR__ . '/../_bootstrap.php';
@@ -7,7 +7,7 @@ rt_guard();
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') rt_json(['error' => 'method'], 405);
 
 $b = rt_body();
-if (!rt_admin_gate($b)) rt_json(['error' => 'unauthorized'], 401); // родительская сессия ИЛИ PIN (fallback), §4.10
+if (!rt_admin_gate()) rt_json(['error' => 'unauthorized'], 401); // только родительская сессия (PIN упразднён 2026-06-07)
 
 $id = isset($b['id']) ? (string)$b['id'] : '';
 if (!preg_match('/^[a-z0-9_-]{2,40}$/', $id)) rt_json(['error' => 'bad id'], 422);

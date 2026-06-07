@@ -80,30 +80,19 @@ function rt_user_role() {
 }
 
 /**
- * Проверка PIN администратора (родитель/разработчик).
- * PIN задаётся в config.php (admin_pin). Если не задан — админ-операции запрещены.
+ * Админ-гейт управления приложениями (§4.10 плана аккаунтов, реализован полностью 2026-06-07):
+ * доступно ТОЛЬКО активной РОДИТЕЛЬСКОЙ СЕССИИ. PIN-система (admin_pin / rt_admin_ok)
+ * полностью упразднена. Используется эндпоинтами store/*.
  */
-function rt_admin_ok($pin) {
-    $c = rt_config();
-    $set = isset($c['admin_pin']) ? (string)$c['admin_pin'] : '';
-    if ($set === '') return false;
-    return is_string($pin) && hash_equals($set, (string)$pin);
-}
-
-/**
- * Админ-гейт (решение 2026-06-05, §4.10 плана аккаунтов): управление приложениями
- * доступно РОДИТЕЛЬСКОЙ СЕССИИ. PIN (admin_pin) остаётся только как fallback на
- * переходный период (вход без аккаунта). Используется эндпоинтами store/*.
- */
-function rt_admin_gate($b) {
+function rt_admin_gate() {
     try {
         $uid = rt_session_user_id();
         if ($uid) {
             $a = rt_account(rt_db(), $uid);
             if ($a && $a['kind'] === 'parent' && $a['status'] === 'active') return true;
         }
-    } catch (Throwable $e) { /* нет таблиц/сессии — проверим PIN ниже */ }
-    return rt_admin_ok(isset($b['pin']) ? $b['pin'] : '');
+    } catch (Throwable $e) { /* нет таблиц/сессии — доступ закрыт */ }
+    return false;
 }
 
 /* ---------- Реестр модулей ---------- */

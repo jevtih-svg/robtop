@@ -1,5 +1,5 @@
 /* RobTop — модуль «Копилка». Свинка с пунктами на боку, огонёк-винстрик, история
-   транзакций (вкладки «Задания»/«Родители») и родительская панель начисления за PIN.
+   транзакций (вкладки «Задания»/«Родители») и родительская панель начислений (только роль parent; в демо открыта).
    Сам ничего не считает — читает леджер через sdk.points (движок в core/sdk.js, политика — ГАЙД-очки.md). */
 (function(){
   "use strict";
@@ -20,7 +20,7 @@
       r_streak_bonus:"Streak bonus 🔥", r_parent_give:"From parents", r_parent_take:"Taken by parents",
       r_task_done:"Parent task done", r_task_fail:"Task not done", r_daily_bonus:"All tasks of the day!",
       r_spend:"Shop", r_other:"Points",
-      parentTitle:"Parent panel", parentGateNote:"Enter the parent PIN",
+      parentTitle:"Parent panel", parentOnly:"Only for a signed-in parent.",
       balanceNow:"in the bank", streakNow:"win streak",
       secTasks:"Parent tasks", btnTaskDone:"✓ Task done +10", btnTaskFail:"✗ Task not done −10",
       taskFailHint:"burns the streak fire", btnDailyBonus:"★ All tasks today +5",
@@ -43,7 +43,7 @@
       r_streak_bonus:"Бонус серии 🔥", r_parent_give:"От родителей", r_parent_take:"Снято родителями",
       r_task_done:"Задание выполнено", r_task_fail:"Задание не выполнено", r_daily_bonus:"Все задания дня!",
       r_spend:"Магазин", r_other:"Пункты",
-      parentTitle:"Панель родителя", parentGateNote:"Введи родительский PIN",
+      parentTitle:"Панель родителя", parentOnly:"Доступно родителю после входа в свой аккаунт.",
       balanceNow:"в копилке", streakNow:"винстрик",
       secTasks:"Задания от родителей", btnTaskDone:"✓ Задание выполнено +10", btnTaskFail:"✗ Задание не выполнено −10",
       taskFailHint:"сжигает огонёк", btnDailyBonus:"★ Все задания дня +5",
@@ -66,7 +66,7 @@
       r_streak_bonus:"Sērijas bonuss 🔥", r_parent_give:"No vecākiem", r_parent_take:"Vecāki noņēma",
       r_task_done:"Uzdevums izpildīts", r_task_fail:"Uzdevums nav izpildīts", r_daily_bonus:"Visi dienas uzdevumi!",
       r_spend:"Veikals", r_other:"Punkti",
-      parentTitle:"Vecāku panelis", parentGateNote:"Ievadi vecāku PIN",
+      parentTitle:"Vecāku panelis", parentOnly:"Pieejams vecākam pēc pieslēgšanās savā kontā.",
       balanceNow:"krājkasē", streakNow:"uzvaru sērija",
       secTasks:"Vecāku uzdevumi", btnTaskDone:"✓ Uzdevums izpildīts +10", btnTaskFail:"✗ Nav izpildīts −10",
       taskFailHint:"nodzēš uguntiņu", btnDailyBonus:"★ Visi dienas uzdevumi +5",
@@ -173,20 +173,13 @@
     box.innerHTML=html;
   }
 
-  /* ---------- родительская панель ---------- */
+  /* ---------- родительская панель ----------
+     PIN упразднён (2026-06-07): панель открывает роль parent из сессии; демо — песочница без гейта.
+     Ребёнку кнопка не рендерится (parentAllowed), тост — защитная ветка. */
+  function parentAllowed(){ return sdk.role==="parent" || sdk.isDemo(); }
   function openParentGate(){
-    if(sdk.role==="parent"){ openParent(); return; } /* родительская сессия: без PIN (§4.10) */
-    var box=document.createElement("div");
-    box.innerHTML='<h2>'+esc(t("parentTitle"))+'</h2>'
-      +'<p style="text-align:center;color:#cfe0ff;font-weight:600;margin:0 0 4px">'+esc(t("parentGateNote"))+'</p>'
-      +'<div class="pin-row"><input id="bkPin" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off">'
-      +'<button class="btn btn-primary" id="bkPinBtn" style="flex:0 0 40%">'+esc(t("common.enter"))+'</button></div>';
-    var ctl=sdk.ui.sheet(box); curSheet=ctl;
-    var inp=box.querySelector("#bkPin"), btn=box.querySelector("#bkPinBtn");
-    function go(){ var v=(inp.value||"").trim(); if(!v) return;
-      sdk.admin.verify(v).then(function(ok){ if(ok){ ctl.close(); openParent(); } else sdk.ui.toast(t("err.bad_pin")); }); }
-    btn.onclick=go; inp.addEventListener("keydown",function(e){ if(e.key==="Enter") go(); });
-    setTimeout(function(){ inp.focus(); },200);
+    if(parentAllowed()){ openParent(); return; }
+    sdk.ui.toast(t("parentOnly"));
   }
   function openParent(){
     var box=document.createElement("div");
@@ -242,7 +235,7 @@
     root.innerHTML='<div class="bk">'
       +'<div class="bk-header"><button class="back" id="bkBack" aria-label="'+esc(t("common.back"))+'">'+BACK_IC+'</button>'
         +'<div class="bk-head-main"><div class="bk-title">'+esc(t("title"))+'</div><div class="bk-sub">'+esc(t("subtitle"))+'</div></div>'
-        +'<button class="hbtn" id="bkParent" aria-label="'+esc(t("parentTitle"))+'">'+PARENT_IC+'</button></div>'
+        +(parentAllowed()?'<button class="hbtn" id="bkParent" aria-label="'+esc(t("parentTitle"))+'">'+PARENT_IC+'</button>':'')+'</div>'
       +'<div class="bk-stage">'
         +'<div class="bk-flame off" id="bkFlame" title="'+esc(t("streakLabel"))+'">'+FLAME_IC
           +'<span class="bk-flame-n" id="bkFlameN">0</span><span class="bk-flame-l">'+esc(t("streakLabel"))+'</span></div>'
@@ -257,7 +250,7 @@
     E={ pts:el.querySelector("#bkPts"), flame:el.querySelector("#bkFlame"), flameN:el.querySelector("#bkFlameN"),
         pig:el.querySelector("#bkPig"), tabs:el.querySelector("#bkTabs"), list:el.querySelector("#bkList") };
     el.querySelector("#bkBack").onclick=function(){ sdk.ui.back(); };
-    el.querySelector("#bkParent").onclick=openParentGate;
+    var pb=el.querySelector("#bkParent"); if(pb) pb.onclick=openParentGate;
     E.tabs.addEventListener("click",function(e){
       var b=e.target.closest(".bk-tab"); if(!b || !alive) return;
       S.tab=b.getAttribute("data-tab");

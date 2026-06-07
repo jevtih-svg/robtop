@@ -1,13 +1,12 @@
 <?php
-/** POST /api/store/enable.php — вкл/выкл модуля (только админ). {pin,id,enabled} | {pin,verify:1} */
+/** POST /api/store/enable.php — вкл/выкл модуля (только родитель). {id,enabled} */
 
 require __DIR__ . '/../_bootstrap.php';
 rt_guard();
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') rt_json(['error' => 'method'], 405);
 
 $b = rt_body();
-if (!rt_admin_gate($b)) rt_json(['error' => 'unauthorized'], 401); // родительская сессия ИЛИ PIN (fallback), §4.10
-if (!empty($b['verify'])) rt_json(['ok' => true]); // только проверка PIN (для разблокировки UI)
+if (!rt_admin_gate()) rt_json(['error' => 'unauthorized'], 401); // только родительская сессия (PIN упразднён 2026-06-07)
 
 $id = isset($b['id']) ? (string)$b['id'] : '';
 if (!preg_match('/^[a-z0-9_-]{2,40}$/', $id)) rt_json(['error' => 'bad id'], 422);

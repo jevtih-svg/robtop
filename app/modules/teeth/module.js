@@ -1,7 +1,7 @@
 /* RobTop — модуль «Таймер чистки зубов».
    Клиентский модуль на универсальном хранилище (sdk.data). Интеграция с очками — через sdk.points.
    2-минутный таймер с кольцом прогресса и спокойным звуком, +10 очков за полную чистку,
-   серия (streak), история, напоминания, родительская панель (PIN).
+   серия (streak), история, напоминания, родительская панель (только роль parent; в демо открыта).
    Тексты — sdk.t/sdk.plural/sdk.formatDate (язык en/ru/lv); словарь — MESSAGES ниже. */
 (function(){
   "use strict";
@@ -33,7 +33,7 @@
       toastPreviewHint:"Tap again to listen",
       remindMorning:"Time to brush your teeth!", remindEvening:"Don't forget your evening brushing.",
       remindUnsupported:"Notifications not supported", remindEnabled:"Reminders enabled", remindDenied:"Notifications blocked in the browser",
-      parentTitle:"For parents", parentGateNote:"Enter the parent PIN.",
+      parentTitle:"For parents", parentOnly:"Only for a signed-in parent.",
       parentDone:"done", parentSkipped:"skipped", parentPoints:"points",
       secManualPoints:"Points manually", secMusicReward:"Music reward", shuffleLabel:"Shuffle tracks",
       secReminders:"Reminders", morning:"Morning", evening:"Evening", enableReminders:"Enable reminders",
@@ -65,7 +65,7 @@
       toastPreviewHint:"Нажми ещё раз, чтобы послушать",
       remindMorning:"Пора почистить зубы!", remindEvening:"Не забудь вечернюю чистку зубов.",
       remindUnsupported:"Уведомления не поддерживаются", remindEnabled:"Напоминания включены", remindDenied:"Уведомления запрещены в браузере",
-      parentTitle:"Родителям", parentGateNote:"Введите PIN родителя.",
+      parentTitle:"Родителям", parentOnly:"Доступно родителю после входа в свой аккаунт.",
       parentDone:"выполнено", parentSkipped:"пропущено", parentPoints:"очки",
       secManualPoints:"Очки вручную", secMusicReward:"Музыка-награда", shuffleLabel:"Случайный порядок треков",
       secReminders:"Напоминания", morning:"Утро", evening:"Вечер", enableReminders:"Включить напоминания",
@@ -97,7 +97,7 @@
       toastPreviewHint:"Nospied vēlreiz, lai klausītos",
       remindMorning:"Laiks tīrīt zobus!", remindEvening:"Neaizmirsti vakara zobu tīrīšanu.",
       remindUnsupported:"Paziņojumi netiek atbalstīti", remindEnabled:"Atgādinājumi ieslēgti", remindDenied:"Paziņojumi pārlūkā bloķēti",
-      parentTitle:"Vecākiem", parentGateNote:"Ievadiet vecāku PIN.",
+      parentTitle:"Vecākiem", parentOnly:"Pieejams vecākam pēc pieslēgšanās savā kontā.",
       parentDone:"pabeigts", parentSkipped:"izlaists", parentPoints:"punkti",
       secManualPoints:"Punkti manuāli", secMusicReward:"Mūzikas balva", shuffleLabel:"Jaukt dziesmas",
       secReminders:"Atgādinājumi", morning:"Rīts", evening:"Vakars", enableReminders:"Ieslēgt atgādinājumus",
@@ -400,17 +400,13 @@
     Notification.requestPermission().then(function(perm){ if(perm==="granted"){ applyReminders(); sdk.ui.toast(t("remindEnabled")); } else sdk.ui.toast(t("remindDenied")); });
   }
 
-  /* ----- родительская панель ----- */
+  /* ----- родительская панель -----
+     PIN упразднён (2026-06-07): панель открывает роль parent из сессии; демо — песочница без гейта.
+     Ребёнку кнопка не рендерится (parentAllowed), тост — защитная ветка. */
+  function parentAllowed(){ return sdk.role==="parent" || sdk.isDemo(); }
   function openParentGate(){
-    if(sdk.role==="parent"){ openParent(); return; } // родительская сессия: панель без PIN (§4.10)
-    var box=document.createElement("div");
-    box.innerHTML='<h2>'+esc(t("parentTitle"))+'</h2><p style="text-align:center;color:#cfe0ff;font-weight:600;margin:0 0 4px">'+esc(t("parentGateNote"))+'</p>'
-      +'<div class="pin-row"><input id="ttPin" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off"><button class="btn btn-primary" id="ttPinBtn" style="flex:0 0 40%">'+esc(t("common.enter"))+'</button></div>';
-    var ctl=sdk.ui.sheet(box); curSheet=ctl;
-    var inp=box.querySelector("#ttPin"), btn=box.querySelector("#ttPinBtn");
-    function go(){ var v=(inp.value||"").trim(); if(!v) return; sdk.admin.verify(v).then(function(ok){ if(ok){ ctl.close(); openParent(); } else sdk.ui.toast(t("err.bad_pin")); }); }
-    btn.onclick=go; inp.addEventListener("keydown",function(e){ if(e.key==="Enter") go(); });
-    setTimeout(function(){ inp.focus(); },200);
+    if(parentAllowed()){ openParent(); return; }
+    sdk.ui.toast(t("parentOnly"));
   }
   function openParent(){
     var s=stats();
@@ -450,7 +446,7 @@
     root.innerHTML='<div class="teeth">'
       +'<div class="tt-header"><button class="back" id="ttBack" aria-label="'+esc(t("common.back"))+'">'+BACK_IC+'</button>'
         +'<div class="tt-head-main"><div class="tt-title">'+esc(t("title"))+'</div><div class="tt-sub">'+esc(t("subtitle"))+'</div></div>'
-        +'<button class="hbtn" id="ttParent" aria-label="'+esc(t("parentTitle"))+'">'+PARENT_IC+'</button></div>'
+        +(parentAllowed()?'<button class="hbtn" id="ttParent" aria-label="'+esc(t("parentTitle"))+'">'+PARENT_IC+'</button>':'')+'</div>'
       +'<div class="tt-stage" id="ttStage"></div>'
       +'<div class="tt-info" id="ttInfo"></div>'
       +'<nav class="tt-tabs" id="ttTabs">'
@@ -475,7 +471,7 @@
     E.filter=root.querySelector("#ttFilter"); E.list=root.querySelector("#ttList");
     E.mhint=root.querySelector("#ttMhint"); E.musicList=root.querySelector("#ttMusicList");
     root.querySelector("#ttBack").onclick=function(){ sdk.ui.back(); };
-    root.querySelector("#ttParent").onclick=openParentGate;
+    var pb=root.querySelector("#ttParent"); if(pb) pb.onclick=openParentGate;
     E.tabs.addEventListener("click",function(e){ var tb=e.target.closest(".tt-tab"); if(tb) setTab(tb.getAttribute("data-tab")); });
     E.filter.addEventListener("click",function(e){ var b=e.target.closest(".tt-fchip"); if(b) setHistFilter(b.getAttribute("data-f")); });
     E.music.addEventListener("click",function(e){ var b=e.target.closest("[data-act]"); if(!b) return; var i=parseInt(b.getAttribute("data-i"),10); if(isNaN(i)) return; if(b.getAttribute("data-act")==="prev") previewToggle(i); else pickTrack(i); });

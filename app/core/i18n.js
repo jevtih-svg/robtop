@@ -7,7 +7,7 @@
    Архитектура:
    - core/strings.js добавляет словари оболочки: RobTop.i18n.add({en,ru,lv}).
    - Каждый модуль приносит свои строки через контракт register({...,messages}).
-   - Ключи — точечные пути: "home.tagline", "wishlist.tab.want", "err.bad_pin".
+   - Ключи — точечные пути: "home.tagline", "wishlist.tab.want", "err.module_load".
    - Множественное число: значение-объект {one,few,many,other,zero} + params.count.
 
    Чтобы добавить новый язык позже: расширить SUPPORTED/NATIVE/TAG/SPEECH здесь

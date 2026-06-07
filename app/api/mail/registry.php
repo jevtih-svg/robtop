@@ -14,7 +14,7 @@
  *     фолбэк: mail_default_lang из config.php → en.
  *   - Отправка из кода: rt_mail_send_tpl($to, '<действие>', $lang, [плейсхолдеры]) — api/_mail.php.
  *   - Новое письмо = новая запись здесь + 3 файла <file>.en/ru/lv.html рядом.
- *   - Тест: <сайт>/api/mail_test.php?pin=<admin_pin>&to=<адрес>&lang=ru
+ *   - Тест (сессией мастер-админа в том же браузере): <сайт>/api/mail_test.php?to=<адрес>&lang=ru
  */
 return [
 

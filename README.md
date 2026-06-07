@@ -18,7 +18,7 @@ app/                     ← то, что публикуется на серве
   manifest.webmanifest   ← PWA-манифест (в Git)
   media/                 ← графика приложения (иконки) — ВНЕ Git, по FTP
   .htaccess
-  config.example.php     ← шаблон конфига (db + api_token + admin_pin)
+  config.example.php     ← шаблон конфига (db + api_token; PIN упразднён)
   api/
     _db.php, _bootstrap.php, _storage.php
     registry.php         ← GET: включённые модули (плитки)
