@@ -382,15 +382,20 @@ switch ($op) {
             $fid = rt_create_family($db, $pid, 'Семья');
             rt_add_member($db, $fid, $pid, 'owner');
         }
-        $lang = rt_mail_lang($b); // язык письма выбирает админ
-        $mail = rt_mail_send_tpl(rt_norm_email($email), 'admin_invite_parent', $lang, [
-            'nickname' => $nick, 'link' => rt_app_url(''),
-        ]);
+        // письмо-приглашение — по галке админа (по умолчанию шлём), язык выбирает админ
+        $notify = !isset($b['notify']) || !empty($b['notify']);
+        $mailOk = false;
+        if ($notify) {
+            $mail = rt_mail_send_tpl(rt_norm_email($email), 'admin_invite_parent', rt_mail_lang($b), [
+                'nickname' => $nick, 'link' => rt_app_url(''),
+            ]);
+            $mailOk = !empty($mail['ok']);
+        }
         $c = rt_config();
-        $logOnly = (isset($c['mail_driver']) ? (string)$c['mail_driver'] : 'log') === 'log';
-        alog('user_created', $pid, $nick, ['kind' => 'parent', 'family' => $fid, 'mail_ok' => !empty($mail['ok'])]);
+        $logOnly = $notify && ((isset($c['mail_driver']) ? (string)$c['mail_driver'] : 'log') === 'log');
+        alog('user_created', $pid, $nick, ['kind' => 'parent', 'family' => $fid, 'notify' => $notify, 'mail_ok' => $mailOk]);
         rt_json(['ok' => true, 'id' => $pid, 'temp_password' => '1234',
-                 'mailOk' => !empty($mail['ok']), 'mailLogOnly' => $logOnly]);
+                 'notify' => $notify, 'mailOk' => $mailOk, 'mailLogOnly' => $logOnly]);
     }
 
     case 'family_rename': {
@@ -410,8 +415,22 @@ switch ($op) {
         if (!$acc || $acc['kind'] !== 'parent') rt_json(['error' => 'parent only'], 422);
         $db->prepare("INSERT INTO family_members (family_id, user_id, role, status) VALUES (?, ?, 'parent', 'active')
                       ON DUPLICATE KEY UPDATE status='active', role=IF(role='owner','owner','parent')")->execute([$fid, $uid]);
-        alog('parent_attached', $uid, null, ['family' => $fid]);
-        rt_json(['ok' => true]);
+        // уведомление по желанию админа (галка в модалке): «вас добавили родителем в семью»
+        $notify = !empty($b['notify']); $mailOk = false;
+        if ($notify && !empty($acc['email'])) {
+            $fl = $db->prepare("SELECT label FROM families WHERE id = ?"); $fl->execute([$fid]);
+            $frow = $fl->fetch();
+            $mail = rt_mail_send_tpl($acc['email'], 'parent_attached', rt_mail_lang($b), [
+                'nickname' => $acc['nickname'],
+                'family'   => $frow && $frow['label'] !== null ? (string)$frow['label'] : ('#' . $fid),
+                'link'     => rt_app_url(''),
+            ]);
+            $mailOk = !empty($mail['ok']);
+        }
+        alog('parent_attached', $uid, null, ['family' => $fid, 'notify' => $notify, 'mail_ok' => $mailOk]);
+        $c = rt_config();
+        rt_json(['ok' => true, 'mailOk' => $mailOk,
+                 'mailLogOnly' => $notify && ((isset($c['mail_driver']) ? (string)$c['mail_driver'] : 'log') === 'log')]);
     }
 
     case 'parent_detach': { // отвязать родителя от семьи (владельца — нельзя; его меняют через transfer_owner)

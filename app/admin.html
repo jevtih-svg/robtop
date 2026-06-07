@@ -253,9 +253,10 @@ users:function(){
         '<div id="parentBox" style="display:none;margin-top:10px">'+
           '<input id="cEmail" type="email" placeholder="Email родителя" style="width:100%">'+
           '<div class="grp" style="margin-top:8px">Семья</div><select id="cFam2" style="width:100%"><option value="0">Своя новая семья</option>'+fopts+'</select>'+
-          '<div class="grp" style="margin-top:8px">Язык письма-приглашения</div><select id="cLang" style="width:100%">'+
+          '<label style="display:flex;gap:8px;align-items:center;font-weight:700;font-size:13px;margin-top:10px"><input type="checkbox" id="cNotify" checked style="width:auto"> Отправить письмо-приглашение</label>'+
+          '<div id="cLangBox"><div class="grp" style="margin-top:8px">Язык письма</div><select id="cLang" style="width:100%">'+
             '<option value="ru">Русский</option><option value="en">English</option><option value="lv">Latviešu</option></select>'+
-          '<p class="lead" style="margin-top:8px">Родителю уйдёт письмо «Вас пригласили в RobTop»: что это за приложение, зачем присоединяться (задания за очки), вход по email + одноразовый 1234.</p>'+
+          '<p class="lead" style="margin-top:8px">Письмо «Вас пригласили в RobTop»: что это за приложение, зачем присоединяться (задания за очки), вход по email + одноразовый 1234.</p></div>'+
         '</div>'+
         '<div class="row" style="margin-top:14px"><button class="btn ghost" id="cCancel">Отмена</button><button class="btn" id="cGo" style="flex:1">Создать</button></div>');
       var kindEls=m.root.querySelectorAll('[name="ck"]');
@@ -264,6 +265,8 @@ users:function(){
         m.root.querySelector('#childBox').style.display=p?'none':'';
         m.root.querySelector('#parentBox').style.display=p?'':'none';
       }; });
+      var cNotify=m.root.querySelector('#cNotify');
+      cNotify.onchange=function(){ m.root.querySelector('#cLangBox').style.display=cNotify.checked?'':'none'; };
       m.root.querySelector('#cCancel').onclick=m.close;
       m.root.querySelector('#cGo').onclick=function(){
         var kind=m.root.querySelector('[name="ck"]:checked').value;
@@ -275,8 +278,9 @@ users:function(){
         } else {
           var em=m.root.querySelector('#cEmail').value.trim();
           if(!em){ toast('Введите email'); return; }
-          api('user_create',{kind:'parent',nickname:nick,email:em,family_id:parseInt(m.root.querySelector('#cFam2').value,10),lang:m.root.querySelector('#cLang').value})
-            .then(function(r){ m.close(); toast(r.mailLogOnly?'Создан. Письмо в журнале (драйвер log), пароль 1234':'Создан, приглашение отправлено на '+em); load('',0); }).catch(fail);
+          var notif=m.root.querySelector('#cNotify').checked;
+          api('user_create',{kind:'parent',nickname:nick,email:em,family_id:parseInt(m.root.querySelector('#cFam2').value,10),notify:notif?1:0,lang:m.root.querySelector('#cLang').value})
+            .then(function(r){ m.close(); toast(notif?(r.mailLogOnly?'Создан. Письмо в журнале (драйвер log), пароль 1234':'Создан, приглашение отправлено на '+em):'Создан без письма, пароль 1234'); load('',0); }).catch(fail);
         }
       };
     }).catch(fail);
@@ -379,28 +383,73 @@ families:function(){
     });
   }).catch(fail);
   function openAttachParent(fid){
-    var m=modal('<h3>Привязать родителя к семье #'+fid+'</h3>'+
-      '<p class="lead">Только существующие родительские аккаунты, ещё не состоящие в этой семье. Нового родителя создавайте в «Пользователях».</p>'+
-      '<input id="apQ" placeholder="Поиск по имени или email…" style="width:100%">'+
-      '<div id="apList"><p class="lead" style="margin-top:10px">Загрузка…</p></div>');
+    var langSel='<div class="grp" style="margin-top:8px">Язык письма</div><select class="apLang" style="width:100%">'+
+      '<option value="ru">Русский</option><option value="en">English</option><option value="lv">Latviešu</option></select>';
+    var m=modal('<h3>Привязать родителя к семье #'+fid+'</h3><div id="apBody"></div>');
+    var body=m.root.querySelector('#apBody');
+    function stepSearch(){
+      body.innerHTML='<p class="lead">Выберите существующий родительский аккаунт (показаны только не состоящие в этой семье) или создайте нового.</p>'+
+        '<input id="apQ" placeholder="Поиск по имени или email…" style="width:100%">'+
+        '<div id="apList"><p class="lead" style="margin-top:10px">Загрузка…</p></div>'+
+        '<button class="pick" id="apNew" style="border-style:dashed">＋ <b>Создать нового родителя</b> <small>аккаунт + письмо-приглашение</small></button>';
+      pmGuard(body);
+      var inp=body.querySelector('#apQ'), tm=null;
+      inp.addEventListener('input',function(){ clearTimeout(tm); tm=setTimeout(function(){ search(inp.value.trim()); },250); });
+      body.querySelector('#apNew').onclick=stepCreate;
+      search('');
+      setTimeout(function(){ inp.focus(); },100);
+    }
     function search(q){
       api('eligible_parents',{family_id:fid,q:q||''}).then(function(r){
-        m.root.querySelector('#apList').innerHTML = r.parents.length
-          ? r.parents.map(function(p){ return '<button class="pick" data-id="'+p.id+'" data-n="'+esc(p.nickname)+'">👤 <b>'+esc(p.nickname)+'</b> <small>'+esc(p.email||'')+(p.family?' · сейчас: '+esc(p.family):'')+'</small></button>'; }).join('')
-          : '<p class="lead" style="margin-top:10px">Никого не нашлось. Все родители уже в этой семье или нет совпадений.</p>';
-        Array.prototype.forEach.call(m.root.querySelectorAll('.pick'),function(b){
-          b.onclick=function(){
-            if(!confirm('Привязать «'+b.getAttribute('data-n')+'» родителем к семье #'+fid+'?')) return;
-            api('parent_attach',{family_id:fid,user_id:parseInt(b.getAttribute('data-id'),10)})
-              .then(function(){ m.close(); toast('Родитель привязан'); VIEWS.families(); }).catch(fail);
-          };
+        body.querySelector('#apList').innerHTML = r.parents.length
+          ? r.parents.map(function(p){ return '<button class="pick apPick" data-id="'+p.id+'" data-n="'+esc(p.nickname)+'" data-e="'+esc(p.email||'')+'">👤 <b>'+esc(p.nickname)+'</b> <small>'+esc(p.email||'')+(p.family?' · сейчас: '+esc(p.family):'')+'</small></button>'; }).join('')
+          : '<p class="lead" style="margin-top:10px">Совпадений нет.</p>';
+        Array.prototype.forEach.call(body.querySelectorAll('.apPick'),function(b){
+          b.onclick=function(){ stepConfirm(parseInt(b.getAttribute('data-id'),10), b.getAttribute('data-n'), b.getAttribute('data-e')); };
         });
       }).catch(fail);
     }
-    var inp=m.root.querySelector('#apQ'), tm=null;
-    inp.addEventListener('input',function(){ clearTimeout(tm); tm=setTimeout(function(){ search(inp.value.trim()); },250); });
-    search('');
-    setTimeout(function(){ inp.focus(); },100);
+    function stepConfirm(uid,nick,email){
+      body.innerHTML='<p class="lead">Привязать <b>'+esc(nick)+'</b>'+(email?' ('+esc(email)+')':'')+' родителем к семье #'+fid+'.</p>'+
+        '<label style="display:flex;gap:8px;align-items:center;font-weight:700;font-size:13px"><input type="checkbox" id="apNotify" checked style="width:auto"> Отправить уведомление на email</label>'+
+        '<div id="apLangBox">'+langSel+'</div>'+
+        '<div class="row" style="margin-top:14px"><button class="btn ghost" id="apBack">‹ Назад</button><button class="btn" id="apGo" style="flex:1">Привязать</button></div>';
+      pmGuard(body);
+      var cb=body.querySelector('#apNotify');
+      cb.onchange=function(){ body.querySelector('#apLangBox').style.display=cb.checked?'':'none'; };
+      if(!email){ cb.checked=false; cb.disabled=true; body.querySelector('#apLangBox').style.display='none'; }
+      body.querySelector('#apBack').onclick=stepSearch;
+      body.querySelector('#apGo').onclick=function(){
+        api('parent_attach',{family_id:fid,user_id:uid,notify:cb.checked?1:0,lang:body.querySelector('.apLang').value})
+          .then(function(r){
+            m.close(); VIEWS.families();
+            toast(cb.checked?(r.mailLogOnly?'Привязан. Письмо в журнале (драйвер log)':'Привязан, уведомление отправлено'):'Привязан, без уведомления');
+          }).catch(fail);
+      };
+    }
+    function stepCreate(){
+      body.innerHTML='<p class="lead">Новый родитель будет создан и сразу привязан к семье #'+fid+'. Вход: email + одноразовый 1234.</p>'+
+        '<input id="apNick" placeholder="Никнейм" style="width:100%">'+
+        '<input id="apEmail" type="email" placeholder="Email" style="width:100%;margin-top:8px">'+
+        '<label style="display:flex;gap:8px;align-items:center;font-weight:700;font-size:13px;margin-top:10px"><input type="checkbox" id="apNotify" checked style="width:auto"> Отправить письмо-приглашение (что за приложение + как войти)</label>'+
+        '<div id="apLangBox">'+langSel+'</div>'+
+        '<div class="row" style="margin-top:14px"><button class="btn ghost" id="apBack">‹ Назад</button><button class="btn" id="apGo" style="flex:1">Создать и привязать</button></div>';
+      pmGuard(body);
+      var cb=body.querySelector('#apNotify');
+      cb.onchange=function(){ body.querySelector('#apLangBox').style.display=cb.checked?'':'none'; };
+      body.querySelector('#apBack').onclick=stepSearch;
+      body.querySelector('#apGo').onclick=function(){
+        var nick=body.querySelector('#apNick').value.trim(), em=body.querySelector('#apEmail').value.trim();
+        if(!nick||!em){ toast('Заполните никнейм и email'); return; }
+        api('user_create',{kind:'parent',nickname:nick,email:em,family_id:fid,notify:cb.checked?1:0,lang:body.querySelector('.apLang').value})
+          .then(function(r){
+            m.close(); VIEWS.families();
+            toast(cb.checked?(r.mailLogOnly?'Создан и привязан. Письмо в журнале (драйвер log)':'Создан, приглашение отправлено на '+em):'Создан и привязан, без письма (пароль 1234)');
+          }).catch(fail);
+      };
+      setTimeout(function(){ body.querySelector('#apNick').focus(); },100);
+    }
+    stepSearch();
   }
 },
 

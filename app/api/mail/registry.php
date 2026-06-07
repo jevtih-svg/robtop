@@ -51,6 +51,17 @@ return [
         ],
     ],
 
+    'parent_attached' => [
+        'desc'         => 'Админ привязал СУЩЕСТВУЮЩЕГО родителя к семье: уведомление (вход обычным паролем, без 1234).',
+        'file'         => 'parent_attached',
+        'placeholders' => ['{{nickname}}', '{{family}}', '{{link}}'],
+        'subject'      => [
+            'en' => 'RobTop: you were added to a family',
+            'ru' => 'RobTop: вас добавили в семью',
+            'lv' => 'RobTop: jūs pievienoja ģimenei',
+        ],
+    ],
+
     'admin_invite_parent' => [
         'desc'         => 'Админ создал родительский аккаунт: приглашение в приложение (что это, зачем присоединяться, вход по email + одноразовый 1234).',
         'file'         => 'admin_invite_parent',
