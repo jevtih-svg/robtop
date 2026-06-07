@@ -78,21 +78,33 @@ switch ($op) {
 
     /* ================= ПОЛЬЗОВАТЕЛИ ================= */
     case 'users': {
+        // Масштаб: без коррелированных подзапросов (агрегаты одним проходом по таблице),
+        // серверная пагинация по 50. Картинки = фото живых желаний + фото в данных модулей
+        // (mood/rating хранят photo в JSON) — то, что реально видно у пользователя.
         $q = isset($b['q']) ? trim((string)$b['q']) : '';
-        $sql = "SELECT u.id, u.name AS nickname, a.kind, a.email, a.status, a.must_change_password,
-                       a.last_login_at, a.created_at,
-                       fm.family_id, f.label AS family_label,
-                       (SELECT COUNT(*) FROM module_data md WHERE md.user_id = u.id AND md.deleted_at IS NULL) AS records,
-                       (SELECT COUNT(*) FROM wishlist_items wi WHERE wi.user_id = u.id AND wi.deleted_at IS NULL) AS wishes,
-                       (SELECT COUNT(*) FROM uploaded_files uf WHERE uf.user_id = u.id AND uf.deleted_at IS NULL) AS images,
-                       (SELECT COUNT(*) FROM admins ad WHERE ad.user_id = u.id AND ad.status='active') AS is_admin
-                FROM users u
+        $page = max(0, (int)($b['page'] ?? 0));
+        $per = 50;
+        $where = ''; $args = [];
+        if ($q !== '') { $where = " WHERE (u.name LIKE ? OR a.email LIKE ? OR f.label LIKE ?)"; $args = ["%$q%", "%$q%", "%$q%"]; }
+        $base = "FROM users u
                 JOIN accounts a ON a.user_id = u.id
                 LEFT JOIN family_members fm ON fm.user_id = u.id AND fm.status='active'
                 LEFT JOIN families f ON f.id = fm.family_id";
-        $args = [];
-        if ($q !== '') { $sql .= " WHERE u.name LIKE ? OR a.email LIKE ? OR f.label LIKE ?"; $args = ["%$q%", "%$q%", "%$q%"]; }
-        $sql .= " ORDER BY fm.family_id, (a.kind='parent') DESC, u.id LIMIT 500";
+        $cnt = $db->prepare("SELECT COUNT(*) n $base $where"); $cnt->execute($args);
+        $total = (int)$cnt->fetch()['n'];
+        $sql = "SELECT u.id, u.name AS nickname, a.kind, a.email, a.status, a.must_change_password,
+                       a.last_login_at, a.created_at, fm.family_id, f.label AS family_label,
+                       COALESCE(md.n,0) AS mdrecs, COALESCE(w.n,0) AS wishes,
+                       COALESCE(w.imgs,0) + COALESCE(md.imgs,0) AS images,
+                       (ad.user_id IS NOT NULL) AS is_admin
+                $base
+                LEFT JOIN (SELECT user_id, COUNT(*) n, SUM(JSON_EXTRACT(data,'$.photo') IS NOT NULL) imgs
+                           FROM module_data WHERE deleted_at IS NULL GROUP BY user_id) md ON md.user_id = u.id
+                LEFT JOIN (SELECT user_id, COUNT(*) n, SUM(photo IS NOT NULL) imgs
+                           FROM wishlist_items WHERE deleted_at IS NULL GROUP BY user_id) w ON w.user_id = u.id
+                LEFT JOIN admins ad ON ad.user_id = u.id AND ad.status='active'
+                $where ORDER BY fm.family_id, (a.kind='parent') DESC, u.id
+                LIMIT $per OFFSET " . ($page * $per);
         $s = $db->prepare($sql); $s->execute($args);
         $rows = [];
         foreach ($s->fetchAll() as $r) {
@@ -103,11 +115,32 @@ switch ($op) {
                 'lastLogin' => $r['last_login_at'], 'created' => $r['created_at'],
                 'familyId' => $r['family_id'] ? (int)$r['family_id'] : null,
                 'familyLabel' => $r['family_label'],
-                'records' => (int)$r['records'] + (int)$r['wishes'], 'images' => (int)$r['images'],
+                'records' => (int)$r['mdrecs'] + (int)$r['wishes'], 'images' => (int)$r['images'],
                 'isAdmin' => (int)$r['is_admin'] > 0,
             ];
         }
-        rt_json(['ok' => true, 'users' => $rows]);
+        rt_json(['ok' => true, 'users' => $rows, 'total' => $total, 'page' => $page, 'per' => $per]);
+    }
+
+    case 'eligible_parents': { // родители, которых МОЖНО привязать к семье (ещё не её активные члены)
+        $fid = (int)($b['family_id'] ?? 0);
+        $q = trim((string)($b['q'] ?? ''));
+        if (!$fid) rt_json(['error' => 'bad input'], 422);
+        $sql = "SELECT u.id, u.name AS nickname, a.email, f2.label AS own_family
+                FROM accounts a JOIN users u ON u.id = a.user_id
+                LEFT JOIN family_members fm2 ON fm2.user_id = u.id AND fm2.status='active'
+                LEFT JOIN families f2 ON f2.id = fm2.family_id
+                WHERE a.kind='parent' AND a.status='active'
+                  AND NOT EXISTS (SELECT 1 FROM family_members fm WHERE fm.family_id = ? AND fm.user_id = u.id AND fm.status='active')";
+        $args = [$fid];
+        if ($q !== '') { $sql .= " AND (u.name LIKE ? OR a.email LIKE ?)"; $args[] = "%$q%"; $args[] = "%$q%"; }
+        $sql .= " ORDER BY u.name LIMIT 20";
+        $s = $db->prepare($sql); $s->execute($args);
+        $rows = [];
+        foreach ($s->fetchAll() as $r) {
+            $rows[] = ['id' => (int)$r['id'], 'nickname' => $r['nickname'], 'email' => $r['email'], 'family' => $r['own_family']];
+        }
+        rt_json(['ok' => true, 'parents' => $rows]);
     }
 
     case 'user_update': { // переименовать (никнейм)
@@ -200,24 +233,164 @@ switch ($op) {
 
     /* ================= СЕМЬИ ================= */
     case 'families': {
-        $fams = [];
+        // Без N+1: семьи одним запросом, члены вторым, склейка в PHP.
+        $fams = []; $idx = [];
         foreach ($db->query("SELECT f.id, f.label, f.owner_id, f.created_at,
-                                    (SELECT COUNT(*) FROM bans bn WHERE bn.kind='family' AND bn.family_id=f.id AND bn.lifted_at IS NULL) AS banned
-                             FROM families f WHERE f.deleted_at IS NULL ORDER BY f.id") as $f) {
-            $m = $db->prepare("SELECT u.id, u.name AS nickname, fm.role, a.kind, a.status, a.email
-                               FROM family_members fm JOIN users u ON u.id = fm.user_id JOIN accounts a ON a.user_id = u.id
-                               WHERE fm.family_id = ? AND fm.status='active'
-                               ORDER BY (fm.role='owner') DESC, (fm.role='parent') DESC, u.id");
-            $m->execute([(int)$f['id']]);
-            $members = [];
-            foreach ($m->fetchAll() as $r) {
-                $members[] = ['id' => (int)$r['id'], 'nickname' => $r['nickname'], 'role' => $r['role'],
-                              'kind' => $r['kind'], 'status' => $r['status'], 'email' => $r['email']];
-            }
+                                    (bn.id IS NOT NULL) AS banned
+                             FROM families f
+                             LEFT JOIN bans bn ON bn.kind='family' AND bn.family_id=f.id AND bn.lifted_at IS NULL
+                             WHERE f.deleted_at IS NULL ORDER BY f.id") as $f) {
+            $idx[(int)$f['id']] = count($fams);
             $fams[] = ['id' => (int)$f['id'], 'label' => $f['label'], 'owner' => (int)$f['owner_id'],
-                       'created' => $f['created_at'], 'banned' => (int)$f['banned'] > 0, 'members' => $members];
+                       'created' => $f['created_at'], 'banned' => (int)$f['banned'] > 0, 'members' => []];
+        }
+        foreach ($db->query("SELECT fm.family_id, u.id, u.name AS nickname, fm.role, a.kind, a.status, a.email
+                             FROM family_members fm JOIN users u ON u.id = fm.user_id JOIN accounts a ON a.user_id = u.id
+                             WHERE fm.status='active'
+                             ORDER BY fm.family_id, (fm.role='owner') DESC, (fm.role='parent') DESC, u.id") as $r) {
+            $fid = (int)$r['family_id'];
+            if (!isset($idx[$fid])) continue;
+            $fams[$idx[$fid]]['members'][] = ['id' => (int)$r['id'], 'nickname' => $r['nickname'], 'role' => $r['role'],
+                                              'kind' => $r['kind'], 'status' => $r['status'], 'email' => $r['email']];
         }
         rt_json(['ok' => true, 'families' => $fams]);
+    }
+
+    case 'family_stats': { // экран статистики семьи: агрегаты по каждому члену + последние события
+        $fid = (int)($b['family_id'] ?? 0);
+        if (!$fid) rt_json(['error' => 'bad input'], 422);
+        $f = $db->prepare("SELECT id, label, owner_id, created_at FROM families WHERE id = ? AND deleted_at IS NULL");
+        $f->execute([$fid]); $fam = $f->fetch();
+        if (!$fam) rt_json(['error' => 'not found'], 404);
+        $m = $db->prepare("SELECT u.id, u.name AS nickname, fm.role, a.kind, a.status, a.last_login_at, a.created_at
+                           FROM family_members fm JOIN users u ON u.id = fm.user_id JOIN accounts a ON a.user_id = u.id
+                           WHERE fm.family_id = ? AND fm.status='active'
+                           ORDER BY (fm.role='owner') DESC, (fm.role='parent') DESC, u.id");
+        $m->execute([$fid]);
+        $members = []; $ids = [];
+        foreach ($m->fetchAll() as $r) {
+            $ids[] = (int)$r['id'];
+            $members[(int)$r['id']] = ['id' => (int)$r['id'], 'nickname' => $r['nickname'], 'role' => $r['role'],
+                'kind' => $r['kind'], 'status' => $r['status'], 'lastLogin' => $r['last_login_at'], 'created' => $r['created_at'],
+                'records' => 0, 'images' => 0, 'points' => 0, 'events7d' => 0];
+        }
+        if ($ids) {
+            $in = implode(',', $ids);
+            foreach ($db->query("SELECT user_id, COUNT(*) n, SUM(JSON_EXTRACT(data,'$.photo') IS NOT NULL) imgs,
+                                        COALESCE(SUM(CASE WHEN module='bank' AND collection='points' THEN CAST(JSON_EXTRACT(data,'$.n') AS SIGNED) END),0) pts
+                                 FROM module_data WHERE deleted_at IS NULL AND user_id IN ($in) GROUP BY user_id") as $r) {
+                $u = (int)$r['user_id'];
+                $members[$u]['records'] += (int)$r['n'];
+                $members[$u]['images'] += (int)$r['imgs'];
+                $members[$u]['points'] = (int)$r['pts'];
+            }
+            foreach ($db->query("SELECT user_id, COUNT(*) n, SUM(photo IS NOT NULL) imgs
+                                 FROM wishlist_items WHERE deleted_at IS NULL AND user_id IN ($in) GROUP BY user_id") as $r) {
+                $u = (int)$r['user_id'];
+                $members[$u]['records'] += (int)$r['n'];
+                $members[$u]['images'] += (int)$r['imgs'];
+            }
+            foreach ($db->query("SELECT user_id, COUNT(*) n FROM events
+                                 WHERE user_id IN ($in) AND created_at > DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY user_id") as $r) {
+                $members[(int)$r['user_id']]['events7d'] = (int)$r['n'];
+            }
+        }
+        $recent = [];
+        if ($ids) {
+            foreach ($db->query("SELECT e.id, e.user_id, u.name who, e.module, e.type, e.item_title, e.created_at
+                                 FROM events e JOIN users u ON u.id = e.user_id
+                                 WHERE e.user_id IN (" . implode(',', $ids) . ") ORDER BY e.id DESC LIMIT 15") as $r) {
+                $recent[] = ['who' => $r['who'], 'module' => $r['module'], 'type' => $r['type'],
+                             'title' => $r['item_title'], 'created' => $r['created_at']];
+            }
+        }
+        rt_json(['ok' => true, 'family' => ['id' => (int)$fam['id'], 'label' => $fam['label'], 'owner' => (int)$fam['owner_id'], 'created' => $fam['created_at']],
+                 'members' => array_values($members), 'recent' => $recent]);
+    }
+
+    case 'family_delete': {
+        // ПОЛНОЕ удаление семьи для чистки: дети стираются целиком (данные, файлы, события);
+        // родитель стирается, если не состоит в других семьях, иначе только отвязывается.
+        // Один сводный лог остаётся (module='admin'). Свою семью удалить нельзя.
+        $fid = (int)($b['family_id'] ?? 0);
+        if (!$fid) rt_json(['error' => 'bad input'], 422);
+        $mm = $db->prepare("SELECT DISTINCT fm.user_id, a.kind, u.name AS nickname FROM family_members fm
+                            JOIN accounts a ON a.user_id = fm.user_id JOIN users u ON u.id = fm.user_id
+                            WHERE fm.family_id = ?");
+        $mm->execute([$fid]);
+        $members = $mm->fetchAll();
+        foreach ($members as $m) if ((int)$m['user_id'] === $AID) rt_json(['error' => 'cannot delete own family'], 422);
+        $wiped = []; $detached = [];
+        foreach ($members as $m) {
+            $uid = (int)$m['user_id'];
+            $full = true;
+            if ($m['kind'] === 'parent') {
+                $o = $db->prepare("SELECT 1 FROM family_members WHERE user_id = ? AND family_id <> ? AND status='active' LIMIT 1");
+                $o->execute([$uid, $fid]);
+                if ($o->fetch()) $full = false; // родитель живёт в другой семье — не стираем
+            }
+            if ($full) { rt_admin_wipe_user($db, $uid); $wiped[] = $m['nickname']; }
+            else {
+                $db->prepare("DELETE FROM family_members WHERE user_id = ? AND family_id = ?")->execute([$uid, $fid]);
+                $db->prepare("DELETE FROM guardianships WHERE family_id = ? AND (child_user_id = ? OR guardian_user_id = ?)")->execute([$fid, $uid, $uid]);
+                $detached[] = $m['nickname'];
+            }
+        }
+        $db->prepare("DELETE FROM invitations WHERE family_id = ?")->execute([$fid]);
+        $db->prepare("DELETE FROM bans WHERE kind='family' AND family_id = ?")->execute([$fid]);
+        $db->prepare("DELETE FROM guardianships WHERE family_id = ?")->execute([$fid]);
+        $db->prepare("DELETE FROM family_members WHERE family_id = ?")->execute([$fid]);
+        $db->prepare("DELETE FROM families WHERE id = ?")->execute([$fid]);
+        alog('family_deleted', $fid, null, ['wiped' => $wiped, 'detached' => $detached]);
+        rt_json(['ok' => true, 'wiped' => $wiped, 'detached' => $detached]);
+    }
+
+    case 'user_create': {
+        // Создать пользователя из админки. Ребёнок: никнейм + семья (пароль 1234, смена при входе).
+        // Родитель: никнейм + email (+семья или своя новая) + язык письма-приглашения.
+        $kind = ($b['kind'] ?? '') === 'parent' ? 'parent' : 'child';
+        $nick = trim((string)($b['nickname'] ?? ''));
+        if (!rt_valid_nickname($nick)) rt_json(['error' => 'bad nickname'], 422);
+        if (rt_nickname_taken($db, $nick)) rt_json(['error' => 'nickname taken'], 409);
+        $fid = (int)($b['family_id'] ?? 0);
+        if ($kind === 'child') {
+            if (!$fid) rt_json(['error' => 'family required'], 422);
+            $o = $db->prepare("SELECT owner_id FROM families WHERE id = ? AND deleted_at IS NULL"); $o->execute([$fid]);
+            $own = $o->fetch();
+            if (!$own) rt_json(['error' => 'family not found'], 404);
+            $cid = rt_create_user($db, $nick, 'child', [
+                'password_hash' => password_hash('1234', PASSWORD_DEFAULT), 'must_change' => 1, 'invited_by' => $AID,
+            ]);
+            rt_add_member($db, $fid, $cid, 'child');
+            rt_add_guardianship($db, $cid, (int)$own['owner_id'], $fid, 'primary', 'created');
+            alog('user_created', $cid, $nick, ['kind' => 'child', 'family' => $fid]);
+            rt_json(['ok' => true, 'id' => $cid, 'temp_password' => '1234']);
+        }
+        $email = (string)($b['email'] ?? '');
+        if (!rt_valid_email($email)) rt_json(['error' => 'bad email'], 422);
+        if (rt_email_taken($db, $email)) rt_json(['error' => 'email taken'], 409);
+        if (rt_email_banned($db, $email)) rt_json(['error' => 'banned'], 403);
+        $pid = rt_create_user($db, $nick, 'parent', [
+            'email' => rt_norm_email($email), 'password_hash' => password_hash('1234', PASSWORD_DEFAULT),
+            'must_change' => 1, 'invited_by' => $AID,
+        ]);
+        if ($fid) {
+            $chk = $db->prepare("SELECT 1 FROM families WHERE id = ? AND deleted_at IS NULL"); $chk->execute([$fid]);
+            if (!$chk->fetch()) rt_json(['error' => 'family not found'], 404);
+            rt_add_member($db, $fid, $pid, 'parent');
+        } else {
+            $fid = rt_create_family($db, $pid, 'Семья');
+            rt_add_member($db, $fid, $pid, 'owner');
+        }
+        $lang = rt_mail_lang($b); // язык письма выбирает админ
+        $mail = rt_mail_send_tpl(rt_norm_email($email), 'admin_invite_parent', $lang, [
+            'nickname' => $nick, 'link' => rt_app_url(''),
+        ]);
+        $c = rt_config();
+        $logOnly = (isset($c['mail_driver']) ? (string)$c['mail_driver'] : 'log') === 'log';
+        alog('user_created', $pid, $nick, ['kind' => 'parent', 'family' => $fid, 'mail_ok' => !empty($mail['ok'])]);
+        rt_json(['ok' => true, 'id' => $pid, 'temp_password' => '1234',
+                 'mailOk' => !empty($mail['ok']), 'mailLogOnly' => $logOnly]);
     }
 
     case 'family_rename': {
@@ -582,12 +755,16 @@ switch ($op) {
     case 'logs': {
         $module = isset($b['module']) ? (string)$b['module'] : '';
         $uid = (int)($b['user_id'] ?? 0);
+        $page = max(0, (int)($b['page'] ?? 0));
+        $per = 50;
+        $where = " WHERE 1=1"; $args = [];
+        if ($module !== '' && preg_match('/^[a-z0-9_-]{2,40}$/', $module)) { $where .= " AND e.module = ?"; $args[] = $module; }
+        if ($uid) { $where .= " AND e.user_id = ?"; $args[] = $uid; }
+        $cnt = $db->prepare("SELECT COUNT(*) n FROM events e" . $where); $cnt->execute($args);
+        $total = (int)$cnt->fetch()['n'];
         $sql = "SELECT e.id, e.user_id, u.name AS who, e.module, e.type, e.item_id, e.item_title, e.meta, e.created_at
-                FROM events e LEFT JOIN users u ON u.id = e.user_id WHERE 1=1";
-        $args = [];
-        if ($module !== '' && preg_match('/^[a-z0-9_-]{2,40}$/', $module)) { $sql .= " AND e.module = ?"; $args[] = $module; }
-        if ($uid) { $sql .= " AND e.user_id = ?"; $args[] = $uid; }
-        $sql .= " ORDER BY e.id DESC LIMIT 200";
+                FROM events e LEFT JOIN users u ON u.id = e.user_id" . $where .
+               " ORDER BY e.id DESC LIMIT $per OFFSET " . ($page * $per);
         $s = $db->prepare($sql); $s->execute($args);
         $rows = [];
         foreach ($s->fetchAll() as $r) {
@@ -603,4 +780,38 @@ switch ($op) {
 
     default:
         rt_json(['error' => 'unknown op'], 400);
+}
+
+/** ПОЛНОЕ стирание пользователя (для family_delete): данные, файлы с диска, события, аккаунт.
+ *  Использовать только из удаления семьи — там же остаётся сводный admin-лог. */
+function rt_admin_wipe_user($db, $uid) {
+    $uid = (int)$uid;
+    // файлы с диска (uploads/users/<id>/...), с защитой от выхода за пределы uploads
+    $base = realpath(__DIR__ . '/../uploads');
+    $dir = $base ? $base . '/users/' . $uid : null;
+    if ($dir && is_dir($dir) && strpos(realpath($dir), $base) === 0) {
+        $it = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ($it as $f) { $f->isDir() ? @rmdir($f->getPathname()) : @unlink($f->getPathname()); }
+        @rmdir($dir);
+    }
+    foreach ([
+        "DELETE FROM sessions WHERE user_id = ?",
+        "DELETE FROM password_resets WHERE user_id = ?",
+        "DELETE FROM invitations WHERE inviter_id = ? OR invited_user_id = ? OR target_child_id = ?",
+        "DELETE FROM admins WHERE user_id = ?",
+        "DELETE FROM module_data WHERE user_id = ?",
+        "DELETE FROM wishlist_items WHERE user_id = ?",
+        "DELETE FROM uploaded_files WHERE user_id = ?",
+        "DELETE FROM events WHERE user_id = ?",
+        "DELETE FROM guardianships WHERE child_user_id = ? OR guardian_user_id = ?",
+        "DELETE FROM family_members WHERE user_id = ?",
+        "DELETE FROM accounts WHERE user_id = ?",
+        "DELETE FROM users WHERE id = ?",
+    ] as $sql) {
+        $n = substr_count($sql, '?');
+        $db->prepare($sql)->execute(array_fill(0, $n, $uid));
+    }
 }

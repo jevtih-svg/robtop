@@ -51,6 +51,17 @@ return [
         ],
     ],
 
+    'admin_invite_parent' => [
+        'desc'         => 'Админ создал родительский аккаунт: приглашение в приложение (что это, зачем присоединяться, вход по email + одноразовый 1234).',
+        'file'         => 'admin_invite_parent',
+        'placeholders' => ['{{nickname}}', '{{link}}'],
+        'subject'      => [
+            'en' => 'You are invited to RobTop',
+            'ru' => 'Вас пригласили в RobTop',
+            'lv' => 'Jūs esat uzaicināts uz RobTop',
+        ],
+    ],
+
     'test' => [
         'desc'         => 'Тестовое письмо для проверки настройки почты (mail_test.php).',
         'file'         => 'test',
