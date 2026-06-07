@@ -83,6 +83,11 @@ switch ($op) {
         // Масштаб: без коррелированных подзапросов (агрегаты одним проходом по таблице),
         // серверная пагинация по 50. Картинки = фото живых желаний + фото в данных модулей
         // (mood/rating хранят photo в JSON) — то, что реально видно у пользователя.
+        // ОДИН пользователь = ОДНА строка: родитель может состоять в нескольких семьях
+        // (вторая семья, «Гость» друга-ребёнка) — без GROUP BY u.id join по family_members
+        // давал дубль на каждое членство (баг Джеффа: «two identical users»); семьи
+        // склеиваются через GROUP_CONCAT, счётчик — по DISTINCT пользователям.
+        // Агрегаты MAX(...) на 1:1-колонках — для совместимости с ONLY_FULL_GROUP_BY.
         $q = isset($b['q']) ? trim((string)$b['q']) : '';
         $page = max(0, (int)($b['page'] ?? 0));
         $per = 50;
@@ -92,20 +97,24 @@ switch ($op) {
                 JOIN accounts a ON a.user_id = u.id
                 LEFT JOIN family_members fm ON fm.user_id = u.id AND fm.status='active'
                 LEFT JOIN families f ON f.id = fm.family_id";
-        $cnt = $db->prepare("SELECT COUNT(*) n $base $where"); $cnt->execute($args);
+        $cnt = $db->prepare("SELECT COUNT(DISTINCT u.id) n $base $where"); $cnt->execute($args);
         $total = (int)$cnt->fetch()['n'];
-        $sql = "SELECT u.id, u.name AS nickname, a.kind, a.email, a.status, a.must_change_password,
-                       a.last_login_at, a.created_at, fm.family_id, f.label AS family_label,
-                       COALESCE(md.n,0) AS mdrecs, COALESCE(w.n,0) AS wishes,
-                       COALESCE(w.imgs,0) + COALESCE(md.imgs,0) AS images,
-                       (ad.user_id IS NOT NULL) AS is_admin
+        $sql = "SELECT u.id, MAX(u.name) AS nickname, MAX(a.kind) AS kind, MAX(a.email) AS email,
+                       MAX(a.status) AS status, MAX(a.must_change_password) AS must_change_password,
+                       MAX(a.last_login_at) AS last_login_at, MAX(a.created_at) AS created_at,
+                       MIN(fm.family_id) AS family_id,
+                       GROUP_CONCAT(DISTINCT f.label ORDER BY f.label SEPARATOR ' · ') AS family_label,
+                       MAX(COALESCE(md.n,0)) AS mdrecs, MAX(COALESCE(w.n,0)) AS wishes,
+                       MAX(COALESCE(w.imgs,0)) + MAX(COALESCE(md.imgs,0)) AS images,
+                       MAX(ad.user_id IS NOT NULL) AS is_admin
                 $base
                 LEFT JOIN (SELECT user_id, COUNT(*) n, SUM(JSON_EXTRACT(data,'$.photo') IS NOT NULL) imgs
                            FROM module_data WHERE deleted_at IS NULL GROUP BY user_id) md ON md.user_id = u.id
                 LEFT JOIN (SELECT user_id, COUNT(*) n, SUM(photo IS NOT NULL) imgs
                            FROM wishlist_items WHERE deleted_at IS NULL GROUP BY user_id) w ON w.user_id = u.id
                 LEFT JOIN admins ad ON ad.user_id = u.id AND ad.status='active'
-                $where ORDER BY fm.family_id, (a.kind='parent') DESC, u.id
+                $where GROUP BY u.id
+                ORDER BY MIN(fm.family_id), MAX(a.kind='parent') DESC, u.id
                 LIMIT $per OFFSET " . ($page * $per);
         $s = $db->prepare($sql); $s->execute($args);
         $rows = [];
@@ -187,7 +196,7 @@ switch ($op) {
                 JOIN family_members fm2 ON fm2.family_id = fm1.family_id AND fm2.role='child' AND fm2.status='active'
                 WHERE fm1.user_id = ? AND fm1.role IN ('owner','parent') AND fm1.status='active'");
             $s->execute([$uid]);
-            if ((int)$s->fetch()['n'] > 0) rt_json(['error' => 'parent has children'], 422);
+            if ((int)$s->fetch()['n'] > 0) rt_json(['error' => 'у родителя есть дети в семье — сначала перенесите детей, отвяжите его или удалите семью целиком'], 422);
         }
         $db->prepare("UPDATE accounts SET status = 'disabled' WHERE user_id = ?")->execute([$uid]);
         $db->prepare("DELETE FROM sessions WHERE user_id = ?")->execute([$uid]);
@@ -441,7 +450,7 @@ switch ($op) {
         if (!$fid || !$uid) rt_json(['error' => 'bad input'], 422);
         $o = $db->prepare("SELECT owner_id FROM families WHERE id = ?"); $o->execute([$fid]);
         $own = $o->fetch();
-        if ($own && (int)$own['owner_id'] === $uid) rt_json(['error' => 'owner cannot be detached'], 422);
+        if ($own && (int)$own['owner_id'] === $uid) rt_json(['error' => 'владельца семьи отвязать нельзя — удалите семью целиком или перенесите детей'], 422);
         $db->prepare("UPDATE family_members SET status='disabled' WHERE family_id = ? AND user_id = ? AND role IN ('parent','owner')")->execute([$fid, $uid]);
         $db->prepare("UPDATE guardianships g JOIN family_members fm ON fm.family_id = ? AND fm.role='child' AND fm.user_id = g.child_user_id
                       SET g.status='severed', g.severed_at=NOW(), g.sever_reason='admin_detach'
