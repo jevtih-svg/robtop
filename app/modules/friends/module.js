@@ -343,7 +343,7 @@
       +'<div class="fr-list" id="frList"></div>'
     +'</div>';
     E.tabs=root.querySelector("#frTabs"); E.list=root.querySelector("#frList");
-    root.addEventListener("click",function(e){
+    sdk.on(root,"click",function(e){
       var tab=e.target.closest("[data-tab]");
       if(tab){ setTab(tab.getAttribute("data-tab")); return; }
       var card=e.target.closest(".fr-card");

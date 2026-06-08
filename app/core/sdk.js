@@ -274,6 +274,10 @@ window.RobTop = window.RobTop || {};
     var mod = meta.id;
     var shell = RT._shell || {};
     var role = (shell.user && shell.user.role) || "child";
+    /* ---- авто-снимаемые слушатели (Ф5): sdk.on/sdk.cleanup регистрируют функцию отмены;
+       ядро (loader.RT.close → sdk._dispose) снимает ВСЁ при размонтировании модуля.
+       Чинит утечку: модуль вешал слушатель на #module-view (он переживает открытия) и не снимал. */
+    var _cleanups = [];
     var sdk = {
       id: mod,
       user: shell.user || {name:"Артём", role:"child"},
@@ -294,6 +298,10 @@ window.RobTop = window.RobTop || {};
         restore: function(coll,id){ return dataOp(mod,"restore",coll,{id:id}); }
       },
       events: { track:function(type,payload){ if(RT.isDemo()) return Promise.resolve(); var b={op:"track",module:mod,type:type,data:payload||null}; var pc=parentChild(); if(pc) b.child=pc; return API.post("data.php",b).catch(function(){}); } },
+      /* on(target, event, handler, opts?) — слушатель с авто-снятием при unmount (Ф5).
+         Возвращает handler (для ручного снятия при желании). cleanup(fn) — произвольная отмена. */
+      on: function(target,ev,fn,opts){ if(target&&target.addEventListener){ target.addEventListener(ev,fn,opts); _cleanups.push(function(){ try{ target.removeEventListener(ev,fn,opts); }catch(e){} }); } return fn; },
+      cleanup: function(fn){ if(typeof fn==="function") _cleanups.push(fn); },
       media:  { upload:function(dataUrl,kind){ return API.post("upload.php",{dataUrl:dataUrl, kind:kind||mod}); } },
       ui: {
         toast:    function(m,a,f){ return shell.toast(m,a,f); },
@@ -389,6 +397,8 @@ window.RobTop = window.RobTop || {};
       util: RT.util || {},
       isDemo: function(){ return RT.isDemo(); }
     };
+    /* _dispose — ядро зовёт при размонтировании (loader.RT.close), снимает все sdk.on/cleanup. */
+    sdk._dispose = function(){ for(var i=0;i<_cleanups.length;i++){ try{ _cleanups[i](); }catch(e){} } _cleanups.length=0; };
     return sdk;
   };
 })(window.RobTop);

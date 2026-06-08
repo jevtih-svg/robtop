@@ -74,6 +74,8 @@ window.RobTop = window.RobTop || {};
     if(id){
       var m=RT.modules[id];
       if(m && m.def && m.def.unmount){ try{ m.def.unmount(); }catch(e){} }
+      /* Ф5: снять все авто-слушатели модуля (sdk.on/cleanup), даже если unmount забыл/упал. */
+      if(m && m.sdk && m.sdk._dispose){ try{ m.sdk._dispose(); }catch(e){} }
     }
     if(RT._shell.fabDestroy) RT._shell.fabDestroy();
     var view=RT._shell.moduleView(); view.innerHTML=""; view.removeAttribute("data-mod");

@@ -338,7 +338,7 @@
       +'<div class="store-section">'+esc(t("historyTitle"))+'</div><div class="md-list" id="mdList"></div>'
     +'</div>';
     E.state=body.querySelector("#mdState"); E.list=body.querySelector("#mdList");
-    root.addEventListener("click",function(e){
+    sdk.on(root,"click",function(e){
       var face=e.target.closest("[data-face]");
       if(face){
         if(!sdk.can("edit")) return;

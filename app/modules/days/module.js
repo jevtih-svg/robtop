@@ -286,7 +286,7 @@
       +'<div class="day-list" id="dyDone"></div></div>';
     E.state=root.querySelector("#dyState"); E.list=root.querySelector("#dyList"); E.done=root.querySelector("#dyDone");
     E.actSec=root.querySelector("#dyActiveSec"); E.doneSec=root.querySelector("#dyDoneSec");
-    root.addEventListener("click",onClick);
+    sdk.on(root,"click",onClick);
     if(sdk.can("edit")) fabH=sdk.ui.fab(t("addBtn"), openCreate);
     renderAll(); load();
     timer=setInterval(tick, 30000);
