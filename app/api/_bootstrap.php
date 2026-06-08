@@ -247,8 +247,9 @@ function rt_notify($toUid, $src, $type, $params = null, $link = null, $actorId =
         $s->execute([$toUid]);
         $min = $s->fetchColumn();
         if ($min) $db->prepare("DELETE FROM notifications WHERE user_id = ? AND id < ?")->execute([$toUid, (int)$min]);
-        // web push «звонком» на устройства получателя (no-op, пока vapid не настроен в config)
-        if (function_exists('rt_push_user')) rt_push_user($toUid);
+        // web push с РЕАЛЬНЫМ текстом на устройства получателя (рендер на языке устройства +
+        // шифрование payload в rt_push_user; no-op, пока vapid не настроен в config)
+        if (function_exists('rt_push_user')) rt_push_user($toUid, $src, $type, $params);
         return true;
     } catch (Throwable $e) { return false; }
 }
