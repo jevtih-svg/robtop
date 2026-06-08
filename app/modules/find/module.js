@@ -348,7 +348,7 @@
     function finish(path){
       rec.photo=path||run.photo;
       sdk.data.create("subs", rec).then(function(it){ if(it) subs.push({id:it.id,d:rec}); });
-      sdk.notify.send("parents","pending",{ name:(sdk.user&&sdk.user.name)||"", desc:desc });
+      sdk.notify.send("parents","pending",{ params:{ name:(sdk.user&&sdk.user.name)||"", desc:desc }, link:{ module:"find" } });
       sdk.events.track("find_submit",{ diff:run.diff });
       sdk.ui.haptics(10); sdk.ui.toast(t("submitted"));
       nextRound();
@@ -438,12 +438,12 @@
     var desc=renderDesc(s.d.adj||[]);
     if(ok){
       sdk.points.add(PTS_FIND,"find_correct",{kind:"win", note:desc});
-      sdk.notify.send("child","correct",{ n:PTS_FIND });
+      sdk.notify.send("child","correct",{ params:{ n:PTS_FIND }, link:{ module:"find" } });
       maybeBonus(s.d.runId, s.d.diff);
       sdk.ui.toast(t("approved"));
     } else {
       sdk.points.add(PTS_MISS,"find_wrong",{kind:"loss", note:desc});
-      sdk.notify.send("child","wrong",{ n:Math.abs(PTS_MISS) });
+      sdk.notify.send("child","wrong",{ params:{ n:Math.abs(PTS_MISS) }, link:{ module:"find" } });
       sdk.ui.toast(t("rejected"));
     }
     renderParent();
@@ -459,7 +459,7 @@
       var rec={ st:"bonus", runId:runId, diff:diff, ts:Date.now() };
       sdk.data.create("subs", rec).then(function(it){ if(it) subs.push({id:it.id,d:rec}); });
       sdk.points.add(PTS_BONUS,"find_bonus",{kind:"win", note:diffLabel(diff)});
-      sdk.notify.send("child","bonus",{ n:PTS_BONUS });
+      sdk.notify.send("child","bonus",{ params:{ n:PTS_BONUS }, link:{ module:"find" } });
       sdk.ui.toast(t("bonus"));
     }
   }
