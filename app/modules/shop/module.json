@@ -11,7 +11,7 @@
   "data": { "store": "generic", "collections": ["items", "orders"] },
   "familyCollections": ["items"],
   "server": false,
-  "permissions": ["points"],
+  "permissions": ["points", "camera"],
   "min_shell": "2.0.0",
   "sort": 130
 

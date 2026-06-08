@@ -10,7 +10,7 @@
   "roles": { "edit": ["child", "parent"], "read": ["child", "parent"] },
   "data": { "store": "generic", "collections": ["subs", "meta"] },
   "server": false,
-  "permissions": ["points"],
+  "permissions": ["points", "camera"],
   "min_shell": "2.0.0",
   "sort": 80
 }

@@ -14,6 +14,25 @@ window.RobTop = window.RobTop || {};
 
   function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
   RT.uid = uid;
+  /* mediaResize — единый ресайз фото (Ф4): FileReader → Image → canvas (макс. сторона max,
+     jpeg quality) → dataUrl; фолбэк на исходник при сбое. Раньше копировался в 7 модулях. */
+  function mediaResize(file, max, quality, cb){
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      var img=new Image();
+      img.onload=function(){
+        var w=img.width, h=img.height;
+        if(w>h && w>max){ h=Math.round(h*max/w); w=max; } else if(h>=w && h>max){ w=Math.round(w*max/h); h=max; }
+        var dataUrl;
+        try{ var cv=document.createElement("canvas"); cv.width=w; cv.height=h; cv.getContext("2d").drawImage(img,0,0,w,h); dataUrl=cv.toDataURL("image/jpeg",quality); }
+        catch(e){ dataUrl=ev.target.result; }
+        cb(dataUrl);
+      };
+      img.onerror=function(){ cb(ev.target.result); };
+      img.src=ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
   /* i18n-ключ: "common.*" и "err.*" — общий словарь; остальное — в неймспейсе модуля */
   function absKey(mod,key){ return /^(common|err)\./.test(String(key))?String(key):(mod+"."+key); }
   RT.isDemo = function(){ return !!(RT._shell && RT._shell.demo); };
@@ -278,6 +297,9 @@ window.RobTop = window.RobTop || {};
        ядро (loader.RT.close → sdk._dispose) снимает ВСЁ при размонтировании модуля.
        Чинит утечку: модуль вешал слушатель на #module-view (он переживает открытия) и не снимал. */
     var _cleanups = [];
+    /* hasPerm — объявлена ли возможность в манифесте модуля (поле permissions). Ф6 ОС-рефакторинга:
+       системные ресурсы выдаются по заявке. Гейтим начисление/списание очков (points). */
+    function hasPerm(p){ var L=(meta && meta.permissions)||[]; return L.indexOf(p)>=0; }
     var sdk = {
       id: mod,
       user: shell.user || {name:"Артём", role:"child"},
@@ -302,7 +324,39 @@ window.RobTop = window.RobTop || {};
          Возвращает handler (для ручного снятия при желании). cleanup(fn) — произвольная отмена. */
       on: function(target,ev,fn,opts){ if(target&&target.addEventListener){ target.addEventListener(ev,fn,opts); _cleanups.push(function(){ try{ target.removeEventListener(ev,fn,opts); }catch(e){} }); } return fn; },
       cleanup: function(fn){ if(typeof fn==="function") _cleanups.push(fn); },
-      media:  { upload:function(dataUrl,kind){ return API.post("upload.php",{dataUrl:dataUrl, kind:kind||mod}); } },
+      media:  {
+        /* upload(dataUrl,kind) — загрузка готового dataUrl. Ф4: требует permission "camera". */
+        upload:function(dataUrl,kind){
+          if(!hasPerm("camera")){ if(window.console&&console.warn) console.warn("RobTop: модуль '"+mod+"' без разрешения 'camera' — upload проигнорирован"); return Promise.resolve({ ok:false, denied:true }); }
+          return API.post("upload.php",{dataUrl:dataUrl, kind:kind||mod});
+        },
+        /* pick(opts) — ЕДИНЫЙ выбор фото (Ф4): открыть выбор → ресайз → (демо: dataUrl /
+           сервер: upload) → {path, dataUrl} либо null (отмена/ошибка). Заменяет 7 копий пайплайна.
+           opts: { source:"camera"|"gallery"(деф), kind:<папка>, max:900, quality:0.82,
+                   onLocal:fn(dataUrl) — показать превью сразу до загрузки }. Требует "camera". */
+        pick:function(opts){
+          opts=opts||{};
+          if(!hasPerm("camera")){ if(window.console&&console.warn) console.warn("RobTop: модуль '"+mod+"' без разрешения 'camera' — media.pick проигнорирован"); return Promise.resolve(null); }
+          return new Promise(function(resolve){
+            var input=document.createElement("input"); input.type="file"; input.accept="image/*";
+            if(opts.source==="camera") input.setAttribute("capture","environment");
+            input.style.display="none"; document.body.appendChild(input);
+            input.addEventListener("change", function(){
+              var file=input.files && input.files[0];
+              if(input.parentNode) input.parentNode.removeChild(input);
+              if(!file){ resolve(null); return; }
+              mediaResize(file, opts.max||900, opts.quality||0.82, function(dataUrl){
+                if(opts.onLocal){ try{ opts.onLocal(dataUrl); }catch(e){} }
+                if(RT.isDemo()){ resolve({ path:dataUrl, dataUrl:dataUrl, demo:true }); return; }
+                API.post("upload.php",{dataUrl:dataUrl, kind:opts.kind||mod}).then(function(res){
+                  resolve(res && res.path ? { path:res.path, dataUrl:dataUrl } : null);
+                }).catch(function(){ resolve(null); });
+              });
+            });
+            input.click();
+          });
+        }
+      },
       ui: {
         toast:    function(m,a,f){ return shell.toast(m,a,f); },
         undo:     function(label,fn){ return shell.toast(RT.i18n.t("common.done"), label||RT.i18n.t("common.undo"), fn); },
@@ -320,8 +374,16 @@ window.RobTop = window.RobTop || {};
         enableDrag: function(sheet,close){ shell.enableDrag(sheet,close); }
       },
       points: {
-        /* add(n, reason, opts?) — opts:{kind, src, note}; kind по умолчанию: win (n≥0) / loss / manual (*_manual) */
-        add: function(n,reason,opts){ return bankAdd(mod,n,reason,opts); },
+        /* add(n, reason, opts?) — opts:{kind, src, note}; kind по умолчанию: win (n≥0) / loss / manual (*_manual).
+           Ф6: требует разрешение "points" в манифесте (permissions). Без него — no-op + предупреждение
+           (защита экономики: установленное приложение не может само себе начислять/списывать очки). */
+        add: function(n,reason,opts){
+          if(!hasPerm("points")){
+            if(window.console && console.warn) console.warn("RobTop: модуль '"+mod+"' без разрешения 'points' — points.add проигнорирован");
+            return Promise.resolve({ ok:false, n:0, kind:"", streak:null, bonus:0, denied:true });
+          }
+          return bankAdd(mod,n,reason,opts);
+        },
         get: function(){ return bankSummary().then(function(s){ return s.balance; }).catch(function(){ return 0; }); },
         summary: function(){ return bankSummary(); }
         /* streakReset упразднён 2026-06-07: винстрик выводится из леджера и гаснет сам
