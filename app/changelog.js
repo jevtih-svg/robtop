@@ -5,6 +5,14 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.08.77", d:"2026-06-08", t:{
+    en:"New app — Find the Object: I name an object, you find it nearby and snap a photo; a grown-up checks it for points.",
+    ru:"Новое приложение — Найти предмет: я называю предмет, ты находишь его рядом и фоткаешь; взрослый проверяет и начисляет очки.",
+    lv:"Jauna lietotne — Atrodi priekšmetu: es nosaucu priekšmetu, tu atrodi to tuvumā un nofotografē; pieaugušais pārbauda un piešķir punktus." } },
+  { v:"2026.06.08.76", d:"2026-06-08", t:{
+    en:"Chat shows delivery and read checkmarks; long-press a message to see when it was read.",
+    ru:"В чате появились галочки доставки и прочтения; зажми сообщение, чтобы увидеть время прочтения.",
+    lv:"Čatā ir piegādes un izlasīšanas atzīmes; turi ziņu, lai redzētu izlasīšanas laiku." } },
   { v:"2026.06.08.75", d:"2026-06-08", t:{
     en:"New app — Friends: describe your friends, rate them, and keep secret ones in a separate tab.",
     ru:"Новое приложение — Друзья: описывай друзей, ставь оценку и прячь секретных в отдельную вкладку.",
