@@ -283,8 +283,9 @@ window.RobTop = window.RobTop || {};
   }
   function fabDestroy(){ fabEl.classList.remove("show"); fabEl.onclick=null; fabEl.innerHTML=""; }
 
-  /* ===== ICONS — общий реестр иконок шапки (раньше дублировались в КАЖДОМ модуле) ===== */
-  var ICONS={
+  /* ===== HDR_ICONS — общий реестр иконок ШАПКИ модулей (раньше дублировались в КАЖДОМ модуле).
+     ВАЖНО: имя НЕ ICONS — выше уже есть var ICONS (иконки ПЛИТОК); коллизия имён её затирала. ===== */
+  var HDR_ICONS={
     back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
     stats:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20v-6M12 20V8M19 20V4"/></svg>',
     statsBars:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>',
@@ -306,7 +307,7 @@ window.RobTop = window.RobTop || {};
     var hdr=document.createElement("header"); hdr.className="rt-hdr";
     if(opts.back!==false){
       var bk=document.createElement("button"); bk.type="button"; bk.className="back rt-back";
-      bk.setAttribute("aria-label", opts.backLabel || t("common.back")); bk.innerHTML=ICONS.back;
+      bk.setAttribute("aria-label", opts.backLabel || t("common.back")); bk.innerHTML=HDR_ICONS.back;
       bk.addEventListener("click", typeof opts.back==="function" ? opts.back : function(){ RT.close(); });
       hdr.appendChild(bk);
     }
@@ -318,7 +319,7 @@ window.RobTop = window.RobTop || {};
     (opts.actions||[]).forEach(function(a){
       if(!a) return;
       var btn=document.createElement("button"); btn.type="button"; btn.className="hbtn"+(a.className?(" "+a.className):"");
-      btn.innerHTML=ICONS[a.icon]||a.icon||"";
+      btn.innerHTML=HDR_ICONS[a.icon]||a.icon||"";
       if(a.label) btn.setAttribute("aria-label", a.label);
       if(a.id) btn.id=a.id;
       if(a.onClick) btn.addEventListener("click", a.onClick);
