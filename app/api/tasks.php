@@ -1,35 +1,36 @@
 <?php
 /**
- * POST /api/tasks.php — ОБЩИЙ СЕРВИС заданий от родителей (канон — ГАЙД-задания.md).
+ * POST /api/tasks.php — ОБЩИЙ СЕРВИС заданий (канон — ГАЙД-задания.md).
  *
  * Задания — ресурс уровня приложения (как очки и оповещения), НЕ данные одного модуля:
- * отдельная таблица tasks, один источник правды. UI два — Копилка (блок на вкладке
- * «Родители») и модуль «Задания»; оба ходят сюда через движок sdk.tasks (core/sdk.js).
- * Сервис НАРОЧНО не гейтится включённостью плиток: выключенная плитка «Задания» или
- * «Копилка» не должна ломать задания в соседнем UI.
+ * отдельная таблица tasks, один источник правды. UI два — модуль «Задания» (главный хаб)
+ * и блок «Задания» в Копилке; оба ходят сюда через движок sdk.tasks (core/sdk.js).
+ * Сервис НАРОЧНО не гейтится включённостью плиток.
+ *
+ * origin (миграция 025): 'parent' — родитель назначил; 'child' — ребёнок ЗАЛОГИРОВАЛ
+ * сделанное дело с предложенными очками (ждёт ревью). pending различается по origin:
+ *   origin=parent → проверка выполнения (decline → назад в active);
+ *   origin=child  → предложение ребёнка (approve может ПОПРАВИТЬ очки; deny → удалить).
  *
  * Тело: { op, id?, title?, points?, type?, patch?, child? }
  * op:
- *   list                  — задания скоупа (живые, свежие сверху)
- *   create {title,points,type}            — родитель: новое задание (status active)
+ *   list                       — задания скоупа (живые, свежие сверху)
+ *   create {title,points,type} — родитель: новое задание (origin=parent, status=active)
+ *   propose {title,points}     — РЕБЁНОК: залогировать дело (origin=child, type=once, status=pending)
  *   update {id, patch:{title?,points?,type?}} — родитель: правка
- *   delete {id}           — родитель: мягкое удаление
- *   claim  {id}           — ребёнок «Сделал!»: active → (once: done | recur: pending)
- *   approve{id}           — родитель: pending → (once: done | recur: active, times_done+1)
- *   decline{id}           — родитель: pending → active, без очков и штрафа (решение Джеффа)
+ *   delete {id}                — родитель: мягкое удаление
+ *   claim  {id}                — ребёнок «Сделал!»: active → pending (ВСЕГДА, и once, и recur)
+ *   approve{id, points?}       — родитель: pending → (once/child: done | recur: active, times_done+1);
+ *                                points? — поправленная сумма (для предложений ребёнка)
+ *   decline{id}                — родитель: pending(origin=parent) → active, без очков
+ *   deny   {id}                — родитель: pending(origin=child) → мягкое удаление (предложение отклонено)
  *
  * ОЧКИ сервис НЕ начисляет: канон ГАЙД-очки.md — только sdk.points (движок винстрика
- * на клиенте). Порядок в движке: сначала очки, потом статус («нет очков → нет статуса»).
- * Переходы статусов здесь УСЛОВНЫЕ (WHERE status=...): гонка двух устройств отдаёт 409,
- * клиент перечитывает список (live-sync).
+ * на клиенте). Порядок в движке: сначала очки, потом статус. Переходы здесь УСЛОВНЫЕ
+ * (WHERE status/origin=...): гонка двух устройств → 409, клиент перечитывает (live-sync).
  *
- * Скоуп — как в data.php: ребёнок видит свои задания; родитель — выбранного на дашборде
- * ребёнка (child=<id>, права rt_can_manage_child), без child — первый ребёнок семьи.
- * События пишутся в events под РЕБЁНКОМ (module 'tasks'), как у семейного пула.
- *
- * Бэкфилл: при первом list скоупа, если в tasks ещё нет ни одной строки этого ребёнка,
- * живые строки generic-стора bank/tasks (module_data) копируются сюда. Старые строки
- * module_data не трогаются (аддитивность) — остаются неживой историей.
+ * Скоуп — как в data.php: ребёнок — свои; родитель — выбранного ребёнка (child=<id>, права
+ * rt_can_manage_child), без child — первый ребёнок семьи. События — в events под РЕБЁНКОМ.
  */
 
 require __DIR__ . '/_bootstrap.php';
@@ -59,38 +60,8 @@ if ($role === 'parent') {
 
 function rt_task_parent_only($role) { if ($role !== 'parent') rt_json(['error' => 'forbidden'], 403); }
 function rt_task_child_only($role)  { if ($role === 'parent') rt_json(['error' => 'forbidden'], 403); }
-/* валидация (rt_task_clean_*), бэкфилл (rt_tasks_backfill) и rt_task_ms_to_dt — в _tasks.php */
-
-$TASK_SELECT = "SELECT id, user_id, title, points, type, status, times_done,
-        UNIX_TIMESTAMP(last_done_at)*1000 AS lastDoneAt,
-        UNIX_TIMESTAMP(claimed_at)*1000  AS claimedAt,
-        UNIX_TIMESTAMP(done_at)*1000     AS doneAt,
-        UNIX_TIMESTAMP(created_at)*1000  AS createdAt,
-        UNIX_TIMESTAMP(updated_at)*1000  AS updatedAt
-   FROM tasks";
-
-function rt_task_out($r) {
-    return [
-        'id'         => (string)$r['id'],
-        'title'      => (string)$r['title'],
-        'points'     => (int)$r['points'],
-        'type'       => ($r['type'] === 'once') ? 'once' : 'recur',
-        'status'     => (string)$r['status'],
-        'timesDone'  => (int)$r['times_done'],
-        'lastDoneAt' => $r['lastDoneAt'] !== null ? (int)$r['lastDoneAt'] : null,
-        'claimedAt'  => $r['claimedAt'] !== null ? (int)$r['claimedAt'] : null,
-        'doneAt'     => $r['doneAt'] !== null ? (int)$r['doneAt'] : null,
-        'createdAt'  => $r['createdAt'] !== null ? (int)$r['createdAt'] : null,
-        'updatedAt'  => $r['updatedAt'] !== null ? (int)$r['updatedAt'] : null,
-    ];
-}
-
-function rt_task_row($db, $uid, $id) {
-    global $TASK_SELECT;
-    $s = $db->prepare($TASK_SELECT . " WHERE id = ? AND user_id = ? AND deleted_at IS NULL");
-    $s->execute([(int)$id, (int)$uid]);
-    return $s->fetch();
-}
+/* валидация (rt_task_clean_*), бэкфилл (rt_tasks_backfill), rt_task_ms_to_dt, $TASK_SELECT,
+   rt_task_out, rt_task_row — в _tasks.php (переиспользуются дашбордом parent.php) */
 
 $id = isset($body['id']) && $body['id'] !== null ? (int)$body['id'] : null;
 
@@ -98,7 +69,7 @@ switch ($op) {
 
     case 'list': {
         rt_tasks_backfill($db, $uid);
-        $s = $db->prepare($TASK_SELECT . " WHERE user_id = ? AND deleted_at IS NULL ORDER BY id DESC");
+        $s = $db->prepare(rt_task_select() . " WHERE user_id = ? AND deleted_at IS NULL ORDER BY id DESC");
         $s->execute([$uid]);
         rt_json(['ok' => true, 'items' => array_map('rt_task_out', $s->fetchAll())]);
     }
@@ -110,11 +81,27 @@ switch ($op) {
         $pts  = rt_task_clean_points(isset($body['points']) ? $body['points'] : 10);
         $type = rt_task_clean_type(isset($body['type']) ? $body['type'] : 'recur');
         $db->prepare(
-            "INSERT INTO tasks (user_id, title, points, type, status, created_by, created_at, updated_at)
-             VALUES (?, ?, ?, ?, 'active', ?, NOW(), NOW())"
+            "INSERT INTO tasks (user_id, title, points, type, status, origin, created_by, created_at, updated_at)
+             VALUES (?, ?, ?, ?, 'active', 'parent', ?, NOW(), NOW())"
         )->execute([$uid, $title, $pts, $type, (int)$me]);
         $newId = (int)$db->lastInsertId();
         rt_log('tasks', 'created', $newId, $title, null, 'active', ['points' => $pts, 'type' => $type], $uid);
+        $r = rt_task_row($db, $uid, $newId);
+        rt_json(['ok' => true, 'item' => $r ? rt_task_out($r) : null]);
+    }
+
+    case 'propose': {
+        // РЕБЁНОК логирует сделанное дело с предложенными очками → ждёт ревью родителя.
+        rt_task_child_only($role);
+        $title = rt_task_clean_title(isset($body['title']) ? $body['title'] : '');
+        if ($title === '') rt_json(['error' => 'title required'], 422);
+        $pts = rt_task_clean_points(isset($body['points']) ? $body['points'] : 10);
+        $db->prepare(
+            "INSERT INTO tasks (user_id, title, points, type, status, origin, created_by, claimed_at, created_at, updated_at)
+             VALUES (?, ?, ?, 'once', 'pending', 'child', ?, NOW(), NOW(), NOW())"
+        )->execute([$uid, $title, $pts, (int)$me]);
+        $newId = (int)$db->lastInsertId();
+        rt_log('tasks', 'proposed', $newId, $title, null, 'pending', ['points' => $pts, 'origin' => 'child'], $uid);
         $r = rt_task_row($db, $uid, $newId);
         rt_json(['ok' => true, 'item' => $r ? rt_task_out($r) : null]);
     }
@@ -147,21 +134,19 @@ switch ($op) {
     }
 
     case 'claim': {
+        // Ребёнок отметил выполнение → ВСЕГДА на проверку родителю (универсальное подтверждение,
+        // решение Джеффа 2026-06-08): и одноразовые, и повторяющиеся идут в pending.
         rt_task_child_only($role);
         if ($id === null) rt_json(['error' => 'id required'], 422);
         $r = rt_task_row($db, $uid, $id);
         if (!$r) rt_json(['error' => 'not found'], 404);
-        $once = ($r['type'] === 'once');
-        $q = $once
-            ? $db->prepare("UPDATE tasks SET status='done', done_at=NOW(), updated_at=NOW()
-                            WHERE id=? AND user_id=? AND status='active'")
-            : $db->prepare("UPDATE tasks SET status='pending', claimed_at=NOW(), updated_at=NOW()
-                            WHERE id=? AND user_id=? AND status='active'");
+        $q = $db->prepare("UPDATE tasks SET status='pending', claimed_at=NOW(), updated_at=NOW()
+                           WHERE id=? AND user_id=? AND status='active' AND origin='parent'");
         $q->execute([$id, $uid]);
         if ($q->rowCount() < 1) rt_json(['ok' => false, 'error' => 'state'], 409);
-        rt_log('tasks', 'claimed', $id, (string)$r['title'], 'active', $once ? 'done' : 'pending',
+        rt_log('tasks', 'claimed', $id, (string)$r['title'], 'active', 'pending',
                ['points' => (int)$r['points']], $uid);
-        rt_json(['ok' => true, 'status' => $once ? 'done' : 'pending']);
+        rt_json(['ok' => true, 'status' => 'pending']);
     }
 
     case 'approve': {
@@ -169,31 +154,55 @@ switch ($op) {
         if ($id === null) rt_json(['error' => 'id required'], 422);
         $r = rt_task_row($db, $uid, $id);
         if (!$r) rt_json(['error' => 'not found'], 404);
-        $once = ($r['type'] === 'once');
-        $q = $once
-            ? $db->prepare("UPDATE tasks SET status='done', done_at=NOW(), claimed_at=NULL, updated_at=NOW()
-                            WHERE id=? AND user_id=? AND status='pending'")
-            : $db->prepare("UPDATE tasks SET status='active', times_done=times_done+1, last_done_at=NOW(),
+        // поправленные очки (для предложений ребёнка — родитель может изменить сумму)
+        if (array_key_exists('points', $body)) {
+            $pts = rt_task_clean_points($body['points']);
+            $db->prepare("UPDATE tasks SET points=? WHERE id=? AND user_id=? AND status='pending'")
+               ->execute([$pts, $id, $uid]);
+        }
+        // recur (origin=parent) — задание остаётся активным, счётчик +1; once и любое предложение — done
+        $recur = ($r['type'] !== 'once' && $r['origin'] !== 'child');
+        $q = $recur
+            ? $db->prepare("UPDATE tasks SET status='active', times_done=times_done+1, last_done_at=NOW(),
                                              claimed_at=NULL, updated_at=NOW()
+                            WHERE id=? AND user_id=? AND status='pending'")
+            : $db->prepare("UPDATE tasks SET status='done', done_at=NOW(), claimed_at=NULL, updated_at=NOW()
                             WHERE id=? AND user_id=? AND status='pending'");
         $q->execute([$id, $uid]);
         if ($q->rowCount() < 1) rt_json(['ok' => false, 'error' => 'state'], 409);
-        rt_log('tasks', 'approved', $id, (string)$r['title'], 'pending', $once ? 'done' : 'active',
-               ['points' => (int)$r['points']], $uid);
-        rt_json(['ok' => true, 'status' => $once ? 'done' : 'active']);
+        $r2 = rt_task_row($db, $uid, $id);
+        rt_log('tasks', 'approved', $id, (string)$r['title'], 'pending', $recur ? 'active' : 'done',
+               ['points' => $r2 ? (int)$r2['points'] : (int)$r['points'], 'origin' => $r['origin']], $uid);
+        rt_json(['ok' => true, 'status' => $recur ? 'active' : 'done',
+                 'points' => $r2 ? (int)$r2['points'] : (int)$r['points']]);
     }
 
     case 'decline': {
+        // Проверка выполнения отклонена → назад в active (только задания родителя).
         rt_task_parent_only($role);
         if ($id === null) rt_json(['error' => 'id required'], 422);
         $r = rt_task_row($db, $uid, $id);
         if (!$r) rt_json(['error' => 'not found'], 404);
         $q = $db->prepare("UPDATE tasks SET status='active', claimed_at=NULL, updated_at=NOW()
-                           WHERE id=? AND user_id=? AND status='pending'");
+                           WHERE id=? AND user_id=? AND status='pending' AND origin='parent'");
         $q->execute([$id, $uid]);
         if ($q->rowCount() < 1) rt_json(['ok' => false, 'error' => 'state'], 409);
         rt_log('tasks', 'declined', $id, (string)$r['title'], 'pending', 'active', null, $uid);
         rt_json(['ok' => true, 'status' => 'active']);
+    }
+
+    case 'deny': {
+        // Предложение ребёнка отклонено → мягкое удаление (исчезает; решение Джеффа).
+        rt_task_parent_only($role);
+        if ($id === null) rt_json(['error' => 'id required'], 422);
+        $r = rt_task_row($db, $uid, $id);
+        if (!$r) rt_json(['error' => 'not found'], 404);
+        $q = $db->prepare("UPDATE tasks SET deleted_at=NOW(), status='done', claimed_at=NULL, updated_at=NOW()
+                           WHERE id=? AND user_id=? AND status='pending' AND origin='child'");
+        $q->execute([$id, $uid]);
+        if ($q->rowCount() < 1) rt_json(['ok' => false, 'error' => 'state'], 409);
+        rt_log('tasks', 'denied', $id, (string)$r['title'], 'pending', null, null, $uid);
+        rt_json(['ok' => true, 'status' => 'denied']);
     }
 
     default:

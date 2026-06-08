@@ -101,6 +101,11 @@
 [data-mod="bank"] .bk-task.st-pending{border-color:color-mix(in srgb,var(--gold) 55%,transparent);
   background:linear-gradient(165deg, color-mix(in srgb,var(--gold) 8%,transparent), rgba(var(--panel-rgb),.82))}
 [data-mod="bank"] .bk-task.st-done{opacity:.55;border-color:color-mix(in srgb,var(--muted) 30%,transparent);background:rgba(var(--panel-rgb),.72)}
+/* предложение ребёнка (origin=child): голубой акцент, как в модуле «Задания» */
+[data-mod="bank"] .bk-task.prop{border-color:color-mix(in srgb,var(--cyan) 55%,transparent);
+  background:linear-gradient(165deg, color-mix(in srgb,var(--cyan) 8%,transparent), rgba(var(--panel-rgb),.82))}
+[data-mod="bank"] .bk-task.prop .bk-badge.plus{color:var(--cyan);
+  border-color:color-mix(in srgb,var(--cyan) 45%,transparent);background:color-mix(in srgb,var(--cyan) 10%,transparent)}
 [data-mod="bank"] .bk-task-main{flex:1;min-width:0}
 [data-mod="bank"] .bk-task-t{color:#fff;font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 [data-mod="bank"] .bk-task-m{color:var(--muted);font-size:11px;font-weight:700;margin-top:2px}

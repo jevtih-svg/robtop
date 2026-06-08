@@ -23,6 +23,7 @@
         lastNo: "At least one app must stay visible"
       },
       hud: { apps: "apps", available: "available" },
+      nav: { apps: "Apps", bank: "Bank", chat: "Chat", notifications: "Alerts", settings: "Settings" },
       sync: { newVer: "Update available", reload: "Update" },
       tile: {
         status: { open: "Open", soon: "Soon" },
@@ -194,6 +195,7 @@
         lastNo: "Хотя бы одно приложение должно остаться"
       },
       hud: { apps: "приложений", available: "доступно" },
+      nav: { apps: "Приложения", bank: "Копилка", chat: "Чат", notifications: "Оповещения", settings: "Настройки" },
       sync: { newVer: "Доступно обновление", reload: "Обновить" },
       tile: {
         status: { open: "Открыть", soon: "Скоро" },
@@ -365,6 +367,7 @@
         lastNo: "Vismaz vienai lietotnei jāpaliek redzamai"
       },
       hud: { apps: "lietotnes", available: "pieejamas" },
+      nav: { apps: "Lietotnes", bank: "Krājkase", chat: "Čats", notifications: "Paziņojumi", settings: "Iestatījumi" },
       sync: { newVer: "Pieejams atjauninājums", reload: "Atjaunināt" },
       tile: {
         status: { open: "Atvērt", soon: "Drīz" },

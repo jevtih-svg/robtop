@@ -1,15 +1,13 @@
 /* RobTop — модуль «Копилка». Свинка с пунктами на боку, огонёк-винстрик, история
    транзакций (вкладки «Задания»/«Родители») и родительская панель начислений (только роль parent; в демо открыта).
-   ЗАДАНИЯ ОТ РОДИТЕЛЕЙ (2026-06-07, v1.7.0): с миграции 024 — ОБЩИЙ движок sdk.tasks
-   (отдельная таблица tasks + api/tasks.php, канон — ГАЙД-задания.md); раньше — коллекция
-   bank/tasks в generic-сторе (перенос — ленивый бэкфилл сервиса). Блок заданий здесь —
-   ЗЕРКАЛО модуля «Задания»: один источник правды, своей логики заданий Копилка не держит
-   (очки и оповещения — внутри движка). UI прежний:
-   родитель создаёт задание (название, очки, тип): «повторяющееся» — ребёнок жмёт «Сделал!»
-   → статус pending → родитель подтверждает (✓ = очки kind=task_done через sdk.points, задание
-   возвращается в active) или возвращает (↩ = без очков, без штрафа — решение Джеффа);
-   «одноразовое» — очки начисляются ребёнку СРАЗУ при отметке (решение Джеффа), статус done.
-   Сумма очков — у каждого задания своя (деф. +10, канон ГАЙД-очки.md §4).
+   ЗАДАНИЯ (v1.8.0, рефактор 2026-06-08): ОБЩИЙ движок sdk.tasks (отдельная таблица tasks +
+   api/tasks.php, канон — ГАЙД-задания.md). ГЛАВНЫЙ хаб заданий — модуль «Задания»; блок
+   здесь — ЛЁГКОЕ зеркало того же источника (Копилка = кошелёк), своей логики не держит.
+   ВСЕ выполнения идут через подтверждение родителя (универсально, и once, и recur):
+   ребёнок «Сделал!» → pending → родитель ✓ (очки kind=task_done через sdk.points; recur →
+   назад в active, once → done) или ↩ (без очков). Предложения ребёнка (origin=child, голубой
+   акцент): родитель одобряет как есть (✓+N) или отклоняет (✕, исчезает) — тонкая правка
+   очков и «Предложить задание» живут в модуле «Задания». Сумма у каждого своя (деф. +10).
    ВИНСТРИК (2026-06-07, v1.2.0): серия дней подряд с хотя бы одним выполненным заданием;
    выводится движком из леджера (день без задания — огонёк гаснет сам). Кнопка-огонёк с «i»
    открывает объяснение для ребёнка (openStreakInfo, простые правила + пример недели).
@@ -78,6 +76,7 @@
       streakToast:"Win streak: {n} 🔥", bonusToast:"Streak bonus +{n}!",
       btnAddTask:"+ New task", btnIDid:"I did it!",
       chipPending:"waiting for check ⏳", chipDone:"done ✓",
+      chipProposed:"proposed +{n}", propTag:"kid's idea", denyA11y:"Decline proposal",
       typeRecur:"Repeating", typeOnce:"One-time",
       metaRecur:"🔁 repeats", metaOnce:"1× one-time", doneTimes:"done ×{n}",
       approveBtn:"✓ +{n}", declineA11y:"Return without points",
@@ -140,6 +139,7 @@
       streakToast:"Винстрик: {n} 🔥", bonusToast:"Бонус серии +{n}!",
       btnAddTask:"+ Новое задание", btnIDid:"Сделал!",
       chipPending:"ждёт проверки ⏳", chipDone:"выполнено ✓",
+      chipProposed:"предложено +{n}", propTag:"предложил ребёнок", denyA11y:"Отклонить предложение",
       typeRecur:"Повторяющееся", typeOnce:"Одноразовое",
       metaRecur:"🔁 повторяется", metaOnce:"1× одноразовое", doneTimes:"сделано ×{n}",
       approveBtn:"✓ +{n}", declineA11y:"Вернуть без очков",
@@ -202,6 +202,7 @@
       streakToast:"Uzvaru sērija: {n} 🔥", bonusToast:"Sērijas bonuss +{n}!",
       btnAddTask:"+ Jauns uzdevums", btnIDid:"Izdarīju!",
       chipPending:"gaida pārbaudi ⏳", chipDone:"izpildīts ✓",
+      chipProposed:"piedāvāts +{n}", propTag:"bērna ideja", denyA11y:"Noraidīt piedāvājumu",
       typeRecur:"Atkārtojas", typeOnce:"Vienreizējs",
       metaRecur:"🔁 atkārtojas", metaOnce:"1× vienreizējs", doneTimes:"izpildīts ×{n}",
       approveBtn:"✓ +{n}", declineA11y:"Atgriezt bez punktiem",
@@ -311,18 +312,12 @@
     return c;
   }
 
-  function claimTask(tk){ /* ребёнок: «Сделал!» — весь поток (очки+статус+оповещение) в движке */
+  function claimTask(tk){ /* ребёнок: «Сделал!» → на проверку родителю (универсальное подтверждение) */
     if(busy) return; busy=true;
     sdk.tasks.claim(tk).then(function(out){
       busy=false;
-      if(!out || !out.ok){ sdk.ui.toast(t("loadFail")); load(); return; }
-      if(out.once){
-        if(out.bonus) sdk.ui.toast(t("bonusToast",{n:out.bonus}));
-        else if(out.streak!=null) sdk.ui.toast(t("streakToast",{n:out.streak}));
-        else sdk.ui.toast(t("doneToast"));
-        sdk.ui.confetti();
-      } else sdk.ui.toast(t("claimToast"));
-      sdk.ui.haptics("light");
+      sdk.ui.toast(t(out && out.ok ? "claimToast" : "loadFail"));
+      if(out && out.ok) sdk.ui.haptics("light");
       load();
     });
   }
@@ -340,11 +335,20 @@
     });
   }
 
-  function declineTask(tk){ /* родитель: вернуть без очков и без штрафа (решение Джеффа) */
+  function declineTask(tk){ /* родитель: вернуть проверку выполнения в active (без очков) */
     if(busy) return; busy=true;
     sdk.tasks.decline(tk).then(function(out){
       busy=false;
       sdk.ui.toast(t(out && out.ok ? "returnedToast" : "loadFail"));
+      load();
+    });
+  }
+
+  function denyTask(tk){ /* родитель: отклонить предложение ребёнка (исчезает) — поток предложений в Копилке тоже работает */
+    if(busy) return; busy=true;
+    sdk.tasks.deny(tk).then(function(out){
+      busy=false;
+      sdk.ui.toast(t(out && out.ok ? "deniedToast" : "loadFail"));
       load();
     });
   }
@@ -426,11 +430,21 @@
       var meta=esc(once?t("metaOnce"):t("metaRecur"));
       var n=parseInt(tk.timesDone,10)||0;
       if(!once && n) meta+=' · '+esc(t("doneTimes",{n:n}));
+      var prop=(tk.origin==="child");  /* предложение ребёнка (origin=child, всегда pending) */
+      if(prop) meta=esc(t("propTag"))+' · '+esc(t("chipProposed",{n:pts}));
       var act="";
       if(tk.status==="pending"){
-        if(isP) act+='<button class="bk-tbtn ok" data-act="ok" data-tid="'+esc(tk.id)+'">'+esc(t("approveBtn",{n:pts}))+'</button>'
-                   +'<button class="bk-tbtn no" data-act="no" data-tid="'+esc(tk.id)+'" aria-label="'+esc(t("declineA11y"))+'">↩</button>';
-        else act+='<span class="bk-chip">'+esc(t("chipPending"))+'</span>';
+        if(prop){
+          /* предложение: родитель одобряет как есть или отклоняет (тонкая правка очков — в модуле «Задания»);
+             ребёнок видит, что предложение ждёт. */
+          if(isP) act+='<button class="bk-tbtn ok" data-act="ok" data-tid="'+esc(tk.id)+'">'+esc(t("approveBtn",{n:pts}))+'</button>'
+                     +'<button class="bk-tbtn x" data-act="deny" data-tid="'+esc(tk.id)+'" aria-label="'+esc(t("denyA11y"))+'">✕</button>';
+          else act+='<span class="bk-chip">'+esc(t("chipProposed",{n:pts}))+'</span>';
+        } else {
+          if(isP) act+='<button class="bk-tbtn ok" data-act="ok" data-tid="'+esc(tk.id)+'">'+esc(t("approveBtn",{n:pts}))+'</button>'
+                     +'<button class="bk-tbtn no" data-act="no" data-tid="'+esc(tk.id)+'" aria-label="'+esc(t("declineA11y"))+'">↩</button>';
+          else act+='<span class="bk-chip">'+esc(t("chipPending"))+'</span>';
+        }
       } else if(tk.status==="active"){
         if(isK) act+='<button class="bk-tbtn do" data-act="claim" data-tid="'+esc(tk.id)+'">'+esc(t("btnIDid"))+'</button>';
         if(isP) act+='<button class="bk-tbtn x" data-act="del" data-tid="'+esc(tk.id)+'" aria-label="'+esc(t("deleteTask"))+'">✕</button>';
@@ -439,7 +453,7 @@
         if(isP) act+='<button class="bk-tbtn x" data-act="del" data-tid="'+esc(tk.id)+'" aria-label="'+esc(t("deleteTask"))+'">✕</button>';
       }
       var editable=isP && tk.status==="active";
-      h+='<div class="bk-task st-'+esc(tk.status)+'"'
+      h+='<div class="bk-task st-'+esc(tk.status)+(prop?" prop":"")+'"'
         +(editable?' data-act="edit" data-tid="'+esc(tk.id)+'" role="button" tabindex="0"':'')+'>'
         +'<div class="bk-badge plus">+'+pts+'</div>'
         +'<div class="bk-task-main"><div class="bk-task-t">'+esc(tk.title||"")+'</div>'
@@ -458,6 +472,7 @@
     else if(act==="claim"){ claimTask(tk); }
     else if(act==="ok"){ approveTask(tk); }
     else if(act==="no"){ declineTask(tk); }
+    else if(act==="deny"){ denyTask(tk); }
     else if(act==="del"){ deleteTask(tk); }
   }
 

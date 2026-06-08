@@ -42,7 +42,11 @@ window.RobTop = window.RobTop || {};
         task_new:"New task “{title}” — +{n} points",
         task_claim:"{name} says “{title}” is done — check it",
         task_done:"{name} finished “{title}” (+{n})",
-        task_approved:"“{title}” approved — +{n} points!" },
+        task_approved:"“{title}” approved — +{n} points!",
+        task_returned:"“{title}” sent back — give it another go",
+        task_proposed:"{name} logged “{title}” for +{n} — review it",
+        task_proposal_ok:"Your task “{title}” approved — +{n} points!",
+        task_proposal_no:"“{title}” was not approved this time" },
       bank:{
         task_new:"New task “{title}” — +{n} points",
         task_claim:"{name} says “{title}” is done — check it",
@@ -79,7 +83,11 @@ window.RobTop = window.RobTop || {};
         task_new:"Новое задание «{title}» — +{n} очков",
         task_claim:"{name}: «{title}» сделано — проверь!",
         task_done:"{name} выполнил(а) задание «{title}» (+{n})",
-        task_approved:"«{title}» подтверждено — +{n} очков!" },
+        task_approved:"«{title}» подтверждено — +{n} очков!",
+        task_returned:"«{title}» вернули — попробуй ещё раз",
+        task_proposed:"{name} предложил(а) «{title}» за +{n} — посмотри",
+        task_proposal_ok:"Твоё задание «{title}» одобрено — +{n} очков!",
+        task_proposal_no:"«{title}» в этот раз не одобрили" },
       bank:{
         task_new:"Новое задание «{title}» — +{n} очков",
         task_claim:"{name}: «{title}» сделано — проверь!",
@@ -116,7 +124,11 @@ window.RobTop = window.RobTop || {};
         task_new:"Jauns uzdevums “{title}” — +{n} punkti",
         task_claim:"{name}: “{title}” izpildīts — pārbaudi!",
         task_done:"{name} izpildīja uzdevumu “{title}” (+{n})",
-        task_approved:"“{title}” apstiprināts — +{n} punkti!" },
+        task_approved:"“{title}” apstiprināts — +{n} punkti!",
+        task_returned:"“{title}” atgriezts — pamēģini vēlreiz",
+        task_proposed:"{name} piedāvāja “{title}” par +{n} — apskati",
+        task_proposal_ok:"Tavs uzdevums “{title}” apstiprināts — +{n} punkti!",
+        task_proposal_no:"“{title}” šoreiz netika apstiprināts" },
       bank:{
         task_new:"Jauns uzdevums “{title}” — +{n} punkti",
         task_claim:"{name}: “{title}” izpildīts — pārbaudi!",
@@ -181,6 +193,8 @@ window.RobTop = window.RobTop || {};
     unreadN=Math.max(0,parseInt(n,10)||0);
     if(badgeEl){ badgeEl.textContent=unreadN>9?"9+":String(unreadN); }
     if(bellEl){ bellEl.classList.toggle("has", unreadN>0); }
+    /* единое нижнее меню: дублируем счётчик на вкладку NOTIFICATIONS (хук ставит shell) */
+    try{ if(RT.Notify && typeof RT.Notify.onBadge==="function") RT.Notify.onBadge(unreadN); }catch(e){}
     try{ /* бейдж на иконке установленной PWA, где поддерживается */
       if(navigator.setAppBadge){ if(unreadN) navigator.setAppBadge(unreadN); else navigator.clearAppBadge&&navigator.clearAppBadge(); }
     }catch(e){}

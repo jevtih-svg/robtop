@@ -145,11 +145,8 @@ body{
      .rt-bar  — детский нижний бар (домой · очки · система), зеркало .pd-tabbar. ===== */
 .rt-hdr{display:flex;align-items:center;gap:9px;
   padding:calc(var(--chrome-top) + var(--safe-top)) 2px 6px;min-height:var(--hdr-total)}
-/* ПРАВИЛО «владелец верхнего-правого угла» (см. ГАЙД-UI-guardrails §«Строгие правила»):
-   на экране модуля глобальный колокольчик 🔔 (.ntf-bell, fixed top-right) виден, поэтому шапка
-   РЕЗЕРВИРУЕТ под него место справа — действия модуля (.rt-actions) и правый блок (баланс
-   Магазина) НИКОГДА не залезают под колокольчик. ⚙ на экранах модулей живёт в нижнем баре. */
-body[data-view="module"] .rt-hdr{padding-right:calc(var(--bell-w) + 8px)}
+/* верхний хром (🔔/⚙) на экранах модулей убран (ушёл в нижнее меню), поэтому резерв справа
+   в шапке больше НЕ нужен — шапка целиком принадлежит приложению (ПЛАН-нижнее-меню.md). */
 /* .rt-head-main — слот заголовка: модуль кладёт сюда свой заголовок (иконка/подзаголовок)
    через opts.titleHtml и СОХРАНЯЕТ своё оформление; рамка задаёт только раскладку.
    Заголовок и подзаголовок усекаются многоточием, а не ломают шапку при длинном тексте. */
@@ -166,25 +163,27 @@ body[data-view="module"] .rt-hdr{padding-right:calc(var(--bell-w) + 8px)}
 /* декоративный «экшен» в шапке (не кнопка): напр. иконка-клипборд в «Заданиях» */
 .rt-actions .rt-deco{background:none;border:none;box-shadow:none;color:var(--muted);pointer-events:none}
 
-/* ---- детский нижний бар (#kidBar): «Домой» + ⚙. Живёт в <body>; виден на детских
-   экранах модулей; в полноэкранных сценах прячется (.rt-bar-hide через hud({hidden})). ---- */
-.rt-bar{display:none;position:fixed;left:0;right:0;bottom:0;z-index:14;max-width:480px;margin:0 auto;
-  align-items:center;gap:10px;min-height:var(--kidbar-total);
-  padding:8px var(--gutter) calc(8px + var(--safe-bottom));
+/* ---- ЕДИНОЕ НИЖНЕЕ МЕНЮ (#kidBar, .rt-nav): 5 вкладок APPS/BANK/CHAT/NOTIFICATIONS/SETTINGS
+   (ПЛАН-нижнее-меню.md). Живёт в <body>; видно на детских экранах (home/модуль/настройки/
+   оповещения); в полноэкранных сценах прячется (.rt-bar-hide через hud({hidden})). ---- */
+.rt-nav{display:none;position:fixed;left:0;right:0;bottom:0;z-index:14;max-width:480px;margin:0 auto;gap:2px;
+  min-height:var(--kidbar-total);padding:6px 8px calc(6px + var(--safe-bottom));
   background:var(--tabbar-grad);border-top:1px solid rgba(255,255,255,.09);backdrop-filter:blur(8px)}
-body[data-view="module"] .rt-bar{display:flex}
-.rt-bar.rt-bar-hide{display:none}
-.rt-home{flex:1;display:flex;align-items:center;justify-content:center;gap:9px;min-height:46px;cursor:pointer;
-  border-radius:14px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);
-  color:var(--chrome-ink);font-family:var(--font-display);font-size:15px;letter-spacing:.3px;
-  box-shadow:0 0 18px -8px var(--cyan)}
-.rt-home svg{width:22px;height:22px}
-.rt-home:active{transform:scale(.97)}
-.rt-bargear{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;cursor:pointer;
-  font-size:20px;color:var(--chrome-ink);background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14);
-  box-shadow:0 0 18px -8px var(--cyan)}
-.rt-bargear:active{transform:scale(.93)}
-/* старый HUD (декоративные счётчики) на экранах модулей больше не показываем — его заменил детский бар */
+body[data-view="home"] .rt-nav,body[data-view="module"] .rt-nav,body[data-view="settings"] .rt-nav,body[data-view="notifications"] .rt-nav{display:flex}
+.rt-nav.rt-bar-hide{display:none}
+.rt-nav-b{flex:1;min-width:0;position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;
+  border:none;background:none;cursor:pointer;font-family:inherit;font-size:10px;font-weight:800;letter-spacing:.2px;
+  color:var(--muted);padding:6px 2px;border-radius:12px;transition:color .15s, transform .1s}
+.rt-nav-b svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.rt-nav-b>span:not(.rt-nav-badge){max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rt-nav-b:active{transform:scale(.94)}
+.rt-nav-b.on{color:var(--cyan);text-shadow:0 0 10px rgba(25,227,255,.7)}
+.rt-nav-b.on svg{filter:drop-shadow(0 0 5px rgba(25,227,255,.8))}
+.rt-nav-badge{position:absolute;top:1px;left:calc(50% + 4px);min-width:16px;height:16px;border-radius:8px;
+  display:grid;place-items:center;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:0 4px;
+  box-shadow:0 0 10px -2px var(--red)}
+.rt-nav-badge[hidden]{display:none}
+/* старый HUD-счётчик на экранах модулей не показываем — его заменило нижнее меню */
 body[data-view="module"] .hud{display:none}
 
 /* ---- guardrails: родительская шапка деталей приложения (.pd-mhead в core/parent.js) ----
@@ -199,7 +198,7 @@ body[data-view="module"] .hud{display:none}
 /* полный фикс переполнения родительской шапки (меньше элементов) — за parent.js (чужая зона) */
 
 /* ===================== HOME ===================== */
-#home{padding-bottom:46px}
+#home{padding-bottom:calc(var(--kidbar-total) + 16px)} /* нижнее меню под сеткой — резерв, чтобы плитки не уходили под него */
 .hometop{padding:calc(30px + var(--safe-top)) 6px 14px;position:relative}
 .brand{font-family:var(--font-display);font-size:40px;letter-spacing:1px;line-height:1;margin:0;color:#fff;
   text-shadow:var(--brand-glow)}
@@ -216,10 +215,18 @@ body[data-view="module"] .hud{display:none}
 .gear{position:absolute;top:calc(30px + var(--safe-top));right:6px;z-index:15;width:42px;height:42px;border-radius:13px;
   display:none;place-items:center;cursor:pointer;font-size:20px;color:var(--chrome-ink);
   background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14);box-shadow:0 0 18px -7px var(--cyan)}
-body[data-view="home"] .gear,body[data-view="parent"] .gear{display:grid}
+/* ⚙ сверху — ТОЛЬКО на родительском дашборде (Ф1; уйдёт в нижнее меню в Ф3). У ребёнка
+   настройки — вкладка нижнего меню, верх чистый. */
+body[data-view="parent"] .gear{display:grid}
 .gear:active{transform:scale(.93)}
 
 .apps{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:18px}
+/* РОДИТЕЛЬСКАЯ сетка (#pdApps): плитка всегда по высоте своего контента, НЕ растягивается
+   на высоту строки. Фикс «плитки ломаются при кликах» (фидбек Джеффа): при ре-рендере
+   дашборда/артефакте реордера одиночная плитка в неполной строке переставала вытягиваться
+   в «высокую». Скоуп только на родителя — детская сетка (ровные строки через stretch) не меняется.
+   Если баг всплывёт и на детском главном — расширить до `.apps .tile`. */
+#pdApps .tile{align-self:start}
 /* разделитель «Скоро» между активными и будущими плитками */
 .apps-sep{grid-column:1 / -1;display:flex;align-items:center;gap:10px;margin:8px 2px 0;
   font-weight:800;font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:#90a2c6}
@@ -372,7 +379,7 @@ body.demo .demo-badge{display:block}
 .store-install:active{transform:scale(.99)}
 
 /* ===================== ЭКРАН НАСТРОЕК (#settings) ===================== */
-#settings{padding-bottom:46px}
+#settings{padding-bottom:calc(var(--kidbar-total) + 16px)} /* нижнее меню всегда видно на настройках — резерв снизу */
 .set-top{display:flex;align-items:center;gap:12px;padding:calc(26px + var(--safe-top)) 0 8px}
 .set-top h1{font-family:var(--font-display);font-weight:400;font-size:23px;margin:0;color:#fff;
   text-shadow:0 0 12px color-mix(in srgb,var(--accent) 60%, transparent)}
@@ -722,6 +729,9 @@ body[data-view="parent"] .pd-tabbar{display:flex}
 /* там, где видна ⚙ (главный + дашборд), колокольчик встаёт слева от неё */
 body[data-view="home"] .ntf-bell,body[data-view="parent"] .ntf-bell{right:56px}
 body[data-view="lock"] .ntf-bell,body.demo .ntf-bell,.ntf-bell.ntf-hide{display:none}
+/* 🔔 сверху — ТОЛЬКО на родительском дашборде (Ф1; уйдёт в нижнее меню в Ф3). У ребёнка
+   оповещения — вкладка нижнего меню; верх приложения чистый. */
+body[data-view="home"] .ntf-bell,body[data-view="module"] .ntf-bell,body[data-view="settings"] .ntf-bell{display:none}
 body[data-view="parent"] .pd-top{padding-right:100px;padding-top:calc(30px + var(--safe-top))} /* контент шапки не лезет под кластер [🔔][⚙]; верх выровнен с ним */
 body[data-view="settings"] .set-top{padding-right:48px}
 .pd-kid .st{white-space:nowrap;overflow:hidden;text-overflow:ellipsis} /* «👁 Только просмотр · активность…» не ломает строку */

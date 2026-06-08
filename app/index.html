@@ -24,7 +24,7 @@ document.addEventListener('dblclick',function(e){e.preventDefault()},{passive:fa
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- subset: cyrillic (RU) + latin/latin-ext (EN, LV: ā č ē ģ ī ķ ļ ņ š ū ž) -->
 <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Rubik:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap&subset=cyrillic,cyrillic-ext,latin,latin-ext" rel="stylesheet">
-<link rel="stylesheet" href="core/ui.css?v=2026.06.08.92">
+<link rel="stylesheet" href="core/ui.css?v=2026.06.08.94">
 </head>
 <body data-view="home">
 <canvas id="bg"></canvas>
@@ -72,16 +72,33 @@ document.addEventListener('dblclick',function(e){e.preventDefault()},{passive:fa
      и fixed-меню внутри неё прилипало к низу длинного списка вместо низа экрана. -->
 <nav class="pd-tabbar" id="pdTabs"></nav>
 
-<!-- Детский нижний бар (guardrails): «Домой» + настройки. Живёт в body (как #pdTabs/#hud):
-     fixed внутри .view(transform) попал бы в containing-block-ловушку. Виден на детских
-     экранах модулей; прячется в полноэкранных сценах (sdk.ui.hud({hidden:true}) → .rt-bar-hide).
-     Шапку модулей строит sdk.ui.frame(); канон — ГАЙД-UI-guardrails.md. -->
-<nav class="rt-bar" id="kidBar">
-  <button class="rt-home" id="kidHome" data-i18n-aria="common.home" aria-label="Home">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v9h5v-5h4v5h5v-9"/></svg>
-    <span data-i18n="common.home">Home</span>
+<!-- ЕДИНОЕ НИЖНЕЕ МЕНЮ (ПЛАН-нижнее-меню.md): 5 вкладок — APPS · BANK · CHAT · NOTIFICATIONS · SETTINGS.
+     Живёт в body (как #pdTabs/#hud): fixed внутри .view(transform) попал бы в containing-block-ловушку.
+     Видно на всех детских экранах (home/модуль/настройки/оповещения); прячется в полноэкранных
+     сценах (sdk.ui.hud({hidden:true}) → .rt-bar-hide). Клики делегирует core/shell.js (navTo).
+     id оставлен kidBar — на него ссылается shell (показ/скрытие). Верхний хром (🔔/⚙) убран. -->
+<nav class="rt-nav" id="kidBar">
+  <button class="rt-nav-b" data-nav="apps" data-i18n-aria="nav.apps" aria-label="Apps">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+    <span data-i18n="nav.apps">Apps</span>
   </button>
-  <button class="rt-bargear" id="kidGear" data-i18n-aria="settings.open" aria-label="Settings">⚙</button>
+  <button class="rt-nav-b" data-nav="bank" data-i18n-aria="nav.bank" aria-label="Bank">
+    <svg viewBox="0 0 24 24"><path d="M4 10h16l-1 9H5z"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+    <span data-i18n="nav.bank">Bank</span>
+  </button>
+  <button class="rt-nav-b" data-nav="chat" data-i18n-aria="nav.chat" aria-label="Chat">
+    <svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-4 3z"/></svg>
+    <span data-i18n="nav.chat">Chat</span>
+  </button>
+  <button class="rt-nav-b" data-nav="notifications" data-i18n-aria="nav.notifications" aria-label="Notifications">
+    <svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+    <span class="rt-nav-badge" id="rtNavBadge" hidden></span>
+    <span data-i18n="nav.notifications">Alerts</span>
+  </button>
+  <button class="rt-nav-b" data-nav="settings" data-i18n-aria="nav.settings" aria-label="Settings">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.1 5.1l2.1 2.1M16.8 16.8l2.1 2.1M18.9 5.1l-2.1 2.1M7.2 16.8l-2.1 2.1"/></svg>
+    <span data-i18n="nav.settings">Settings</span>
+  </button>
 </nav>
 
 <!-- Магазин приложений (только родитель; открывается из настроек) -->
@@ -96,19 +113,19 @@ document.addEventListener('dblclick',function(e){e.preventDefault()},{passive:fa
 <div class="demo-badge" id="demoBadge" data-i18n="common.demo">demo</div>
 
 <!-- Индикатор версии (слева внизу). Меняй число при КАЖДОМ обновлении — видно, залилась ли новая версия на сайт. -->
-<div class="appver" id="appver">v2026.06.08.92</div>
+<div class="appver" id="appver">v2026.06.08.94</div>
 
 <!-- Версия приложения = маркер деплоя и cache-busting. Меняй ТОЛЬКО это число при каждом обновлении (11 мест, включая notify).
      + ЛЕНДИНГ: запись о версии в changelog.js (журнал «Что нового») и ?v= у changelog.js в landing.html. -->
-<script>window.RT_VER="2026.06.08.92";</script>
-<script src="core/util.js?v=2026.06.08.92"></script>
-<script src="core/i18n.js?v=2026.06.08.92"></script>
-<script src="core/strings.js?v=2026.06.08.92"></script>
-<script src="core/bg.js?v=2026.06.08.92"></script>
-<script src="core/sdk.js?v=2026.06.08.92"></script>
-<script src="core/loader.js?v=2026.06.08.92"></script>
-<script src="core/notify.js?v=2026.06.08.92"></script>
-<script src="core/parent.js?v=2026.06.08.92"></script>
-<script src="core/shell.js?v=2026.06.08.92"></script>
+<script>window.RT_VER="2026.06.08.94";</script>
+<script src="core/util.js?v=2026.06.08.94"></script>
+<script src="core/i18n.js?v=2026.06.08.94"></script>
+<script src="core/strings.js?v=2026.06.08.94"></script>
+<script src="core/bg.js?v=2026.06.08.94"></script>
+<script src="core/sdk.js?v=2026.06.08.94"></script>
+<script src="core/loader.js?v=2026.06.08.94"></script>
+<script src="core/notify.js?v=2026.06.08.94"></script>
+<script src="core/parent.js?v=2026.06.08.94"></script>
+<script src="core/shell.js?v=2026.06.08.94"></script>
 </body>
 </html>

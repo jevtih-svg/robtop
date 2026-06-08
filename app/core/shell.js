@@ -371,9 +371,9 @@ window.RobTop = window.RobTop || {};
   function showHome(){
     screenSave({v:"home"});
     if(!demo && isParent() && RT.Parent){ showParent(); return; }
-    body.setAttribute("data-view","home"); if(lockView) lockView.classList.remove("active"); hideParent(); hideSettings(); moduleView.classList.remove("active"); homeView.classList.add("active"); window.scrollTo(0,0); fabDestroy(); homeHud();
+    body.setAttribute("data-view","home"); if(lockView) lockView.classList.remove("active"); hideParent(); hideSettings(); moduleView.classList.remove("active"); homeView.classList.add("active"); window.scrollTo(0,0); fabDestroy(); homeHud(); setNavActive();
   }
-  function showModule(){ screenSave({v:"module",id:RT._current||null}); body.setAttribute("data-view","module"); if(lockView) lockView.classList.remove("active"); hideParent(); hideSettings(); homeView.classList.remove("active"); moduleView.classList.add("active"); if(kidBarEl) kidBarEl.classList.remove("rt-bar-hide"); window.scrollTo(0,0); }
+  function showModule(){ screenSave({v:"module",id:RT._current||null}); body.setAttribute("data-view","module"); if(lockView) lockView.classList.remove("active"); hideParent(); hideSettings(); homeView.classList.remove("active"); moduleView.classList.add("active"); if(kidBarEl) kidBarEl.classList.remove("rt-bar-hide"); window.scrollTo(0,0); setNavActive(); }
   /* родительский дашборд (core/parent.js); read-only поверхность вместо детского дома */
   function showParent(){
     body.setAttribute("data-view","parent");
@@ -693,13 +693,40 @@ window.RobTop = window.RobTop || {};
     homeView.classList.remove("active"); moduleView.classList.remove("active"); hideParent();
     if(lockView) lockView.classList.remove("active");
     settingsView.classList.add("active");
-    window.scrollTo(0,0); fabDestroy();
+    window.scrollTo(0,0); fabDestroy(); setNavActive();
     if(!demo){ var k=authKey(); loadAccount().then(function(){
       if(isSettingsOpen() && authKey()!==k) renderSettings();
     }); }
   }
   /* назад из настроек: showHome сам уводит родителя на дашборд */
   function closeSettings(){ if(!isSettingsOpen()) return; showHome(); }
+
+  /* ---- ЕДИНОЕ НИЖНЕЕ МЕНЮ (#kidBar.rt-nav): маршрутизация 5 вкладок (ПЛАН-нижнее-меню.md).
+     APPS=сетка, BANK/CHAT=модули прямо, NOTIFICATIONS=центр (Ф1 — пока шторка), SETTINGS=настройки.
+     У ребёнка (home/модуль/настройки). Родитель — свой таббар до Ф3. ---- */
+  function navTo(tab){
+    if(tab==="apps"){ if(RT.current()) RT.close(); else showHome(); }
+    else if(tab==="bank"){ if(RT.current()!=="bank") RT.open("bank"); }
+    else if(tab==="chat"){ if(RT.current()!=="chat") RT.open("chat"); }
+    else if(tab==="notifications"){ if(RT.Notify && RT.Notify.open) RT.Notify.open(); }
+    else if(tab==="settings"){ openSettings(); }
+    setNavActive();
+  }
+  function setNavActive(){
+    if(!kidBarEl) return;
+    var v=body.getAttribute("data-view"), cur=RT.current();
+    var act = cur==="bank" ? "bank" : cur==="chat" ? "chat"
+            : v==="settings" ? "settings" : "apps"; /* дом и любой другой модуль → APPS */
+    Array.prototype.forEach.call(kidBarEl.querySelectorAll(".rt-nav-b"),function(b){
+      b.classList.toggle("on", b.getAttribute("data-nav")===act);
+    });
+  }
+  /* бейдж непрочитанного на вкладку NOTIFICATIONS (зовёт core/notify.js при изменении счётчика) */
+  function navBadge(n){
+    var el=document.getElementById("rtNavBadge"); if(!el) return;
+    n=parseInt(n,10)||0;
+    if(n>0){ el.textContent=n>9?"9+":String(n); el.hidden=false; } else { el.hidden=true; }
+  }
 
   /* блок «Аккаунт» в настройках: статус + вход/выход (вход меняет rt_user_id на сервере, поэтому после
      успеха перезагружаем страницу — чистое состояние реестра и данных, без частичных перерисовок) */
@@ -1508,9 +1535,12 @@ window.RobTop = window.RobTop || {};
     gearBtn.addEventListener("click",openSettings);
     /* детский нижний бар: «Домой» закрывает модуль (как кнопка назад в шапке), ⚙ открывает настройки */
     if(kidBarEl){
-      var kh=kidBarEl.querySelector("#kidHome"); if(kh) kh.addEventListener("click",function(){ if(RT.current()) RT.close(); });
-      var kg=kidBarEl.querySelector("#kidGear"); if(kg) kg.addEventListener("click",openSettings);
+      /* единое нижнее меню: делегируем клики по вкладкам (data-nav) в navTo */
+      kidBarEl.addEventListener("click",function(e){
+        var b=e.target.closest("[data-nav]"); if(b) navTo(b.getAttribute("data-nav"));
+      });
     }
+    if(RT.Notify) RT.Notify.onBadge=navBadge; /* бейдж непрочитанного на вкладку оповещений */
     storeOverlay.addEventListener("click",function(e){ if(e.target===storeOverlay) closeStore(); });
     var sg=storeOverlay.querySelector(".grip"); if(sg) sg.addEventListener("click",closeStore);
     enableDrag(storeOverlay.querySelector(".sheet"), closeStore);

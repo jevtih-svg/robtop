@@ -34,6 +34,42 @@ if (!function_exists('rt_task_clean_title')) {
         return $n > 0 ? date('Y-m-d H:i:s', (int)($n / 1000)) : null;
     }
 
+    /** SELECT всех полей задания в формате контракта (ms-таймстампы). Общий для tasks.php и parent.php. */
+    function rt_task_select() {
+        return "SELECT id, user_id, title, points, type, status, origin, times_done,
+                UNIX_TIMESTAMP(last_done_at)*1000 AS lastDoneAt,
+                UNIX_TIMESTAMP(claimed_at)*1000  AS claimedAt,
+                UNIX_TIMESTAMP(done_at)*1000     AS doneAt,
+                UNIX_TIMESTAMP(created_at)*1000  AS createdAt,
+                UNIX_TIMESTAMP(updated_at)*1000  AS updatedAt
+           FROM tasks";
+    }
+
+    /** Строка задания → плоский контракт клиента (sdk.tasks). */
+    function rt_task_out($r) {
+        return [
+            'id'         => (string)$r['id'],
+            'title'      => (string)$r['title'],
+            'points'     => (int)$r['points'],
+            'type'       => ($r['type'] === 'once') ? 'once' : 'recur',
+            'status'     => (string)$r['status'],
+            'origin'     => (isset($r['origin']) && $r['origin'] === 'child') ? 'child' : 'parent',
+            'timesDone'  => (int)$r['times_done'],
+            'lastDoneAt' => $r['lastDoneAt'] !== null ? (int)$r['lastDoneAt'] : null,
+            'claimedAt'  => $r['claimedAt'] !== null ? (int)$r['claimedAt'] : null,
+            'doneAt'     => $r['doneAt'] !== null ? (int)$r['doneAt'] : null,
+            'createdAt'  => $r['createdAt'] !== null ? (int)$r['createdAt'] : null,
+            'updatedAt'  => $r['updatedAt'] !== null ? (int)$r['updatedAt'] : null,
+        ];
+    }
+
+    /** Одно задание скоупа по id (живое). */
+    function rt_task_row($db, $uid, $id) {
+        $s = $db->prepare(rt_task_select() . " WHERE id = ? AND user_id = ? AND deleted_at IS NULL");
+        $s->execute([(int)$id, (int)$uid]);
+        return $s->fetch();
+    }
+
     /**
      * Ленивый бэкфилл: один раз на скоуп переносит живые строки generic-стора
      * bank/tasks (module_data) в таблицу tasks. Старые строки module_data НЕ трогаются

@@ -14,7 +14,29 @@
 
 /* список */
 [data-mod="tasks"] .tsk-list{margin-top:12px}
-[data-mod="tasks"] .tsk-add{width:100%;min-height:46px;margin-bottom:10px;border-style:dashed}
+[data-mod="tasks"] .tsk-add{width:100%;min-height:48px;margin-bottom:14px;font-size:15px}
+
+/* секции (стопка: «Ждут проверки» / «Активные» / «Выполнено» и детские) */
+[data-mod="tasks"] .tsk-sec{margin-bottom:18px}
+[data-mod="tasks"] .tsk-sec-h{display:flex;align-items:center;gap:8px;margin:0 2px 9px;
+  color:var(--muted);font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+[data-mod="tasks"] .tsk-sec-n{flex:none;min-width:20px;height:20px;padding:0 6px;border-radius:999px;
+  display:inline-flex;align-items:center;justify-content:center;font-size:11px;
+  color:var(--green);background:color-mix(in srgb,var(--green) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--green) 40%,transparent)}
+
+/* карточка-предложение ребёнка (origin=child) — отдельный, заметный вид */
+[data-mod="tasks"] .tsk-card.prop{border-color:color-mix(in srgb,var(--cyan) 55%,transparent);
+  box-shadow:0 0 18px -8px var(--cyan)}
+[data-mod="tasks"] .tsk-card.prop .tsk-badge{color:var(--cyan);
+  background:color-mix(in srgb,var(--cyan) 10%,transparent);
+  border-color:color-mix(in srgb,var(--cyan) 45%,transparent);
+  text-shadow:0 0 10px color-mix(in srgb,var(--cyan) 70%,transparent)}
+[data-mod="tasks"] .tsk-tag{display:inline-block;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:800;
+  color:var(--cyan);background:color-mix(in srgb,var(--cyan) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--cyan) 45%,transparent);margin-right:5px;vertical-align:middle}
+[data-mod="tasks"] .tsk-badge.dim{color:var(--muted);background:color-mix(in srgb,var(--muted) 8%,transparent);
+  border-color:color-mix(in srgb,var(--muted) 30%,transparent);text-shadow:none}
 
 /* карточка задания (зеркало bk-task) */
 [data-mod="tasks"] .tsk-card{display:flex;align-items:center;gap:12px;padding:12px;margin-bottom:8px;
@@ -66,3 +88,11 @@
   border:1.5px solid color-mix(in srgb,var(--muted) 35%,transparent)}
 .tsk-type.on{color:var(--green);border-color:color-mix(in srgb,var(--green) 60%,transparent);
   box-shadow:0 0 14px -6px var(--green)}
+/* подсказка под формой предложения ребёнка */
+.tsk-hint{margin:8px 2px 0;color:var(--muted);font-size:12.5px;font-weight:600;text-align:center}
+/* шторка проверки предложения (родитель): название дела + поле очков */
+.tsk-review{margin:4px 0 8px}
+.tsk-rv-title{color:#fff;font-weight:800;font-size:18px;margin-bottom:12px;line-height:1.25}
+.tsk-review input{min-height:46px;width:100%;border-radius:12px;border:1.5px solid color-mix(in srgb,var(--cyan) 50%,transparent);
+  background:rgba(var(--panel-rgb),.65);color:#fff;font:inherit;font-weight:800;font-size:16px;padding:0 14px}
+.tsk-review input:focus{outline:none;border-color:color-mix(in srgb,var(--cyan) 80%,transparent)}

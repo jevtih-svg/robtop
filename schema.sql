@@ -228,6 +228,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   points INT NOT NULL DEFAULT 10,                 -- очков за выполнение (1..1000)
   type VARCHAR(10) NOT NULL DEFAULT 'recur',      -- recur | once
   status VARCHAR(12) NOT NULL DEFAULT 'active',   -- active | pending | done
+  origin VARCHAR(10) NOT NULL DEFAULT 'parent',   -- parent (назначил родитель) | child (предложил ребёнок) (миграция 025)
   times_done INT UNSIGNED NOT NULL DEFAULT 0,     -- сколько раз подтверждено (recur)
   last_done_at DATETIME DEFAULT NULL,
   claimed_at DATETIME DEFAULT NULL,               -- ребёнок нажал «Сделал!» (pending)

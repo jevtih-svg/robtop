@@ -173,26 +173,31 @@ window.RobTop = window.RobTop || {};
   }
 
   /* ---- движок заданий: общий сервис api/tasks.php (канон — ГАЙД-задания.md) ----
-     Задания родителей (2026-06-07) — ресурс УРОВНЯ ПРИЛОЖЕНИЯ, как очки: отдельная
-     таблица tasks (НЕ generic-стор), один источник правды. UI два и они реплицируют
-     друг друга: Копилка (блок на вкладке «Родители») и модуль «Задания» — оба зовут
-     ТОЛЬКО sdk.tasks, своей логики заданий не держат.
+     Задания — ресурс УРОВНЯ ПРИЛОЖЕНИЯ, как очки: отдельная таблица tasks (НЕ generic-стор),
+     один источник правды. UI два и они реплицируют друг друга: модуль «Задания» (главный
+     хаб) и блок «Задания» в Копилке — оба зовут ТОЛЬКО sdk.tasks, своей логики не держат.
      Контракт задания (плоский): { id, title, points, type "recur"|"once",
-       status "active"|"pending"|"done", timesDone, lastDoneAt, claimedAt, doneAt,
-       createdAt, updatedAt } (таймстампы — ms или null).
-     Потоки (порядок СОХРАНЁН из Копилки: сначала очки, потом статус — «нет очков →
-     нет статуса», защита награды ребёнка; переходы на сервере условные, гонка → 409):
-       claim  (ребёнок «Сделал!»): once — очки сразу (kind task_done) + статус done;
-              recur — статус pending, очки после проверки родителем;
-       approve(родитель): очки (kind task_done) + (once → done | recur → active,
-              timesDone+1); decline(родитель): pending → active, без очков и штрафа.
-     Оповещения (task_new/task_claim/task_done/task_approved, ключи ntf.ev.tasks.*)
-     шлёт САМ движок — модули их не дублируют. Демо: localStorage через
-     demoData("tasks","items") — обе плитки видят один список и там. */
+       status "active"|"pending"|"done", origin "parent"|"child", timesDone, lastDoneAt,
+       claimedAt, doneAt, createdAt, updatedAt } (таймстампы — ms или null).
+     ПОТОКИ (рефактор 2026-06-08; порядок «сначала очки, потом статус» — защита награды;
+     переходы на сервере условные, гонка → 409):
+       create  (родитель): новое задание ребёнку, origin=parent, status=active;
+       propose (РЕБЁНОК): «залогировать» сделанное дело с предложенными очками,
+               origin=child, type=once, status=pending — ждёт ревью родителя;
+       claim   (ребёнок «Сделал!»): active → pending ВСЕГДА (и once, и recur) —
+               универсальное подтверждение, очки только после approve родителя;
+       approve (родитель, points? — поправленная сумма): очки (kind task_done) +
+               recur → active (timesDone+1) | once/предложение → done;
+       decline (родитель): проверка отклонена → задание назад в active (без очков);
+       deny    (родитель): предложение ребёнка отклонено → исчезает (мягкое удаление).
+     Оповещения (ntf.ev.tasks.*: task_new/task_claim/task_approved/task_returned/
+       task_proposed/task_proposal_ok/task_proposal_no) шлёт САМ движок — UI не дублирует.
+     Демо: localStorage через demoData("tasks","items") — обе плитки видят один список. */
   function taskNorm(x){ /* демо-строка {id,status,data{…}} → плоский контракт сервиса */
     var d=x.data||{}, p=parseInt(d.points,10);
     return { id:String(x.id), title:String(d.title||""), points:p>0?Math.min(p,1000):10,
              type:d.type==="once"?"once":"recur", status:x.status||"active",
+             origin:d.origin==="child"?"child":"parent",
              timesDone:parseInt(d.timesDone,10)||0, lastDoneAt:d.lastDoneAt||null,
              claimedAt:d.claimedAt||null, doneAt:d.doneAt||null,
              createdAt:x.createdAt||0, updatedAt:x.updatedAt||0 };
@@ -208,85 +213,97 @@ window.RobTop = window.RobTop || {};
     var pc=parentChild(); if(pc) b.child=pc;
     API.post("notify.php",b).catch(function(){});
   }
+  function selfName(){ return (RT._shell && RT._shell.user && RT._shell.user.name)||""; }
+  function clampPts(v){ var n=parseInt(v,10); return n>0?Math.min(n,1000):10; }
   function tasksList(){
     if(RT.isDemo()){
       var r=demoData("tasks","list","items",null);
-      return Promise.resolve(((r&&r.items)||[]).map(taskNorm));
+      return Promise.resolve(((r&&r.items)||[]).map(taskNorm).filter(function(x){ return x.status!=="denied"; }));
     }
     return tasksPost("list",null).then(function(r){ return (r&&r.items)||[]; });
   }
-  function tasksCreate(o){
-    o=o||{}; var n=parseInt(o.points,10);
-    var rec={ title:String(o.title||"").slice(0,120),
-              points:n>0?Math.min(n,1000):10,
+  function tasksCreate(o){ /* родитель: новое задание */
+    o=o||{};
+    var rec={ title:String(o.title||"").slice(0,120), points:clampPts(o.points),
               type:o.type==="once"?"once":"recur" };
     function fin(){ tasksNotify("child","task_new",{title:rec.title,n:rec.points}); return {ok:true}; }
     if(RT.isDemo()){
-      demoData("tasks","create","items",{data:{title:rec.title,points:rec.points,type:rec.type,timesDone:0,status:"active"}});
+      demoData("tasks","create","items",{data:{title:rec.title,points:rec.points,type:rec.type,origin:"parent",timesDone:0,status:"active"}});
       return Promise.resolve(fin());
     }
     return tasksPost("create",rec).then(function(r){ return (r&&r.ok)?fin():{ok:false}; })
       .catch(function(){ return {ok:false}; });
   }
-  function tasksUpdate(id,patch){ /* правка названия/очков/типа (статусы двигают только потоки) */
+  function tasksPropose(o){ /* ребёнок: залогировать сделанное дело с предложенными очками */
+    o=o||{};
+    var rec={ title:String(o.title||"").slice(0,120), points:clampPts(o.points) };
+    if(!rec.title) return Promise.resolve({ok:false});
+    function fin(){ tasksNotify("parents","task_proposed",{name:selfName(),title:rec.title,n:rec.points}); return {ok:true}; }
+    if(RT.isDemo()){
+      demoData("tasks","create","items",{data:{title:rec.title,points:rec.points,type:"once",origin:"child",timesDone:0,status:"pending",claimedAt:Date.now()}});
+      return Promise.resolve(fin());
+    }
+    return tasksPost("propose",rec).then(function(r){ return (r&&r.ok)?fin():{ok:false}; })
+      .catch(function(){ return {ok:false}; });
+  }
+  function tasksUpdate(id,patch){ /* родитель: правка названия/очков/типа */
     var p={}, n;
     if(patch && patch.title!=null) p.title=String(patch.title).slice(0,120);
-    if(patch && patch.points!=null){ n=parseInt(patch.points,10); p.points=n>0?Math.min(n,1000):10; }
+    if(patch && patch.points!=null) p.points=clampPts(patch.points);
     if(patch && patch.type!=null) p.type=patch.type==="once"?"once":"recur";
     if(RT.isDemo()){ demoData("tasks","update","items",{id:id,patch:p}); return Promise.resolve({ok:true}); }
     return tasksPost("update",{id:id,patch:p}).then(function(r){ return {ok:!!(r&&r.ok)}; })
       .catch(function(){ return {ok:false}; });
   }
-  function tasksRemove(id){
+  function tasksRemove(id){ /* родитель: удалить задание */
     if(RT.isDemo()){ demoData("tasks","delete","items",{id:id}); return Promise.resolve({ok:true}); }
     return tasksPost("delete",{id:id}).then(function(r){ return {ok:!!(r&&r.ok)}; })
       .catch(function(){ return {ok:false}; });
   }
-  function tasksSetStatus(task, action){ /* перевод статуса: демо — локально, сервер — условно */
-    if(RT.isDemo()){
-      if(action==="claim"){
-        if(task.type==="once"){ demoData("tasks","move","items",{id:task.id,status:"done"}); demoData("tasks","update","items",{id:task.id,patch:{doneAt:Date.now()}}); }
-        else { demoData("tasks","move","items",{id:task.id,status:"pending"}); demoData("tasks","update","items",{id:task.id,patch:{claimedAt:Date.now()}}); }
-      } else if(action==="approve"){
-        if(task.type==="once"){ demoData("tasks","move","items",{id:task.id,status:"done"}); demoData("tasks","update","items",{id:task.id,patch:{doneAt:Date.now(),claimedAt:null}}); }
-        else { demoData("tasks","update","items",{id:task.id,patch:{timesDone:(parseInt(task.timesDone,10)||0)+1,lastDoneAt:Date.now(),claimedAt:null}}); demoData("tasks","move","items",{id:task.id,status:"active"}); }
-      } else { demoData("tasks","move","items",{id:task.id,status:"active"}); demoData("tasks","update","items",{id:task.id,patch:{claimedAt:null}}); }
-      return Promise.resolve({ok:true});
-    }
-    return tasksPost(action,{id:task.id}).then(function(r){ return {ok:!!(r&&r.ok)}; })
+  function demoStatus(id, status, patch){ /* демо: сдвиг статуса + патч полей одной строки */
+    demoData("tasks","move","items",{id:id,status:status});
+    if(patch) demoData("tasks","update","items",{id:id,patch:patch});
+  }
+  function tasksClaim(task){ /* ребёнок «Сделал!» → {ok} (всегда на проверку родителю) */
+    if(RT.isDemo()){ demoStatus(task.id,"pending",{claimedAt:Date.now()}); return Promise.resolve(claimFin()); }
+    function claimFin(){ tasksNotify("parents","task_claim",{name:selfName(),title:String(task.title||""),n:parseInt(task.points,10)||10}); return {ok:true}; }
+    return tasksPost("claim",{id:task.id}).then(function(r){ return (r&&r.ok)?claimFin():{ok:false}; })
       .catch(function(){ return {ok:false}; });
   }
-  function tasksClaim(task){ /* ребёнок «Сделал!» → {ok, once, streak|null, bonus} */
-    var pts=parseInt(task.points,10)||10, title=String(task.title||"");
-    var name=(RT._shell && RT._shell.user && RT._shell.user.name)||"";
-    if(task.type==="once"){
-      /* одноразовое: очки СРАЗУ (решение Джеффа), потом статус */
-      return bankAdd("tasks",pts,"task_done",{kind:"task_done",src:"tasks",note:title}).then(function(out){
-        if(!out || !out.ok) return {ok:false,once:true,streak:null,bonus:0};
-        return tasksSetStatus(task,"claim").then(function(){
-          tasksNotify("parents","task_done",{name:name,title:title,n:pts});
-          return {ok:true,once:true,streak:out.streak,bonus:out.bonus};
-        });
-      });
-    }
-    return tasksSetStatus(task,"claim").then(function(st){
-      if(!st.ok) return {ok:false,once:false,streak:null,bonus:0};
-      tasksNotify("parents","task_claim",{name:name,title:title,n:pts});
-      return {ok:true,once:false,streak:null,bonus:0};
-    });
-  }
-  function tasksApprove(task){ /* родитель: подтвердить → {ok, streak|null, bonus} */
-    var pts=parseInt(task.points,10)||10, title=String(task.title||"");
+  function tasksApprove(task, finalPts){ /* родитель: подтвердить (+поправить очки) → {ok, streak, bonus, points} */
+    var pts=(finalPts!=null)?clampPts(finalPts):(parseInt(task.points,10)||10);
+    var title=String(task.title||""), isChild=(task.origin==="child");
+    var recur=(task.type!=="once" && !isChild);
     return bankAdd("tasks",pts,"task_done",{kind:"task_done",src:"parent",note:title}).then(function(out){
-      if(!out || !out.ok) return {ok:false,streak:null,bonus:0};
-      return tasksSetStatus(task,"approve").then(function(){
-        tasksNotify("child","task_approved",{title:title,n:pts});
-        return {ok:true,streak:out.streak,bonus:out.bonus};
+      if(!out || !out.ok) return {ok:false,streak:null,bonus:0,points:pts};
+      var done;
+      if(RT.isDemo()){
+        if(recur) demoStatus(task.id,"active",{points:pts,timesDone:(parseInt(task.timesDone,10)||0)+1,lastDoneAt:Date.now(),claimedAt:null});
+        else demoStatus(task.id,"done",{points:pts,doneAt:Date.now(),claimedAt:null});
+        done=Promise.resolve({ok:true});
+      } else {
+        done=tasksPost("approve",finalPts!=null?{id:task.id,points:pts}:{id:task.id}).then(function(r){ return {ok:!!(r&&r.ok)}; }).catch(function(){ return {ok:false}; });
+      }
+      return done.then(function(st){
+        if(!st.ok) return {ok:false,streak:null,bonus:0,points:pts};
+        tasksNotify("child", isChild?"task_proposal_ok":"task_approved", {title:title,n:pts});
+        return {ok:true,streak:out.streak,bonus:out.bonus,points:pts};
       });
     });
   }
-  function tasksDecline(task){ /* родитель: вернуть без очков и без штрафа (решение Джеффа) */
-    return tasksSetStatus(task,"decline");
+  function tasksDecline(task){ /* родитель: вернуть проверку выполнения в active (без очков) */
+    var title=String(task.title||"");
+    if(RT.isDemo()){ demoStatus(task.id,"active",{claimedAt:null}); return Promise.resolve(declFin()); }
+    function declFin(){ tasksNotify("child","task_returned",{title:title}); return {ok:true}; }
+    return tasksPost("decline",{id:task.id}).then(function(r){ return (r&&r.ok)?declFin():{ok:false}; })
+      .catch(function(){ return {ok:false}; });
+  }
+  function tasksDeny(task){ /* родитель: отклонить предложение ребёнка → исчезает */
+    var title=String(task.title||"");
+    if(RT.isDemo()){ demoStatus(task.id,"denied",{claimedAt:null}); demoData("tasks","delete","items",{id:task.id}); return Promise.resolve(denyFin()); }
+    function denyFin(){ tasksNotify("child","task_proposal_no",{title:title}); return {ok:true}; }
+    return tasksPost("deny",{id:task.id}).then(function(r){ return (r&&r.ok)?denyFin():{ok:false}; })
+      .catch(function(){ return {ok:false}; });
   }
 
   RT.createSdk = function(meta){
@@ -389,17 +406,19 @@ window.RobTop = window.RobTop || {};
         /* streakReset упразднён 2026-06-07: винстрик выводится из леджера и гаснет сам
            (день без задания); хранимого счётчика больше нет. */
       },
-      /* ---- задания родителей: ОБЩИЙ движок (api/tasks.php, канон — ГАЙД-задания.md).
-         Копилка и модуль «Задания» — только эти вызовы, своей логики заданий не держат.
-         claim/approve сами начисляют очки (sdk.points) и шлют оповещения. */
+      /* ---- задания: ОБЩИЙ движок (api/tasks.php, канон — ГАЙД-задания.md).
+         Модуль «Задания» и блок Копилки — только эти вызовы, своей логики не держат.
+         claim/approve/propose/deny сами начисляют очки (sdk.points) и шлют оповещения. */
       tasks: {
         list:    function(){ return tasksList(); },
-        create:  function(o){ return tasksCreate(o); },
+        create:  function(o){ return tasksCreate(o); },           // родитель: новое задание
+        propose: function(o){ return tasksPropose(o); },          // ребёнок: залогировать дело с предложенными очками
         update:  function(id,patch){ return tasksUpdate(id,patch); },
         remove:  function(id){ return tasksRemove(id); },
-        claim:   function(task){ return tasksClaim(task); },
-        approve: function(task){ return tasksApprove(task); },
-        decline: function(task){ return tasksDecline(task); }
+        claim:   function(task){ return tasksClaim(task); },      // ребёнок: «Сделал!» → на проверку
+        approve: function(task,points){ return tasksApprove(task,points); }, // родитель: подтвердить (+поправить очки)
+        decline: function(task){ return tasksDecline(task); },    // родитель: вернуть проверку в active
+        deny:    function(task){ return tasksDeny(task); }        // родитель: отклонить предложение (исчезает)
       },
       /* ---- оповещения (ядро core/notify.js + api/notify.php; канон — ГАЙД-оповещения.md) ----
          send(to, type, opts?) — fire-and-forget, никогда не reject. to: "parents"|"child"|"family"
