@@ -164,11 +164,8 @@
         +(form.photo?' style="background-image:url(\''+esc(form.photo)+'\')"':"")+'>'
         +(form.photo?'<span>'+esc(t("replacePhoto"))+'</span>':'<span class="pic">'+CAM_IC+'</span><span>'+esc(t("addPhoto"))+'</span>')
       +'</div>'
-      +'<input type="file" id="rdPhotoInput" accept="image/*" style="display:none">'
       +'<div class="rd-form-actions"><button class="btn btn-cancel" id="rdCancel">'+esc(t("common.cancel"))+'</button>'
       +'<button class="btn btn-primary" id="rdSave">'+esc(t("common.save"))+'</button></div></div>';
-    E.photoInput=E.state.querySelector("#rdPhotoInput");
-    E.photoInput.addEventListener("change",function(e){ handleFile(e.target.files[0]); E.photoInput.value=""; });
   }
   function updateFormStars(){
     if(!E.state) return;
@@ -183,21 +180,16 @@
     if(pick){ pick.classList.toggle("has",!!src); pick.style.backgroundImage=src?"url('"+src+"')":"";
       pick.innerHTML=src?'<span>'+esc(t("replacePhoto"))+'</span>':'<span class="pic">'+CAM_IC+'</span><span>'+esc(t("addPhoto"))+'</span>'; }
   }
-  function uploadPhoto(dataUrl){
-    var pick=E.state&&E.state.querySelector("#rdPhotoPick"); if(pick) pick.classList.add("uploading");
-    sdk.media.upload(dataUrl,"rating").then(function(res){
-      if(pick) pick.classList.remove("uploading");
-      if(res&&res.path){ form.photo=res.path; } else { setPhoto(null); sdk.ui.toast(t("photoFailed")); }
-    }).catch(function(){ if(pick) pick.classList.remove("uploading"); setPhoto(null); sdk.ui.toast(t("photoFailed")); });
-  }
-  function handleFile(file){
-    if(!file) return; var reader=new FileReader();
-    reader.onload=function(ev){ var img=new Image();
-      img.onload=function(){ var max=900,w=img.width,h=img.height; if(w>h&&w>max){ h=Math.round(h*max/w); w=max; } else if(h>=w&&h>max){ w=Math.round(w*max/h); h=max; }
-        var dataUrl; try{ var cv=document.createElement("canvas"); cv.width=w; cv.height=h; cv.getContext("2d").drawImage(img,0,0,w,h); dataUrl=cv.toDataURL("image/jpeg",0.82); }catch(e){ dataUrl=ev.target.result; }
-        setPhoto(dataUrl); if(!sdk.isDemo()) uploadPhoto(dataUrl); };
-      img.onerror=function(){ var du=ev.target.result; setPhoto(du); if(!sdk.isDemo()) uploadPhoto(du); }; img.src=ev.target.result; };
-    reader.readAsDataURL(file);
+  /* Ф4: единый sdk.media.pick (как в mood). onLocal — мгновенное превью; .then(null) при отмене
+     (превью не показывали) или при сбое загрузки (флаг picked отличает). */
+  function pickPhoto(){
+    var pick=E.state&&E.state.querySelector("#rdPhotoPick"), picked=false;
+    sdk.media.pick({ kind:"rating", onLocal:function(dataUrl){ picked=true; setPhoto(dataUrl); if(pick) pick.classList.add("uploading"); } })
+      .then(function(r){
+        if(pick) pick.classList.remove("uploading");
+        if(r && r.path){ form.photo=r.path; }
+        else if(picked){ setPhoto(null); sdk.ui.toast(t("photoFailed")); }
+      });
   }
 
   /* ----- сохранение ----- */
@@ -318,7 +310,7 @@
         var d=dataOf(entry);
         form={open:true, stars:d.stars||0, photo:d.photo||null, editingId:entry.id, why:d.why||"", liked:d.liked||""};
         renderForm(); return; }
-      if(e.target.closest("#rdPhotoPick")){ if(E.photoInput) E.photoInput.click(); return; }
+      if(e.target.closest("#rdPhotoPick")){ pickPhoto(); return; }
       var row=e.target.closest(".rd-row"); if(row) openDetail(row.getAttribute("data-id"));
     });
     renderState(); renderHistory(); hud(); load();
