@@ -386,7 +386,17 @@ window.RobTop = window.RobTop || {};
       ".pd-kidsw{margin-left:auto;display:flex;align-items:center;gap:6px;padding:5px 10px 5px 5px;border-radius:999px;cursor:pointer;"+
         "background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);font-family:inherit}"+
       ".pd-kidsw .a{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;color:#04212b;background:linear-gradient(150deg,#5fd0ff,#a86bff)}"+
-      ".pd-kidsw .nm{font-weight:800;font-size:12.5px;color:#dbe6ff}";
+      ".pd-kidsw .nm{font-weight:800;font-size:12.5px;color:#dbe6ff}"+
+      /* верх контента не должен лезть под статус-бар и кластер [🔔][⚙] (как у .pd-top) */
+      "body[data-view=\"parent\"] .pdv-top{padding-top:calc(30px + env(safe-area-inset-top));padding-right:100px}"+
+      /* контент должен прокручиваться полностью над фиксированным таббаром (.pd-tabbar) */
+      "body[data-view=\"parent\"] .pd-wrap{padding-bottom:calc(104px + env(safe-area-inset-bottom))}"+
+      ".pdv-secttl{font-family:var(--font-display);font-size:20px;color:#fff;margin:0;line-height:1.1}"+
+      ".pdv-launch{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:26px 18px;margin-top:6px;"+
+        "background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:18px}"+
+      ".pdv-launch .em{font-size:46px;line-height:1}"+
+      ".pdv-launch .ti{font-family:var(--font-display);font-size:18px;color:#fff}"+
+      ".pdv-launch .sb{font-size:13px;color:var(--muted);font-weight:600;max-width:260px;line-height:1.5}";
     document.head.appendChild(s);
   }
   function initial(name){ name=(name||"").trim(); return name?name.charAt(0).toUpperCase():"🙂"; }
@@ -722,17 +732,42 @@ window.RobTop = window.RobTop || {};
     });
   }
 
+  /* =================== ВКЛАДКА «Копилка» (на месте, таббар остаётся) =================== */
+  function bankSection(){
+    var data=S.data||{}, pend=bankPending();
+    var h='<div class="pdv-top"><div class="pdv-secttl">'+esc(modName("bank"))+'</div>'
+      +'<div class="pd-substatus" style="font-size:11px;color:var(--muted);font-weight:700;margin:6px 2px 0">'+esc(kidName())+'</div></div>';
+    h+='<div class="pdv-pts"><span class="pig">🐷</span><div><div class="n">'+(data.points||0)+'</div><div class="l">'+esc(t("parent.points"))+'</div></div>'
+      +'<div class="strk">🔥 '+(data.streak||0)+'</div></div>';
+    h+='<div class="pdv-act">'
+      +'<button class="btn btn-primary" id="pdGive" style="flex:1.5">'+esc(t("parent.give.btn"))+'</button>'
+      +'<button class="btn btn-cancel" id="pdPen" style="flex:1">'+esc(t("parent.pen.btn"))+'</button></div>';
+    if(pend>0)
+      h+='<button class="btn btn-cancel" id="pdOpenTasks" style="width:100%;justify-content:flex-start;margin-top:10px">⏳ '+esc(t("parent.sum.tasks",{n:pend}))+'</button>';
+    h+='<button class="btn btn-primary" id="pdOpenBank" style="width:100%;margin-top:10px">'+esc(modName("bank"))+' →</button>';
+    return h;
+  }
+
+  /* =================== ВКЛАДКА «Чат» (на месте; сам мессенджер открывается полноэкранно) =================== */
+  function chatSection(){
+    var h='<div class="pdv-top"><div class="pdv-secttl">'+esc(modName("chat"))+'</div></div>';
+    h+='<div class="pdv-launch"><span class="em">💬</span>'
+      +'<span class="ti">'+esc(modName("chat"))+'</span>'
+      +'<span class="sb">'+esc(t("parent.sum.chat"))+'</span>'
+      +'<button class="btn btn-primary" id="pdOpenChat" style="max-width:240px">'+esc(modName("chat"))+' →</button></div>';
+    return h;
+  }
+
   /* =================== нижняя навигация (Приложения / Копилка / Чат) =================== */
   function renderTabs(){
     var bar=tabsEl(); if(!bar) return;
     function b(id,svg,label,on){
       return '<button data-ptab="'+id+'"'+(on?' class="on"':'')+'>'+svg+'<span>'+esc(label)+'</span></button>';
     }
-    var onApps=(S.tab==="apps");
     bar.innerHTML=
-      b("apps",'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',t("parent.nav.apps"),onApps)
-      +b("bank",'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 10h16l-1 9H5z"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',t("parent.nav.bank"),false)
-      +b("chat",'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 5h16v11H9l-4 3z"/></svg>',t("parent.nav.chat"),false);
+      b("apps",'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',t("parent.nav.apps"),S.tab==="apps")
+      +b("bank",'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 10h16l-1 9H5z"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',t("parent.nav.bank"),S.tab==="bank")
+      +b("chat",'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 5h16v11H9l-4 3z"/></svg>',t("parent.nav.chat"),S.tab==="chat");
   }
 
   /* =================== сборка экрана =================== */
@@ -765,9 +800,11 @@ window.RobTop = window.RobTop || {};
       return;
     }
     if(!S.data){ root.innerHTML=""; return; }
-    var head, body;
-    if(S.mod){ head=areaHeadHtml(S.mod); body=areaHtml(S.mod); }
-    else { head=""; body=homeHtml(); }
+    var head="", body;
+    if(S.tab==="bank"){ body=bankSection(); }
+    else if(S.tab==="chat"){ body=chatSection(); }
+    else if(S.mod){ head=areaHeadHtml(S.mod); body=areaHtml(S.mod); }
+    else { body=homeHtml(); }
     root.innerHTML='<div class="pd-wrap">'+head+'<div class="pd-body">'+body+'</div></div>';
     wire(root);
     if(keepMode) root.__jgl.refresh();
@@ -794,6 +831,10 @@ window.RobTop = window.RobTop || {};
     var gv=root.querySelector("#pdGive"); if(gv) gv.onclick=openGive;
     var pv=root.querySelector("#pdPen"); if(pv) pv.onclick=openPen;
     var sw=root.querySelector("#pdKidSw"); if(sw) sw.onclick=openChildSwitch;
+    /* открыть полноэкранные модули из вкладок Копилка/Чат */
+    var ob=root.querySelector("#pdOpenBank"); if(ob) ob.onclick=function(){ if(RT.open) RT.open("bank"); };
+    var ot=root.querySelector("#pdOpenTasks"); if(ot) ot.onclick=function(){ if(RT.open) RT.open("tasks"); };
+    var oc=root.querySelector("#pdOpenChat"); if(oc) oc.onclick=function(){ if(RT.open) RT.open("chat"); };
     /* чипы детей */
     Array.prototype.forEach.call(root.querySelectorAll(".pdv-chip[data-kid]"),function(b){
       b.onclick=function(){ var id=parseInt(b.getAttribute("data-kid"),10); if(id!==S.childId) fetchData(id); };
@@ -827,10 +868,9 @@ window.RobTop = window.RobTop || {};
     bar.__pdWired=true;
     bar.addEventListener("click",function(e){
       var b=e.target.closest("[data-ptab]"); if(!b) return;
-      var tab=b.getAttribute("data-ptab");
-      if(tab==="bank"){ if(RT.open) RT.open("bank"); return; }
-      if(tab==="chat"){ if(RT.open) RT.open("chat"); return; }
-      S.tab="apps"; S.mod=null; render(); window.scrollTo(0,0);
+      /* Копилка/Чат теперь ВНУТРИ родителя (таббар остаётся): не уводим в модуль,
+         меняем вкладку на месте. Сам модуль (полноэкранный) открывается по кнопке внутри. */
+      S.tab=b.getAttribute("data-ptab"); S.mod=null; render(); window.scrollTo(0,0);
     });
   }
 
