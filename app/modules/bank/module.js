@@ -1,7 +1,11 @@
 /* RobTop — модуль «Копилка». Свинка с пунктами на боку, огонёк-винстрик, история
    транзакций (вкладки «Задания»/«Родители») и родительская панель начислений (только роль parent; в демо открыта).
-   ЗАДАНИЯ ОТ РОДИТЕЛЕЙ (2026-06-07, v.26): коллекция bank/tasks в generic-сторе.
-   Родитель создаёт задание (название, очки, тип): «повторяющееся» — ребёнок жмёт «Сделал!»
+   ЗАДАНИЯ ОТ РОДИТЕЛЕЙ (2026-06-07, v1.7.0): с миграции 024 — ОБЩИЙ движок sdk.tasks
+   (отдельная таблица tasks + api/tasks.php, канон — ГАЙД-задания.md); раньше — коллекция
+   bank/tasks в generic-сторе (перенос — ленивый бэкфилл сервиса). Блок заданий здесь —
+   ЗЕРКАЛО модуля «Задания»: один источник правды, своей логики заданий Копилка не держит
+   (очки и оповещения — внутри движка). UI прежний:
+   родитель создаёт задание (название, очки, тип): «повторяющееся» — ребёнок жмёт «Сделал!»
    → статус pending → родитель подтверждает (✓ = очки kind=task_done через sdk.points, задание
    возвращается в active) или возвращает (↩ = без очков, без штрафа — решение Джеффа);
    «одноразовое» — очки начисляются ребёнку СРАЗУ при отметке (решение Джеффа), статус done.
@@ -266,7 +270,7 @@
 
   /* ---------- данные ---------- */
   function load(){
-    Promise.all([ sdk.points.summary(), sdk.data.list("tasks") ]).then(function(rr){
+    Promise.all([ sdk.points.summary(), sdk.tasks.list() ]).then(function(rr){
       if(!alive) return;
       var s=rr[0];
       S.balance=s.balance; S.streak=s.streak; S.plus=s.plusStreak||0; S.loaded=true; S.err=false;
@@ -288,16 +292,16 @@
     });
   }
 
-  /* ---------- задания от родителей (bank/tasks) ----------
-     Строка module_data: status active|pending|done; data {title, points, type recur|once,
-     timesDone?, lastDoneAt?, claimedAt?, doneAt?}. Очки — ТОЛЬКО через sdk.points (канон). */
+  /* ---------- задания от родителей: ОБЩИЙ движок sdk.tasks (ГАЙД-задания.md) ----------
+     Плоский контракт: {id, title, points, type recur|once, status active|pending|done,
+     timesDone, …}. Очки и оповещения — ВНУТРИ движка; модуль только рендерит и зовёт. */
   function parentCtl(){ return sdk.role==="parent" || sdk.isDemo(); }
   function kidCtl(){ return sdk.role!=="parent" || sdk.isDemo(); }
   function taskOf(id){
     for(var i=0;i<S.tasks.length;i++) if(String(S.tasks[i].id)===String(id)) return S.tasks[i];
     return null;
   }
-  function taskPts(tk){ var n=parseInt(tk.data&&tk.data.points,10); return n>0?n:10; }
+  function taskPts(tk){ var n=parseInt(tk.points,10); return n>0?n:10; }
   function actionable(){
     var c=0, i, st;
     for(i=0;i<S.tasks.length;i++){
@@ -307,91 +311,64 @@
     return c;
   }
 
-  function claimTask(tk){ /* ребёнок: «Сделал!» */
+  function claimTask(tk){ /* ребёнок: «Сделал!» — весь поток (очки+статус+оповещение) в движке */
     if(busy) return; busy=true;
-    var pts=taskPts(tk), title=(tk.data&&tk.data.title)||"";
-    if((tk.data&&tk.data.type)==="once"){
-      /* одноразовое: очки сразу (решение Джеффа), kind task_done двигает винстрик */
-      sdk.points.add(pts,"task_done",{kind:"task_done",src:"bank",note:title}).then(function(out){
-        if(!out || !out.ok){ busy=false; sdk.ui.toast(t("loadFail")); return; }
-        sdk.data.move("tasks",tk.id,"done").then(function(){
-          return sdk.data.update("tasks",tk.id,{doneAt:Date.now()});
-        }).catch(function(){}).then(function(){
-          busy=false;
-          if(out.bonus) sdk.ui.toast(t("bonusToast",{n:out.bonus}));
-          else if(out.streak!=null) sdk.ui.toast(t("streakToast",{n:out.streak}));
-          else sdk.ui.toast(t("doneToast"));
-          sdk.ui.confetti(); sdk.ui.haptics("light");
-          /* оповещение родителям: одноразовое выполнено, очки уже начислены (ГАЙД-оповещения.md) */
-          if(sdk.notify) sdk.notify.send("parents","task_done",{params:{name:sdk.user.name,title:title,n:pts},link:{module:"bank"}});
-          load();
-        });
-      });
-      return;
-    }
-    /* повторяющееся: на проверку родителю */
-    sdk.data.move("tasks",tk.id,"pending").then(function(){
-      return sdk.data.update("tasks",tk.id,{claimedAt:Date.now()});
-    }).then(function(){
-      busy=false; sdk.ui.toast(t("claimToast")); sdk.ui.haptics("light");
-      /* оповещение родителям: «сделал, проверь» */
-      if(sdk.notify) sdk.notify.send("parents","task_claim",{params:{name:sdk.user.name,title:title,n:pts},link:{module:"bank"}});
-      load();
-    }).catch(function(){ busy=false; sdk.ui.toast(t("loadFail")); load(); });
-  }
-
-  function approveTask(tk){ /* родитель: подтвердить — очки + задание дальше по типу */
-    if(busy) return; busy=true;
-    var pts=taskPts(tk), title=(tk.data&&tk.data.title)||"", once=(tk.data&&tk.data.type)==="once";
-    sdk.points.add(pts,"task_done",{kind:"task_done",src:"parent",note:title}).then(function(out){
-      if(!out || !out.ok){ busy=false; sdk.ui.toast(t("loadFail")); return; }
-      var fin = once
-        ? sdk.data.move("tasks",tk.id,"done").then(function(){
-            return sdk.data.update("tasks",tk.id,{doneAt:Date.now(),claimedAt:null});
-          })
-        : sdk.data.update("tasks",tk.id,{
-            timesDone:((tk.data&&parseInt(tk.data.timesDone,10))||0)+1,
-            lastDoneAt:Date.now(), claimedAt:null
-          }).then(function(){ return sdk.data.move("tasks",tk.id,"active"); });
-      fin.catch(function(){}).then(function(){
-        busy=false;
+    sdk.tasks.claim(tk).then(function(out){
+      busy=false;
+      if(!out || !out.ok){ sdk.ui.toast(t("loadFail")); load(); return; }
+      if(out.once){
         if(out.bonus) sdk.ui.toast(t("bonusToast",{n:out.bonus}));
         else if(out.streak!=null) sdk.ui.toast(t("streakToast",{n:out.streak}));
         else sdk.ui.toast(t("doneToast"));
-        sdk.ui.haptics("light");
-        /* оповещение ребёнку: задание подтверждено, очки получены (требование Джеффа 2026-06-07) */
-        if(sdk.notify) sdk.notify.send("child","task_approved",{params:{title:title,n:pts},link:{module:"bank"}});
-        load();
-      });
+        sdk.ui.confetti();
+      } else sdk.ui.toast(t("claimToast"));
+      sdk.ui.haptics("light");
+      load();
+    });
+  }
+
+  function approveTask(tk){ /* родитель: подтвердить — движок начислит очки и сдвинет статус */
+    if(busy) return; busy=true;
+    sdk.tasks.approve(tk).then(function(out){
+      busy=false;
+      if(!out || !out.ok){ sdk.ui.toast(t("loadFail")); load(); return; }
+      if(out.bonus) sdk.ui.toast(t("bonusToast",{n:out.bonus}));
+      else if(out.streak!=null) sdk.ui.toast(t("streakToast",{n:out.streak}));
+      else sdk.ui.toast(t("doneToast"));
+      sdk.ui.haptics("light");
+      load();
     });
   }
 
   function declineTask(tk){ /* родитель: вернуть без очков и без штрафа (решение Джеффа) */
     if(busy) return; busy=true;
-    sdk.data.move("tasks",tk.id,"active").then(function(){
-      return sdk.data.update("tasks",tk.id,{claimedAt:null});
-    }).then(function(){
-      busy=false; sdk.ui.toast(t("returnedToast")); load();
-    }).catch(function(){ busy=false; sdk.ui.toast(t("loadFail")); load(); });
+    sdk.tasks.decline(tk).then(function(out){
+      busy=false;
+      sdk.ui.toast(t(out && out.ok ? "returnedToast" : "loadFail"));
+      load();
+    });
   }
 
   function deleteTask(tk){
-    sdk.ui.confirm({ title:t("confirmDel",{t:(tk.data&&tk.data.title)||""}),
+    sdk.ui.confirm({ title:t("confirmDel",{t:tk.title||""}),
                      ok:t("common.delete"), cancel:t("common.cancel") }).then(function(yes){
       if(!yes || busy) return; busy=true;
-      sdk.data.remove("tasks",tk.id).then(function(){ busy=false; load(); })
-        .catch(function(){ busy=false; sdk.ui.toast(t("loadFail")); });
+      sdk.tasks.remove(tk.id).then(function(out){
+        busy=false;
+        if(!out || !out.ok) sdk.ui.toast(t("loadFail"));
+        load();
+      });
     });
   }
 
   function openTaskSheet(tk){ /* создание/правка задания (родитель) */
-    var d=(tk&&tk.data)||{}, typ=(d.type==="once")?"once":"recur";
+    var typ=(tk && tk.type==="once")?"once":"recur";
     var box=document.createElement("div");
     box.innerHTML='<h2>'+esc(t(tk?"editTask":"newTask"))+'</h2>'
       +'<div class="bk-tform">'
-        +'<input type="text" id="bkTTitle" maxlength="60" placeholder="'+esc(t("taskTitlePh"))+'" value="'+esc(d.title||"")+'">'
+        +'<input type="text" id="bkTTitle" maxlength="60" placeholder="'+esc(t("taskTitlePh"))+'" value="'+esc(tk?tk.title:"")+'">'
         +'<label class="bk-tlbl" for="bkTPts">'+esc(t("taskPtsLbl"))+'</label>'
-        +'<input type="number" id="bkTPts" inputmode="numeric" min="1" max="1000" value="'+(parseInt(d.points,10)>0?parseInt(d.points,10):10)+'">'
+        +'<input type="number" id="bkTPts" inputmode="numeric" min="1" max="1000" value="'+(tk && tk.points>0?tk.points:10)+'">'
         +'<div class="bk-types">'
           +'<button class="bk-type'+(typ==="recur"?" on":"")+'" data-t="recur">🔁 '+esc(t("typeRecur"))+'</button>'
           +'<button class="bk-type'+(typ==="once"?" on":"")+'" data-t="once">1× '+esc(t("typeOnce"))+'</button>'
@@ -417,15 +394,16 @@
       var pts=parseInt(box.querySelector("#bkTPts").value,10);
       if(!(pts>0)) pts=10; if(pts>1000) pts=1000;
       busy=true;
+      /* оповещение о НОВОМ задании шлёт сам движок (task_new) */
       var op = tk
-        ? sdk.data.update("tasks",tk.id,{title:title,points:pts,type:typ})
-        : sdk.data.create("tasks",{title:title,points:pts,type:typ,status:"active"});
-      op.then(function(){
-        busy=false; ctl.close(); sdk.ui.toast(t("doneToast"));
-        /* НОВОЕ задание — оповещение ребёнку (правки не шумят) */
-        if(!tk && sdk.notify) sdk.notify.send("child","task_new",{params:{title:title,n:pts},link:{module:"bank"}});
+        ? sdk.tasks.update(tk.id,{title:title,points:pts,type:typ})
+        : sdk.tasks.create({title:title,points:pts,type:typ});
+      op.then(function(out){
+        busy=false;
+        if(!out || !out.ok){ sdk.ui.toast(t("loadFail")); return; }
+        ctl.close(); sdk.ui.toast(t("doneToast"));
         load();
-      }).catch(function(){ busy=false; sdk.ui.toast(t("loadFail")); });
+      });
     };
     var del=box.querySelector("#bkTDel");
     if(del) del.onclick=function(){ ctl.close(); deleteTask(tk); };
@@ -444,9 +422,9 @@
     var h="";
     if(isP) h+='<button class="btn btn-cancel bk-addtask" data-act="add">'+esc(t("btnAddTask"))+'</button>';
     for(var i=0;i<list.length;i++){
-      var tk=list[i], d=tk.data||{}, pts=taskPts(tk), once=(d.type==="once");
+      var tk=list[i], pts=taskPts(tk), once=(tk.type==="once");
       var meta=esc(once?t("metaOnce"):t("metaRecur"));
-      var n=parseInt(d.timesDone,10)||0;
+      var n=parseInt(tk.timesDone,10)||0;
       if(!once && n) meta+=' · '+esc(t("doneTimes",{n:n}));
       var act="";
       if(tk.status==="pending"){
@@ -464,7 +442,7 @@
       h+='<div class="bk-task st-'+esc(tk.status)+'"'
         +(editable?' data-act="edit" data-tid="'+esc(tk.id)+'" role="button" tabindex="0"':'')+'>'
         +'<div class="bk-badge plus">+'+pts+'</div>'
-        +'<div class="bk-task-main"><div class="bk-task-t">'+esc(d.title||"")+'</div>'
+        +'<div class="bk-task-main"><div class="bk-task-t">'+esc(tk.title||"")+'</div>'
         +'<div class="bk-task-m">'+meta+'</div></div>'
         +'<div class="bk-tact">'+act+'</div></div>';
     }

@@ -350,11 +350,10 @@ window.RobTop = window.RobTop || {};
 
   /* =================== рендер =================== */
   function kidName(){ return (S.data&&S.data.child&&S.data.child.nickname)||""; }
-  /* задания Копилки, ждущие подтверждения родителя (bank/tasks, status=pending) */
+  /* задания, ждущие подтверждения родителя — общий сервис tasks (таблица tasks, миграция 024).
+     parent.php отдаёт готовый счётчик tasksPending; раньше считали по content.bank/tasks. */
   function bankPending(){
-    var rows=(S.data&&S.data.content&&S.data.content.bank)||[], n=0, i;
-    for(i=0;i<rows.length;i++) if(rows[i].collection==="tasks" && rows[i].status==="pending") n++;
-    return n;
+    return (S.data && parseInt(S.data.tasksPending,10)) || 0;
   }
   /* магазин: заказы ребёнка, ждущие подтверждения (shop/orders, status=pending) и число призов */
   function shopStats(){

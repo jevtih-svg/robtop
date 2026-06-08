@@ -23,6 +23,8 @@
 require __DIR__ . '/_bootstrap.php';
 rt_guard();
 
+require_once __DIR__ . '/_tasks.php';   // задания: общий сервис (бэкфилл + счётчик «ждут проверки»)
+
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') rt_json(['error' => 'method'], 405);
 
 $db = rt_db();
@@ -197,9 +199,10 @@ if ($before > 0) {
 
 /* ---------- контент модулей (то, что РЕАЛЬНО создал ребёнок) ----------
    Свежие записи generic-стора по модулям: оценки/настроения с текстами, раунды
-   угадайки, слова, чистки. Технические коллекции meta и леджер копилки не отдаются,
-   НО задания от родителей (bank/tasks, 2026-06-07) отдаются — карточка Копилки на
-   Обзоре показывает «ждут проверки: N» (status='pending').
+   угадайки, слова, чистки. Технические коллекции meta и леджер копилки не отдаются.
+   Задания родителей с миграции 024 живут в ОТДЕЛЬНОЙ таблице tasks (не module_data) —
+   их счётчик «ждут проверки» отдаётся полем tasksPending ниже (карточка Копилки/Заданий
+   на Обзоре). Старый фильтр bank/tasks убран: новые задания туда не пишутся.
    Фото внутри data — по тому же правилу приватности, что и виш-лист. */
 $cq = $db->prepare(
     "SELECT id, module, collection, status, favorite, data,
@@ -207,7 +210,7 @@ $cq = $db->prepare(
      FROM module_data
      WHERE user_id = ? AND deleted_at IS NULL
        AND collection <> 'meta'
-       AND (module <> 'bank' OR collection = 'tasks')
+       AND module <> 'bank'
      ORDER BY id DESC
      LIMIT 400"
 );
@@ -275,6 +278,9 @@ while (isset($taskDays[$cur->format('Y-m-d')]) && $streak < 21) {
     $cur->modify('-1 day');
 }
 
+/* ---------- задания: сколько ждут проверки (таблица tasks; бэкфилл внутри) ---------- */
+$tasksPending = rt_tasks_pending_count($db, $childId);
+
 /* ---------- последняя активность (за всё время) ---------- */
 $lq = $db->prepare("SELECT UNIX_TIMESTAMP(MAX(created_at)) * 1000 AS t FROM events WHERE user_id = ?");
 $lq->execute([$childId]);
@@ -289,6 +295,7 @@ rt_json([
     'points'        => $points,
     'streak'        => $streak,
     'plusStreak'    => $plusStreak,
+    'tasksPending'  => $tasksPending,
     'days'          => $days,
     'items'         => $items,
     'events'        => $events,

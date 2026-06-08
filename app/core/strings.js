@@ -30,7 +30,7 @@
         wishlist: "Wishlist", reverse: "Words Backwards", mood: "Mood of the Day",
         teeth: "Toothbrushing Timer", guess: "Guess the Number", names: "Funny Names",
         days: "Day Counter", find: "Find the Object", museum: "Home Museum",
-        rating: "Day Rating", lost: "Lost & Found", walk: "Dog Walk", snake: "Snake", bank: "Piggy Bank", shop: "Shop", chat: "Chat", dice: "Dice"
+        rating: "Day Rating", lost: "Lost & Found", walk: "Dog Walk", snake: "Snake", tasks: "Tasks", bank: "Piggy Bank", shop: "Shop", chat: "Chat", dice: "Dice"
       },
       settings: {
         open: "Settings", title: "Settings", language: "Language",
@@ -201,7 +201,7 @@
         wishlist: "Виш-лист", reverse: "Слова наоборот", mood: "Настроение дня",
         teeth: "Таймер чистки зубов", guess: "Угадай число", names: "Смешные имена",
         days: "Счётчик дней", find: "Найти предмет", museum: "Домашний музей",
-        rating: "Оценка дня", lost: "Бюро находок", walk: "Прогулка", snake: "Змейка", bank: "Копилка", shop: "Магазин", chat: "Чат", dice: "Кубик"
+        rating: "Оценка дня", lost: "Бюро находок", walk: "Прогулка", snake: "Змейка", tasks: "Задания", bank: "Копилка", shop: "Магазин", chat: "Чат", dice: "Кубик"
       },
       settings: {
         open: "Настройки", title: "Настройки", language: "Язык",
@@ -372,7 +372,7 @@
         wishlist: "Vēlmju saraksts", reverse: "Vārdi otrādi", mood: "Dienas garastāvoklis",
         teeth: "Zobu tīrīšanas taimeris", guess: "Uzmini skaitli", names: "Smieklīgi vārdi",
         days: "Dienu skaitītājs", find: "Atrodi priekšmetu", museum: "Mājas muzejs",
-        rating: "Dienas vērtējums", lost: "Atradumu birojs", walk: "Pastaiga", snake: "Čūska", bank: "Krājkase", shop: "Veikals", chat: "Čats", dice: "Kauliņš"
+        rating: "Dienas vērtējums", lost: "Atradumu birojs", walk: "Pastaiga", snake: "Čūska", tasks: "Uzdevumi", bank: "Krājkase", shop: "Veikals", chat: "Čats", dice: "Kauliņš"
       },
       settings: {
         open: "Iestatījumi", title: "Iestatījumi", language: "Valoda",

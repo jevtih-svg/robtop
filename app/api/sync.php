@@ -88,7 +88,18 @@ try {
     $s->execute([$uid]);
     $c[3] = (string)$s->fetchColumn();
 } catch (Throwable $e) { /* таблиц чата может не быть (миграция 023) */ }
-$data = md5(implode('|', $d) . '#' . implode('|', $t) . '#' . implode('|', $c));
+/* задания (миграция 024, ОТДЕЛЬНАЯ таблица tasks — не module_data): тот же скоуп uid,
+   что и данные модулей; любой оп tasks.php бьёт updated_at — COUNT+MAX(id)+MAX(updated_at)
+   ловят всё (создание/правка/«Сделал!»/проверка/удаление) для Копилки и модуля «Задания» */
+$tk = ['0', '0', '0'];
+try {
+    $q = $db->query(
+        "SELECT COUNT(*) c, COALESCE(MAX(id),0) m, COALESCE(MAX(UNIX_TIMESTAMP(updated_at)),0) u
+         FROM tasks WHERE user_id IN ($in)"
+    )->fetch();
+    $tk = [$q['c'], $q['m'], $q['u']];
+} catch (Throwable $e) { /* таблицы заданий может не быть (миграция 024) */ }
+$data = md5(implode('|', $d) . '#' . implode('|', $t) . '#' . implode('|', $c) . '#' . implode('|', $tk));
 
 /* ---- отпечаток реестра плиток ---- */
 $reg = '';

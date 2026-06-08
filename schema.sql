@@ -217,6 +217,29 @@ CREATE TABLE IF NOT EXISTS chat_messages (
   KEY idx_chat_msg_thread (thread_id, id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ---------- Задания от родителей (миграция 024; канон — ГАЙД-задания.md) ----------
+-- ОБЩИЙ сервис уровня приложения (api/tasks.php + sdk.tasks): один источник правды,
+-- UI два — Копилка и модуль «Задания». Старые строки generic-стора bank/tasks
+-- переносит ленивый бэкфилл api/tasks.php.
+CREATE TABLE IF NOT EXISTS tasks (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id INT UNSIGNED NOT NULL,                  -- ребёнок-владелец
+  title VARCHAR(120) NOT NULL DEFAULT '',
+  points INT NOT NULL DEFAULT 10,                 -- очков за выполнение (1..1000)
+  type VARCHAR(10) NOT NULL DEFAULT 'recur',      -- recur | once
+  status VARCHAR(12) NOT NULL DEFAULT 'active',   -- active | pending | done
+  times_done INT UNSIGNED NOT NULL DEFAULT 0,     -- сколько раз подтверждено (recur)
+  last_done_at DATETIME DEFAULT NULL,
+  claimed_at DATETIME DEFAULT NULL,               -- ребёнок нажал «Сделал!» (pending)
+  done_at DATETIME DEFAULT NULL,                  -- одноразовое выполнено
+  created_by INT UNSIGNED DEFAULT NULL,           -- какой родитель создал
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted_at DATETIME DEFAULT NULL,               -- мягкое удаление
+  PRIMARY KEY (id),
+  KEY idx_tasks_user (user_id, deleted_at, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ---------- Заполнение реестра родными модулями ----------
 INSERT INTO modules (id, name, version, manifest, source, trusted, server, enabled, sort_order) VALUES
  ('wishlist','Виш-лист','2.0.0','{"color":"#ff3db0","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,1,1,10),
@@ -232,6 +255,7 @@ INSERT INTO modules (id, name, version, manifest, source, trusted, server, enabl
  ('lost','Бюро находок','1.0.0','{"color":"#2bf0c0","status":"soon"}','native',1,0,1,110),
  ('walk','Прогулка','1.2.0','{"color":"#38e8a0","status":"active","wide":false,"familyPool":true,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,0,1,115),
  ('snake','Змейка','1.0.0','{"color":"#19e3ff","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,117),
+ ('tasks','Задания','1.0.0','{"color":"#2bf0c0","status":"active","wide":false,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,0,1,118),
  ('bank','Копилка','1.0.0','{"color":"#ff4d6d","status":"active","wide":true,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,0,1,120),
  ('shop','Магазин','1.0.0','{"color":"#ff2bd6","status":"active","wide":false,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,0,1,130),
  ('chat','Чат','1.0.0','{"color":"#3b6bff","status":"active","wide":false,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,1,1,135)
