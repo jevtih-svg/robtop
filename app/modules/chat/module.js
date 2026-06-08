@@ -182,29 +182,31 @@
     var th=threadById(S.tid); if(!th) return;
     var names=(th.members||[]).map(function(m){ return m.id===S.me?t("you"):m.name; });
     var sub=th.kind==="group" ? t("members",{names:names.join(", ")}) : t("subtitle");
-    var h='<div class="ch-head"><button class="back" id="chToList" aria-label="'+esc(sdk.i18n.t("common.back"))+'">'+BACK_IC+'</button>'
+    var h='<div class="ch-head"><button class="back" id="chToList" tabindex="-1" aria-label="'+esc(sdk.i18n.t("common.back"))+'">'+BACK_IC+'</button>'
       +'<span class="ava">'+threadEmoji(th)+'</span>'
       +'<div class="ch-head-main"><div class="ch-title">'+esc(threadName(th))+'</div>'
       +'<div class="ch-sub">'+esc(sub)+'</div></div></div>';
     if(th.ro) h+='<div class="ch-ro">👁 '+esc(t("ro"))+'</div>';
     h+='<div class="ch-msgs" id="chMsgs"></div>';
     if(!th.ro && sdk.can("edit")){
+      /* tabindex="-1" на кнопках: чтобы поле было ЕДИНСТВЕННЫМ навигируемым элементом и
+         клавиатура не рисовала стрелки «предыдущее/следующее поле». Файл-инпут НЕ держим в
+         разметке постоянно (это второй <input> → клавиатура считает его полем и даёт стрелки):
+         создаём его на лету по тапу камеры (openFilePicker). */
       h+='<div class="ch-comp" id="chComp">'
-        +'<div class="ch-prev" id="chPrev" style="display:none"><img id="chPrevImg" alt=""><button class="px" id="chPrevX" aria-label="✕">✕</button></div>'
+        +'<div class="ch-prev" id="chPrev" style="display:none"><img id="chPrevImg" alt=""><button class="px" id="chPrevX" tabindex="-1" aria-label="✕">✕</button></div>'
         +'<div class="ch-comp-row">'
-        +'<button class="cbtn" id="chPhotoPick" aria-label="'+esc(t("addPhoto"))+'">'+CAM_IC+'</button>'
+        +'<button class="cbtn" id="chPhotoPick" tabindex="-1" aria-label="'+esc(t("addPhoto"))+'">'+CAM_IC+'</button>'
         +'<div id="chInput" class="ch-input" contenteditable="true" role="textbox" aria-multiline="true"'
           +' aria-label="'+esc(t("write"))+'" data-ph="'+esc(t("write"))+'"'
           +' enterkeyhint="send" inputmode="text" autocapitalize="sentences" autocorrect="on" spellcheck="true" translate="no"></div>'
-        +'<button class="cbtn send off" id="chSend" aria-label="'+esc(t("send"))+'">'+SEND_IC+'</button>'
+        +'<button class="cbtn send off" id="chSend" tabindex="-1" aria-label="'+esc(t("send"))+'">'+SEND_IC+'</button>'
         +'</div>'
-        +'<input type="file" id="chFile" accept="image/*" style="display:none">'
         +'</div>';
     }
     E.wrap.innerHTML=h;
     E.msgs=E.wrap.querySelector("#chMsgs");
     E.input=E.wrap.querySelector("#chInput");
-    E.file=E.wrap.querySelector("#chFile");
     if(E.msgs) E.msgs.addEventListener("scroll",function(){ S.stick=nearBottom(); },{passive:true});
     if(E.input){
       E.input.addEventListener("beforeinput",onBeforeInput);
@@ -254,7 +256,7 @@
 
   /* ---- композер (contenteditable): только текст ---- */
   function composerText(){ return E.input ? (E.input.innerText||"").replace(/ /g," ") : ""; }
-  function clearComposer(){ if(E.input){ E.input.innerHTML=""; } updateSendState(); }
+  function clearComposer(){ if(E.input){ E.input.innerHTML=""; if(document.activeElement===E.input) placeCaretEnd(); } updateSendState(); }
   function placeCaretEnd(){
     if(!E.input) return;
     try{ var r=document.createRange(); r.selectNodeContents(E.input); r.collapse(false);
@@ -358,7 +360,6 @@
   function clearPhoto(){
     S.photo=null;
     var pv=E.wrap.querySelector("#chPrev"); if(pv) pv.style.display="none";
-    if(E.file) E.file.value="";
     updateSendState();
   }
 
@@ -374,20 +375,38 @@
 
   /* ---- клавиатура (iOS/Android): слой повторяет visualViewport ----
      Слой #chApp = position:fixed на весь экран. При клавиатуре visualViewport.height < innerHeight:
-     задаём слою эту высоту (низ слоя = верх клавиатуры), а offsetTop сдвигаем translateY'ем. Композер,
-     будучи последним flex-элементом колонки, садится РОВНО над клавиатурой — без зазора и без
-     панели формы (контент-editable). Тело страницы заблокировано — позади ничего не едет. */
+     задаём слою min(vv.height, clientHeight) (низ слоя = верх клавиатуры; min страхует от завышения
+     vv на части Android), offsetTop сдвигаем translateY'ем. Композер, будучи последним flex-элементом
+     колонки, садится РОВНО над клавиатурой. Класс kb-open ставится/снимается по ФОКУСУ поля (см.
+     syncKb), а не по высоте: на Android с resizes-content innerHeight тоже сжимается и высотная
+     эвристика не срабатывала — оставался нижний safe-area отступ как щель. Тело заблокировано. */
+  function syncKb(){ if(E.app) E.app.classList.toggle("kb-open", !!(E.input && document.activeElement===E.input)); }
   function vpApply(){
     if(!alive() || !E.app) return;
     var vv=window.visualViewport;
-    if(!vv){ E.app.style.height=""; E.app.style.transform=""; return; } /* десктоп/старьё → CSS 100dvh */
-    E.app.style.height=Math.round(vv.height)+"px";
-    var off=Math.round(vv.offsetTop||0);
-    E.app.style.transform = off>0 ? "translateY("+off+"px)" : "";
-    var kb=Math.max(0, Math.round(window.innerHeight - vv.height - off));
-    var open=kb>80;
-    if(open!==S.kbOpen){ S.kbOpen=open; E.app.classList.toggle("kb-open",open); }
-    if(open) scrollBottom();
+    if(vv){
+      var ch=document.documentElement.clientHeight||vv.height;
+      E.app.style.height=Math.round(Math.min(vv.height, ch))+"px";
+      var off=Math.round(vv.offsetTop||0);
+      E.app.style.transform = off>0 ? "translateY("+off+"px)" : "";
+    } else { E.app.style.height=""; E.app.style.transform=""; } /* десктоп/старьё → CSS 100dvh */
+    var open=!!(E.input && document.activeElement===E.input);
+    syncKb();
+    if(open && !S.kbOpen) scrollBottom(); /* доскролл только на переходе «открылась» */
+    S.kbOpen=open;
+  }
+  /* файл-инпут создаём НА ЛЕТУ (а не держим скрытый <input> в разметке): постоянный второй
+     <input> клавиатура считает полем и рисует стрелки «пред./след.». Жест клика сохраняется. */
+  function openFilePicker(){
+    var inp=document.createElement("input");
+    inp.type="file"; inp.accept="image/*";
+    inp.style.cssText="position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0";
+    inp.addEventListener("change",function(){
+      if(inp.files && inp.files[0]) pickPhoto(inp.files[0]);
+      if(inp.parentNode) inp.parentNode.removeChild(inp);
+    });
+    document.body.appendChild(inp);
+    inp.click();
   }
   function kbSetup(){
     if(S.vv) return;
@@ -543,7 +562,7 @@
         }
         return;
       }
-      if(e.target.closest("#chPhotoPick")){ if(E.file) E.file.click(); return; }
+      if(e.target.closest("#chPhotoPick")){ openFilePicker(); return; }
       if(e.target.closest("#chPrevX")){ clearPhoto(); return; }
       if(e.target.closest("#chSend")){ doSend(); return; }
       var img=e.target.closest(".msg img");
@@ -551,8 +570,10 @@
       var msg=e.target.closest(".msg[data-mine]");
       if(msg && !msg.classList.contains("sys")){ askDelete(parseInt(msg.getAttribute("data-mid"),10)); return; }
     });
-    E.app.addEventListener("change",function(e){
-      if(e.target && e.target.id==="chFile" && e.target.files && e.target.files[0]) pickPhoto(e.target.files[0]);
+    /* тап по кнопке композера НЕ должен уводить фокус с поля (иначе Android гасит клавиатуру
+       при отправке). preventDefault на mousedown держит фокус в contenteditable; click проходит. */
+    E.app.addEventListener("mousedown",function(e){
+      if(e.target.closest && e.target.closest("#chComp .cbtn")) e.preventDefault();
     });
     /* свайп по ленте прячет клавиатуру (blur); свайп по самому композеру не считается */
     E.app.addEventListener("touchstart",function(e){ S.ty=e.touches&&e.touches[0]?e.touches[0].clientY:null; },{passive:true});
@@ -563,9 +584,19 @@
       if(e.target && e.target.closest && e.target.closest("#chComp")) return;
       if(Math.abs(e.touches[0].clientY-S.ty)>28){ try{ ae.blur(); }catch(x){} S.ty=null; }
     },{passive:true});
-    /* фокус в поле → доскроллить к последним сообщениям после выезда клавиатуры */
+    /* фокус в поле = клавиатура открыта → отметить kb-open (надёжнее любой высотной эвристики)
+       и доскроллить к последним после выезда клавиатуры */
     E.app.addEventListener("focusin",function(e){
-      if(e.target && e.target.id==="chInput"){ setTimeout(function(){ if(alive()){ vpApply(); scrollBottom(); } },300); }
+      if(e.target && e.target.id==="chInput"){
+        if(E.app) E.app.classList.add("kb-open"); S.kbOpen=true;
+        setTimeout(function(){ if(alive()){ vpApply(); scrollBottom(); } },300);
+      }
+    });
+    E.app.addEventListener("focusout",function(e){
+      if(e.target && e.target.id==="chInput"){
+        /* задержка: при отправке фокус удерживается (mousedown preventDefault), ложного закрытия нет */
+        setTimeout(function(){ if(alive() && document.activeElement!==E.input){ if(E.app) E.app.classList.remove("kb-open"); S.kbOpen=false; vpApply(); } },80);
+      }
     });
     kbSetup();
     vpApply();

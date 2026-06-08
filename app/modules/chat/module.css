@@ -87,11 +87,12 @@ html.ch-lock,html.ch-lock body{overflow:hidden;height:100%}
 
 /* ---- композер: обычный flex-низ слоя (НЕ sticky/НЕ fixed) ---- */
 [data-mod="chat"] .ch-comp{flex:none;margin:0 -16px;
-  padding:8px 14px calc(10px + env(safe-area-inset-bottom));
+  padding:7px 14px calc(7px + env(safe-area-inset-bottom));
   background:rgba(var(--panel-rgb),.96);border-top:1px solid rgba(255,255,255,.09)}
-/* при открытой клавиатуре композер уже над клавиатурой — нижний safe-area не нужен (иначе щель).
-   #chApp несёт и класс .ch-app, и data-mod="chat", и .kb-open — селектор бьёт по нему самому */
-.ch-app.kb-open .ch-comp{padding-bottom:8px}
+/* при открытой клавиатуре композер сидит ВПЛОТНУЮ над ней — нижний safe-area убираем (иначе щель,
+   как на скриншоте Джеффа). kb-open ставится по фокусу поля (module.js syncKb). #chApp несёт класс
+   .ch-app, data-mod="chat" и .kb-open одновременно — селектор бьёт по нему самому. */
+.ch-app.kb-open .ch-comp{padding-bottom:5px}
 [data-mod="chat"] .ch-comp-row{display:flex;align-items:flex-end;gap:9px}
 /* поле ввода — contenteditable: растёт сам до max-height, дальше внутренний скролл */
 [data-mod="chat"] .ch-input{flex:1;min-width:0;min-height:46px;max-height:120px;overflow-y:auto;-webkit-overflow-scrolling:touch;
