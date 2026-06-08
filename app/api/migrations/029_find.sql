@@ -1,4 +1,4 @@
--- 026: модуль «Найти предмет» (find) — плановая плитка переводится из soon в active.
+-- 029: модуль «Найти предмет» (find) — плановая плитка переводится из soon в active.
 -- Данные модуля живут в module_data (generic-стор: subs, meta), своя таблица не нужна.
 -- roles.edit включает parent: родитель проверяет фото (✓ верно / ✗ неверно) и меняет статус отправки.
 INSERT INTO modules (id, name, version, manifest, source, trusted, server, enabled, sort_order) VALUES

@@ -1,0 +1,16 @@
+{
+  "id": "find",
+  "name": "Найти предмет",
+  "version": "1.0.0",
+  "color": "#19e3ff",
+  "status": "active",
+  "wide": false,
+  "entry": "module.js",
+  "styles": "module.css",
+  "roles": { "edit": ["child", "parent"], "read": ["child", "parent"] },
+  "data": { "store": "generic", "collections": ["subs", "meta"] },
+  "server": false,
+  "permissions": ["points"],
+  "min_shell": "2.0.0",
+  "sort": 80
+}
