@@ -1521,6 +1521,11 @@ window.RobTop = window.RobTop || {};
         showHome(); loadRegistry().then(function(){ restoreScreen(savedSt); }); syncStart(); // живое обновление — только для вошедших
         if(RT.Notify) RT.Notify.boot(); // оповещения: колокольчик, бейдж, баннеры
       } else {
+        /* Незалогиненных встречает ЛЕНДИНГ (landing.html), форма входа — по кнопке
+           «Войти» с лендинга (index.html#login). Редирект только с канонических
+           адресов: на SPA-под-путях rewrite отдаёт index.html, и относительный
+           landing.html зациклился бы. */
+        if(location.hash!=="#login" && /(\/|\/index\.html)$/.test(location.pathname)){ location.replace("landing.html"); return; }
         renderLock(false); // форма входа
       }
     });

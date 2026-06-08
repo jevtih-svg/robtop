@@ -1,6 +1,9 @@
 /* RobTop — модуль «Чат». Скоуп [data-mod="chat"], только глобальные токены тем (core/ui.css). */
 
-[data-mod="chat"] .ch{padding-bottom:24px}
+/* Колонка на всю высоту экрана: композер прижат к низу ПОТОКОМ (sticky), а не fixed —
+   fixed внутри .view.active ломается containing block'ом transform-анимации (прецедент:
+   таббар дашборда, шапка core/parent.js). 100dvh — живая высота вьюпорта iOS. */
+[data-mod="chat"] .ch{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
 
 /* ---- шапка (паттерн md-header) ---- */
 [data-mod="chat"] .ch-head{display:flex;align-items:center;gap:12px;
@@ -34,9 +37,9 @@
   font-size:11.5px;font-weight:800;background:var(--red);color:rgba(255,255,255,.97)}
 
 /* ---- пустые состояния ---- */
-[data-mod="chat"] .ch-empty{display:flex;flex-direction:column;align-items:center;gap:12px;
-  padding:46px 22px;text-align:center;color:var(--muted)}
-[data-mod="chat"] .ch-empty.in{padding:30px 16px}
+[data-mod="chat"] .ch-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  flex:1;padding:46px 22px;text-align:center;color:var(--muted)}
+[data-mod="chat"] .ch-empty.in{flex:0 1 auto;padding:30px 16px}
 [data-mod="chat"] .ch-empty .e{font-size:52px;filter:drop-shadow(0 0 18px color-mix(in srgb, var(--blue) 55%, transparent))}
 [data-mod="chat"] .ch-empty p{margin:0;font-size:14.5px;line-height:1.45;max-width:300px}
 [data-mod="chat"] .ch-empty .btn{flex:none;min-width:200px}
@@ -44,7 +47,7 @@
 /* ---- переписка ---- */
 [data-mod="chat"] .ch-ro{margin:6px 0;padding:9px 12px;border-radius:12px;text-align:center;font-size:12.5px;
   color:var(--muted);background:rgba(var(--panel-rgb),.6);border:1px dashed rgba(255,255,255,.16)}
-[data-mod="chat"] .ch-msgs{display:flex;flex-direction:column;padding:6px 0 132px}
+[data-mod="chat"] .ch-msgs{display:flex;flex-direction:column;flex:1;justify-content:flex-end;padding:6px 0 14px}
 [data-mod="chat"] .ch-day{text-align:center;font-size:11.5px;color:var(--muted-2);margin:14px 0 6px}
 [data-mod="chat"] .ch-older{margin:4px auto 8px;padding:9px 16px;border-radius:999px;cursor:pointer;font:inherit;font-size:12.5px;
   color:var(--muted);background:rgba(var(--panel-rgb),.7);border:1px solid rgba(255,255,255,.1)}
@@ -62,9 +65,9 @@
 [data-mod="chat"] .msg img{display:block;max-width:100%;max-height:300px;border-radius:13px;cursor:zoom-in}
 [data-mod="chat"] .msg.sys{font-size:12.5px;color:var(--muted-dim);font-style:italic;background:transparent;border-style:dashed;cursor:default}
 
-/* ---- композер (фиксирован внизу, поверх скролла) ---- */
-[data-mod="chat"] .ch-comp{position:fixed;left:0;right:0;bottom:0;z-index:7;margin:0 auto;max-width:560px;
-  padding:8px 14px calc(12px + env(safe-area-inset-bottom));
+/* ---- композер (sticky к низу вьюпорта; при клавиатуре поднимается transform'ом из JS) ---- */
+[data-mod="chat"] .ch-comp{position:sticky;bottom:0;z-index:7;margin:0 -16px;will-change:transform;
+  padding:8px 14px calc(10px + env(safe-area-inset-bottom));
   background:rgba(var(--panel-rgb),.94);backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,.09)}
 [data-mod="chat"] .ch-comp-row{display:flex;align-items:flex-end;gap:9px}
 [data-mod="chat"] .ch-comp textarea{flex:1;min-height:46px;max-height:110px;padding:12px 13px;border-radius:15px;resize:none;
@@ -82,10 +85,10 @@
 [data-mod="chat"] .ch-prev .px{width:30px;height:30px;border-radius:50%;cursor:pointer;font:inherit;color:var(--ink);
   background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16)}
 
-/* ---- лайтбокс фото ---- */
-[data-mod="chat"] .ch-lb{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
-  background:rgba(0,0,0,.86);cursor:zoom-out;padding:18px}
-[data-mod="chat"] .ch-lb img{max-width:100%;max-height:92vh;border-radius:14px}
+/* ---- лайтбокс фото: шторка оболочки (sheet вне [data-mod] — префикс класса);
+   свой fixed-оверлей внутри .view страдал тем же containing block'ом, что и композер ---- */
+.ch-lbimg{display:block;width:100%;max-height:72vh;object-fit:contain;border-radius:14px;
+  background:rgba(0,0,0,.35);cursor:zoom-out}
 
 /* ---- шторка «Новый чат» ---- */
 .ch-picks{display:flex;flex-direction:column;gap:8px;max-height:46vh;overflow-y:auto;margin-bottom:12px}

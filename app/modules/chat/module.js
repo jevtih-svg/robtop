@@ -278,12 +278,40 @@
     if(E.file) E.file.value="";
   }
 
-  /* ---- лайтбокс фото ---- */
+  /* ---- лайтбокс фото: шторка оболочки (свой fixed внутри .view ломается transform-анимацией) ---- */
   function openLightbox(src){
-    var lb=document.createElement("div"); lb.className="ch-lb";
-    lb.innerHTML='<img src="'+esc(src)+'" alt="">';
-    lb.addEventListener("click",function(){ if(lb.parentNode) lb.parentNode.removeChild(lb); });
-    E.wrap.appendChild(lb);
+    if(S.sheet) return;
+    var node=document.createElement("div");
+    node.innerHTML='<img class="ch-lbimg" src="'+esc(src)+'" alt="">';
+    var sh=sdk.ui.sheet(node);
+    S.sheet=sh; /* refresh() ждёт закрытия и сам видит снятый overlay */
+    node.querySelector("img").addEventListener("click",function(){ S.sheet=null; try{ sh.close(); }catch(e){} });
+  }
+
+  /* ---- клавиатура (iOS/Android): композер поверх клавиатуры + свайп по переписке прячет её ----
+     sticky-композер прижат к НИЗУ layout-вьюпорта; клавиатура его не двигает. visualViewport
+     говорит, сколько низа перекрыто — поднимаем композер transform'ом и дополняем msgs снизу. */
+  function kbApply(){
+    if(!S || !S.alive || !window.visualViewport) return;
+    var c=E.wrap?E.wrap.querySelector("#chComp"):null;
+    var vv=window.visualViewport;
+    var kb=Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+    if(c) c.style.transform = kb>2 ? "translateY(-"+kb+"px)" : "";
+    if(E.msgs) E.msgs.style.paddingBottom = kb>2 ? (kb+14)+"px" : "";
+    if(kb>2) scrollBottom();
+  }
+  function kbSetup(){
+    if(!window.visualViewport || S.vv) return;
+    S.vv=kbApply;
+    window.visualViewport.addEventListener("resize",S.vv);
+    window.visualViewport.addEventListener("scroll",S.vv);
+  }
+  function kbTeardown(){
+    if(S && S.vv && window.visualViewport){
+      window.visualViewport.removeEventListener("resize",S.vv);
+      window.visualViewport.removeEventListener("scroll",S.vv);
+      S.vv=null;
+    }
   }
 
   /* ---- удаление своего сообщения ---- */
@@ -388,7 +416,7 @@
     sdk=theSdk; root=rootEl;
     S={ alive:true, view:"list", tid:null, threads:[], roster:[], me:0, isParent:false,
         family:true, loaded:false, msgs:[], more:false, msgsLoaded:false,
-        sending:false, photo:null, sheet:null, pendingTid:null };
+        sending:false, photo:null, sheet:null, pendingTid:null, vv:null, ty:null };
     E={};
     sdk.ui.hud({hidden:true});
     root.innerHTML='<div class="ch" id="chWrap"></div>';
@@ -420,6 +448,20 @@
     E.wrap.addEventListener("change",function(e){
       if(e.target && e.target.id==="chFile" && e.target.files && e.target.files[0]) pickPhoto(e.target.files[0]);
     });
+    /* свайп по переписке прячет клавиатуру (blur); свайп по самому композеру не считается */
+    E.wrap.addEventListener("touchstart",function(e){ S.ty=e.touches&&e.touches[0]?e.touches[0].clientY:null; },{passive:true});
+    E.wrap.addEventListener("touchmove",function(e){
+      if(S.ty==null || !e.touches || !e.touches[0]) return;
+      var ae=document.activeElement;
+      if(!ae || ae.id!=="chInput") return;
+      if(e.target && e.target.closest && e.target.closest("#chComp")) return;
+      if(Math.abs(e.touches[0].clientY-S.ty)>28){ try{ ae.blur(); }catch(x){} S.ty=null; }
+    },{passive:true});
+    /* фокус в поле → доскроллить к последним сообщениям после выезда клавиатуры */
+    E.wrap.addEventListener("focusin",function(e){
+      if(e.target && e.target.id==="chInput"){ setTimeout(function(){ if(alive()) scrollBottom(); },300); }
+    });
+    kbSetup();
 
     if(sdk.isDemo()){
       E.wrap.innerHTML='<div class="ch-head"><button class="back" id="chBack" aria-label="'+esc(sdk.i18n.t("common.back"))+'">'+BACK_IC+'</button>'
@@ -437,6 +479,7 @@
   }
   function unmount(){
     if(S) S.alive=false;
+    kbTeardown(); /* visualViewport — глобальные слушатели, снять обязательно */
     if(S && S.sheet){ try{ S.sheet.close(); }catch(e){} S.sheet=null; }
     S=null; E={};
   }

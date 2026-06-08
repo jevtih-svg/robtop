@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07061a">
+<meta name="description" content="RobTop — Mega App for Parents and Kids: games, tasks, points and prizes for the whole family.">
+<title>RobTop — Mega App for Parents and Kids</title>
+<link rel="icon" type="image/svg+xml" href="media/icon/icon.svg">
+<link rel="apple-touch-icon" href="media/icon/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Rubik:wght@400;500;600;700;800&display=swap&subset=cyrillic,cyrillic-ext,latin,latin-ext" rel="stylesheet">
+<style>
+  /* ЛЕНДИНГ для незалогиненных (apps.tilley.live/robtop → shell уводит сюда без сессии).
+     Standalone, как w.html: без core/*, мини-i18n en/ru/lv внутри
+     (?lang → localStorage robtop_locale → язык браузера → en; ключ общий с приложением —
+     выбор языка переезжает в приложение). Тема — всегда неон (тема живёт на аккаунте,
+     у гостя аккаунта нет). Mobile-first; ≥640px и ≥960px — десктопные сетки.
+     Журнал изменений — из changelog.js (window.RT_CHANGELOG), новейшие сверху. */
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root{--cyan:#19e3ff;--pink:#ff3db0;--magenta:#ff2bd6;--purple:#a64bff;--blue:#3b6bff;--mint:#2bf0c0;
+    --gold:#ffd23b;--red:#ff4d6d;--ink:#eaf2ff;--muted:#93a6cf;
+    --card:linear-gradient(162deg,rgba(26,23,56,.72),rgba(11,10,28,.74));--line:rgba(255,255,255,.12)}
+  html{scroll-behavior:smooth}
+  html,body{margin:0;min-height:100%}
+  body{font-family:'Rubik',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink);background:#05050f;
+    background-image:radial-gradient(820px 600px at 14% 8%,rgba(166,75,255,.20),transparent 60%),
+      radial-gradient(820px 680px at 88% 22%,rgba(25,227,255,.15),transparent 60%),
+      radial-gradient(900px 800px at 50% 108%,rgba(255,43,214,.18),transparent 60%),
+      linear-gradient(180deg,#070617 0%,#05040f 60%,#07041a 100%);min-height:100vh;overflow-x:hidden}
+  /* ---- плавающие неоновые орбы (чистый CSS вместо canvas) ---- */
+  .orbs{position:fixed;inset:0;pointer-events:none;z-index:0}
+  .orbs i{position:absolute;border-radius:50%;filter:blur(26px);opacity:.5;animation:drift 26s ease-in-out infinite alternate}
+  .orbs i:nth-child(1){width:140px;height:140px;left:6%;top:12%;background:radial-gradient(circle,rgba(25,227,255,.55),transparent 70%)}
+  .orbs i:nth-child(2){width:190px;height:190px;right:-40px;top:30%;background:radial-gradient(circle,rgba(255,43,214,.45),transparent 70%);animation-duration:32s}
+  .orbs i:nth-child(3){width:120px;height:120px;left:14%;bottom:18%;background:radial-gradient(circle,rgba(166,75,255,.5),transparent 70%);animation-duration:23s}
+  .orbs i:nth-child(4){width:90px;height:90px;right:18%;bottom:8%;background:radial-gradient(circle,rgba(43,240,192,.45),transparent 70%);animation-duration:29s}
+  .orbs i:nth-child(5){width:70px;height:70px;left:46%;top:6%;background:radial-gradient(circle,rgba(255,210,59,.4),transparent 70%);animation-duration:35s}
+  @keyframes drift{from{transform:translate(0,0)}to{transform:translate(40px,60px)}}
+  @media (prefers-reduced-motion:reduce){.orbs i{animation:none}}
+  /* ---- верхняя панель ---- */
+  .top{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:10px;
+    padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:rgba(6,5,20,.78);
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.07)}
+  .brand{font-family:'Russo One',sans-serif;font-size:21px;color:#fff;text-decoration:none;
+    text-shadow:0 0 12px rgba(25,227,255,.7),0 0 26px rgba(255,43,214,.5)}
+  .brand b{color:var(--pink);font-weight:400}
+  .lang{display:flex;gap:4px;margin-left:auto;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:12px;padding:3px}
+  .lang button{font-family:inherit;font-weight:800;font-size:11.5px;color:var(--muted);background:none;border:0;border-radius:9px;padding:5px 8px;cursor:pointer}
+  .lang button.on{color:#041018;background:linear-gradient(135deg,var(--cyan),#6ea8ff)}
+  .toplogin{font-weight:800;font-size:12.5px;color:var(--cyan);text-decoration:none;border:1px solid rgba(25,227,255,.4);
+    background:rgba(25,227,255,.1);border-radius:12px;padding:7px 12px;white-space:nowrap}
+  /* ---- каркас ---- */
+  .wrap{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:0 16px 40px}
+  @media (min-width:640px){.wrap{max-width:640px}}
+  @media (min-width:960px){.wrap{max-width:980px}}
+  /* ---- герой ---- */
+  .hero{text-align:center;padding:42px 0 10px}
+  @media (min-width:960px){.hero{padding:64px 0 18px}}
+  h1{font-family:'Russo One',sans-serif;font-size:34px;line-height:1.05;margin:14px 0 0;color:#fff;
+    text-shadow:0 0 14px rgba(25,227,255,.7),0 0 34px rgba(255,43,214,.5)}
+  @media (min-width:960px){h1{font-size:52px}}
+  h1 b{color:var(--pink);font-weight:400}
+  .heroTag{font-family:'Russo One',sans-serif;font-size:18px;color:var(--cyan);margin-top:10px;
+    text-shadow:0 0 10px rgba(25,227,255,.55)}
+  @media (min-width:960px){.heroTag{font-size:24px}}
+  .heroSub{color:var(--muted);font-weight:600;font-size:14.5px;line-height:1.55;max-width:560px;margin:12px auto 0}
+  .cta{display:inline-flex;align-items:center;gap:9px;margin-top:22px;font-family:'Russo One',sans-serif;font-size:16px;
+    color:#041018;text-decoration:none;background:linear-gradient(92deg,var(--cyan),#5e8bff 55%,var(--magenta));
+    border-radius:16px;padding:15px 26px;box-shadow:0 0 22px rgba(25,227,255,.45),0 10px 30px rgba(0,0,0,.45)}
+  .cta:active{transform:scale(.97)}
+  .ctaNote{color:var(--muted);font-size:12.5px;font-weight:600;margin-top:10px}
+  .chips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:20px}
+  .chips span{font-weight:800;font-size:12px;color:var(--ink);background:rgba(255,255,255,.07);
+    border:1px solid var(--line);border-radius:12px;padding:6px 11px}
+  .chips span b{color:var(--gold);font-weight:800}
+  /* ---- секции ---- */
+  .sect{display:flex;align-items:center;gap:9px;font-family:'Russo One',sans-serif;font-size:18px;color:#fff;margin:40px 2px 6px}
+  .sect .dot{width:10px;height:10px;border-radius:50%;background:var(--sc,#19e3ff);box-shadow:0 0 12px var(--sc,#19e3ff);flex:none}
+  .sectSub{color:var(--muted);font-weight:600;font-size:13.5px;line-height:1.5;margin:0 2px 16px}
+  /* ---- как это работает ---- */
+  .how{display:grid;gap:10px}
+  @media (min-width:640px){.how{grid-template-columns:repeat(3,1fr)}}
+  .step{background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:16px}
+  .step .n{font-family:'Russo One',sans-serif;font-size:15px;color:#041018;width:30px;height:30px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--c1),var(--c2));
+    box-shadow:0 0 14px var(--c1)}
+  .step .t{font-weight:800;font-size:15px;color:#fff;margin-top:10px}
+  .step .d{color:var(--muted);font-weight:600;font-size:13px;line-height:1.5;margin-top:5px}
+  /* ---- плитки приложений ---- */
+  .apps{display:grid;gap:10px}
+  @media (min-width:640px){.apps{grid-template-columns:1fr 1fr}}
+  @media (min-width:960px){.apps{grid-template-columns:repeat(3,1fr)}}
+  .app{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1.5px solid var(--line);
+    border-left:4px solid var(--c);border-radius:16px;padding:13px}
+  .app .ic{flex:none;width:44px;height:44px;border-radius:13px;color:var(--c);background:rgba(255,255,255,.06);
+    border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 14px color-mix(in srgb,var(--c) 35%,transparent)}
+  .app .ic svg{width:26px;height:26px}
+  .app .t{font-weight:800;font-size:14.5px;color:#fff}
+  .app .d{color:var(--muted);font-weight:600;font-size:12.5px;line-height:1.45;margin-top:3px}
+  .app.soon{opacity:.55}
+  .app.soon .badge{font-size:10.5px;font-weight:800;color:var(--gold);border:1px solid rgba(255,210,59,.45);
+    border-radius:9px;padding:2px 7px;margin-left:7px;vertical-align:2px}
+  .appsSep{display:flex;align-items:center;gap:10px;color:var(--muted);font-weight:800;font-size:12px;
+    text-transform:uppercase;letter-spacing:.8px;margin:20px 2px 12px}
+  .appsSep:before,.appsSep:after{content:"";flex:1;height:1px;background:rgba(255,255,255,.12)}
+  /* ---- для родителей ---- */
+  .feats{display:grid;gap:10px}
+  @media (min-width:640px){.feats{grid-template-columns:1fr 1fr}}
+  @media (min-width:960px){.feats{grid-template-columns:repeat(3,1fr)}}
+  .feat{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:14px}
+  .feat .t{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;color:#fff}
+  .feat .t .fdot{width:8px;height:8px;border-radius:50%;background:var(--fc);box-shadow:0 0 10px var(--fc);flex:none}
+  .feat .d{color:var(--muted);font-weight:600;font-size:12.5px;line-height:1.5;margin-top:6px}
+  /* ---- журнал изменений ---- */
+  .log{display:flex;flex-direction:column;gap:8px}
+  .logRow{display:flex;gap:10px;align-items:baseline;background:var(--card);border:1.5px solid var(--line);
+    border-radius:14px;padding:11px 13px}
+  .logRow .v{flex:none;font-weight:800;font-size:11.5px;color:var(--gold);background:rgba(255,210,59,.1);
+    border:1px solid rgba(255,210,59,.35);border-radius:9px;padding:3px 8px;white-space:nowrap}
+  .logRow .d{flex:1;color:var(--ink);font-weight:600;font-size:13px;line-height:1.5}
+  .logRow .dt{color:var(--muted);font-size:11px;font-weight:700;white-space:nowrap}
+  @media (max-width:639px){.logRow .dt{display:none}}
+  .more{margin-top:12px;width:100%;font-family:inherit;font-weight:800;font-size:13px;color:var(--cyan);
+    background:rgba(25,227,255,.08);border:1px solid rgba(25,227,255,.35);border-radius:13px;padding:11px;cursor:pointer}
+  /* ---- футер ---- */
+  .foot{color:var(--muted);font-size:12px;font-weight:600;text-align:center;margin-top:44px;line-height:1.8}
+  .foot a{color:var(--cyan);text-decoration:none;font-weight:700}
+</style>
+</head>
+<body>
+<div class="orbs" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+
+<header class="top">
+  <a class="brand" href="landing.html">Rob<b>Top</b></a>
+  <nav class="lang" id="langSeg" aria-label="Language"></nav>
+  <a class="toplogin" href="index.html#login" id="topLogin"></a>
+</header>
+
+<div class="wrap">
+  <section class="hero">
+    <h1>Rob<b>Top</b></h1>
+    <div class="heroTag" id="heroTag"></div>
+    <p class="heroSub" id="heroSub"></p>
+    <a class="cta" href="index.html#login" id="cta"></a>
+    <div class="ctaNote" id="ctaNote"></div>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <div class="sect" style="--sc:#19e3ff"><span class="dot"></span><span id="howH"></span></div>
+  <p class="sectSub" id="howSub"></p>
+  <div class="how" id="how"></div>
+
+  <div class="sect" style="--sc:#ff3db0"><span class="dot"></span><span id="appsH"></span></div>
+  <p class="sectSub" id="appsSub"></p>
+  <div class="apps" id="appsGrid"></div>
+  <div class="appsSep" id="soonSep"></div>
+  <div class="apps" id="soonGrid"></div>
+
+  <div class="sect" style="--sc:#a64bff"><span class="dot"></span><span id="parH"></span></div>
+  <p class="sectSub" id="parSub"></p>
+  <div class="feats" id="feats"></div>
+
+  <div class="sect" id="news" style="--sc:#ffd23b"><span class="dot"></span><span id="logH"></span></div>
+  <p class="sectSub" id="logSub"></p>
+  <div class="log" id="log"></div>
+  <button class="more" id="logMore" hidden></button>
+
+  <div class="foot"><span id="footNote"></span><br>
+    RobTop · <a href="index.html#login">apps.tilley.live/robtop</a> · <span id="ver"></span></div>
+</div>
+
+<script src="changelog.js?v=2026.06.07.65"></script>
+<script>
+"use strict";
+/* ---------- мини-i18n (en по умолчанию, ключ общий с приложением) ---------- */
+var T={
+en:{
+  metaTitle:"RobTop — Mega App for Parents and Kids",
+  metaDesc:"RobTop — Mega App for Parents and Kids: games, tasks, points and prizes for the whole family.",
+  signIn:"Sign in", heroTag:"Mega App for Parents and Kids",
+  heroSub:"One app — many mini-apps: games, daily journals, parent tasks, points and a family prize shop. Kids play and earn, parents see everything.",
+  cta:"Open the app", ctaNote:"A parent creates the family right in the app. Sign-in for parents and kids.",
+  chips:["12 apps inside","points & prizes","3 languages","for the whole family"],
+  howH:"How it works", howSub:"Three steps — and the whole family is in.",
+  how:[["A parent creates a family","Sign up by email, add kids by nickname, invite the other parent."],
+       ["Kids play and do tasks","Games and daily journals earn points; parent tasks earn even more."],
+       ["Points become prizes","Parents put prizes in the Shop — kids buy them with their points."]],
+  appsH:"All apps inside", appsSub:"Every tile is a mini-app. Parents can switch any of them on or off for each child.",
+  soonSep:"Coming soon",
+  tiles:{ wishlist:"Wishlist", reverse:"Words Backwards", mood:"Mood of the Day", teeth:"Toothbrushing Timer",
+    guess:"Guess the Number", names:"Funny Names", rating:"Day Rating", bank:"Piggy Bank", shop:"Shop",
+    walk:"Dog Walk", snake:"Snake", chat:"Chat", days:"Day Counter", find:"Find the Object", museum:"Home Museum", lost:"Lost & Found" },
+  apps:{
+    wishlist:"A wish list with photos: Want / Thinking / Bought. Sharable — with parent's permission.",
+    mood:"Pick the day's smiley, add a “because…” and a photo. Stats for the month.",
+    teeth:"A 2-minute timer with a glowing ring and sound. Points and a day streak.",
+    guess:"A timed math question, answer 1–10. Win points, lose a few if wrong.",
+    names:"10,000 made-up names: funny or not? Two-tab history of your votes.",
+    reverse:"Type a word — the app flips it and says it out loud.",
+    rating:"Every evening: 1–5 stars, a note and a photo. Editable till midnight.",
+    bank:"All points live here: parent tasks, streak flame and full history.",
+    shop:"Prizes from parents: buy with points, a parent hands the prize over.",
+    walk:"A quick dog-walk log for the whole family: time, mood, commands, photos.",
+    snake:"The Nokia classic in neon. New records earn points.",
+    chat:"A family messenger: chats and groups only within the family, with photos.",
+    days:"Count down the days to an event.", find:"Find an object by AI hints and photograph it.",
+    museum:"Photograph your creations — they become a museum.", lost:"A collection of your little treasures." },
+  parH:"For parents", parSub:"You see the whole picture and stay in control — kindly.",
+  feats:[["Dashboard","Each child's day at a glance: moods, ratings, games, walks and a full journal."],
+         ["Tasks & points","Create tasks, confirm completion, award bonus points. Streaks keep kids motivated."],
+         ["Prize shop","You decide the prizes and prices. Purchases wait for your confirmation."],
+         ["App control","Switch any mini-app on or off per child. Wishlist sharing only with your OK."],
+         ["Notifications","A bell in the app and Web Push to your phone: tasks, purchases, tickets."],
+         ["Themes & languages","Neon or Tilley Live theme per account. English, Russian, Latvian."]],
+  logH:"What's new", logSub:"The app updates often — every version lands here.",
+  showAll:"Show all", showLess:"Show less",
+  footNote:"A family app: a child's account is created by a parent and protected by a password." },
+ru:{
+  metaTitle:"RobTop — мега-приложение для родителей и детей",
+  metaDesc:"RobTop — мега-приложение для родителей и детей: игры, задания, очки и призы для всей семьи.",
+  signIn:"Войти", heroTag:"Мега-приложение для родителей и детей",
+  heroSub:"Одно приложение — много мини-приложений: игры, дневники дня, задания от родителей, очки и семейный магазин призов. Дети играют и зарабатывают, родители всё видят.",
+  cta:"Открыть приложение", ctaNote:"Родитель создаёт семью прямо в приложении. Вход — для родителей и детей.",
+  chips:["12 приложений внутри","очки и призы","3 языка","для всей семьи"],
+  howH:"Как это устроено", howSub:"Три шага — и вся семья внутри.",
+  how:[["Родитель создаёт семью","Регистрация по email, дети добавляются по никнейму, второго родителя можно пригласить."],
+       ["Дети играют и выполняют задания","Игры и дневники приносят пункты; задания от родителей — ещё больше."],
+       ["Пункты превращаются в призы","Родители выставляют призы в Магазине — дети покупают их за свои пункты."]],
+  appsH:"Все приложения внутри", appsSub:"Каждая плитка — мини-приложение. Родитель может включать и выключать любое для каждого ребёнка.",
+  soonSep:"Скоро будут",
+  tiles:{ wishlist:"Виш-лист", reverse:"Слова наоборот", mood:"Настроение дня", teeth:"Таймер чистки зубов",
+    guess:"Угадай число", names:"Смешные имена", rating:"Оценка дня", bank:"Копилка", shop:"Магазин",
+    walk:"Прогулка", snake:"Змейка", chat:"Чат", days:"Счётчик дней", find:"Найти предмет", museum:"Домашний музей", lost:"Бюро находок" },
+  apps:{
+    wishlist:"Список желаний с фото: Хочу / Думаю / Купил. Можно делиться — с разрешения родителя.",
+    mood:"Выбери смайлик дня, добавь «потому что…» и фото. Статистика за месяц.",
+    teeth:"Таймер на 2 минуты со светящимся кольцом и звуком. Очки и серия дней.",
+    guess:"Пример на время, ответ от 1 до 10. Отгадал — очки, ошибся — небольшой минус.",
+    names:"10 000 выдуманных имён: смешно или нет? История голосов в двух вкладках.",
+    reverse:"Введи слово — приложение перевернёт его и озвучит вслух.",
+    rating:"Каждый вечер: звёзды 1–5, заметка и фото. Можно править до полуночи.",
+    bank:"Все пункты живут здесь: задания от родителей, огонёк-серия и вся история.",
+    shop:"Призы от родителей: покупай за пункты, родитель вручает приз.",
+    walk:"Быстрая запись прогулки с собакой для всей семьи: время, оценка, команды, фото.",
+    snake:"Классика Nokia в неоне. Новые рекорды приносят пункты.",
+    chat:"Семейный мессенджер: переписка и группы только внутри семьи, с фото.",
+    days:"Считай, сколько дней осталось до события.", find:"Найди предмет по подсказке ИИ и сфотографируй.",
+    museum:"Фотографируй свои творения — из них получится музей.", lost:"Коллекция твоих маленьких сокровищ." },
+  parH:"Родителям", parSub:"Вы видите всю картину и мягко управляете происходящим.",
+  feats:[["Дашборд","День каждого ребёнка как на ладони: настроение, оценки, игры, прогулки и полный журнал."],
+         ["Задания и очки","Создавайте задания, подтверждайте выполнение, начисляйте бонусы. Серии держат мотивацию."],
+         ["Магазин призов","Призы и цены назначаете вы. Покупки ждут вашего подтверждения."],
+         ["Контроль приложений","Любое мини-приложение можно включить или выключить каждому ребёнку. Шаринг виш-листа — только с вашего разрешения."],
+         ["Оповещения","Колокольчик в приложении и Web Push на телефон: задания, покупки, обращения."],
+         ["Темы и языки","Тема «Неон» или «Tilley Live» на каждом аккаунте. Английский, русский, латышский."]],
+  logH:"Что нового", logSub:"Приложение часто обновляется — каждая версия попадает сюда.",
+  showAll:"Показать все", showLess:"Свернуть",
+  footNote:"Семейное приложение: аккаунт ребёнка создаёт родитель, вход защищён паролем." },
+lv:{
+  metaTitle:"RobTop — mega lietotne vecākiem un bērniem",
+  metaDesc:"RobTop — mega lietotne vecākiem un bērniem: spēles, uzdevumi, punkti un balvas visai ģimenei.",
+  signIn:"Ieiet", heroTag:"Mega lietotne vecākiem un bērniem",
+  heroSub:"Viena lietotne — daudzas mini-lietotnes: spēles, dienas žurnāli, vecāku uzdevumi, punkti un ģimenes balvu veikals. Bērni spēlē un pelna, vecāki visu redz.",
+  cta:"Atvērt lietotni", ctaNote:"Vecāks izveido ģimeni tieši lietotnē. Pieteikšanās — vecākiem un bērniem.",
+  chips:["12 lietotnes iekšā","punkti un balvas","3 valodas","visai ģimenei"],
+  howH:"Kā tas darbojas", howSub:"Trīs soļi — un visa ģimene ir iekšā.",
+  how:[["Vecāks izveido ģimeni","Reģistrācija ar e-pastu, bērnus pievieno ar segvārdu, var uzaicināt otru vecāku."],
+       ["Bērni spēlē un pilda uzdevumus","Spēles un žurnāli pelna punktus; vecāku uzdevumi — vēl vairāk."],
+       ["Punkti kļūst par balvām","Vecāki izliek balvas Veikalā — bērni pērk tās par saviem punktiem."]],
+  appsH:"Visas lietotnes iekšā", appsSub:"Katra flīze ir mini-lietotne. Vecāks var ieslēgt vai izslēgt jebkuru katram bērnam.",
+  soonSep:"Drīzumā",
+  tiles:{ wishlist:"Vēlmju saraksts", reverse:"Vārdi otrādi", mood:"Dienas garastāvoklis", teeth:"Zobu tīrīšanas taimeris",
+    guess:"Uzmini skaitli", names:"Smieklīgi vārdi", rating:"Dienas vērtējums", bank:"Krājkase", shop:"Veikals",
+    walk:"Pastaiga", snake:"Čūska", chat:"Čats", days:"Dienu skaitītājs", find:"Atrodi priekšmetu", museum:"Mājas muzejs", lost:"Atradumu birojs" },
+  apps:{
+    wishlist:"Vēlmju saraksts ar foto: Gribu / Domāju / Nopirku. Var kopīgot — ar vecāku atļauju.",
+    mood:"Izvēlies dienas smaidiņu, pievieno “tāpēc ka…” un foto. Mēneša statistika.",
+    teeth:"2 minūšu taimeris ar mirdzošu gredzenu un skaņu. Punkti un dienu sērija.",
+    guess:"Matemātikas piemērs uz laiku, atbilde 1–10. Uzminēji — punkti, kļūdījies — neliels mīnuss.",
+    names:"10 000 izdomātu vārdu: smieklīgi vai ne? Balsu vēsture divās cilnēs.",
+    reverse:"Ievadi vārdu — lietotne to apgriezīs un izrunās skaļi.",
+    rating:"Katru vakaru: 1–5 zvaigznes, piezīme un foto. Var labot līdz pusnaktij.",
+    bank:"Visi punkti dzīvo šeit: vecāku uzdevumi, sērijas liesmiņa un visa vēsture.",
+    shop:"Balvas no vecākiem: pērc par punktiem, vecāks pasniedz balvu.",
+    walk:"Ātra suņa pastaigas atzīme visai ģimenei: laiks, vērtējums, komandas, foto.",
+    snake:"Nokia klasika neonā. Jauni rekordi pelna punktus.",
+    chat:"Ģimenes ziņotājs: sarakste un grupas tikai ģimenē, ar foto.",
+    days:"Skaiti, cik dienu atlicis līdz notikumam.", find:"Atrodi priekšmetu pēc MI norādēm un nofotografē.",
+    museum:"Fotografē savus darbus — no tiem sanāks muzejs.", lost:"Tavu mazo dārgumu kolekcija." },
+  parH:"Vecākiem", parSub:"Jūs redzat visu kopainu un maigi vadāt notiekošo.",
+  feats:[["Panelis","Katra bērna diena kā uz delnas: garastāvoklis, vērtējumi, spēles, pastaigas un pilns žurnāls."],
+         ["Uzdevumi un punkti","Veidojiet uzdevumus, apstipriniet izpildi, piešķiriet bonusus. Sērijas uztur motivāciju."],
+         ["Balvu veikals","Balvas un cenas nosakāt jūs. Pirkumi gaida jūsu apstiprinājumu."],
+         ["Lietotņu kontrole","Jebkuru mini-lietotni var ieslēgt vai izslēgt katram bērnam. Vēlmju saraksta kopīgošana — tikai ar jūsu atļauju."],
+         ["Paziņojumi","Zvaniņš lietotnē un Web Push uz tālruni: uzdevumi, pirkumi, pieteikumi."],
+         ["Tēmas un valodas","Tēma Neon vai Tilley Live katram kontam. Angļu, krievu, latviešu."]],
+  logH:"Kas jauns", logSub:"Lietotne bieži atjaunojas — katra versija nonāk šeit.",
+  showAll:"Rādīt visu", showLess:"Sakļaut",
+  footNote:"Ģimenes lietotne: bērna kontu izveido vecāks, pieteikšanās aizsargāta ar paroli." }
+};
+var LANGS=["en","ru","lv"];
+function pickLang(){
+  var q=new URLSearchParams(location.search).get('lang');
+  if(q && T[q]) return q;
+  try{ var s=localStorage.getItem('robtop_locale'); if(s && T[s]) return s; }catch(e){}
+  var ls=(navigator.languages&&navigator.languages.length)?navigator.languages:[navigator.language||""];
+  for(var i=0;i<ls.length;i++){ var c=String(ls[i]||"").slice(0,2).toLowerCase(); if(T[c]) return c; }
+  return 'en';
+}
+var cur=pickLang();
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+/* ---------- иконки плиток (копия из core/shell.js ICONS) ---------- */
+var ICONS={
+  cherry:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="7.5" cy="17" r="3.6"/><circle cx="15.7" cy="17.6" r="3.6"/><path d="M8 14.4C9 8.4 13 5 18.4 3.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16.1 14.6C16.7 9.4 15 6 12 3.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M18.4 3.8c1-1.1 2.7-1.1 3.6.3-1.5.5-2.5.4-3.6-.3z"/></svg>',
+  smile:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10.2" r="1.05" fill="currentColor" stroke="none"/><circle cx="15" cy="10.2" r="1.05" fill="currentColor" stroke="none"/><path d="M8.4 14.4a4.2 4.2 0 0 0 7.2 0" stroke-linecap="round"/></svg>',
+  tooth:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M6 4.2c2 0 2.2 1.4 6 1.4s4-1.4 6-1.4 3 2 2.5 6-1 9.4-2.6 9.4-1.4-5-3.4-5-2 5-3.5 5-2-5.4-2.5-9.4S4 4.2 6 4.2z"/></svg>',
+  quiz:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><path d="M9.4 9.6a2.6 2.6 0 1 1 3.7 2.4c-.95.45-1.6 1-1.6 2.1" stroke-linecap="round"/><circle cx="11.5" cy="17" r="1" fill="currentColor" stroke="none"/></svg>',
+  tag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 12V5a1 1 0 0 1 1-1h7l8 8-8 8z"/><circle cx="8.4" cy="8.4" r="1.4" fill="currentColor" stroke="none"/></svg>',
+  reverse:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h12l-3.2-3.2M20 15.5H8l3.2 3.2"/></svg>',
+  calendar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 9.2h17M8 3.2v3.6M16 3.2v3.6" stroke-linecap="round"/></svg>',
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M15.5 15.5L20 20"/></svg>',
+  museum:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.2l9-5 9 5M5 9.2v7.8M19 9.2v7.8M9 9.2v7.8M15 9.2v7.8M3.4 20.2h17.2"/></svg>',
+  star:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.7 5.7 6.3.8-4.6 4.4 1.2 6.2L12 17.8 6.4 20.1l1.2-6.2L3 9.5l6.3-.8z"/></svg>',
+  gem:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M6 3.2h12l3 5-9 12.6L3 8.2z"/><path d="M3 8.2h18M9 3.2l-3 5 6 12.6 6-12.6-3-5"/></svg>',
+  bank:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6.6" rx="7" ry="3"/><path d="M5 6.6v6.4c0 1.7 3.1 3 7 3s7-1.3 7-3V6.6"/><path d="M5 13c0 1.7 3.1 3 7 3s7-1.3 7-3"/></svg>',
+  paw:'<svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="6.4" cy="10" rx="1.7" ry="2.3"/><ellipse cx="9.9" cy="7.3" rx="1.7" ry="2.4"/><ellipse cx="14.1" cy="7.3" rx="1.7" ry="2.4"/><ellipse cx="17.6" cy="10" rx="1.7" ry="2.3"/><path d="M12 11.2c2.9 0 5.3 2.1 5.7 4.8.3 1.9-1.1 3.4-3 3.4-1.3 0-1.9-.6-2.7-.6s-1.4.6-2.7.6c-1.9 0-3.3-1.5-3-3.4.4-2.7 2.8-4.8 5.7-4.8z"/></svg>',
+  snake:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.6 5.6h9.9a3.2 3.2 0 0 1 0 6.4H7.4a3.2 3.2 0 0 0 0 6.4h7.2"/><circle cx="16.8" cy="18.4" r="2.5" fill="currentColor" stroke="none"/><path d="M19.6 18.4l2.2-1.1M19.6 18.4l2.2 1.1" stroke-width="1.6"/></svg>',
+  gift:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="1.6"/><path d="M4 12.5h16M12 9v11"/><path d="M12 9c-4 0-5.4-2-4.6-3.6C8.2 3.8 11 4.6 12 9zM12 9c4 0 5.4-2 4.6-3.6C15.8 3.8 13 4.6 12 9z"/></svg>',
+  chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.6a7.6 7.6 0 0 1-7.6 7.6c-1.3 0-2.5-.3-3.6-.9L4.4 19.6l1.3-5A7.6 7.6 0 1 1 21 11.6z"/><circle cx="9.6" cy="11.6" r="1" fill="currentColor" stroke="none"/><circle cx="13.4" cy="11.6" r="1" fill="currentColor" stroke="none"/><circle cx="17.2" cy="11.6" r="1" fill="currentColor" stroke="none"/></svg>'
+};
+/* Активные модули (порядок = sort главного экрана) и плановые. НОВЫЙ МОДУЛЬ в приложении →
+   добавить строку здесь и описание apps.<id> в T (см. ГАЙД-новое-субприложение.md). */
+var APPS=[
+  {id:"wishlist",color:"#ff3db0",icon:"cherry"},
+  {id:"reverse",color:"#ff7a3d",icon:"reverse"},
+  {id:"mood",color:"#ffd23b",icon:"smile"},
+  {id:"teeth",color:"#19e3ff",icon:"tooth"},
+  {id:"guess",color:"#a64bff",icon:"quiz"},
+  {id:"names",color:"#38e8a0",icon:"tag"},
+  {id:"rating",color:"#ffd23b",icon:"star"},
+  {id:"walk",color:"#38e8a0",icon:"paw"},
+  {id:"snake",color:"#19e3ff",icon:"snake"},
+  {id:"bank",color:"#ff4d6d",icon:"bank"},
+  {id:"shop",color:"#ff2bd6",icon:"gift"},
+  {id:"chat",color:"#3b6bff",icon:"chat"}
+];
+var SOON=[
+  {id:"days",color:"#3b6bff",icon:"calendar"},
+  {id:"find",color:"#19e3ff",icon:"search"},
+  {id:"museum",color:"#c0a0ff",icon:"museum"},
+  {id:"lost",color:"#2bf0c0",icon:"gem"}
+];
+var STEPC=[["#19e3ff","#3b6bff"],["#a64bff","#ff2bd6"],["#2bf0c0","#19e3ff"]];
+var FEATC=["#19e3ff","#ffd23b","#ff2bd6","#a64bff","#ff4d6d","#2bf0c0"];
+var logOpen=false;
+
+function appCard(a,soon){
+  var L=T[cur];
+  return '<div class="app'+(soon?' soon':'')+'" style="--c:'+a.color+'">'
+    +'<span class="ic">'+ICONS[a.icon]+'</span><span><span class="t">'+esc(L.tiles[a.id])
+    +(soon?'<span class="badge">'+esc(L.soonSep)+'</span>':'')+'</span>'
+    +'<span class="d" style="display:block">'+esc(L.apps[a.id])+'</span></span></div>';
+}
+function renderLog(){
+  var L=T[cur], box=document.getElementById('log'), btn=document.getElementById('logMore');
+  var all=(window.RT_CHANGELOG||[]), list=logOpen?all:all.slice(0,6);
+  box.innerHTML=list.map(function(e){
+    return '<div class="logRow"><span class="v">v'+esc(e.v)+'</span><span class="d">'+esc(e.t[cur]||e.t.en)+'</span><span class="dt">'+esc(e.d)+'</span></div>';
+  }).join('')||'<div class="logRow"><span class="d">…</span></div>';
+  if(all.length>6){ btn.hidden=false; btn.textContent=logOpen?L.showLess:L.showAll; } else btn.hidden=true;
+}
+function render(){
+  var L=T[cur];
+  document.documentElement.lang=cur;
+  document.title=L.metaTitle;
+  document.querySelector('meta[name="description"]').setAttribute('content',L.metaDesc);
+  document.getElementById('topLogin').textContent=L.signIn;
+  document.getElementById('heroTag').textContent=L.heroTag;
+  document.getElementById('heroSub').textContent=L.heroSub;
+  document.getElementById('cta').textContent=L.cta+' →';
+  document.getElementById('ctaNote').textContent=L.ctaNote;
+  document.getElementById('chips').innerHTML=L.chips.map(function(c){ return '<span>'+esc(c)+'</span>'; }).join('');
+  document.getElementById('howH').textContent=L.howH;
+  document.getElementById('howSub').textContent=L.howSub;
+  document.getElementById('how').innerHTML=L.how.map(function(s,i){
+    return '<div class="step" style="--c1:'+STEPC[i][0]+';--c2:'+STEPC[i][1]+'"><span class="n">'+(i+1)+'</span>'
+      +'<div class="t">'+esc(s[0])+'</div><div class="d">'+esc(s[1])+'</div></div>';
+  }).join('');
+  document.getElementById('appsH').textContent=L.appsH;
+  document.getElementById('appsSub').textContent=L.appsSub;
+  document.getElementById('appsGrid').innerHTML=APPS.map(function(a){ return appCard(a,false); }).join('');
+  document.getElementById('soonSep').textContent=L.soonSep;
+  document.getElementById('soonGrid').innerHTML=SOON.map(function(a){ return appCard(a,true); }).join('');
+  document.getElementById('parH').textContent=L.parH;
+  document.getElementById('parSub').textContent=L.parSub;
+  document.getElementById('feats').innerHTML=L.feats.map(function(f,i){
+    return '<div class="feat" style="--fc:'+FEATC[i]+'"><div class="t"><span class="fdot"></span>'+esc(f[0])+'</div><div class="d">'+esc(f[1])+'</div></div>';
+  }).join('');
+  document.getElementById('logH').textContent=L.logH;
+  document.getElementById('logSub').textContent=L.logSub;
+  document.getElementById('footNote').textContent=L.footNote;
+  var seg=document.getElementById('langSeg');
+  seg.innerHTML=LANGS.map(function(l){
+    return '<button type="button"'+(l===cur?' class="on"':'')+' data-l="'+l+'">'+l.toUpperCase()+'</button>';
+  }).join('');
+  renderLog();
+}
+document.getElementById('langSeg').addEventListener('click',function(e){
+  var b=e.target.closest('button[data-l]'); if(!b) return;
+  cur=b.getAttribute('data-l');
+  try{ localStorage.setItem('robtop_locale',cur); }catch(err){} // общий ключ — язык переедет в приложение
+  render();
+});
+document.getElementById('logMore').addEventListener('click',function(){ logOpen=!logOpen; renderLog(); });
+document.getElementById('ver').textContent=(window.RT_CHANGELOG&&window.RT_CHANGELOG[0])?('v'+window.RT_CHANGELOG[0].v):'';
+render();
+</script>
+</body>
+</html>

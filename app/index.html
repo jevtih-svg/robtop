@@ -24,7 +24,7 @@ document.addEventListener('dblclick',function(e){e.preventDefault()},{passive:fa
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- subset: cyrillic (RU) + latin/latin-ext (EN, LV: ā č ē ģ ī ķ ļ ņ š ū ž) -->
 <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Rubik:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap&subset=cyrillic,cyrillic-ext,latin,latin-ext" rel="stylesheet">
-<link rel="stylesheet" href="core/ui.css?v=2026.06.07.65">
+<link rel="stylesheet" href="core/ui.css?v=2026.06.07.67">
 </head>
 <body data-view="home">
 <canvas id="bg"></canvas>
@@ -62,8 +62,9 @@ document.addEventListener('dblclick',function(e){e.preventDefault()},{passive:fa
 <!-- FAB (общий, управляется модулями через sdk.ui.fab; aria-label выставляет shell при показе) -->
 <button class="fab" id="fab" aria-label="Action"></button>
 
-<!-- ⚙ настройки — глобальная фиксированная кнопка (кластер [🔔][⚙] вверху справа; 🔔 рисует
-     core/notify.js). Видна на главном экране ребёнка и родительском дашборде (CSS .gear). -->
+<!-- ⚙ настройки — глобальная кнопка В ШАПКЕ (кластер [🔔][⚙] вверху справа; 🔔 рисует
+     core/notify.js; absolute с v.67 — уезжает со скроллом, не висит над контентом).
+     Видна на главном экране ребёнка и родительском дашборде (CSS .gear). -->
 <button class="gear" id="gearBtn" data-i18n-aria="settings.open" aria-label="Settings">⚙</button>
 
 <!-- Таббар родительского дашборда (рисует core/parent.js). Живёт в body, НЕ в #parent:
@@ -83,18 +84,18 @@ document.addEventListener('dblclick',function(e){e.preventDefault()},{passive:fa
 <div class="demo-badge" id="demoBadge" data-i18n="common.demo">demo</div>
 
 <!-- Индикатор версии (слева внизу). Меняй число при КАЖДОМ обновлении — видно, залилась ли новая версия на сайт. -->
-<div class="appver" id="appver">v2026.06.07.65</div>
+<div class="appver" id="appver">v2026.06.07.67</div>
 
 <!-- Версия приложения = маркер деплоя и cache-busting. Меняй ТОЛЬКО это число при каждом обновлении (11 мест, включая notify).
      + ЛЕНДИНГ: запись о версии в changelog.js (журнал «Что нового») и ?v= у changelog.js в landing.html. -->
-<script>window.RT_VER="2026.06.07.65";</script>
-<script src="core/i18n.js?v=2026.06.07.65"></script>
-<script src="core/strings.js?v=2026.06.07.65"></script>
-<script src="core/bg.js?v=2026.06.07.65"></script>
-<script src="core/sdk.js?v=2026.06.07.65"></script>
-<script src="core/loader.js?v=2026.06.07.65"></script>
-<script src="core/notify.js?v=2026.06.07.65"></script>
-<script src="core/parent.js?v=2026.06.07.65"></script>
-<script src="core/shell.js?v=2026.06.07.65"></script>
+<script>window.RT_VER="2026.06.07.67";</script>
+<script src="core/i18n.js?v=2026.06.07.67"></script>
+<script src="core/strings.js?v=2026.06.07.67"></script>
+<script src="core/bg.js?v=2026.06.07.67"></script>
+<script src="core/sdk.js?v=2026.06.07.67"></script>
+<script src="core/loader.js?v=2026.06.07.67"></script>
+<script src="core/notify.js?v=2026.06.07.67"></script>
+<script src="core/parent.js?v=2026.06.07.67"></script>
+<script src="core/shell.js?v=2026.06.07.67"></script>
 </body>
 </html>
