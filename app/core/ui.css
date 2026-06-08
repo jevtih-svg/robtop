@@ -169,7 +169,7 @@ body{
 .rt-nav{display:none;position:fixed;left:0;right:0;bottom:0;z-index:14;max-width:480px;margin:0 auto;gap:2px;
   min-height:var(--kidbar-total);padding:6px 8px calc(6px + var(--safe-bottom));
   background:var(--tabbar-grad);border-top:1px solid rgba(255,255,255,.09);backdrop-filter:blur(8px)}
-body[data-view="home"] .rt-nav,body[data-view="module"] .rt-nav,body[data-view="settings"] .rt-nav,body[data-view="notifications"] .rt-nav{display:flex}
+body[data-view="home"] .rt-nav,body[data-view="module"] .rt-nav,body[data-view="settings"] .rt-nav,body[data-view="notifications"] .rt-nav,body[data-view="parent"] .rt-nav{display:flex}
 .rt-nav.rt-bar-hide{display:none}
 .rt-nav-b{flex:1;min-width:0;position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;
   border:none;background:none;cursor:pointer;font-family:inherit;font-size:10px;font-weight:800;letter-spacing:.2px;
@@ -215,9 +215,8 @@ body[data-view="module"] .hud{display:none}
 .gear{position:absolute;top:calc(30px + var(--safe-top));right:6px;z-index:15;width:42px;height:42px;border-radius:13px;
   display:none;place-items:center;cursor:pointer;font-size:20px;color:var(--chrome-ink);
   background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14);box-shadow:0 0 18px -7px var(--cyan)}
-/* ⚙ сверху — ТОЛЬКО на родительском дашборде (Ф1; уйдёт в нижнее меню в Ф3). У ребёнка
-   настройки — вкладка нижнего меню, верх чистый. */
-body[data-view="parent"] .gear{display:grid}
+/* ⚙ сверху больше НЕ показываем нигде — настройки у всех (ребёнок и родитель) во вкладке
+   нижнего меню SETTINGS (ПЛАН-нижнее-меню.md Ф3). .gear база display:none. */
 .gear:active{transform:scale(.93)}
 
 .apps{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:18px}
@@ -581,8 +580,10 @@ button.pd-ev{cursor:pointer;transition:border-color .15s} button.pd-ev:active{bo
    заполненная анимация .view.active (transform) делает секцию containing block в Chrome,
    и fixed внутри неё позиционировался от низа ДЛИННОГО списка, а не экрана. Виден только
    на родительском виде. */
+/* старый родительский таббар (#pdTabs) скрыт — его заменило ЕДИНОЕ нижнее меню (.rt-nav),
+   которое теперь видно и на родителе (ПЛАН-нижнее-меню.md Ф3). parent.js ещё рендерит в #pdTabs,
+   но он невидим; вкладки дашборда переключает shell.navTo → RT.Parent.setTab. */
 .pd-tabbar{display:none}
-body[data-view="parent"] .pd-tabbar{display:flex}
 .pd-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:14;max-width:480px;margin:0 auto;gap:4px;
   padding:8px 14px calc(10px + var(--safe-bottom));
   background:var(--tabbar-grad);border-top:1px solid rgba(255,255,255,.09);backdrop-filter:blur(8px)}
@@ -731,8 +732,10 @@ body[data-view="home"] .ntf-bell,body[data-view="parent"] .ntf-bell{right:56px}
 body[data-view="lock"] .ntf-bell,body.demo .ntf-bell,.ntf-bell.ntf-hide{display:none}
 /* 🔔 сверху — ТОЛЬКО на родительском дашборде (Ф1; уйдёт в нижнее меню в Ф3). У ребёнка
    оповещения — вкладка нижнего меню; верх приложения чистый. */
-body[data-view="home"] .ntf-bell,body[data-view="module"] .ntf-bell,body[data-view="settings"] .ntf-bell{display:none}
-body[data-view="parent"] .pd-top{padding-right:100px;padding-top:calc(30px + var(--safe-top))} /* контент шапки не лезет под кластер [🔔][⚙]; верх выровнен с ним */
+body[data-view="home"] .ntf-bell,body[data-view="module"] .ntf-bell,body[data-view="settings"] .ntf-bell,body[data-view="parent"] .ntf-bell{display:none}
+body[data-view="parent"] .pd-top{padding-right:var(--gutter);padding-top:calc(30px + var(--safe-top))} /* 🔔/⚙ ушли в нижнее меню — правый резерв под кластер больше не нужен (Ф3) */
+/* то же для дашбордной шапки .pdv-top (её padding-right:100 инжектит parent.js): выше специфичность (#parent) перебивает инлайн */
+#parent .pdv-top{padding-right:var(--gutter)}
 body[data-view="settings"] .set-top{padding-right:48px}
 .pd-kid .st{white-space:nowrap;overflow:hidden;text-overflow:ellipsis} /* «👁 Только просмотр · активность…» не ломает строку */
 .ntf-badge{position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;border-radius:10px;display:none;

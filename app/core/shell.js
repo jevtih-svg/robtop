@@ -382,6 +382,7 @@ window.RobTop = window.RobTop || {};
     if(parentView) parentView.classList.add("active");
     window.scrollTo(0,0); fabDestroy();
     if(RT.Parent) RT.Parent.show();
+    setNavActive(); /* подсветить активную вкладку (apps/bank/chat) единого меню */
   }
 
   /* ---- экран входа (lock): на сервере без сессии приложение закрыто ---- */
@@ -702,21 +703,33 @@ window.RobTop = window.RobTop || {};
   function closeSettings(){ if(!isSettingsOpen()) return; showHome(); }
 
   /* ---- ЕДИНОЕ НИЖНЕЕ МЕНЮ (#kidBar.rt-nav): маршрутизация 5 вкладок (ПЛАН-нижнее-меню.md).
-     APPS=сетка, BANK/CHAT=модули прямо, NOTIFICATIONS=центр (Ф1 — пока шторка), SETTINGS=настройки.
-     У ребёнка (home/модуль/настройки). Родитель — свой таббар до Ф3. ---- */
+     РОЛЕ-ОСОЗНАННО: у ребёнка APPS=сетка, BANK/CHAT=модули прямо; у РОДИТЕЛЯ apps/bank/chat —
+     вкладки дашборда (RT.Parent.setTab, его #pdTabs скрыт). NOTIFICATIONS=центр (Ф1 — пока шторка),
+     SETTINGS=настройки — общие для обеих ролей. Видно на всех экранах (Ф3). ---- */
+  function parentMode(){ return !demo && isParent() && !!RT.Parent; }
   function navTo(tab){
+    if(tab==="notifications"){ if(RT.Notify && RT.Notify.open) RT.Notify.open(); setNavActive(); return; }
+    if(tab==="settings"){ openSettings(); return; }
+    if(parentMode()){
+      /* apps/bank/chat — на дашборд и переключить его вкладку */
+      if(RT.current()) RT.close();                                    /* закрыть открытый модуль → showParent */
+      else if(body.getAttribute("data-view")!=="parent") showParent();
+      if(RT.Parent.setTab) RT.Parent.setTab(tab);
+      setNavActive(); return;
+    }
     if(tab==="apps"){ if(RT.current()) RT.close(); else showHome(); }
     else if(tab==="bank"){ if(RT.current()!=="bank") RT.open("bank"); }
     else if(tab==="chat"){ if(RT.current()!=="chat") RT.open("chat"); }
-    else if(tab==="notifications"){ if(RT.Notify && RT.Notify.open) RT.Notify.open(); }
-    else if(tab==="settings"){ openSettings(); }
     setNavActive();
   }
   function setNavActive(){
     if(!kidBarEl) return;
-    var v=body.getAttribute("data-view"), cur=RT.current();
-    var act = cur==="bank" ? "bank" : cur==="chat" ? "chat"
-            : v==="settings" ? "settings" : "apps"; /* дом и любой другой модуль → APPS */
+    var v=body.getAttribute("data-view"), cur=RT.current(), act;
+    if(v==="settings") act="settings";
+    else if(parentMode() && v==="parent") act=(RT.Parent.tab && RT.Parent.tab()) || "apps";
+    else if(cur==="bank") act="bank";
+    else if(cur==="chat") act="chat";
+    else act="apps"; /* дом и любой другой открытый модуль → APPS */
     Array.prototype.forEach.call(kidBarEl.querySelectorAll(".rt-nav-b"),function(b){
       b.classList.toggle("on", b.getAttribute("data-nav")===act);
     });

@@ -904,6 +904,10 @@ window.RobTop = window.RobTop || {};
     moreJournal: function(){}, /* журнал убран — no-op для совместимости */
     active: active,
     childId: function(){ return S.childId || savedChild(); },
-    children: function(){ return (S.data && S.data.children) || []; }
+    children: function(){ return (S.data && S.data.children) || []; },
+    /* ЕДИНОЕ НИЖНЕЕ МЕНЮ (shell.navTo, ПЛАН-нижнее-меню.md Ф3): дашборд переключает
+       вкладки apps/bank/chat из общего бара (свой #pdTabs скрыт CSS). */
+    setTab: function(tb){ if(tb && tb!==S.tab){ S.tab=tb; S.mod=null; render(); window.scrollTo(0,0); } },
+    tab: function(){ return S.tab; }
   };
 })(window.RobTop);
