@@ -2733,10 +2733,11 @@
     sdk=theSdk; root=rootEl; E={};
     ratings=[]; meta=null; metaId=null; metaLoaded=false; tab="funny"; busy=false; lastSaved=null;
     var title=sdk.i18n.t("tile.names");
-    root.innerHTML='<div class="fn">'
-      +'<div class="fn-header"><button class="back" id="fnBack" aria-label="'+esc(sdk.i18n.t("common.back"))+'">'+BACK_IC+'</button>'
-        +'<div class="fn-head-main"><div class="fn-title">'+esc(title)+'</div>'
-        +'<div class="fn-sub">'+esc(t("subtitle"))+'</div></div></div>'
+    var body=sdk.ui.frame({
+      titleHtml:'<div class="fn-title">'+esc(title)+'</div><div class="fn-sub">'+esc(t("subtitle"))+'</div>',
+      backLabel:sdk.i18n.t("common.back")
+    }).body;
+    body.innerHTML='<div class="fn">'
       +'<div id="fnStage"></div>'
       +'<div class="store-section">'+esc(t("statsTitle"))+'</div>'
       +'<div class="fn-stats" id="fnStats"></div>'
@@ -2749,7 +2750,6 @@
     +'</div>';
     E.stage=root.querySelector("#fnStage"); E.stats=root.querySelector("#fnStats");
     E.tabs=root.querySelector("#fnTabs"); E.list=root.querySelector("#fnList");
-    root.querySelector("#fnBack").addEventListener("click",function(){ sdk.ui.back(); });
     /* делегирование — на внутреннем .fn (пересоздаётся при mount), НЕ на root (урок rating) */
     root.querySelector(".fn").addEventListener("click",function(e){
       var act=e.target.closest("[data-act]");

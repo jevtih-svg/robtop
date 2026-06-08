@@ -326,17 +326,18 @@
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; items=[]; sel=null; form=blankForm();
     var title=sdk.i18n.t("tile.mood");
-    root.innerHTML='<div class="md">'
-      +'<div class="md-header"><button class="back" id="mdBack" aria-label="'+esc(t("common.back"))+'">'+BACK_IC+'</button>'
-      +'<div class="md-head-main"><div class="md-title"><span class="sic">'+FACE.happy+'</span> '+esc(title)+'</div>'
-      +'<div class="md-sub">'+esc(t("subtitle"))+'</div></div>'
-      +'<button class="hbtn" id="mdStats" aria-label="'+esc(t("aria.stats"))+'">'+STATS_IC+'</button></div>'
+    /* guardrails: шапку строит общая рамка (sdk.ui.frame); модуль наполняет только body */
+    var body=sdk.ui.frame({
+      titleHtml:'<div class="md-title"><span class="sic">'+FACE.happy+'</span> '+esc(title)+'</div>'
+        +'<div class="md-sub">'+esc(t("subtitle"))+'</div>',
+      backLabel:t("common.back"),
+      actions:[{ icon:"stats", id:"mdStats", label:t("aria.stats"), onClick:openStats }]
+    }).body;
+    body.innerHTML='<div class="md">'
       +'<div id="mdState"></div>'
       +'<div class="store-section">'+esc(t("historyTitle"))+'</div><div class="md-list" id="mdList"></div>'
     +'</div>';
-    E.state=root.querySelector("#mdState"); E.list=root.querySelector("#mdList");
-    root.querySelector("#mdBack").addEventListener("click",function(){ sdk.ui.back(); });
-    root.querySelector("#mdStats").addEventListener("click",openStats);
+    E.state=body.querySelector("#mdState"); E.list=body.querySelector("#mdList");
     root.addEventListener("click",function(e){
       var face=e.target.closest("[data-face]");
       if(face){

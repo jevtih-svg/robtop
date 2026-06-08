@@ -305,6 +305,9 @@ window.RobTop = window.RobTop || {};
         chime:    function(){ shell.chime(); },
         hud:      function(o){ shell.hud(o); },
         fab:      function(label,onClick){ return shell.fab(label,onClick); },
+        /* frame(opts) — ЕДИНАЯ рамка экрана модуля (guardrails): строит шапку (‹ назад ·
+           заголовок · действия) и возвращает { body } для контента. Канон — ГАЙД-UI-guardrails.md. */
+        frame:    function(opts){ return shell.frame(opts); },
         back:     function(){ RT.close(); },
         enableDrag: function(sheet,close){ shell.enableDrag(sheet,close); }
       },

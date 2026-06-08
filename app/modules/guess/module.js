@@ -506,11 +506,12 @@ var POOL=[
     sdk=theSdk; root=rootEl; E={}; rounds=[]; meta=null; metaId=null; metaLoaded=false;
     mode="idle"; game=null; histFilter="all"; curSheet=null; saving=false;
     var title=sdk.i18n.t("tile.guess");
-    root.innerHTML='<div class="gn">'
-      +'<div class="gn-header"><button class="back" id="gnBack" aria-label="'+esc(t("common.back"))+'">'+BACK_IC+'</button>'
-        +'<div class="gn-head-main"><div class="gn-title">'+esc(title)+'</div>'
-        +'<div class="gn-sub">'+esc(t("subtitle"))+'</div></div>'
-        +'<button class="hbtn" id="gnStats" aria-label="'+esc(t("aria.stats"))+'">'+STATS_IC+'</button></div>'
+    var body=sdk.ui.frame({
+      titleHtml:'<div class="gn-title">'+esc(title)+'</div><div class="gn-sub">'+esc(t("subtitle"))+'</div>',
+      backLabel:t("common.back"),
+      actions:[{ icon:"stats", id:"gnStats", label:t("aria.stats"), onClick:openStats }]
+    }).body;
+    body.innerHTML='<div class="gn">'
       +'<div id="gnStage"></div>'
       +(sdk.can("edit")
         ?'<div class="gn-legend"><span class="lg win">'+esc(t("legWin"))+'</span><span class="lg wrong">'+esc(t("legWrong"))+'</span><span class="lg to">'+esc(t("legTimeout"))+'</span></div>'
@@ -525,8 +526,6 @@ var POOL=[
       +'<div class="gn-list" id="gnList"></div>'
     +'</div>';
     E.stage=root.querySelector("#gnStage"); E.filter=root.querySelector("#gnFilter"); E.list=root.querySelector("#gnList");
-    root.querySelector("#gnBack").addEventListener("click",function(){ sdk.ui.back(); });
-    root.querySelector("#gnStats").addEventListener("click",openStats);
     /* делегирование — на внутреннем .gn (пересоздаётся при каждом mount), НЕ на root:
        root живёт между mount'ами, и слушатели на нём наслаивались бы (урок rating) */
     root.querySelector(".gn").addEventListener("click",function(e){

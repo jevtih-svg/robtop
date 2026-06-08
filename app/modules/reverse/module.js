@@ -98,15 +98,16 @@
 
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; items=[];
-    root.innerHTML='<div class="rev">'
-      +'<div class="rev-header"><button class="back" id="revBack" aria-label="'+esc(t("common.back"))+'">'+BACK_IC+'</button>'
-      +'<div><div class="rev-title">'+esc(t("title"))+'</div><div class="rev-sub">'+esc(t("subtitle"))+'</div></div></div>'
+    var body=sdk.ui.frame({
+      titleHtml:'<div class="rev-title">'+esc(t("title"))+'</div><div class="rev-sub">'+esc(t("subtitle"))+'</div>',
+      backLabel:t("common.back")
+    }).body;
+    body.innerHTML='<div class="rev">'
       +'<div class="rev-card"><input class="rev-in" id="revIn" type="text" maxlength="60" placeholder="'+esc(t("inPh"))+'" autocomplete="off"><div class="rev-out empty" id="revOut">'+esc(t("outEmpty"))+'</div></div>'
       +'<div class="sheet-actions" style="margin-top:14px"><button class="btn" id="revSpeak" style="flex:0 0 46%">'+esc(t("speak"))+'</button><button class="btn btn-primary" id="revSave">'+esc(t("common.save"))+'</button></div>'
       +'<div class="store-section">'+esc(t("sectionHistory"))+'</div><div class="rev-list" id="revList"></div>'
     +'</div>';
     E.in=root.querySelector("#revIn"); E.out=root.querySelector("#revOut"); E.list=root.querySelector("#revList");
-    root.querySelector("#revBack").addEventListener("click",function(){ sdk.ui.back(); });
     E.in.addEventListener("input",renderOut);
     E.in.addEventListener("keydown",function(e){ if(e.key==="Enter") saveCurrent(); });
     root.querySelector("#revSave").addEventListener("click",saveCurrent);

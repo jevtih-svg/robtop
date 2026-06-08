@@ -95,7 +95,7 @@ window.RobTop = window.RobTop || {};
   /* ---- DOM ---- */
   var body, appsEl, homeView, moduleView, lockView, parentView, settingsView, fabEl, toastEl, demoBadge,
       hudEl,hudL,hudCnum,hudClbl,hudRnum,hudRlbl, settingsBody,
-      storeOverlay, storeBody, gearBtn, homeJgl=null;
+      storeOverlay, storeBody, gearBtn, kidBarEl, homeJgl=null;
 
   /* ================= общие UI-сервисы ================= */
   function buzz(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
@@ -132,7 +132,7 @@ window.RobTop = window.RobTop || {};
   }
   /* hud({hidden:true}) прячет HUD на время полноэкранных сцен модуля (игра в змейке);
      ЛЮБОЙ обычный вызов hud(values) снимает скрытие — чужой модуль не унаследует спрятанный HUD. */
-  function hud(o){ o=o||{}; if(hudEl) hudEl.classList.toggle("hud-off", o.hidden===true); if(RT.Notify) RT.Notify.hide(o.hidden===true); if(o.left!=null) hudL.innerHTML=o.left; if(o.cNum!=null) hudCnum.textContent=o.cNum; if(o.cLbl!=null) hudClbl.textContent=o.cLbl; if(o.rNum!=null) hudRnum.textContent=o.rNum; if(o.rLbl!=null) hudRlbl.textContent=o.rLbl; }
+  function hud(o){ o=o||{}; if(hudEl) hudEl.classList.toggle("hud-off", o.hidden===true); if(RT.Notify) RT.Notify.hide(o.hidden===true); if(kidBarEl && o.hidden!=null) kidBarEl.classList.toggle("rt-bar-hide", o.hidden===true); if(o.left!=null) hudL.innerHTML=o.left; if(o.cNum!=null) hudCnum.textContent=o.cNum; if(o.cLbl!=null) hudClbl.textContent=o.cLbl; if(o.rNum!=null) hudRnum.textContent=o.rNum; if(o.rLbl!=null) hudRlbl.textContent=o.rLbl; }
   /* ---- скрытый реордер (long-press ~0.55с → jiggle + drag): главный экран и дашборд ----
      Никакого видимого UI до жеста: удержал элемент — режим «дрожания», тащишь — порядок
      меняется, отпустил — onCommit(ids) сохраняет. Выход — плавающая кнопка ✓ или навигация
@@ -282,6 +282,56 @@ window.RobTop = window.RobTop || {};
     return { show:function(){ fabEl.classList.add("show"); }, hide:function(){ fabEl.classList.remove("show"); }, destroy:fabDestroy };
   }
   function fabDestroy(){ fabEl.classList.remove("show"); fabEl.onclick=null; fabEl.innerHTML=""; }
+
+  /* ===== ICONS — общий реестр иконок шапки (раньше дублировались в КАЖДОМ модуле) ===== */
+  var ICONS={
+    back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+    stats:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20v-6M12 20V8M19 20V4"/></svg>',
+    statsBars:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>',
+    parent:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>',
+    plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'
+  };
+  /* ===== frame(opts) — ЕДИНАЯ рамка экрана модуля (guardrails; канон ГАЙД-UI-guardrails.md).
+     Строит .rt-hdr (‹ назад · заголовок · действия) в #module-view и возвращает .rt-body,
+     КУДА модуль кладёт контент. Модуль больше НЕ рисует свою шапку. opts:
+       title     — простой текстовый заголовок, ЛИБО
+       titleHtml — готовая разметка заголовка (модуль сохраняет своё оформление: иконка/подзаголовок);
+       back      — true(деф)|false|function (своя обработка; деф = RT.close);
+       backLabel — aria кнопки назад (деф common.back);
+       actions   — [{icon:'stats'|'statsBars'|'parent'|'plus'|<svg-строка>, label, onClick, id, className}],
+                   falsy-элементы пропускаются. Возврат: { body, header, actions(el) }. */
+  function frame(opts){
+    opts=opts||{};
+    var view=moduleView; view.innerHTML="";
+    var hdr=document.createElement("header"); hdr.className="rt-hdr";
+    if(opts.back!==false){
+      var bk=document.createElement("button"); bk.type="button"; bk.className="back rt-back";
+      bk.setAttribute("aria-label", opts.backLabel || t("common.back")); bk.innerHTML=ICONS.back;
+      bk.addEventListener("click", typeof opts.back==="function" ? opts.back : function(){ RT.close(); });
+      hdr.appendChild(bk);
+    }
+    var main=document.createElement("div"); main.className="rt-head-main";
+    if(opts.titleHtml!=null) main.innerHTML=opts.titleHtml;
+    else { var h=document.createElement("div"); h.className="rt-title"; h.textContent=opts.title||""; main.appendChild(h); }
+    hdr.appendChild(main);
+    var acts=document.createElement("div"); acts.className="rt-actions";
+    (opts.actions||[]).forEach(function(a){
+      if(!a) return;
+      var btn=document.createElement("button"); btn.type="button"; btn.className="hbtn"+(a.className?(" "+a.className):"");
+      btn.innerHTML=ICONS[a.icon]||a.icon||"";
+      if(a.label) btn.setAttribute("aria-label", a.label);
+      if(a.id) btn.id=a.id;
+      if(a.onClick) btn.addEventListener("click", a.onClick);
+      acts.appendChild(btn);
+    });
+    /* rightHtml — произвольная разметка справа в шапке (не иконка-кнопка): напр. баланс в Магазине */
+    if(opts.rightHtml) acts.insertAdjacentHTML("beforeend", opts.rightHtml);
+    hdr.appendChild(acts);
+    var body=document.createElement("div"); body.className="rt-body";
+    view.appendChild(hdr); view.appendChild(body);
+    return { body:body, header:hdr, actions:acts };
+  }
+
   function confirm(opts){
     opts=opts||{};
     return new Promise(function(resolve){
@@ -322,7 +372,7 @@ window.RobTop = window.RobTop || {};
     if(!demo && isParent() && RT.Parent){ showParent(); return; }
     body.setAttribute("data-view","home"); if(lockView) lockView.classList.remove("active"); hideParent(); hideSettings(); moduleView.classList.remove("active"); homeView.classList.add("active"); window.scrollTo(0,0); fabDestroy(); homeHud();
   }
-  function showModule(){ screenSave({v:"module",id:RT._current||null}); body.setAttribute("data-view","module"); if(lockView) lockView.classList.remove("active"); hideParent(); hideSettings(); homeView.classList.remove("active"); moduleView.classList.add("active"); window.scrollTo(0,0); }
+  function showModule(){ screenSave({v:"module",id:RT._current||null}); body.setAttribute("data-view","module"); if(lockView) lockView.classList.remove("active"); hideParent(); hideSettings(); homeView.classList.remove("active"); moduleView.classList.add("active"); if(kidBarEl) kidBarEl.classList.remove("rt-bar-hide"); window.scrollTo(0,0); }
   /* родительский дашборд (core/parent.js); read-only поверхность вместо детского дома */
   function showParent(){
     body.setAttribute("data-view","parent");
@@ -1443,6 +1493,7 @@ window.RobTop = window.RobTop || {};
     hudEl=document.getElementById("hud"); hudL=document.getElementById("hudL"); hudCnum=document.getElementById("hudCnum"); hudClbl=document.getElementById("hudClbl"); hudRnum=document.getElementById("hudRnum"); hudRlbl=document.getElementById("hudRlbl");
     settingsView=document.getElementById("settings");
     storeOverlay=document.getElementById("storeOverlay"); storeBody=document.getElementById("storeBody"); gearBtn=document.getElementById("gearBtn");
+    kidBarEl=document.getElementById("kidBar");
   }
   function wire(){
     appsEl.addEventListener("click",function(e){
@@ -1454,6 +1505,11 @@ window.RobTop = window.RobTop || {};
     /* скрытый реордер плиток (только активные; «скоро» и скрытые не двигаются) */
     homeJgl=makeJiggle(appsEl,{ items:".tile:not(.soon):not(.hid)", skip:".jgl-eye", onCommit:applyTileOrder });
     gearBtn.addEventListener("click",openSettings);
+    /* детский нижний бар: «Домой» закрывает модуль (как кнопка назад в шапке), ⚙ открывает настройки */
+    if(kidBarEl){
+      var kh=kidBarEl.querySelector("#kidHome"); if(kh) kh.addEventListener("click",function(){ if(RT.current()) RT.close(); });
+      var kg=kidBarEl.querySelector("#kidGear"); if(kg) kg.addEventListener("click",openSettings);
+    }
     storeOverlay.addEventListener("click",function(e){ if(e.target===storeOverlay) closeStore(); });
     var sg=storeOverlay.querySelector(".grip"); if(sg) sg.addEventListener("click",closeStore);
     enableDrag(storeOverlay.querySelector(".sheet"), closeStore);
@@ -1482,7 +1538,7 @@ window.RobTop = window.RobTop || {};
   RT._shell={
     user:{name:"Артём", role:"child"}, demo:demo, tokens:{},
     moduleView:moduleViewEl, showHome:showHome, showModule:showModule,
-    toast:toast, buzz:buzz, chime:chime, hud:hud, fab:fab, fabDestroy:fabDestroy,
+    toast:toast, buzz:buzz, chime:chime, hud:hud, fab:fab, fabDestroy:fabDestroy, frame:frame,
     confirm:confirm, sheet:sheet, enableDrag:enableDrag, setDemo:setDemo,
     /* для родительского дашборда (core/parent.js): настройки, иконки плиток, роль,
        скрытый реордер (makeJiggle) + сохранение личного порядка (applyTileOrder) +

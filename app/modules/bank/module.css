@@ -1,7 +1,5 @@
 /* RobTop — модуль «Копилка». Скоуп [data-mod="bank"], классы bk-*. Акцент — неон-розовый/красный var(--red). */
-[data-mod="bank"] .bk{padding-bottom:140px}
-[data-mod="bank"] .bk-header{display:flex;align-items:center;gap:12px;padding:calc(20px + env(safe-area-inset-top)) 2px 8px}
-[data-mod="bank"] .bk-head-main{flex:1;min-width:0}
+/* guardrails: рамка (.rt-hdr/.rt-body) даёт раскладку шапки и нижний резерв; здесь — только оформление заголовка */
 [data-mod="bank"] .bk-title{font-family:var(--font-display);font-size:24px;color:#fff;
   text-shadow:0 0 12px color-mix(in srgb,var(--red) 80%,transparent), 0 0 26px color-mix(in srgb,var(--magenta) 35%,transparent)}
 [data-mod="bank"] .bk-sub{margin:0;color:var(--muted);font-weight:600;font-size:13px}

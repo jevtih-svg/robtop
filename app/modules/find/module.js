@@ -502,15 +502,18 @@
   }
 
   /* =================== ШАПКА / НАВИГАЦИЯ =================== */
+  /* guardrails: find пересоздаёт весь экран (камера/раунды/родитель), поэтому НЕ использует
+     sdk.ui.frame(), но его шапка — стандартная .rt-hdr (единый верх/safe-area, кнопка .back). */
   function head(title, sub, internalBack){
-    return '<div class="find-head"><button class="hbtn" id="fdBack" aria-label="back">'+BACK_IC+'</button>'
-      +'<div><div class="find-title">'+esc(title)+'</div>'+(sub?'<div class="find-sub">'+esc(sub)+'</div>':'')+'</div></div>';
+    return '<header class="rt-hdr"><button class="back rt-back" id="fdBack" aria-label="'+esc(t("common.back"))+'">'+BACK_IC+'</button>'
+      +'<div class="rt-head-main"><div class="find-title">'+esc(title)+'</div>'+(sub?'<div class="find-sub">'+esc(sub)+'</div>':'')+'</div></header>';
   }
   function bindBack(fn){ var b=root.querySelector("#fdBack"); if(b) b.onclick=fn||function(){ sdk.ui.back(); }; }
 
   /* =================== MOUNT / UNMOUNT =================== */
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; E={}; destroyed=false; run=null; ptab="pending"; subs=[];
+    sdk.ui.hud({hidden:true}); /* guardrails: find управляет низом сам (камера/кнопки) — детский бар не показываем */
     root.innerHTML='<div class="find-empty">'+esc(t("loading"))+'</div>';
     Promise.all([loadMeta(), loadSubs()]).then(function(){
       if(destroyed) return;

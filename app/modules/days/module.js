@@ -274,10 +274,11 @@
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; items=[]; form=blankForm(); fabH=null;
     var title=sdk.i18n.t("tile.days");
-    root.innerHTML='<div class="day">'
-      +'<div class="day-header"><button class="back" id="dyBack" aria-label="'+esc(t("common.back"))+'">'+BACK_IC+'</button>'
-      +'<div class="day-head-main"><div class="day-title"><span class="sic">'+CAL_IC+'</span> '+esc(title)+'</div>'
-      +'<div class="day-sub">'+esc(t("subtitle"))+'</div></div></div>'
+    var body=sdk.ui.frame({
+      titleHtml:'<div class="day-title"><span class="sic">'+CAL_IC+'</span> '+esc(title)+'</div><div class="day-sub">'+esc(t("subtitle"))+'</div>',
+      backLabel:t("common.back")
+    }).body;
+    body.innerHTML='<div class="day">'
       +'<div id="dyState"></div>'
       +'<div class="store-section" id="dyActiveSec">'+esc(t("activeSec"))+'</div>'
       +'<div class="day-list" id="dyList"></div>'
@@ -285,7 +286,6 @@
       +'<div class="day-list" id="dyDone"></div></div>';
     E.state=root.querySelector("#dyState"); E.list=root.querySelector("#dyList"); E.done=root.querySelector("#dyDone");
     E.actSec=root.querySelector("#dyActiveSec"); E.doneSec=root.querySelector("#dyDoneSec");
-    root.querySelector("#dyBack").addEventListener("click",function(){ sdk.ui.back(); });
     root.addEventListener("click",onClick);
     if(sdk.can("edit")) fabH=sdk.ui.fab(t("addBtn"), openCreate);
     renderAll(); load();

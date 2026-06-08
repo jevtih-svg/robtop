@@ -124,11 +124,13 @@ html{background:var(--bg0)}
 html,body{margin:0;padding:0;min-height:100%;overscroll-behavior:none;touch-action:pan-x pan-y}
 body{
   font-family:var(--font-body);
-  color:var(--ink); background:var(--bg0); min-height:100vh; overflow-x:hidden;
+  color:var(--ink); background:var(--bg0); min-height:100vh; min-height:100dvh; overflow-x:hidden;
   background-image:var(--bg-img);
 }
 #bg{position:fixed;inset:0;z-index:0;display:block}
-#root{position:relative;z-index:1;max-width:480px;margin:0 auto;min-height:100vh}
+/* guardrails: dvh — стабильная высота на мобильных (низ не «дышит» при адресной строке);
+   100vh оставлен фолбэком для старых браузеров. */
+#root{position:relative;z-index:1;max-width:480px;margin:0 auto;min-height:100vh;min-height:100dvh}
 
 .view{display:none;padding:0 16px}
 .view.active{display:block;animation:viewin .32s ease both}
@@ -142,15 +144,37 @@ body{
      .rt-bar  — детский нижний бар (домой · очки · система), зеркало .pd-tabbar. ===== */
 .rt-hdr{display:flex;align-items:center;gap:12px;
   padding:calc(var(--chrome-top) + var(--safe-top)) 2px 8px;min-height:var(--hdr-total)}
-.rt-hdr .rt-title{flex:1;min-width:0;font-family:var(--font-display);font-weight:400;font-size:22px;
+/* .rt-head-main — слот заголовка: модуль кладёт сюда свой заголовок (иконка/подзаголовок)
+   через opts.titleHtml и СОХРАНЯЕТ своё оформление; рамка задаёт только раскладку. */
+.rt-head-main{flex:1;min-width:0}
+.rt-hdr .rt-title{font-family:var(--font-display);font-weight:400;font-size:22px;
   color:#fff;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   text-shadow:0 0 12px color-mix(in srgb,var(--accent) 60%, transparent)}
 .rt-hdr .rt-actions{flex:none;display:flex;align-items:center;gap:8px}
 .rt-body{padding-bottom:calc(var(--kidbar-total) + 16px)}
-.rt-bar{position:fixed;left:0;right:0;bottom:0;z-index:14;max-width:480px;margin:0 auto;
-  display:flex;align-items:center;gap:10px;min-height:var(--kidbar-total);
+/* декоративный «экшен» в шапке (не кнопка): напр. иконка-клипборд в «Заданиях» */
+.rt-actions .rt-deco{background:none;border:none;box-shadow:none;color:var(--muted);pointer-events:none}
+
+/* ---- детский нижний бар (#kidBar): «Домой» + ⚙. Живёт в <body>; виден на детских
+   экранах модулей; в полноэкранных сценах прячется (.rt-bar-hide через hud({hidden})). ---- */
+.rt-bar{display:none;position:fixed;left:0;right:0;bottom:0;z-index:14;max-width:480px;margin:0 auto;
+  align-items:center;gap:10px;min-height:var(--kidbar-total);
   padding:8px var(--gutter) calc(8px + var(--safe-bottom));
   background:var(--tabbar-grad);border-top:1px solid rgba(255,255,255,.09);backdrop-filter:blur(8px)}
+body[data-view="module"] .rt-bar{display:flex}
+.rt-bar.rt-bar-hide{display:none}
+.rt-home{flex:1;display:flex;align-items:center;justify-content:center;gap:9px;min-height:46px;cursor:pointer;
+  border-radius:14px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);
+  color:var(--chrome-ink);font-family:var(--font-display);font-size:15px;letter-spacing:.3px;
+  box-shadow:0 0 18px -8px var(--cyan)}
+.rt-home svg{width:22px;height:22px}
+.rt-home:active{transform:scale(.97)}
+.rt-bargear{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;cursor:pointer;
+  font-size:20px;color:var(--chrome-ink);background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14);
+  box-shadow:0 0 18px -8px var(--cyan)}
+.rt-bargear:active{transform:scale(.93)}
+/* старый HUD (декоративные счётчики) на экранах модулей больше не показываем — его заменил детский бар */
+body[data-view="module"] .hud{display:none}
 
 /* ===================== HOME ===================== */
 #home{padding-bottom:46px}

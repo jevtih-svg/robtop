@@ -1,7 +1,5 @@
 /* RobTop — модуль «Смешные имена». Скоуп [data-mod="names"], классы fn-*. Акцент — мятный var(--mint). */
-[data-mod="names"] .fn{padding-bottom:140px}
-[data-mod="names"] .fn-header{display:flex;align-items:center;gap:12px;padding:calc(20px + env(safe-area-inset-top)) 2px 8px}
-[data-mod="names"] .fn-head-main{flex:1;min-width:0}
+/* guardrails: нижний резерв даёт .rt-body, раскладку шапки — .rt-hdr */
 [data-mod="names"] .fn-title{font-family:var(--font-display);font-size:24px;color:#fff;
   text-shadow:0 0 12px color-mix(in srgb,var(--mint) 80%,transparent), 0 0 26px color-mix(in srgb,var(--mint) 40%,transparent)}
 [data-mod="names"] .fn-sub{margin:0;color:var(--muted);font-weight:600;font-size:13px}

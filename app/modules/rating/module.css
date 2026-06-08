@@ -1,7 +1,5 @@
 /* RobTop — модуль «Оценка дня». Скоуп [data-mod="rating"], классы rd-*. Акцент — золотой var(--gold). */
-[data-mod="rating"] .rd{padding-bottom:140px}
-[data-mod="rating"] .rd-header{display:flex;align-items:center;gap:12px;padding:calc(20px + env(safe-area-inset-top)) 2px 8px}
-[data-mod="rating"] .rd-head-main{flex:1;min-width:0}
+/* guardrails: нижний резерв даёт .rt-body, раскладку шапки — .rt-hdr */
 [data-mod="rating"] .rd-title{font-family:var(--font-display);font-size:24px;color:#fff;display:flex;align-items:center;gap:8px;
   text-shadow:0 0 12px color-mix(in srgb,var(--gold) 75%,transparent), 0 0 24px color-mix(in srgb,var(--orange) 40%,transparent)}
 [data-mod="rating"] .rd-title .sic{width:22px;height:22px;color:var(--gold);flex:none}

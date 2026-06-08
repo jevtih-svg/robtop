@@ -329,11 +329,12 @@
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; items=[]; currentTab="open";
     var title=sdk.i18n.t("tile.friends"), canEdit=sdk.can("edit");
-    root.innerHTML='<div class="fr">'
-      +'<div class="fr-header"><button class="back" id="frBack" aria-label="'+esc(t("common.back"))+'">'+BACK_IC+'</button>'
-      +'<div class="fr-head-main"><div class="fr-title"><span class="sic">'+FR_IC+'</span> '+esc(title)+'</div>'
-      +'<div class="fr-sub">'+esc(t("subtitle"))+'</div></div>'
-      +'<button class="hbtn" id="frStats" aria-label="'+esc(t("aria.stats"))+'">'+STATS_IC+'</button></div>'
+    var body=sdk.ui.frame({
+      titleHtml:'<div class="fr-title"><span class="sic">'+FR_IC+'</span> '+esc(title)+'</div><div class="fr-sub">'+esc(t("subtitle"))+'</div>',
+      backLabel:t("common.back"),
+      actions:[{ icon:"stats", id:"frStats", label:t("aria.stats"), onClick:openStats }]
+    }).body;
+    body.innerHTML='<div class="fr">'
       +(canEdit?"":'<div class="fr-pnote">'+esc(t("parentNote"))+'</div>')
       +'<div class="fr-tabs" id="frTabs">'
         +'<button class="fr-tab active" data-tab="open">'+esc(t("tabOpen"))+' <span class="fr-tc" data-count="open">0</span></button>'
@@ -342,8 +343,6 @@
       +'<div class="fr-list" id="frList"></div>'
     +'</div>';
     E.tabs=root.querySelector("#frTabs"); E.list=root.querySelector("#frList");
-    root.querySelector("#frBack").addEventListener("click",function(){ sdk.ui.back(); });
-    root.querySelector("#frStats").addEventListener("click",openStats);
     root.addEventListener("click",function(e){
       var tab=e.target.closest("[data-tab]");
       if(tab){ setTab(tab.getAttribute("data-tab")); return; }

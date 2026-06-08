@@ -14,7 +14,7 @@
         cancel: "Cancel", close: "Close", save: "Save", delete: "Delete",
         yes: "Yes", no: "No", done: "Done", undo: "Undo", enter: "Enter",
         demo: "demo", removed: "Removed", failed: "Couldn't do that",
-        back: "Back", confirmTitle: "Confirm?"
+        back: "Back", home: "Home", confirmTitle: "Confirm?"
       },
       home: { tagline: "Choose an app", soonSep: "Coming soon" },
       reorder: {
@@ -185,7 +185,7 @@
         cancel: "Отмена", close: "Закрыть", save: "Сохранить", delete: "Удалить",
         yes: "Да", no: "Нет", done: "Готово", undo: "Отменить", enter: "Войти",
         demo: "демо", removed: "Удалено", failed: "Не удалось",
-        back: "Назад", confirmTitle: "Подтвердить?"
+        back: "Назад", home: "Домой", confirmTitle: "Подтвердить?"
       },
       home: { tagline: "Выбери приложение", soonSep: "Скоро будут" },
       reorder: {
@@ -356,7 +356,7 @@
         cancel: "Atcelt", close: "Aizvērt", save: "Saglabāt", delete: "Dzēst",
         yes: "Jā", no: "Nē", done: "Gatavs", undo: "Atsaukt", enter: "Ienākt",
         demo: "demo", removed: "Izdzēsts", failed: "Neizdevās",
-        back: "Atpakaļ", confirmTitle: "Apstiprināt?"
+        back: "Atpakaļ", home: "Mājas", confirmTitle: "Apstiprināt?"
       },
       home: { tagline: "Izvēlies lietotni", soonSep: "Drīz būs" },
       reorder: {

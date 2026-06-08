@@ -1,7 +1,5 @@
 /* RobTop — модуль «Угадай число». Скоуп [data-mod="guess"], классы gn-*. Акцент — фиолетовый var(--purple). */
-[data-mod="guess"] .gn{padding-bottom:140px}
-[data-mod="guess"] .gn-header{display:flex;align-items:center;gap:12px;padding:calc(20px + env(safe-area-inset-top)) 2px 8px}
-[data-mod="guess"] .gn-head-main{flex:1;min-width:0}
+/* guardrails: нижний резерв даёт .rt-body, раскладку шапки — .rt-hdr */
 [data-mod="guess"] .gn-title{font-family:var(--font-display);font-size:24px;color:#fff;
   text-shadow:0 0 12px color-mix(in srgb,var(--purple) 80%,transparent), 0 0 26px color-mix(in srgb,var(--purple) 40%,transparent)}
 [data-mod="guess"] .gn-sub{margin:0;color:var(--muted);font-weight:600;font-size:13px}

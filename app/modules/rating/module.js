@@ -295,17 +295,16 @@
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; items=[]; form=blankForm();
     var title=sdk.i18n.t("tile.rating");
-    root.innerHTML='<div class="rd">'
-      +'<div class="rd-header"><button class="back" id="rdBack" aria-label="'+esc(t("common.back"))+'">'+BACK_IC+'</button>'
-      +'<div class="rd-head-main"><div class="rd-title"><span class="sic">'+STAR_F+'</span> '+esc(title)+'</div>'
-      +'<div class="rd-sub">'+esc(t("subtitle"))+'</div></div>'
-      +'<button class="hbtn" id="rdStats" aria-label="'+esc(t("aria.stats"))+'">'+STATS_IC+'</button></div>'
+    var body=sdk.ui.frame({
+      titleHtml:'<div class="rd-title"><span class="sic">'+STAR_F+'</span> '+esc(title)+'</div><div class="rd-sub">'+esc(t("subtitle"))+'</div>',
+      backLabel:t("common.back"),
+      actions:[{ icon:"stats", id:"rdStats", label:t("aria.stats"), onClick:openStats }]
+    }).body;
+    body.innerHTML='<div class="rd">'
       +'<div id="rdState"></div>'
       +'<div class="store-section">'+esc(t("historyTitle"))+'</div><div class="rd-list" id="rdList"></div>'
     +'</div>';
     E.state=root.querySelector("#rdState"); E.list=root.querySelector("#rdList");
-    root.querySelector("#rdBack").addEventListener("click",function(){ sdk.ui.back(); });
-    root.querySelector("#rdStats").addEventListener("click",openStats);
     /* делегирование — на внутреннем .rd (пересоздаётся при каждом mount), НЕ на root:
        root живёт между mount'ами, и слушатели на нём наслаивались бы */
     root.querySelector(".rd").addEventListener("click",function(e){

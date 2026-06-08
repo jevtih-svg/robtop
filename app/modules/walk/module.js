@@ -732,23 +732,23 @@
     entries=[]; behs=[]; evts=[]; cmds=[]; iss=[]; evtTypes=[]; meta={id:null,puppy:1,reward:REWARD_DEF};
     step="dur"; cur=null; beh=null; ev=null; saving=false;
     var title=sdk.i18n.t("tile.walk");
-    root.innerHTML='<div class="wk">'
-      +'<div class="wk-header"><button class="back" id="wkBack" aria-label="'+esc(t("common.back"))+'">'+BACK_IC+'</button>'
-      +'<div class="wk-head-main"><div class="wk-title"><span class="sic">'+PAW_IC+'</span> '+esc(title)+'</div>'
-      +'<div class="wk-sub">'+esc(t("subtitle"))+'</div></div>'
-      +'<button class="hbtn" id="wkGear" aria-label="'+esc(t("aria.settings"))+'">'+GEAR_IC+'</button></div>'
+    var body=sdk.ui.frame({
+      titleHtml:'<div class="wk-title"><span class="sic">'+PAW_IC+'</span> '+esc(title)+'</div><div class="wk-sub">'+esc(t("subtitle"))+'</div>',
+      backLabel:t("common.back"),
+      back:function(){
+        if(step==="details"){ step="rate"; renderMain(); return; }
+        if(step==="rate"){ step="dur"; cur=null; renderMain(); return; }
+        if(step==="beh"){ step="dur"; beh=null; renderMain(); return; }
+        if(step==="evt"){ step="dur"; ev=null; renderMain(); return; }
+        sdk.ui.back();
+      },
+      actions:[{ icon:GEAR_IC, id:"wkGear", label:t("aria.settings"), onClick:openSettings }]
+    }).body;
+    body.innerHTML='<div class="wk">'
       +'<div id="wkMain"></div>'
       +'<div class="store-section">'+esc(t("historyTitle"))+'</div><div class="wk-list" id="wkList"></div>'
     +'</div>';
     E.main=root.querySelector("#wkMain"); E.list=root.querySelector("#wkList");
-    root.querySelector("#wkBack").addEventListener("click",function(){
-      if(step==="details"){ step="rate"; renderMain(); return; }
-      if(step==="rate"){ step="dur"; cur=null; renderMain(); return; }
-      if(step==="beh"){ step="dur"; beh=null; renderMain(); return; }
-      if(step==="evt"){ step="dur"; ev=null; renderMain(); return; }
-      sdk.ui.back();
-    });
-    root.querySelector("#wkGear").addEventListener("click",openSettings);
     /* root (#module-view) — постоянный узел оболочки: листенер обязателен к снятию в unmount,
        иначе при повторных открытиях модуля обработчики накапливаются (двойные тосты/тоглы) */
     E.onRootClick=function(e){

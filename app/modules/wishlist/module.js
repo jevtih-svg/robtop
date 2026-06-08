@@ -523,13 +523,6 @@
   /* ----- DOM build ----- */
   function rootHTML(){
     return '<div class="wl" data-tab="want">'
-      +'<div class="wl-header">'
-        +'<button class="back" id="wlBack" aria-label="'+esc(t("common.back"))+'">'+BACK_IC+'</button>'
-        +'<div class="wl-head-main"><div class="wl-title"><span class="cic">'+TITLE_CHERRY+'</span> '+esc(t("title"))+'</div><div class="wl-sub">'+esc(t("subtitle"))+'</div></div>'
-        +'<button class="hbtn" id="wlFriends" aria-label="'+esc(t("share.ariaFriends"))+'">'+FRIENDS_IC+'</button>'
-        +'<button class="hbtn" id="wlShare" aria-label="'+esc(t("share.aria"))+'">'+SHARE_IC+'</button>'
-        +'<button class="hbtn" id="wlStats" aria-label="'+esc(t("aria.stats"))+'">'+STATS_IC+'</button>'
-      +'</div>'
       +'<nav class="tabs" id="wlTabs">'
         +'<button class="tab active" data-tab="want"><span class="t-label"><span class="dot"></span>'+esc(t("tab.want"))+'</span><span class="badge" data-count="want">0</span></button>'
         +'<button class="tab" data-tab="thinking"><span class="t-label"><span class="dot"></span>'+esc(t("tab.thinking"))+'</span><span class="badge" data-count="thinking">0</span></button>'
@@ -576,10 +569,6 @@
     E.statsBody=ovWrap.querySelector("#wlStatsBody");
   }
   function wire(){
-    root.querySelector("#wlBack").addEventListener("click",function(){ sdk.ui.back(); });
-    root.querySelector("#wlStats").addEventListener("click",openStats);
-    root.querySelector("#wlShare").addEventListener("click",openShare);
-    root.querySelector("#wlFriends").addEventListener("click",openFriends);
     E.tabs.addEventListener("click",function(e){ var tb=e.target.closest(".tab"); if(tb) setTab(tb.getAttribute("data-tab")); });
     E.list.addEventListener("click",function(e){
       var btn=e.target.closest("[data-action]");
@@ -617,7 +606,16 @@
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl;
     currentTab="want"; editingId=null; formPhoto=null; pendingPurchaseId=null; detailId=null; undoFn=null; state={items:[],events:[]};
-    root.innerHTML=rootHTML();
+    var body=sdk.ui.frame({
+      titleHtml:'<div class="wl-title"><span class="cic">'+TITLE_CHERRY+'</span> '+esc(t("title"))+'</div><div class="wl-sub">'+esc(t("subtitle"))+'</div>',
+      backLabel:t("common.back"),
+      actions:[
+        { icon:FRIENDS_IC, id:"wlFriends", label:t("share.ariaFriends"), onClick:openFriends },
+        { icon:SHARE_IC, id:"wlShare", label:t("share.aria"), onClick:openShare },
+        { icon:"statsBars", id:"wlStats", label:t("aria.stats"), onClick:openStats }
+      ]
+    }).body;
+    body.innerHTML=rootHTML();
     ovWrap=document.createElement("div"); ovWrap.className="wl-overlays"; ovWrap.innerHTML=overlaysHTML(); document.body.appendChild(ovWrap);
     grab(); wire();
     fabCtl=sdk.ui.fab(t("btn.want"), openAdd);

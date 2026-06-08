@@ -510,10 +510,12 @@
 
   /* ----- каркас ----- */
   function buildSkeleton(){
-    root.innerHTML='<div class="teeth">'
-      +'<div class="tt-header"><button class="back" id="ttBack" aria-label="'+esc(t("common.back"))+'">'+BACK_IC+'</button>'
-        +'<div class="tt-head-main"><div class="tt-title">'+esc(t("title"))+'</div><div class="tt-sub">'+esc(t("subtitle"))+'</div></div>'
-        +(parentAllowed()?'<button class="hbtn" id="ttParent" aria-label="'+esc(t("parentTitle"))+'">'+PARENT_IC+'</button>':'')+'</div>'
+    var body=sdk.ui.frame({
+      titleHtml:'<div class="tt-title">'+esc(t("title"))+'</div><div class="tt-sub">'+esc(t("subtitle"))+'</div>',
+      backLabel:t("common.back"),
+      actions:[ parentAllowed()?{ icon:"parent", id:"ttParent", label:t("parentTitle"), onClick:openParentGate }:null ]
+    }).body;
+    body.innerHTML='<div class="teeth">'
       +'<div class="tt-stage" id="ttStage"></div>'
       +'<div class="tt-info" id="ttInfo"></div>'
       +'<nav class="tt-tabs" id="ttTabs">'
@@ -537,8 +539,6 @@
     E.tabs=root.querySelector("#ttTabs"); E.history=root.querySelector("#ttHistory"); E.music=root.querySelector("#ttMusic");
     E.filter=root.querySelector("#ttFilter"); E.list=root.querySelector("#ttList");
     E.mhint=root.querySelector("#ttMhint"); E.musicList=root.querySelector("#ttMusicList");
-    root.querySelector("#ttBack").onclick=function(){ sdk.ui.back(); };
-    var pb=root.querySelector("#ttParent"); if(pb) pb.onclick=openParentGate;
     E.tabs.addEventListener("click",function(e){ var tb=e.target.closest(".tt-tab"); if(tb) setTab(tb.getAttribute("data-tab")); });
     E.filter.addEventListener("click",function(e){ var b=e.target.closest(".tt-fchip"); if(b) setHistFilter(b.getAttribute("data-f")); });
     E.music.addEventListener("click",function(e){ var b=e.target.closest("[data-act]"); if(!b) return; var i=parseInt(b.getAttribute("data-i"),10); if(isNaN(i)) return; if(b.getAttribute("data-act")==="prev") previewToggle(i); else pickTrack(i); });

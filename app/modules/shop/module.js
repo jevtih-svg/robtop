@@ -443,18 +443,18 @@
       ? '<button class="sh-cart" id="shCart" aria-label="'+esc(t("ordersA11y"))+'">'+BAG_IC
         +'<span class="sh-cart-n" id="shCartN" hidden>0</span></button>'
       : '';
-    root.innerHTML='<div class="sh">'
-      +'<div class="sh-header"><button class="back" id="shBack" aria-label="'+esc(t("common.back"))+'">'+BACK_IC+'</button>'
-        +'<div class="sh-head-main"><div class="sh-title">'+esc(titleTxt)+'</div>'
-        +'<div class="sh-sub">'+esc(t("subtitle"))+'</div></div>'
-        +'<div class="sh-bal">'+COIN_IC+'<b id="shBal">…</b></div></div>'
+    var body=sdk.ui.frame({
+      titleHtml:'<div class="sh-title">'+esc(titleTxt)+'</div><div class="sh-sub">'+esc(t("subtitle"))+'</div>',
+      backLabel:t("common.back"),
+      rightHtml:'<div class="sh-bal">'+COIN_IC+'<b id="shBal">…</b></div>'
+    }).body;
+    body.innerHTML='<div class="sh">'
       +'<section class="sh-stage" id="shGrid"></section>'
       +bag
       +'</div>';
-    var el=root.querySelector(".sh");
-    E={ bal:el.querySelector("#shBal"), grid:el.querySelector("#shGrid"),
+    var el=body.querySelector(".sh");
+    E={ bal:root.querySelector("#shBal"), grid:el.querySelector("#shGrid"),
         cart:el.querySelector("#shCart"), cartN:el.querySelector("#shCartN") };
-    el.querySelector("#shBack").onclick=function(){ sdk.ui.back(); };
     if(E.cart) E.cart.onclick=function(){ if(alive) openOrders(); };
     /* делегат на пересоздаваемом узле — листенер не копится между mount */
     E.grid.addEventListener("click", onGridClick);

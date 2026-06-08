@@ -388,18 +388,17 @@
     mode="idle"; g=null; curSheet=null; saving=false; recJust=false; touchPt=null;
     var sp=sdk.storage.local("speed").get(); speedSel=(sp>=1&&sp<=9)?Math.floor(sp):3;
     var title=sdk.i18n.t("tile.snake");
-    root.innerHTML='<div class="sn">'
-      +'<div class="sn-header"><button class="back" id="snBack" aria-label="'+esc(t("common.back"))+'">'+BACK_IC+'</button>'
-        +'<div class="sn-head-main"><div class="sn-title">'+esc(title)+'</div>'
-        +'<div class="sn-sub">'+esc(t("subtitle"))+'</div></div>'
-        +'<button class="hbtn" id="snStats" aria-label="'+esc(t("aria.stats"))+'">'+STATS_IC+'</button></div>'
+    var body=sdk.ui.frame({
+      titleHtml:'<div class="sn-title">'+esc(title)+'</div><div class="sn-sub">'+esc(t("subtitle"))+'</div>',
+      backLabel:t("common.back"),
+      actions:[{ icon:"stats", id:"snStats", label:t("aria.stats"), onClick:openStats }]
+    }).body;
+    body.innerHTML='<div class="sn">'
       +'<div id="snStage"></div>'
       +'<div class="store-section">'+esc(t("historyTitle"))+'</div>'
       +'<div class="sn-list" id="snList"></div>'
     +'</div>';
     E.stage=root.querySelector("#snStage"); E.list=root.querySelector("#snList"); E.sn=root.querySelector(".sn");
-    root.querySelector("#snBack").addEventListener("click",function(){ sdk.ui.back(); });
-    root.querySelector("#snStats").addEventListener("click",openStats);
     /* делегирование — на внутреннем .sn (пересоздаётся при каждом mount), НЕ на root:
        root живёт между mount'ами, и слушатели на нём наслаивались бы (урок rating/walk) */
     root.querySelector(".sn").addEventListener("click",function(e){

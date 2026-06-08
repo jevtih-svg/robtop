@@ -271,16 +271,16 @@
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; alive=true; busy=false; curSheet=null;
     S={ tasks:[], loaded:false, err:false };
-    root.innerHTML='<div class="tsk">'
-      +'<div class="tsk-header"><button class="back" id="tskBack" aria-label="'+esc(t("common.back"))+'">'+BACK_IC+'</button>'
-        +'<div class="tsk-head-main"><div class="tsk-title">'+esc(title())+'</div>'
-        +'<div class="tsk-sub">'+esc(t("subtitle"))+'</div></div>'
-        +'<div class="tsk-head-ic">'+CLIP_IC+'</div></div>'
+    var body=sdk.ui.frame({
+      titleHtml:'<div class="tsk-title">'+esc(title())+'</div><div class="tsk-sub">'+esc(t("subtitle"))+'</div>',
+      backLabel:t("common.back"),
+      actions:[{ icon:CLIP_IC, className:"rt-deco" }]
+    }).body;
+    body.innerHTML='<div class="tsk">'
       +'<section class="tsk-list" id="tskList"></section>'
       +'</div>';
-    var el=root.querySelector(".tsk");
+    var el=body.querySelector(".tsk");
     E={ list:el.querySelector("#tskList") };
-    el.querySelector("#tskBack").onclick=function(){ sdk.ui.back(); };
     /* делегат кликов: узел #tskList пересоздаётся при каждом mount — листенер не копится */
     E.list.addEventListener("click", onListClick);
     load();

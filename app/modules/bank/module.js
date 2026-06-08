@@ -623,10 +623,13 @@
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; alive=true; busy=false; curSheet=null; PE=null;
     S={ balance:0, streak:0, plus:0, items:[], tasks:[], tab:"apps", loaded:false, err:false };
-    root.innerHTML='<div class="bk">'
-      +'<div class="bk-header"><button class="back" id="bkBack" aria-label="'+esc(t("common.back"))+'">'+BACK_IC+'</button>'
-        +'<div class="bk-head-main"><div class="bk-title">'+esc(t("title"))+'</div><div class="bk-sub">'+esc(t("subtitle"))+'</div></div>'
-        +(parentAllowed()?'<button class="hbtn" id="bkParent" aria-label="'+esc(t("parentTitle"))+'">'+PARENT_IC+'</button>':'')+'</div>'
+    /* guardrails: шапку строит общая рамка (sdk.ui.frame); модуль наполняет только body */
+    var body=sdk.ui.frame({
+      titleHtml:'<div class="bk-title">'+esc(t("title"))+'</div><div class="bk-sub">'+esc(t("subtitle"))+'</div>',
+      backLabel:t("common.back"),
+      actions:[ parentAllowed()?{ icon:"parent", id:"bkParent", label:t("parentTitle"), onClick:openParentGate }:null ]
+    }).body;
+    body.innerHTML='<div class="bk">'
       +'<div class="bk-stage">'
         +'<button class="bk-flame off" id="bkFlame" aria-label="'+esc(t("infoTitle"))+'">'+FLAME_IC
           +'<span class="bk-flame-n" id="bkFlameN">0</span><span class="bk-flame-l">'+esc(t("streakLabel"))+'</span>'
@@ -643,15 +646,13 @@
           +'<span class="bk-tab-n" id="bkTabN" hidden>0</span></button></nav>'
       +'<section class="bk-list" id="bkList"></section>'
       +'</div>';
-    var el=root.querySelector(".bk");
+    var el=body.querySelector(".bk");
     E={ pts:el.querySelector("#bkPts"), flame:el.querySelector("#bkFlame"), flameN:el.querySelector("#bkFlameN"),
         plus:el.querySelector("#bkPlus"), plusN:el.querySelector("#bkPlusN"),
         pig:el.querySelector("#bkPig"), tabs:el.querySelector("#bkTabs"), list:el.querySelector("#bkList"),
         tabN:el.querySelector("#bkTabN"), earned:el.querySelector("#bkEarned") };
-    el.querySelector("#bkBack").onclick=function(){ sdk.ui.back(); };
     E.flame.onclick=openStreakInfo;
     E.plus.onclick=openPlusInfo;
-    var pb=el.querySelector("#bkParent"); if(pb) pb.onclick=openParentGate;
     E.tabs.addEventListener("click",function(e){
       var b=e.target.closest(".bk-tab"); if(!b || !alive) return;
       S.tab=b.getAttribute("data-tab");
