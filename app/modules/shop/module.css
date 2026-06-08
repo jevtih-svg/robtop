@@ -17,6 +17,35 @@
 [data-mod="shop"] .sh-bal b{font-family:var(--font-display);font-size:18px;line-height:1;color:#fff;
   text-shadow:0 0 10px color-mix(in srgb,var(--gold) 90%,transparent)}
 
+/* блок родителя «Покупки на подтверждение» — вместо корзинки (фидбек Джеффа) */
+[data-mod="shop"] .sh-approvals{margin-top:14px;border-radius:18px;padding:12px;
+  background:linear-gradient(165deg, rgba(var(--panel-rgb),.55), rgba(var(--panel-rgb),.9));
+  border:1.5px solid color-mix(in srgb,var(--gold) 45%,transparent);
+  box-shadow:0 8px 22px rgba(0,0,0,.4)}
+[data-mod="shop"] .sh-approvals-h{font-family:var(--font-display);font-size:15px;color:var(--ink);margin-bottom:10px;
+  display:flex;align-items:center;gap:7px}
+[data-mod="shop"] .sh-approvals-h::before{content:"🛍"}
+[data-mod="shop"] .sh-approvals .sh-order{display:flex;align-items:center;gap:11px;border-radius:14px;padding:9px;
+  background:rgba(var(--panel-rgb),.6);border:1px solid color-mix(in srgb,var(--magenta) 25%,transparent);margin-bottom:9px}
+[data-mod="shop"] .sh-approvals .sh-order:last-child{margin-bottom:0}
+[data-mod="shop"] .sh-oph{flex:none;width:52px;height:52px;border-radius:10px;background-color:rgba(0,0,0,.4);
+  background-size:cover;background-position:center}
+[data-mod="shop"] .sh-oph.none{display:flex;align-items:center;justify-content:center;color:var(--muted)}
+[data-mod="shop"] .sh-oph.none svg{width:26px;height:26px}
+[data-mod="shop"] .sh-omain{flex:1;min-width:0}
+[data-mod="shop"] .sh-ot{font-weight:800;font-size:14px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+[data-mod="shop"] .sh-om{font-size:12px;color:var(--muted);font-weight:600;margin-top:2px}
+[data-mod="shop"] .sh-oact{display:flex;flex-direction:column;gap:6px}
+[data-mod="shop"] .sh-obtn{min-height:38px;padding:0 12px;border-radius:11px;border:none;cursor:pointer;
+  font:inherit;font-weight:800;font-size:12.5px;-webkit-tap-highlight-color:transparent}
+[data-mod="shop"] .sh-obtn.ok{color:#04250f;background:var(--green);box-shadow:0 4px 14px -5px var(--green)}
+[data-mod="shop"] .sh-obtn.no{color:var(--ink);background:rgba(var(--panel-rgb),.9);border:1px solid color-mix(in srgb,var(--muted) 40%,transparent)}
+
+/* метка «скрыт у N» на карточке товара (вид родителя) */
+[data-mod="shop"] .sh-hidden{display:inline-flex;align-items:center;gap:3px;margin-left:auto;
+  font-size:11px;font-weight:700;color:var(--muted)}
+[data-mod="shop"] .sh-hidden svg{width:13px;height:13px}
+
 /* кнопка родителя «+ Новый приз» */
 [data-mod="shop"] .sh-additem{width:100%;margin:12px 0 2px;min-height:48px}
 
@@ -111,3 +140,18 @@
 .sheet .sh-form input:focus{border-color:var(--magenta)}
 .sheet .sh-lbl{font-size:12.5px;font-weight:800;color:var(--muted);margin:-3px 0 -6px 4px;
   text-transform:uppercase;letter-spacing:.04em}
+
+/* чек-лист «доступно детям» в форме приза */
+.sheet .sh-avail{margin-top:4px;border-radius:13px;padding:11px 13px;
+  background:rgba(0,0,0,.22);border:1.5px solid color-mix(in srgb,var(--magenta) 22%,transparent)}
+.sheet .sh-avail-h{font-size:12.5px;font-weight:800;color:var(--muted);margin-bottom:9px;
+  text-transform:uppercase;letter-spacing:.04em}
+.sheet .sh-kid{display:flex;align-items:center;gap:11px;min-height:42px;cursor:pointer;
+  -webkit-tap-highlight-color:transparent}
+.sheet .sh-kid input{position:absolute;opacity:0;width:0;height:0}
+.sheet .sh-kid-box{flex:none;width:26px;height:26px;border-radius:8px;background:rgba(0,0,0,.3);
+  border:2px solid color-mix(in srgb,var(--muted) 55%,transparent);position:relative;transition:.15s}
+.sheet .sh-kid input:checked + .sh-kid-box{background:var(--green);border-color:var(--green)}
+.sheet .sh-kid input:checked + .sh-kid-box::after{content:"";position:absolute;left:8px;top:3px;
+  width:7px;height:13px;border:solid #04250f;border-width:0 3px 3px 0;transform:rotate(45deg)}
+.sheet .sh-kid-nm{font-weight:700;font-size:15px;color:var(--ink)}

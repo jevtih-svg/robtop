@@ -344,6 +344,25 @@ window.RobTop = window.RobTop || {};
           return API.post("notify.php",b).catch(function(){ return {ok:false}; });
         }
       },
+      /* ---- семья: список детей и выбранный на дашборде ребёнок (для модулей с общесемейными
+         данными, напр. каталог Магазина: чек-лист «доступно детям»). Источник — загруженный
+         родительский дашборд (core/parent.js). Для роли child или без дашборда — пусто/null. */
+      family: {
+        children: function(){
+          var ch = (RT.Parent && RT.Parent.children) ? RT.Parent.children() : [];
+          return Array.isArray(ch) ? ch : [];
+        }
+      },
+      /* выбранный на дашборде ребёнок {id, name} (роль parent); null — иначе. Тот же id,
+         что sdk.js шлёт серверу (parentChild) — модуль показывает, в чьём скоупе работает. */
+      scopeChild: function(){
+        if(role!=="parent") return null;
+        var id = parentChild();
+        if(!id) return null;
+        var name="", ch=(RT.Parent && RT.Parent.children) ? RT.Parent.children() : [];
+        for(var i=0;i<(ch||[]).length;i++){ if(String(ch[i].id)===String(id)){ name=ch[i].nickname||""; break; } }
+        return { id:id, name:name };
+      },
       /* sdk.admin.verify (PIN) упразднён 2026-06-07: роль даёт сессия аккаунта — модулям достаточно sdk.role / sdk.isDemo() */
       theme: { tokens: shell.tokens || {} },
       storage: { local:function(key){ var k="robtop_"+mod+"_"+key; return {

@@ -18,7 +18,7 @@ window.RobTop = window.RobTop || {};
     return RT.API.post("accounts.php",{op:"me"}).then(function(r){
       acct=(r&&r.ok)?r:{authenticated:false};
       if(acct.authenticated && acct.user){
-        RT._shell.user={ name:acct.user.nickname, role:(acct.user.kind==="parent"?"parent":"child") };
+        RT._shell.user={ id:acct.user.id, name:acct.user.nickname, role:(acct.user.kind==="parent"?"parent":"child") };
         ensureDeviceToken(acct.user); // самолечение: текущий аккаунт всегда в списке устройства
         // тема аккаунта (users.theme): применить визуально (RTTheme сам кэширует в rt_theme)
         if(acct.user.theme && window.RTTheme) RTTheme.set(acct.user.theme);

@@ -9,6 +9,7 @@
   "styles": "module.css",
   "roles": { "edit": ["child", "parent"], "read": ["child", "parent"] },
   "data": { "store": "generic", "collections": ["items", "orders"] },
+  "familyCollections": ["items"],
   "server": false,
   "permissions": ["points"],
   "min_shell": "2.0.0",

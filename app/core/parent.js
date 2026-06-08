@@ -41,7 +41,7 @@ window.RobTop = window.RobTop || {};
       teeth:"streak: {n} 🔥 · {c} in period", rating:"average: {avg}★ · {c} rated",
       mood:"most often: {e} {name} ×{c}", reverse:"{c} words reversed", guess:"guessed {w} of {c}",
       bank:"{p} points total · streak {s} 🔥 · pluses {ps} ⚡", bankTasks:"⏳ waiting for check: {n}",
-      shop:"{n} prizes in the shop", shopOrders:"🛍 waiting for approval: {n}",
+      shop:"Prizes for points", shopOrders:"🛍 waiting for approval: {n}",
       chat:"💬 family chat — open and write",
       generic:{one:"{n} action in period",other:"{n} actions in period"}, none:"no activity in period" },
     ins:{ streak:"Brushing streak: {n} days in a row", bought:"Wish fulfilled: “{t}” 🎉",
@@ -94,7 +94,7 @@ window.RobTop = window.RobTop || {};
       teeth:"серия: {n} 🔥 · {c} за период", rating:"средняя: {avg}★ · {c} оценок",
       mood:"чаще всего: {e} {name} ×{c}", reverse:"{c} слов перевёрнуто", guess:"угадано {w} из {c}",
       bank:"{p} пунктов всего · винстрик {s} 🔥 · плюсы {ps} ⚡", bankTasks:"⏳ ждут проверки: {n}",
-      shop:"{n} призов в магазине", shopOrders:"🛍 ждут подтверждения: {n}",
+      shop:"Призы за пункты", shopOrders:"🛍 ждут подтверждения: {n}",
       chat:"💬 семейный чат — открыть и написать",
       generic:{one:"{n} действие за период",few:"{n} действия за период",many:"{n} действий за период"}, none:"нет активности за период" },
     ins:{ streak:"Серия чистки зубов: {n} дней подряд", bought:"Исполнено желание: «{t}» 🎉",
@@ -147,7 +147,7 @@ window.RobTop = window.RobTop || {};
       teeth:"sērija: {n} 🔥 · {c} periodā", rating:"vidēji: {avg}★ · {c} vērtējumi",
       mood:"visbiežāk: {e} {name} ×{c}", reverse:"{c} vārdi apgriezti", guess:"uzminēti {w} no {c}",
       bank:"{p} punkti kopā · sērija {s} 🔥 · plusi {ps} ⚡", bankTasks:"⏳ gaida pārbaudi: {n}",
-      shop:"{n} balvas veikalā", shopOrders:"🛍 gaida apstiprinājumu: {n}",
+      shop:"Balvas par punktiem", shopOrders:"🛍 gaida apstiprinājumu: {n}",
       chat:"💬 ģimenes čats — atvērt un rakstīt",
       generic:{zero:"{n} darbību periodā",one:"{n} darbība periodā",other:"{n} darbības periodā"}, none:"perioda aktivitātes nav" },
     ins:{ streak:"Zobu tīrīšanas sērija: {n} dienas pēc kārtas", bought:"Vēlme piepildīta: “{t}” 🎉",
@@ -355,14 +355,13 @@ window.RobTop = window.RobTop || {};
   function bankPending(){
     return (S.data && parseInt(S.data.tasksPending,10)) || 0;
   }
-  /* магазин: заказы ребёнка, ждущие подтверждения (shop/orders, status=pending) и число призов */
-  function shopStats(){
-    var rows=(S.data&&S.data.content&&S.data.content.shop)||[], pend=0, items=0, i;
-    for(i=0;i<rows.length;i++){
-      if(rows[i].collection==="orders" && rows[i].status==="pending") pend++;
-      if(rows[i].collection==="items") items++;
-    }
-    return { pend:pend, items:items };
+  /* магазин: заказы ребёнка, ждущие подтверждения (shop/orders, status=pending).
+     Каталог shop/items — ОБЩЕСЕМЕЙНЫЙ (живёт в пуле, не в скоупе выбранного ребёнка),
+     поэтому число товаров на дашборде не считаем — только сигнал «ждут подтверждения». */
+  function shopPending(){
+    var rows=(S.data&&S.data.content&&S.data.content.shop)||[], n=0, i;
+    for(i=0;i<rows.length;i++) if(rows[i].collection==="orders" && rows[i].status==="pending") n++;
+    return n;
   }
 
   function topbarHtml(){
@@ -448,8 +447,8 @@ window.RobTop = window.RobTop || {};
                     : t("parent.sum.bank",{p:(data.points||0),s:(data.streak||0),ps:(data.plusStreak||0)});
       }
       else if(m.id==="shop"){
-        var sst=shopStats();
-        line=sst.pend>0 ? t("parent.sum.shopOrders",{n:sst.pend}) : t("parent.sum.shop",{n:sst.items});
+        var sp=shopPending();
+        line=sp>0 ? t("parent.sum.shopOrders",{n:sp}) : t("parent.sum.shop");
       }
       else if(m.id==="chat") line=t("parent.sum.chat");
       else if(m.id==="wishlist") line=t("parent.sum.wishlist",{total:items.length,want:wWant,bought:wBought});
@@ -1014,6 +1013,9 @@ window.RobTop = window.RobTop || {};
     active: active,
     /* выбранный ребёнок для скоупа данных: sdk.js шлёт его серверу с КАЖДЫМ запросом
        роли parent (data.php проверяет права и работает со скоупом этого ребёнка) */
-    childId: function(){ return S.childId || savedChild(); }
+    childId: function(){ return S.childId || savedChild(); },
+    /* все дети родителя [{id,nickname,…}] — для модулей с общесемейными данными
+       (Магазин: чек-лист «доступно детям»). Загружено дашбордом (parent.php). */
+    children: function(){ return (S.data && S.data.children) || []; }
   };
 })(window.RobTop);
