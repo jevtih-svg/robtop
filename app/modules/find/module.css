@@ -1,7 +1,10 @@
 /* RobTop — модуль «Найти предмет» (find). Скоуп: [data-mod="find"] / .find-*.
    Использует токены core/ui.css, акцент — цвет модуля #19e3ff + цвета сложности. */
 
-[data-mod="find"]{ --fd:#19e3ff; --fd-easy:#38e8a0; --fd-medium:#ffd23b; --fd-hard:#ff8a3d; --fd-impossible:#ff4d6d; }
+[data-mod="find"]{ --fd:#19e3ff; --fd-easy:#38e8a0; --fd-medium:#ffd23b; --fd-hard:#ff8a3d; --fd-impossible:#ff4d6d;
+  /* guardrails: универсальный детский бар «Домой» виден и в find — резервируем низ,
+     чтобы камера и кнопки «Сфоткать/Отправить» сидели ВЫШЕ бара, а не под ним */
+  padding-bottom:calc(var(--kidbar-total) + 8px); }
 
 /* ----- общая шапка ----- */
 .find-head{ display:flex; align-items:center; gap:10px; padding:4px 2px 12px; }

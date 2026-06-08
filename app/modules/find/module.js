@@ -513,7 +513,8 @@
   /* =================== MOUNT / UNMOUNT =================== */
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; E={}; destroyed=false; run=null; ptab="pending"; subs=[];
-    sdk.ui.hud({hidden:true}); /* guardrails: find управляет низом сам (камера/кнопки) — детский бар не показываем */
+    /* guardrails: детский бар «Домой» виден и здесь (универсально); кнопки камеры сидят ВЫШЕ него
+       за счёт нижнего резерва find-acts/find-entry (module.css) — отдельный hud-hide не нужен. */
     root.innerHTML='<div class="find-empty">'+esc(t("loading"))+'</div>';
     Promise.all([loadMeta(), loadSubs()]).then(function(){
       if(destroyed) return;

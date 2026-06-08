@@ -10,11 +10,14 @@
 /* ---- слой на весь экран (в <body>) ----
    БЕЗ will-change:transform — иначе слой изолируется в свой композит-слой и backdrop-filter
    шапки перестаёт «видеть» фон #bg за слоем (шапка выходила плоским тёмным баром сверху). */
+/* guardrails: высота слоя = экран МИНУС детский бар «Домой» — композер и лента сидят ВЫШЕ бара
+   (когда клавиатура закрыта). При фокусе JS задаёт height=visualViewport инлайном (перекрывает
+   это правило), клавиатура накрывает бар снизу — поэтому во время набора бар не мешает. */
 .ch-app{position:fixed;left:0;right:0;top:0;z-index:24;
-  max-width:480px;margin:0 auto;height:100dvh;
+  max-width:480px;margin:0 auto;height:calc(100dvh - var(--kidbar-total));
   display:flex;flex-direction:column;
   background:transparent} /* фон #bg виден сквозь ленту, как и раньше */
-@supports not (height:100dvh){ .ch-app{height:100vh} }
+@supports not (height:100dvh){ .ch-app{height:calc(100vh - var(--kidbar-total))} }
 /* тело страницы под слоем заблокировано — нет баунса/дёрганья позади */
 html.ch-lock,html.ch-lock body{overflow:hidden;height:100%}
 

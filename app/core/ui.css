@@ -142,15 +142,20 @@ body{
      .rt-hdr  — единая шапка (‹ назад · заголовок · действия), один верх --chrome-top;
      .rt-body — единственный скролл-контейнер, нижний резерв = высота бара + safe-area;
      .rt-bar  — детский нижний бар (домой · очки · система), зеркало .pd-tabbar. ===== */
-.rt-hdr{display:flex;align-items:center;gap:12px;
-  padding:calc(var(--chrome-top) + var(--safe-top)) 2px 8px;min-height:var(--hdr-total)}
+.rt-hdr{display:flex;align-items:center;gap:9px;
+  padding:calc(var(--chrome-top) + var(--safe-top)) 2px 6px;min-height:var(--hdr-total)}
 /* .rt-head-main — слот заголовка: модуль кладёт сюда свой заголовок (иконка/подзаголовок)
-   через opts.titleHtml и СОХРАНЯЕТ своё оформление; рамка задаёт только раскладку. */
+   через opts.titleHtml и СОХРАНЯЕТ своё оформление; рамка задаёт только раскладку.
+   Заголовок и подзаголовок усекаются многоточием, а не ломают шапку при длинном тексте. */
 .rt-head-main{flex:1;min-width:0}
-.rt-hdr .rt-title{font-family:var(--font-display);font-weight:400;font-size:22px;
-  color:#fff;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+.rt-hdr .rt-title{font-family:var(--font-display);font-weight:400;font-size:21px;
+  color:#fff;line-height:1.12;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   text-shadow:0 0 12px color-mix(in srgb,var(--accent) 60%, transparent)}
-.rt-hdr .rt-actions{flex:none;display:flex;align-items:center;gap:8px}
+.rt-hdr .rt-actions{flex:none;display:flex;align-items:center;gap:6px}
+/* компактные кнопки В ШАПКЕ (меньше глобальных 46px): чтобы помещались заголовок + несколько
+   действий (напр. Виш-лист: назад + заголовок + 3 кнопки) без обрезки на узких экранах */
+.rt-hdr .back,.rt-hdr .hbtn{width:42px;height:42px;border-radius:13px}
+.rt-hdr .back svg,.rt-hdr .hbtn svg{width:20px;height:20px}
 .rt-body{padding-bottom:calc(var(--kidbar-total) + 16px)}
 /* декоративный «экшен» в шапке (не кнопка): напр. иконка-клипборд в «Заданиях» */
 .rt-actions .rt-deco{background:none;border:none;box-shadow:none;color:var(--muted);pointer-events:none}
@@ -175,6 +180,16 @@ body[data-view="module"] .rt-bar{display:flex}
 .rt-bargear:active{transform:scale(.93)}
 /* старый HUD (декоративные счётчики) на экранах модулей больше не показываем — его заменил детский бар */
 body[data-view="module"] .hud{display:none}
+
+/* ---- guardrails: родительская шапка деталей приложения (.pd-mhead в core/parent.js) ----
+   Чтобы переключатель ребёнка («Artemkaa ▾») не выдавливал и не накрывал заголовок: ограничиваем
+   его ширину и усекаем имя. Иконка модуля уже починена (HDR_ICONS-коллизия). Правила здесь
+   (в ui.css), а не в parent.js — параллельная сессия активно правит parent.js; выше специфичность
+   (.pd-mhead .pd-kidsw = 0,2,0) перебивает инлайн-стиль .pd-kidsw, который инжектит parent.js. */
+.pd-mhead{gap:9px}
+.pd-mhead .mttl{flex:1 1 auto;min-width:0}
+.pd-mhead .pd-kidsw{flex:0 1 auto;max-width:44%;min-width:0;overflow:hidden}
+.pd-mhead .pd-kidsw .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* ===================== HOME ===================== */
 #home{padding-bottom:46px}

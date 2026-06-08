@@ -593,7 +593,9 @@
         sending:false, photo:null, sheet:null, pendingTid:null, vv:null, ty:null, stick:true, kbOpen:false,
         lpTimer:null, lpX:0, lpY:0, suppressClick:false };
     E={};
-    sdk.ui.hud({hidden:true});
+    /* guardrails: детский бар «Домой» виден и в чате (универсально) — слой .ch-app укорочен на его
+       высоту (module.css), композер сидит над баром; раньше тут было hud({hidden:true}), убрано.
+       Старый HUD-счётчик и так скрыт CSS на экранах модулей; колокольчик закрыт слоем .ch-app. */
 
     /* слой чата живёт в <body>, НЕ в .view-секции (см. шапку файла). Снимаем возможный осколок. */
     var old=document.getElementById("chApp"); if(old&&old.parentNode) old.parentNode.removeChild(old);
