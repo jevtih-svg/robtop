@@ -5,6 +5,14 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.08.69", d:"2026-06-08", t:{
+    en:"Chat now feels like a real messenger: the typing bar sits right above the keyboard, no gap.",
+    ru:"Чат стал как настоящий мессенджер: строка ввода — прямо над клавиатурой, без зазора.",
+    lv:"Čats tagad kā īsts ziņotājs: ievades josla tieši virs tastatūras, bez atstarpes." } },
+  { v:"2026.06.07.68", d:"2026-06-07", t:{
+    en:"New app, Tasks: parent chores you complete to earn points, with a win streak.",
+    ru:"Новое приложение «Задания»: поручения от родителей за пункты, со своим винстриком.",
+    lv:"Jauna lietotne «Uzdevumi»: vecāku uzdevumi, ko izpildi par punktiem, ar sēriju." } },
   { v:"2026.06.07.65", d:"2026-06-07", t:{
     en:"Welcome page for guests with all apps and this changelog.",
     ru:"Страница-знакомство для гостей: все приложения и этот журнал изменений.",

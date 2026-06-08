@@ -2,7 +2,22 @@
    текст + фото, оповещения на каждое сообщение (серверный rt_notify в modules/chat/api.php).
    Поверхности: список чатов → переписка (пузыри, день-разделители, композер с фото) → шторка
    «Новый чат» (выбор членов семьи, ≥2 — группа с названием). Родитель видит ВСЕ чаты семьи
-   (чужие — read-only, секция «Все чаты семьи»). Живое обновление — хук refresh() (sync 4с). */
+   (чужие — read-only, секция «Все чаты семьи»). Живое обновление — хук refresh() (sync 4с).
+
+   РАСКЛАДКА (v1.1.0, 2026-06-08 — переписана под нативный мессенджер):
+   ─ Весь чат рисуется в СОБСТВЕННЫЙ слой <div id="chApp"> в <body>, А НЕ в .view-секцию.
+     Причина та же, что у таббара родителя (index.html, .pd-tabbar): заполненная анимация
+     .view.active (transform) делает секцию containing block — position:fixed внутри неё липнет
+     к низу длинного списка, а не к экрану. Слой в <body> свободен от этого, и fixed работает.
+   ─ Слой = position:fixed на весь экран; колонка flex: шапка (flex:none) / лента (flex:1,
+     ЕДИНСТВЕННЫЙ скроллер) / композер (flex:none, прижат потоком к низу слоя). Тело страницы
+     заблокировано (html.ch-lock) — нет дёрганья и баунса позади.
+   ─ Клавиатура: visualViewport.height задаёт ВЫСОТУ слоя, offsetTop — translateY. Композер,
+     будучи низом колонки, оказывается ровно над клавиатурой без зазора. Никаких transform'ов
+     на самом композере (старый приём давал щель из скриншота).
+   ─ Композер — contenteditable div (НЕ textarea): iOS Safari не рисует над ним панель формы
+     (‹ › Готово). Только текст: вставка как plain-text, лимит 1000, плейсхолдер через :empty,
+     Enter — отправка, Shift+Enter — перенос, IME-safe. Рост — CSS max-height, дальше скролл. */
 (function(){
   "use strict";
   var MESSAGES={
@@ -57,6 +72,7 @@
   var CAM_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5a2 2 0 0 1 2-2h2l1.4-2h5.2L16 6.5h2a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.4"/></svg>';
   var SEND_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-7-5 16-3.4-6.2z"/><path d="M20 5L11.6 14.8"/></svg>';
   var BUBBLE_E='💬';
+  var MAXLEN=1000;
 
   var sdk=null, root=null, E={}, S=null;
   /* персональный оттенок имени в группах — токены тем (без жёстких цветов) */
@@ -111,6 +127,7 @@
       +'<div class="ch-sub">'+esc(t("subtitle"))+'</div></div>'
       +(S.family&&sdk.can("edit")?'<button class="hbtn" id="chNew" aria-label="'+esc(t("newChat"))+'">'+PLUS_IC+'</button>':'')
       +'</div>';
+    h+='<div class="ch-scroll" id="chScroll">';
     if(!S.loaded){ h+='<div class="ch-empty"><div class="e">⏳</div></div>'; }
     else if(!S.family){
       h+='<div class="ch-empty"><div class="e">👨‍👩‍👧</div><p>'+esc(t("noFamily"))+'</p></div>';
@@ -128,7 +145,9 @@
         }
       }
     }
+    h+='</div>';
     E.wrap.innerHTML=h;
+    E.msgs=null; E.input=null; E.file=null;
   }
   function rowHtml(th){
     var last=th.last, prev;
@@ -150,7 +169,7 @@
   /* =================== ПЕРЕПИСКА =================== */
   function openThread(tid){
     var th=threadById(tid); if(!th){ renderList(); return; }
-    S.view="thread"; S.tid=tid; S.msgs=[]; S.more=false; S.msgsLoaded=false;
+    S.view="thread"; S.tid=tid; S.msgs=[]; S.more=false; S.msgsLoaded=false; S.stick=true;
     th.unread=0;
     renderThread();
     loadMsgs(tid).then(function(r){
@@ -174,8 +193,10 @@
         +'<div class="ch-prev" id="chPrev" style="display:none"><img id="chPrevImg" alt=""><button class="px" id="chPrevX" aria-label="✕">✕</button></div>'
         +'<div class="ch-comp-row">'
         +'<button class="cbtn" id="chPhotoPick" aria-label="'+esc(t("addPhoto"))+'">'+CAM_IC+'</button>'
-        +'<textarea id="chInput" rows="1" maxlength="1000" placeholder="'+esc(t("write"))+'"></textarea>'
-        +'<button class="cbtn send" id="chSend" aria-label="'+esc(t("send"))+'">'+SEND_IC+'</button>'
+        +'<div id="chInput" class="ch-input" contenteditable="true" role="textbox" aria-multiline="true"'
+          +' aria-label="'+esc(t("write"))+'" data-ph="'+esc(t("write"))+'"'
+          +' enterkeyhint="send" inputmode="text" autocapitalize="sentences" autocorrect="on" spellcheck="true" translate="no"></div>'
+        +'<button class="cbtn send off" id="chSend" aria-label="'+esc(t("send"))+'">'+SEND_IC+'</button>'
         +'</div>'
         +'<input type="file" id="chFile" accept="image/*" style="display:none">'
         +'</div>';
@@ -184,10 +205,16 @@
     E.msgs=E.wrap.querySelector("#chMsgs");
     E.input=E.wrap.querySelector("#chInput");
     E.file=E.wrap.querySelector("#chFile");
-    if(E.input) E.input.addEventListener("input",autoGrow);
+    if(E.msgs) E.msgs.addEventListener("scroll",function(){ S.stick=nearBottom(); },{passive:true});
+    if(E.input){
+      E.input.addEventListener("beforeinput",onBeforeInput);
+      E.input.addEventListener("input",onComposerInput);
+      E.input.addEventListener("keydown",onComposerKey);
+      E.input.addEventListener("paste",onComposerPaste);
+    }
     renderMsgs();
+    vpApply();
   }
-  function autoGrow(){ if(!E.input) return; E.input.style.height="auto"; E.input.style.height=Math.min(E.input.scrollHeight,110)+"px"; }
   function msgHtml(m, group){
     var mine=m.uid===S.me;
     if(m.del) return '<div class="msg sys'+(mine?" me":"")+'">🚫 '+esc(t("deleted"))+'</div>';
@@ -201,7 +228,9 @@
   function renderMsgs(){
     if(!E.msgs) return;
     var th=threadById(S.tid), group=th&&th.kind==="group";
-    var h="", lastDay="", i, m;
+    /* распорка с margin-top:auto прижимает редкие сообщения к низу, но НЕ обрезает верх
+       при переполнении (в отличие от justify-content:flex-end — там не доскроллить вверх) */
+    var h='<div class="ch-msgs-top"></div>', lastDay="", i, m;
     if(S.more) h+='<button class="ch-older" id="chOlder">'+esc(t("older"))+'</button>';
     if(S.msgsLoaded && !S.msgs.length) h+='<div class="ch-empty in"><div class="e">'+BUBBLE_E+'</div><p>'+esc(t("first"))+'</p></div>';
     for(i=0;i<S.msgs.length;i++){
@@ -211,16 +240,68 @@
       h+=msgHtml(m, group);
     }
     E.msgs.innerHTML=h;
+    /* фото грузятся лениво и меняют высоту — держим низ, если пользователь и так внизу */
+    var imgs=E.msgs.querySelectorAll(".msg img"), j;
+    for(j=0;j<imgs.length;j++){ imgs[j].addEventListener("load",function(){ if(alive()&&S.stick) scrollBottom(); },{once:true}); }
   }
-  function scrollBottom(){ try{ window.scrollTo(0, document.body.scrollHeight); }catch(e){} }
+
+  /* единственный скроллер — лента (или список); НЕ окно (тело заблокировано) */
+  function scrollBottom(){ var s=E.msgs; if(s){ try{ s.scrollTop=s.scrollHeight; }catch(e){} } }
   function nearBottom(){
-    try{ return (window.innerHeight+window.scrollY) >= (document.body.scrollHeight-220); }catch(e){ return true; }
+    var s=E.msgs; if(!s) return true;
+    return (s.scrollHeight - s.scrollTop - s.clientHeight) < 240;
+  }
+
+  /* ---- композер (contenteditable): только текст ---- */
+  function composerText(){ return E.input ? (E.input.innerText||"").replace(/ /g," ") : ""; }
+  function clearComposer(){ if(E.input){ E.input.innerHTML=""; } updateSendState(); }
+  function placeCaretEnd(){
+    if(!E.input) return;
+    try{ var r=document.createRange(); r.selectNodeContents(E.input); r.collapse(false);
+      var sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(r); }catch(e){}
+  }
+  /* блокируем ввод сверх лимита (печать); вставка режется в onComposerPaste */
+  function onBeforeInput(e){
+    if(!e.inputType || e.inputType.indexOf("insert")!==0) return;
+    if(e.inputType==="insertFromPaste") return; /* обработаем в paste */
+    var add=e.data?e.data.length:(e.inputType==="insertLineBreak"||e.inputType==="insertParagraph"?1:0);
+    if(add>0 && E.input.innerText.length+add>MAXLEN) e.preventDefault();
+  }
+  function onComposerInput(){
+    if(!E.input) return;
+    /* contenteditable иногда оставляет <br>/<div> после очистки — нормализуем, чтобы :empty показал плейсхолдер */
+    if(!E.input.textContent.replace(/​/g,"").trim()){ if(E.input.innerHTML!=="") E.input.innerHTML=""; }
+    updateSendState();
+  }
+  function onComposerKey(e){
+    if(e.key==="Enter" && !e.shiftKey && !(e.isComposing||e.keyCode===229)){
+      e.preventDefault(); doSend();
+    }
+  }
+  function onComposerPaste(e){
+    e.preventDefault();
+    var cd=e.clipboardData||window.clipboardData;
+    var txt=cd?(cd.getData("text/plain")||""):"";
+    if(!txt) return;
+    var room=MAXLEN-E.input.innerText.length;
+    if(room<=0) return;
+    if(txt.length>room) txt=txt.slice(0,room);
+    try{ document.execCommand("insertText",false,txt); }
+    catch(e2){ E.input.appendChild(document.createTextNode(txt)); placeCaretEnd(); }
+    onComposerInput();
+  }
+  function updateSendState(){
+    var b=E.wrap?E.wrap.querySelector("#chSend"):null;
+    if(!b) return;
+    var has=(composerText().trim()!=="") || !!S.photo;
+    b.classList.toggle("off", !has || !!S.sending);
+    b.setAttribute("aria-disabled", (!has||S.sending)?"true":"false");
   }
 
   /* ---- отправка ---- */
   function doSend(){
     if(S.sending) return;
-    var body=(E.input?E.input.value:"").trim();
+    var body=composerText().trim();
     var ph=S.photo;
     if(!body && !ph) return;
     S.sending=true; setSending(true);
@@ -234,12 +315,12 @@
       S.sending=false; if(!alive()) return;
       setSending(false);
       if(!(r&&r.ok&&r.item)){ sdk.ui.toast(t("errSend")); return; }
-      if(E.input){ E.input.value=""; autoGrow(); }
+      clearComposer();
       clearPhoto();
       S.msgs.push(r.item);
       var th=threadById(S.tid);
       if(th){ th.last={uid:r.item.uid,name:r.item.name,body:r.item.body,photo:r.item.photo?1:0,at:r.item.at}; th.at=r.item.at; }
-      renderMsgs(); scrollBottom();
+      S.stick=true; renderMsgs(); scrollBottom();
       sdk.ui.haptics(6);
       sdk.events.track("message_sent_ui",{thread:S.tid, photo:r.item.photo?1:0});
     }).catch(function(e){
@@ -250,7 +331,8 @@
   }
   function setSending(on){
     var b=E.wrap.querySelector("#chSend");
-    if(b){ b.disabled=!!on; b.classList.toggle("busy",!!on); }
+    if(b){ b.classList.toggle("busy",!!on); }
+    updateSendState();
   }
   function pickPhoto(file){
     if(!file) return;
@@ -267,6 +349,7 @@
         S.photo={dataUrl:dataUrl};
         var pv=E.wrap.querySelector("#chPrev"), pi=E.wrap.querySelector("#chPrevImg");
         if(pv&&pi){ pi.src=dataUrl; pv.style.display="flex"; }
+        updateSendState();
       };
       img.src=ev.target.result;
     };
@@ -276,9 +359,10 @@
     S.photo=null;
     var pv=E.wrap.querySelector("#chPrev"); if(pv) pv.style.display="none";
     if(E.file) E.file.value="";
+    updateSendState();
   }
 
-  /* ---- лайтбокс фото: шторка оболочки (свой fixed внутри .view ломается transform-анимацией) ---- */
+  /* ---- лайтбокс фото: шторка оболочки (свой fixed внутри слоя ломается transform-сдвигом) ---- */
   function openLightbox(src){
     if(S.sheet) return;
     var node=document.createElement("div");
@@ -288,30 +372,40 @@
     node.querySelector("img").addEventListener("click",function(){ S.sheet=null; try{ sh.close(); }catch(e){} });
   }
 
-  /* ---- клавиатура (iOS/Android): композер поверх клавиатуры + свайп по переписке прячет её ----
-     sticky-композер прижат к НИЗУ layout-вьюпорта; клавиатура его не двигает. visualViewport
-     говорит, сколько низа перекрыто — поднимаем композер transform'ом и дополняем msgs снизу. */
-  function kbApply(){
-    if(!S || !S.alive || !window.visualViewport) return;
-    var c=E.wrap?E.wrap.querySelector("#chComp"):null;
+  /* ---- клавиатура (iOS/Android): слой повторяет visualViewport ----
+     Слой #chApp = position:fixed на весь экран. При клавиатуре visualViewport.height < innerHeight:
+     задаём слою эту высоту (низ слоя = верх клавиатуры), а offsetTop сдвигаем translateY'ем. Композер,
+     будучи последним flex-элементом колонки, садится РОВНО над клавиатурой — без зазора и без
+     панели формы (контент-editable). Тело страницы заблокировано — позади ничего не едет. */
+  function vpApply(){
+    if(!alive() || !E.app) return;
     var vv=window.visualViewport;
-    var kb=Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
-    if(c) c.style.transform = kb>2 ? "translateY(-"+kb+"px)" : "";
-    if(E.msgs) E.msgs.style.paddingBottom = kb>2 ? (kb+14)+"px" : "";
-    if(kb>2) scrollBottom();
+    if(!vv){ E.app.style.height=""; E.app.style.transform=""; return; } /* десктоп/старьё → CSS 100dvh */
+    E.app.style.height=Math.round(vv.height)+"px";
+    var off=Math.round(vv.offsetTop||0);
+    E.app.style.transform = off>0 ? "translateY("+off+"px)" : "";
+    var kb=Math.max(0, Math.round(window.innerHeight - vv.height - off));
+    var open=kb>80;
+    if(open!==S.kbOpen){ S.kbOpen=open; E.app.classList.toggle("kb-open",open); }
+    if(open) scrollBottom();
   }
   function kbSetup(){
-    if(!window.visualViewport || S.vv) return;
-    S.vv=kbApply;
-    window.visualViewport.addEventListener("resize",S.vv);
-    window.visualViewport.addEventListener("scroll",S.vv);
+    if(S.vv) return;
+    S.vv=vpApply;
+    if(window.visualViewport){
+      window.visualViewport.addEventListener("resize",S.vv);
+      window.visualViewport.addEventListener("scroll",S.vv);
+    }
+    window.addEventListener("orientationchange",S.vv);
   }
   function kbTeardown(){
-    if(S && S.vv && window.visualViewport){
+    if(!S || !S.vv) return;
+    if(window.visualViewport){
       window.visualViewport.removeEventListener("resize",S.vv);
       window.visualViewport.removeEventListener("scroll",S.vv);
-      S.vv=null;
     }
+    window.removeEventListener("orientationchange",S.vv);
+    S.vv=null;
   }
 
   /* ---- удаление своего сообщения ---- */
@@ -388,7 +482,7 @@
     if(!alive()) return true;
     if(S.sheet && !(S.sheet.overlay && S.sheet.overlay.parentNode)) S.sheet=null; /* шторку закрыли grip'ом/оверлеем */
     if(S.sending || S.sheet || S.photo) return false;
-    if(E.input && E.input.value.trim()!=="") return false;
+    if(composerText().trim()!=="") return false; /* черновик не затираем */
     if(S.view==="thread"){
       var tid=S.tid, stick=nearBottom();
       loadMsgs(tid).then(function(r){
@@ -416,25 +510,37 @@
     sdk=theSdk; root=rootEl;
     S={ alive:true, view:"list", tid:null, threads:[], roster:[], me:0, isParent:false,
         family:true, loaded:false, msgs:[], more:false, msgsLoaded:false,
-        sending:false, photo:null, sheet:null, pendingTid:null, vv:null, ty:null };
+        sending:false, photo:null, sheet:null, pendingTid:null, vv:null, ty:null, stick:true, kbOpen:false };
     E={};
     sdk.ui.hud({hidden:true});
-    root.innerHTML='<div class="ch" id="chWrap"></div>';
-    E.wrap=root.querySelector("#chWrap");
 
-    /* делегирование всех кликов — на внутренний wrap (умирает вместе с innerHTML, root-листенер не копится) */
-    E.wrap.addEventListener("click",function(e){
+    /* слой чата живёт в <body>, НЕ в .view-секции (см. шапку файла). Снимаем возможный осколок. */
+    var old=document.getElementById("chApp"); if(old&&old.parentNode) old.parentNode.removeChild(old);
+    var app=document.createElement("div");
+    app.id="chApp"; app.className="ch-app"; app.setAttribute("data-mod","chat");
+    app.innerHTML='<div class="ch" id="chWrap"></div>';
+    document.body.appendChild(app);
+    E.app=app;
+    E.wrap=app.querySelector("#chWrap");
+    document.documentElement.classList.add("ch-lock"); /* блок прокрутки тела позади слоя */
+
+    /* делегирование всех кликов — на слой (живёт всю жизнь модуля, слушатели не копятся) */
+    E.app.addEventListener("click",function(e){
       if(e.target.closest("#chBack")){ sdk.ui.back(); return; }
-      if(e.target.closest("#chToList")){ S.view="list"; S.tid=null; renderList(); loadThreads().then(function(){ if(alive()&&S.view==="list") renderList(); }).catch(function(){}); window.scrollTo(0,0); return; }
+      if(e.target.closest("#chToList")){ S.view="list"; S.tid=null; renderList(); loadThreads().then(function(){ if(alive()&&S.view==="list") renderList(); }).catch(function(){}); return; }
       if(e.target.closest("#chNew")||e.target.closest("#chNew2")){ openNewChat(); return; }
       var row=e.target.closest(".ch-row");
-      if(row){ openThread(parseInt(row.getAttribute("data-tid"),10)); window.scrollTo(0,0); return; }
+      if(row){ openThread(parseInt(row.getAttribute("data-tid"),10)); return; }
       if(e.target.closest("#chOlder")){
         var first=S.msgs.length?S.msgs[0].id:0;
-        if(first) loadMsgs(S.tid,first).then(function(r){
-          if(!alive()||!(r&&r.ok)) return;
-          S.msgs=(r.items||[]).concat(S.msgs); S.more=!!r.more; renderMsgs();
-        }).catch(function(){});
+        if(first){
+          var sBefore=E.msgs?E.msgs.scrollHeight:0, tBefore=E.msgs?E.msgs.scrollTop:0;
+          loadMsgs(S.tid,first).then(function(r){
+            if(!alive()||!(r&&r.ok)) return;
+            S.msgs=(r.items||[]).concat(S.msgs); S.more=!!r.more; renderMsgs();
+            if(E.msgs) E.msgs.scrollTop = tBefore + (E.msgs.scrollHeight - sBefore); /* держим место */
+          }).catch(function(){});
+        }
         return;
       }
       if(e.target.closest("#chPhotoPick")){ if(E.file) E.file.click(); return; }
@@ -445,12 +551,12 @@
       var msg=e.target.closest(".msg[data-mine]");
       if(msg && !msg.classList.contains("sys")){ askDelete(parseInt(msg.getAttribute("data-mid"),10)); return; }
     });
-    E.wrap.addEventListener("change",function(e){
+    E.app.addEventListener("change",function(e){
       if(e.target && e.target.id==="chFile" && e.target.files && e.target.files[0]) pickPhoto(e.target.files[0]);
     });
-    /* свайп по переписке прячет клавиатуру (blur); свайп по самому композеру не считается */
-    E.wrap.addEventListener("touchstart",function(e){ S.ty=e.touches&&e.touches[0]?e.touches[0].clientY:null; },{passive:true});
-    E.wrap.addEventListener("touchmove",function(e){
+    /* свайп по ленте прячет клавиатуру (blur); свайп по самому композеру не считается */
+    E.app.addEventListener("touchstart",function(e){ S.ty=e.touches&&e.touches[0]?e.touches[0].clientY:null; },{passive:true});
+    E.app.addEventListener("touchmove",function(e){
       if(S.ty==null || !e.touches || !e.touches[0]) return;
       var ae=document.activeElement;
       if(!ae || ae.id!=="chInput") return;
@@ -458,16 +564,17 @@
       if(Math.abs(e.touches[0].clientY-S.ty)>28){ try{ ae.blur(); }catch(x){} S.ty=null; }
     },{passive:true});
     /* фокус в поле → доскроллить к последним сообщениям после выезда клавиатуры */
-    E.wrap.addEventListener("focusin",function(e){
-      if(e.target && e.target.id==="chInput"){ setTimeout(function(){ if(alive()) scrollBottom(); },300); }
+    E.app.addEventListener("focusin",function(e){
+      if(e.target && e.target.id==="chInput"){ setTimeout(function(){ if(alive()){ vpApply(); scrollBottom(); } },300); }
     });
     kbSetup();
+    vpApply();
 
     if(sdk.isDemo()){
       E.wrap.innerHTML='<div class="ch-head"><button class="back" id="chBack" aria-label="'+esc(sdk.i18n.t("common.back"))+'">'+BACK_IC+'</button>'
         +'<div class="ch-head-main"><div class="ch-title">'+BUBBLE_E+' '+esc(sdk.i18n.t("tile.chat"))+'</div>'
         +'<div class="ch-sub">'+esc(t("subtitle"))+'</div></div></div>'
-        +'<div class="ch-empty"><div class="e">'+BUBBLE_E+'</div><p>'+esc(t("demo"))+'</p></div>';
+        +'<div class="ch-scroll"><div class="ch-empty"><div class="e">'+BUBBLE_E+'</div><p>'+esc(t("demo"))+'</p></div></div>';
       return;
     }
     renderList();
@@ -481,6 +588,8 @@
     if(S) S.alive=false;
     kbTeardown(); /* visualViewport — глобальные слушатели, снять обязательно */
     if(S && S.sheet){ try{ S.sheet.close(); }catch(e){} S.sheet=null; }
+    document.documentElement.classList.remove("ch-lock");
+    if(E.app && E.app.parentNode) E.app.parentNode.removeChild(E.app); /* слой #chApp из <body> */
     S=null; E={};
   }
   /* тап по оповещению: открыть конкретную переписку (link {module:"chat", item:"<tid>"}) */
