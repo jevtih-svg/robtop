@@ -4,7 +4,8 @@
 --
 -- chat_threads  — тред (direct 1:1 с уникальным dkey "d:<family>:<min>:<max>" или group с названием),
 --                 family_id скоупит чат на семью, updated_at двигает сортировку списка.
--- chat_members  — участники треда + last_read_id (личный маркер прочитанности).
+-- chat_members  — участники треда + last_read_id (личный маркер прочитанности),
+--                 last_read_at/seen_at (миграция 027: время прочтения + присутствие для галочек).
 -- chat_messages — сообщения: текст (≤1000) и/или фото (путь uploads/...); мягкое удаление
 --                 deleted_at (плейсхолдер «удалено» у всех, файл фото стирается).
 
@@ -26,6 +27,8 @@ CREATE TABLE IF NOT EXISTS chat_members (
   thread_id BIGINT UNSIGNED NOT NULL,
   user_id INT UNSIGNED NOT NULL,
   last_read_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  last_read_at DATETIME NULL,
+  seen_at DATETIME NULL,
   joined_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (thread_id, user_id),
   KEY idx_chat_member_user (user_id)

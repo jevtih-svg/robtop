@@ -5,6 +5,14 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.08.75", d:"2026-06-08", t:{
+    en:"New app — Friends: describe your friends, rate them, and keep secret ones in a separate tab.",
+    ru:"Новое приложение — Друзья: описывай друзей, ставь оценку и прячь секретных в отдельную вкладку.",
+    lv:"Jauna lietotne — Draugi: apraksti savus draugus, novērtē tos un slēp slepenos atsevišķā cilnē." } },
+  { v:"2026.06.08.75", d:"2026-06-08", t:{
+    en:"New app — Day Counter: set a date and a name, and watch the days count down to your big event.",
+    ru:"Новое приложение — Счётчик дней: выбери дату и название, и считай дни до важного события.",
+    lv:"Jauna lietotne — Dienu skaitītājs: izvēlies datumu un nosaukumu un skaiti dienas līdz lielajam notikumam." } },
   { v:"2026.06.08.74", d:"2026-06-08", t:{
     en:"Toothbrushing Timer now counts once per time of day: brush from 5:00 to 10:00 and from 18:00 to 23:59.",
     ru:"Таймер чистки зубов теперь засчитывает один раз за период: чистим с 5:00 до 10:00 и с 18:00 до 23:59.",

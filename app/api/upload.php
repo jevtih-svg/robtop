@@ -15,7 +15,7 @@ rt_guard();
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') rt_json(['error' => 'method'], 405);
 
 $body = rt_body();
-$kindAllowed = ['wishlist', 'avatars', 'documents', 'events', 'rating', 'mood', 'chat'];
+$kindAllowed = ['wishlist', 'avatars', 'documents', 'events', 'rating', 'mood', 'chat', 'find'];
 $kind = (isset($body['kind']) && in_array($body['kind'], $kindAllowed, true)) ? $body['kind'] : 'wishlist';
 $dataUrl = isset($body['dataUrl']) ? (string)$body['dataUrl'] : '';
 

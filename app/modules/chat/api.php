@@ -194,8 +194,13 @@ function rt_chat_action($db, $uid, $type, $itemId, $data) {
                 $mx->execute([$tid]);
                 $maxId = (int)$mx->fetchColumn();
                 if ($maxId > 0) {
-                    $db->prepare("UPDATE chat_members SET last_read_id = GREATEST(last_read_id, ?) WHERE thread_id = ? AND user_id = ?")
-                       ->execute([$maxId, $tid, $uid]);
+                    try { /* продвигаем маркер + штампуем время прочтения (для галочек у отправителя) */
+                        $db->prepare("UPDATE chat_members SET last_read_id = ?, last_read_at = NOW() WHERE thread_id = ? AND user_id = ? AND last_read_id < ?")
+                           ->execute([$maxId, $tid, $uid, $maxId]);
+                    } catch (Throwable $e) { /* до миграции 027 нет колонки last_read_at */
+                        $db->prepare("UPDATE chat_members SET last_read_id = GREATEST(last_read_id, ?) WHERE thread_id = ? AND user_id = ?")
+                           ->execute([$maxId, $tid, $uid]);
+                    }
                 }
                 try {
                     $lk = json_encode(['module' => 'chat', 'item' => (string)$tid], JSON_UNESCAPED_UNICODE);
@@ -203,7 +208,22 @@ function rt_chat_action($db, $uid, $type, $itemId, $data) {
                        ->execute([$uid, $lk]);
                 } catch (Throwable $e) { /* таблицы оповещений может не быть */ }
             }
-            rt_json(['ok' => true, 'items' => $items, 'ro' => $acc['ro'] ? 1 : 0, 'more' => count($rows) === 50 ? 1 : 0]);
+            /* читатели треда (кроме меня) с маркерами — клиент по ним рисует галочки на МОИХ
+               сообщениях: read = чей-то last_read_id >= id; delivered = чей-то seen_at >= времени.
+               Фолбэк без last_read_at/seen_at (до миграции 027) — read всё равно работает по lri. */
+            $readers = [];
+            try {
+                $rs = $db->prepare("SELECT cm.user_id, cm.last_read_id, cm.last_read_at, cm.seen_at, u.name FROM chat_members cm JOIN users u ON u.id = cm.user_id WHERE cm.thread_id = ? AND cm.user_id <> ?");
+                $rs->execute([$tid, $uid]);
+                foreach ($rs->fetchAll() as $r) $readers[] = ['uid' => (int)$r['user_id'], 'name' => (string)$r['name'], 'lri' => (int)$r['last_read_id'], 'rat' => $r['last_read_at'] ? strtotime($r['last_read_at']) * 1000 : null, 'sat' => $r['seen_at'] ? strtotime($r['seen_at']) * 1000 : null];
+            } catch (Throwable $e) {
+                try {
+                    $rs = $db->prepare("SELECT cm.user_id, cm.last_read_id, u.name FROM chat_members cm JOIN users u ON u.id = cm.user_id WHERE cm.thread_id = ? AND cm.user_id <> ?");
+                    $rs->execute([$tid, $uid]);
+                    foreach ($rs->fetchAll() as $r) $readers[] = ['uid' => (int)$r['user_id'], 'name' => (string)$r['name'], 'lri' => (int)$r['last_read_id'], 'rat' => null, 'sat' => null];
+                } catch (Throwable $e2) { $readers = []; }
+            }
+            rt_json(['ok' => true, 'items' => $items, 'ro' => $acc['ro'] ? 1 : 0, 'more' => count($rows) === 50 ? 1 : 0, 'readers' => $readers]);
         }
 
         /* Отправка: текст и/или фото. Только участник. Оповещение каждому другому участнику. */

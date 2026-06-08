@@ -34,7 +34,9 @@
       pickTitle:"Chat with whom?", startChat:"Start chat", createGroup:"Create group",
       needTitle:"Give the group a name", ro:"View only — you are not in this chat",
       members:"In chat: {names}", errSend:"Couldn't send, try again", errLoad:"Couldn't load, pull to retry",
-      older:"Show earlier messages", uploadFail:"Photo didn't upload, try again"
+      older:"Show earlier messages", uploadFail:"Photo didn't upload, try again",
+      stSent:"Sent", stDelivered:"Delivered", stRead:"Read", readAt:"Read at {t}",
+      infoTitle:"Message", infoClose:"Close"
     }},
     ru:{ chat:{
       subtitle:"Семейный мессенджер",
@@ -49,7 +51,9 @@
       pickTitle:"С кем чат?", startChat:"Начать чат", createGroup:"Создать группу",
       needTitle:"Дай группе название", ro:"Только просмотр — ты не в этом чате",
       members:"В чате: {names}", errSend:"Не отправилось, попробуй ещё раз", errLoad:"Не загрузилось, попробуй ещё раз",
-      older:"Показать сообщения раньше", uploadFail:"Фото не загрузилось, попробуй ещё раз"
+      older:"Показать сообщения раньше", uploadFail:"Фото не загрузилось, попробуй ещё раз",
+      stSent:"Отправлено", stDelivered:"Доставлено", stRead:"Прочитано", readAt:"Прочитано в {t}",
+      infoTitle:"Сообщение", infoClose:"Закрыть"
     }},
     lv:{ chat:{
       subtitle:"Ģimenes ziņotājs",
@@ -64,7 +68,9 @@
       pickTitle:"Ar ko čatot?", startChat:"Sākt čatu", createGroup:"Izveidot grupu",
       needTitle:"Dod grupai nosaukumu", ro:"Tikai skatīšanās — tu neesi šajā čatā",
       members:"Čatā: {names}", errSend:"Neizdevās nosūtīt, mēģini vēlreiz", errLoad:"Neizdevās ielādēt, mēģini vēlreiz",
-      older:"Rādīt agrākās ziņas", uploadFail:"Foto neielādējās, mēģini vēlreiz"
+      older:"Rādīt agrākās ziņas", uploadFail:"Foto neielādējās, mēģini vēlreiz",
+      stSent:"Nosūtīts", stDelivered:"Piegādāts", stRead:"Izlasīts", readAt:"Izlasīts {t}",
+      infoTitle:"Ziņa", infoClose:"Aizvērt"
     }}
   };
   var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
@@ -72,6 +78,9 @@
   var CAM_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5a2 2 0 0 1 2-2h2l1.4-2h5.2L16 6.5h2a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.4"/></svg>';
   var SEND_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-7-5 16-3.4-6.2z"/><path d="M20 5L11.6 14.8"/></svg>';
   var BUBBLE_E='💬';
+  /* галочки статуса своих сообщений: ✓ sent, ✓✓ delivered/read (цвет задаёт CSS .ck-<status>) */
+  var CHECK_ONE='<svg viewBox="0 0 14 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6.5l3.3 3.3L12.5 2"/></svg>';
+  var CHECK_TWO='<svg viewBox="0 0 20 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6.5l3.3 3.3L10.5 2"/><path d="M7.5 6.5l3.3 3.3L18.5 2"/></svg>';
   var MAXLEN=1000;
 
   var sdk=null, root=null, E={}, S=null;
@@ -174,7 +183,7 @@
     renderThread();
     loadMsgs(tid).then(function(r){
       if(!alive() || S.tid!==tid) return;
-      if(r&&r.ok){ S.msgs=r.items||[]; S.more=!!r.more; S.msgsLoaded=true; renderMsgs(); scrollBottom(); }
+      if(r&&r.ok){ S.msgs=r.items||[]; S.readers=r.readers||[]; S.more=!!r.more; S.msgsLoaded=true; renderMsgs(); scrollBottom(); }
       else sdk.ui.toast(t("errLoad"));
     }).catch(function(){ if(alive()) sdk.ui.toast(t("errLoad")); });
   }
@@ -217,6 +226,20 @@
     renderMsgs();
     vpApply();
   }
+  /* статус МОЕГО сообщения по маркерам читателей (S.readers): read = кто-то прочитал
+     (last_read_id >= id); delivered = кто-то был в сети после отправки (seen_at >= времени) */
+  function msgStatus(m){
+    var rs=S.readers||[], i, read=false, deliv=false;
+    for(i=0;i<rs.length;i++){
+      if(rs[i].lri>=m.id) read=true;
+      if(rs[i].sat && rs[i].sat>=m.at) deliv=true;
+    }
+    return read?"read":(deliv?"delivered":"sent");
+  }
+  function msgTick(m){
+    var st=msgStatus(m);
+    return '<span class="rtk rtk-'+st+'" aria-hidden="true">'+(st==="sent"?CHECK_ONE:CHECK_TWO)+'</span>';
+  }
   function msgHtml(m, group){
     var mine=m.uid===S.me;
     if(m.del) return '<div class="msg sys'+(mine?" me":"")+'">🚫 '+esc(t("deleted"))+'</div>';
@@ -224,7 +247,7 @@
     if(!mine && group) h+='<div class="nm" style="color:'+nameVar(m.uid)+'">'+esc(m.name)+'</div>';
     if(m.photo) h+='<img src="'+esc(m.photo)+'" alt="'+esc(t("photoWord"))+'" loading="lazy" data-full="'+esc(m.photo)+'">';
     if(m.body) h+='<div class="bd">'+esc(m.body)+'</div>';
-    h+='<div class="mt">'+esc(hhmm(m.at))+'</div></div>';
+    h+='<div class="mt">'+esc(hhmm(m.at))+(mine?msgTick(m):"")+'</div></div>';
     return h;
   }
   function renderMsgs(){
@@ -374,26 +397,28 @@
   }
 
   /* ---- клавиатура (iOS/Android): слой повторяет visualViewport ----
-     Слой #chApp = position:fixed на весь экран. При клавиатуре visualViewport.height < innerHeight:
-     задаём слою min(vv.height, clientHeight) (низ слоя = верх клавиатуры; min страхует от завышения
-     vv на части Android), offsetTop сдвигаем translateY'ем. Композер, будучи последним flex-элементом
-     колонки, садится РОВНО над клавиатурой. Класс kb-open ставится/снимается по ФОКУСУ поля (см.
-     syncKb), а не по высоте: на Android с resizes-content innerHeight тоже сжимается и высотная
-     эвристика не срабатывала — оставался нижний safe-area отступ как щель. Тело заблокировано. */
+     Слой #chApp = position:fixed. ВАЖНО (фикс «сообщения зависают выше» при закрытии и «лишнего
+     отступа снизу»): высоту слоя задаём ТОЛЬКО когда поле в фокусе (клавиатура вероятно открыта) —
+     тогда слой = видимый вьюпорт (visualViewport.height), низ = верх клавиатуры, offsetTop сдвигаем
+     translateY'ем. Как только поле теряет фокус (клавиатуры нет), снимаем inline-высоту → слой на
+     весь экран (CSS 100dvh), сообщения и композер возвращаются к самому низу без остаточной щели.
+     Класс kb-open — по ФОКУСУ поля (syncKb), не по высоте (на Android resizes-content высотная
+     эвристика давала 0). Тело страницы заблокировано html.ch-lock. */
   function syncKb(){ if(E.app) E.app.classList.toggle("kb-open", !!(E.input && document.activeElement===E.input)); }
   function vpApply(){
     if(!alive() || !E.app) return;
     var vv=window.visualViewport;
-    if(vv){
-      var ch=document.documentElement.clientHeight||vv.height;
-      E.app.style.height=Math.round(Math.min(vv.height, ch))+"px";
+    var focused=!!(E.input && document.activeElement===E.input);
+    if(vv && focused){
+      E.app.style.height=Math.round(vv.height)+"px";
       var off=Math.round(vv.offsetTop||0);
       E.app.style.transform = off>0 ? "translateY("+off+"px)" : "";
-    } else { E.app.style.height=""; E.app.style.transform=""; } /* десктоп/старьё → CSS 100dvh */
-    var open=!!(E.input && document.activeElement===E.input);
+    } else {
+      E.app.style.height=""; E.app.style.transform=""; /* нет фокуса → полный экран (100dvh) */
+    }
     syncKb();
-    if(open && !S.kbOpen) scrollBottom(); /* доскролл только на переходе «открылась» */
-    S.kbOpen=open;
+    if(focused && !S.kbOpen) scrollBottom(); /* доскролл только на переходе «открылась» */
+    S.kbOpen=focused;
   }
   /* файл-инпут создаём НА ЛЕТУ (а не держим скрытый <input> в разметке): постоянный второй
      <input> клавиатура считает полем и рисует стрелки «пред./след.». Жест клика сохраняется. */
@@ -439,6 +464,38 @@
         }
       }).catch(function(){});
     });
+  }
+
+  /* инфо о доставке/прочтении СВОЕГО сообщения + удаление (по long-press). 1:1 — одна строка,
+     группа — по строке на участника (кроме меня) с его статусом и временем прочтения. */
+  function openMsgInfo(mid){
+    if(S.sheet) return;
+    var m=null,i; for(i=0;i<S.msgs.length;i++){ if(S.msgs[i].id===mid){ m=S.msgs[i]; break; } }
+    if(!m || m.del) return;
+    var th=threadById(S.tid), group=th&&th.kind==="group", rs=S.readers||[];
+    function row(name, st, rat){
+      var ic=st==="sent"?CHECK_ONE:CHECK_TWO;
+      var txt;
+      if(st==="read") txt=group ? esc(name)+" · "+esc(t("stRead"))+" "+esc(hhmm(rat||m.at)) : esc(t("readAt",{t:hhmm(rat||m.at)}));
+      else if(st==="delivered") txt=group ? esc(name)+" · "+esc(t("stDelivered")) : esc(t("stDelivered"));
+      else txt=group ? esc(name)+" · "+esc(t("stSent")) : esc(t("stSent"));
+      return '<div class="rcpt-row"><span class="rtk rtk-'+st+'">'+ic+'</span><span class="rcpt-tx">'+txt+'</span></div>';
+    }
+    var rowsH="";
+    if(group){
+      if(!rs.length) rowsH=row("", "sent", null);
+      else rs.forEach(function(r){ rowsH+=row(r.name, r.lri>=m.id?"read":(r.sat&&r.sat>=m.at?"delivered":"sent"), r.rat); });
+    } else {
+      var r0=rs[0]; rowsH=row(r0?r0.name:"", msgStatus(m), r0?r0.rat:null);
+    }
+    var node=document.createElement("div");
+    node.innerHTML='<h2>'+esc(t("infoTitle"))+'</h2><div class="rcpt-list">'+rowsH+'</div>'
+      +'<div class="sheet-actions"><button class="btn btn-cancel" id="rcptClose">'+esc(t("infoClose"))+'</button>'
+      +'<button class="btn ch-del" id="rcptDel">'+esc(t("delYes"))+'</button></div>';
+    var sh=sdk.ui.sheet(node); S.sheet=sh;
+    function close(){ S.sheet=null; try{ sh.close(); }catch(e){} }
+    node.querySelector("#rcptClose").addEventListener("click",close);
+    node.querySelector("#rcptDel").addEventListener("click",function(){ close(); askDelete(mid); });
   }
 
   /* =================== НОВЫЙ ЧАТ =================== */
@@ -506,12 +563,14 @@
       var tid=S.tid, stick=nearBottom();
       loadMsgs(tid).then(function(r){
         if(!alive() || S.tid!==tid || !(r&&r.ok)) return;
-        var items=r.items||[];
+        var items=r.items||[], newReaders=r.readers||[];
         var oldLast=S.msgs.length?S.msgs[S.msgs.length-1].id:0;
         var newLast=items.length?items[items.length-1].id:0;
         var changed = items.length!==S.msgs.length || newLast!==oldLast || delCount(items)!==delCount(S.msgs);
-        if(changed){
-          S.msgs=items; S.more=!!r.more; S.msgsLoaded=true;
+        /* галочки прочтения меняются БЕЗ изменения списка сообщений — ловим отдельно */
+        var rChanged = readersFp(newReaders)!==readersFp(S.readers);
+        if(changed || rChanged){
+          S.msgs=items; S.readers=newReaders; S.more=!!r.more; S.msgsLoaded=true;
           renderMsgs();
           if(newLast>oldLast && stick) scrollBottom();
         }
@@ -523,13 +582,16 @@
     return true;
   }
   function delCount(arr){ var n=0,i; for(i=0;i<arr.length;i++) if(arr[i].del) n++; return n; }
+  /* отпечаток маркеров читателей: меняется при чтении/появлении в сети → пере-рисовать галочки */
+  function readersFp(rs){ return (rs||[]).map(function(r){ return r.uid+":"+r.lri+":"+(r.sat||0); }).join(","); }
 
   /* =================== MOUNT / UNMOUNT =================== */
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl;
     S={ alive:true, view:"list", tid:null, threads:[], roster:[], me:0, isParent:false,
-        family:true, loaded:false, msgs:[], more:false, msgsLoaded:false,
-        sending:false, photo:null, sheet:null, pendingTid:null, vv:null, ty:null, stick:true, kbOpen:false };
+        family:true, loaded:false, msgs:[], readers:[], more:false, msgsLoaded:false,
+        sending:false, photo:null, sheet:null, pendingTid:null, vv:null, ty:null, stick:true, kbOpen:false,
+        lpTimer:null, lpX:0, lpY:0, suppressClick:false };
     E={};
     sdk.ui.hud({hidden:true});
 
@@ -545,6 +607,7 @@
 
     /* делегирование всех кликов — на слой (живёт всю жизнь модуля, слушатели не копятся) */
     E.app.addEventListener("click",function(e){
+      if(S.suppressClick){ S.suppressClick=false; e.preventDefault(); e.stopPropagation(); return; } /* был long-press */
       if(e.target.closest("#chBack")){ sdk.ui.back(); return; }
       if(e.target.closest("#chToList")){ S.view="list"; S.tid=null; renderList(); loadThreads().then(function(){ if(alive()&&S.view==="list") renderList(); }).catch(function(){}); return; }
       if(e.target.closest("#chNew")||e.target.closest("#chNew2")){ openNewChat(); return; }
@@ -556,7 +619,7 @@
           var sBefore=E.msgs?E.msgs.scrollHeight:0, tBefore=E.msgs?E.msgs.scrollTop:0;
           loadMsgs(S.tid,first).then(function(r){
             if(!alive()||!(r&&r.ok)) return;
-            S.msgs=(r.items||[]).concat(S.msgs); S.more=!!r.more; renderMsgs();
+            S.msgs=(r.items||[]).concat(S.msgs); if(r.readers) S.readers=r.readers; S.more=!!r.more; renderMsgs();
             if(E.msgs) E.msgs.scrollTop = tBefore + (E.msgs.scrollHeight - sBefore); /* держим место */
           }).catch(function(){});
         }
@@ -567,9 +630,24 @@
       if(e.target.closest("#chSend")){ doSend(); return; }
       var img=e.target.closest(".msg img");
       if(img){ openLightbox(img.getAttribute("data-full")||img.src); return; }
-      var msg=e.target.closest(".msg[data-mine]");
-      if(msg && !msg.classList.contains("sys")){ askDelete(parseInt(msg.getAttribute("data-mid"),10)); return; }
+      /* тап по своему сообщению больше НЕ удаляет (был риск случайного): статус прочтения и
+         удаление — по long-press, см. pointer-слушатели ниже → openMsgInfo */
     });
+    /* long-press по своему сообщению → инфо «доставлено/прочитано» + удаление (pointer = мышь+тач) */
+    E.app.addEventListener("pointerdown",function(e){
+      var msg=e.target.closest && e.target.closest('.msg[data-mine]');
+      if(!msg || msg.classList.contains("sys")) return;
+      var mid=parseInt(msg.getAttribute("data-mid"),10);
+      S.lpX=e.clientX; S.lpY=e.clientY;
+      if(S.lpTimer) clearTimeout(S.lpTimer);
+      S.lpTimer=setTimeout(function(){ S.lpTimer=null; if(alive()){ S.suppressClick=true; sdk.ui.haptics&&sdk.ui.haptics(8); openMsgInfo(mid); } },480);
+    });
+    E.app.addEventListener("pointermove",function(e){
+      if(S.lpTimer && (Math.abs(e.clientX-S.lpX)>10 || Math.abs(e.clientY-S.lpY)>10)){ clearTimeout(S.lpTimer); S.lpTimer=null; }
+    });
+    function cancelLp(){ if(S.lpTimer){ clearTimeout(S.lpTimer); S.lpTimer=null; } }
+    E.app.addEventListener("pointerup",cancelLp);
+    E.app.addEventListener("pointercancel",cancelLp);
     /* тап по кнопке композера НЕ должен уводить фокус с поля (иначе Android гасит клавиатуру
        при отправке). preventDefault на mousedown держит фокус в contenteditable; click проходит. */
     E.app.addEventListener("mousedown",function(e){

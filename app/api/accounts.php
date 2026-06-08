@@ -184,6 +184,28 @@ switch ($op) {
         rt_json(['ok' => true]);
     }
 
+    /* ---- скрытые плитки РОДИТЕЛЬСКОГО дашборда v2 (миграция 025) ----
+       Отдельно от tile_hidden: дашборд по умолчанию прячет игры, родитель сам решает, что
+       показывать. В отличие от tile_hidden пишем массив ВСЕГДА (даже пустой "[]"), не NULL:
+       наличие значения = «родитель настроил» (показать всё = []), NULL = «дефолт» (игры скрыты).
+       Читает parent.php (поле hiddenParent). На аккаунт родителя, как tile_order/tile_hidden. */
+    case 'tile_hidden_parent': {
+        $u   = rt_require_login($db);
+        $ids = [];
+        if (isset($b['hidden']) && is_array($b['hidden'])) {
+            foreach ($b['hidden'] as $id) {
+                if (is_string($id) && preg_match('/^[a-z0-9_-]{2,40}$/', $id)) $ids[] = $id;
+                if (count($ids) >= 100) break; // защита от мусора
+            }
+        }
+        $json = json_encode(array_values(array_unique($ids))); // ВСЕГДА массив (явный выбор), не NULL
+        $db->prepare(
+            "INSERT INTO user_prefs (user_id, hidden_tiles_parent) VALUES (?, ?)
+             ON DUPLICATE KEY UPDATE hidden_tiles_parent = VALUES(hidden_tiles_parent)"
+        )->execute([(int)$u['id'], $json]);
+        rt_json(['ok' => true]);
+    }
+
     /* ---- тема оформления аккаунта (users.theme, миграция 016) ----
        Каждый аккаунт (родитель и ребёнок) выбирает тему СЕБЕ в Настройках;
        применяется на любом устройстве после входа. Allowlist держим здесь,

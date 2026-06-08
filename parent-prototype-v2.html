@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RobTop — Родитель v2 (прототип)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Rubik:wght@400;500;600;700;800&display=swap&subset=cyrillic,cyrillic-ext,latin,latin-ext" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root{--cyan:#19e3ff;--magenta:#ff2bd6;--pink:#ff3db0;--purple:#a64bff;--blue:#3b6bff;
+    --green:#2bf0c0;--mint:#38e8a0;--gold:#ffd23b;--red:#ff4d6d;--orange:#ff7a3d;
+    --ink:#eaf2ff;--muted:#93a6cf;--accent:#ff3db0}
+  html,body{margin:0;min-height:100%}
+  body{font-family:'Rubik',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink);background:#05050f;
+    background-image:radial-gradient(900px 600px at 12% 6%,rgba(166,75,255,.18),transparent 60%),
+      radial-gradient(900px 700px at 90% 18%,rgba(25,227,255,.13),transparent 60%),
+      radial-gradient(1000px 800px at 50% 110%,rgba(255,43,214,.15),transparent 60%),
+      linear-gradient(180deg,#070617,#05040f 60%,#07041a);min-height:100vh}
+
+  /* ── шапка страницы (как у других прототипов) ── */
+  .head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .head h1{font-family:'Russo One','Rubik',sans-serif;font-size:19px;margin:0;color:#fff;text-shadow:0 0 12px rgba(25,227,255,.6)}
+  .head h1 b{color:var(--pink);font-weight:400}
+  .head .sub{color:var(--muted);font-size:12px;font-weight:600;margin-top:2px}
+  .tools{display:flex;align-items:center;gap:10px}
+  .demo{font-size:10.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--gold);
+    background:rgba(255,210,59,.14);border:1px solid rgba(255,210,59,.45);padding:4px 9px;border-radius:999px}
+  .lang{display:flex;gap:4px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:3px}
+  .lang button{border:none;background:none;color:#cfe0ff;font-weight:800;font-size:12px;padding:5px 10px;border-radius:999px;cursor:pointer;font-family:inherit}
+  .lang button.on{color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0)}
+  .stagewrap{display:flex;flex-direction:column;align-items:center;padding:18px 16px 60px}
+  .hint{color:var(--muted);font-size:12px;font-weight:600;margin:0 0 14px;text-align:center;max-width:560px;line-height:1.6}
+  .hint b{color:#cfe0ff}
+
+  /* ── телефон ── */
+  .phone{width:390px;max-width:94vw;border-radius:40px;padding:12px;background:linear-gradient(160deg,#15132e,#0a0920);
+    border:1px solid rgba(255,255,255,.14);box-shadow:0 30px 70px rgba(0,0,0,.6),0 0 50px -16px var(--cyan)}
+  .screen{position:relative;height:760px;max-height:80vh;overflow:hidden;border-radius:30px;display:flex;flex-direction:column;
+    background:radial-gradient(700px 480px at 20% 0%,rgba(166,75,255,.12),transparent 60%),linear-gradient(180deg,#0a0920,#0b0822)}
+  .scroll{flex:1;overflow:auto;padding:0 14px 86px}
+  .scroll::-webkit-scrollbar{width:0}
+  .anim{animation:sin .25s ease both}
+  @keyframes sin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  /* ── глобальный кластер (шестерёнка/колокольчик), как в реальном приложении ── */
+  .chrome{position:absolute;top:14px;right:14px;z-index:18;display:flex;gap:8px}
+  .chrome button{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;cursor:pointer;font-size:17px;color:#bfe9ff;
+    background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14);box-shadow:0 0 16px -7px var(--cyan)}
+  .chrome .dot{position:absolute;top:-3px;right:-3px;min-width:15px;height:15px;border-radius:9px;background:var(--pink);color:#fff;font-size:9px;font-weight:800;display:grid;place-items:center;padding:0 3px}
+
+  /* ── переключатель детей (чипы) ── */
+  .ptop{padding:46px 4px 4px}
+  .kidrow{display:flex;gap:9px;overflow-x:auto;padding:2px 2px 6px}
+  .kidrow::-webkit-scrollbar{height:0}
+  .kidchip{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 13px 6px 6px;border-radius:999px;cursor:pointer;
+    background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);transition:.15s}
+  .kidchip .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:19px;
+    background:linear-gradient(150deg,rgba(25,227,255,.25),rgba(166,75,255,.3));border:1px solid rgba(25,227,255,.4)}
+  .kidchip .nm{font-weight:800;font-size:14px;color:#dbe6ff}
+  .kidchip.on{border-color:var(--cyan);background:rgba(25,227,255,.12);box-shadow:0 0 18px -6px var(--cyan)}
+  .kidchip.on .nm{color:#fff}
+  .singlekid{display:flex;align-items:center;gap:11px;padding:2px 2px 4px}
+  .singlekid .av{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-size:23px;
+    background:linear-gradient(150deg,rgba(25,227,255,.25),rgba(166,75,255,.3));border:1px solid rgba(25,227,255,.45)}
+  .singlekid .nm{font-family:'Russo One','Rubik',sans-serif;font-size:18px;color:#fff}
+  .singlekid .sb{font-size:11px;color:var(--muted);font-weight:700;margin-top:2px}
+
+  /* ── баланс очков + действия ── */
+  .pts{display:flex;align-items:center;gap:14px;margin:12px 2px 0;padding:15px 16px;border-radius:18px;
+    background:linear-gradient(150deg,rgba(255,77,109,.16),rgba(255,43,214,.1));border:1.5px solid rgba(255,77,109,.4);
+    box-shadow:0 0 26px -10px var(--red)}
+  .pts .pig{font-size:30px}
+  .pts .n{font-family:'Russo One','Rubik',sans-serif;font-size:30px;color:#fff;line-height:1;text-shadow:0 0 16px rgba(255,77,109,.6)}
+  .pts .l{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--red);margin-top:4px}
+  .pts .strk{margin-left:auto;text-align:right;font-size:11px;font-weight:800;color:var(--gold)}
+  .act{display:flex;gap:9px;margin:11px 2px 0}
+  .act button{flex:1;border:none;cursor:pointer;font-family:inherit;font-weight:800;font-size:14.5px;border-radius:14px;padding:14px 10px;
+    display:flex;align-items:center;justify-content:center;gap:7px}
+  .act .give{flex:1.5;background:linear-gradient(180deg,#ff5db0,#d51a82);color:#fff;box-shadow:0 0 20px -6px var(--pink)}
+  .act .pen{background:rgba(255,77,109,.14);color:#ffb3c0;border:1.5px solid rgba(255,77,109,.45)}
+  .act button:active{transform:scale(.96)}
+
+  /* ── заголовки секций ── */
+  .sect{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);margin:18px 4px 9px;display:flex;align-items:center;gap:8px}
+  .sect .ln{flex:1;height:1px;background:rgba(255,255,255,.1)}
+
+  /* ── сетка плиток (как у ребёнка, но «расширенная» строкой статуса) ── */
+  .apps{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .tile{position:relative;display:flex;flex-direction:column;gap:9px;align-items:flex-start;border-radius:19px;padding:15px 14px;cursor:pointer;text-align:left;
+    font-family:inherit;color:var(--ink);background:linear-gradient(162deg,rgba(26,23,56,.72),rgba(11,10,28,.74));
+    border:1.5px solid color-mix(in srgb,var(--c) 50%,transparent);
+    box-shadow:0 8px 24px rgba(0,0,0,.42),0 0 22px -12px var(--c);transition:transform .14s}
+  .tile:active{transform:scale(.965)}
+  .tile .ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:24px;color:var(--c);
+    background:radial-gradient(circle at 50% 38%,color-mix(in srgb,var(--c) 30%,transparent),transparent 72%)}
+  .tile .nm{font-weight:800;font-size:14.5px;color:#eef4ff;line-height:1.15}
+  .tile .stt{font-size:11.5px;font-weight:700;color:var(--c);opacity:.95;line-height:1.3}
+  .tile .badge{position:absolute;top:12px;right:12px;min-width:20px;height:20px;border-radius:11px;background:var(--gold);color:#3a2a00;
+    font-size:11px;font-weight:800;display:grid;place-items:center;padding:0 5px;box-shadow:0 0 12px -3px var(--gold)}
+  .tile .eye{position:absolute;top:10px;right:10px;width:28px;height:28px;border-radius:9px;display:none;place-items:center;font-size:14px;
+    background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.18)}
+  .tile.hidden{opacity:.5;filter:saturate(.5)}
+  .reveal{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;
+    border:1.5px dashed rgba(255,255,255,.18);border-radius:16px;padding:12px;color:#9fb0d6;font-weight:800;font-size:12.5px}
+  .reveal:active{transform:scale(.99)}
+
+  /* ── область приложения ── */
+  .ahead{display:flex;align-items:center;gap:11px;padding:46px 2px 6px}
+  .ahead .back{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;cursor:pointer;color:#bfe9ff;
+    background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14)}
+  .ahead .mic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-size:23px;color:var(--c);
+    background:radial-gradient(circle at 50% 38%,color-mix(in srgb,var(--c) 30%,transparent),transparent 72%);border:1px solid color-mix(in srgb,var(--c) 40%,transparent)}
+  .ahead .ttl{flex:1;min-width:0}
+  .ahead .ttl .t1{font-family:'Russo One','Rubik',sans-serif;font-size:17px;color:#fff;line-height:1.1}
+  .ahead .ttl .t2{font-size:11px;color:var(--muted);font-weight:700;margin-top:2px}
+  .ahead .kidav{display:flex;align-items:center;gap:6px;padding:5px 9px 5px 5px;border-radius:999px;cursor:pointer;
+    background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12)}
+  .ahead .kidav .a{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:15px;
+    background:linear-gradient(150deg,rgba(25,227,255,.25),rgba(166,75,255,.3))}
+  .ahead .kidav .nm{font-weight:800;font-size:12.5px;color:#dbe6ff}
+  .ahead .kidav .cv{color:var(--muted);font-size:11px}
+
+  .wlabel{font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#7f8fb5;margin:18px 4px 8px}
+  .card{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:13px 14px;margin-bottom:10px}
+
+  /* виджет-статистика */
+  .stats{display:flex;gap:9px}
+  .stats .s{flex:1;text-align:center;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:15px;padding:13px 6px 10px}
+  .stats .s .n{font-family:'Russo One','Rubik',sans-serif;font-size:25px;color:#fff;line-height:1}
+  .stats .s .l{font-size:10px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--muted);margin-top:6px}
+
+  /* виджет-контент: кликабельные строки */
+  .crow{display:flex;align-items:center;gap:11px;width:100%;text-align:left;font-family:inherit;cursor:pointer;
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:11px 12px;margin-bottom:8px;transition:.12s}
+  .crow:active{transform:scale(.985);background:rgba(255,255,255,.07)}
+  .crow .ci{width:38px;height:38px;border-radius:11px;flex:none;display:grid;place-items:center;font-size:19px;
+    background:rgba(255,255,255,.05);border:1px solid color-mix(in srgb,var(--c) 35%,transparent)}
+  .crow .cx{flex:1;min-width:0}
+  .crow .c1{font-weight:800;font-size:14px;color:#eaf2ff;line-height:1.2}
+  .crow .c2{font-size:12px;color:#9fb0d6;font-weight:600;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .crow .ct{flex:none;font-size:11px;color:var(--muted);font-weight:700;text-align:right}
+  .crow .chev{flex:none;color:#56688f;font-size:16px}
+  .gold{color:var(--gold)}.okc{color:var(--green)}.badc{color:var(--red)}.dimc{color:var(--muted)}
+
+  /* виджеты-управление */
+  .ctrlrow{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:12px 13px;margin-bottom:9px}
+  .ctrlrow .cm{flex:1;min-width:0}
+  .ctrlrow .ct1{font-weight:800;font-size:13.5px;color:#eaf2ff}
+  .ctrlrow .ct2{font-size:11.5px;color:#9fb0d6;font-weight:600;margin-top:2px}
+  .toggle{flex:none;width:50px;height:29px;border-radius:999px;border:none;cursor:pointer;position:relative;background:rgba(255,255,255,.16);transition:.2s}
+  .toggle.on{background:linear-gradient(180deg,#2bf0c0,#10ad85)}
+  .toggle::after{content:"";position:absolute;top:3px;left:3px;width:23px;height:23px;border-radius:50%;background:#fff;transition:.2s}
+  .toggle.on::after{transform:translateX(21px)}
+  .cbtn{display:flex;align-items:center;gap:9px;width:100%;cursor:pointer;font-family:inherit;font-weight:800;font-size:14px;color:#eaf2ff;
+    background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);border-radius:14px;padding:13px 14px;margin-bottom:9px}
+  .cbtn.primary{background:linear-gradient(180deg,#ff5db0,#d51a82);color:#fff;border-color:transparent;justify-content:center}
+  .cbtn.ok{background:linear-gradient(180deg,#3df0c0,#19c7e0);color:#04212b;border-color:transparent;justify-content:center}
+  .cbtn:active{transform:scale(.985)}
+  .pillbtn{margin-left:auto;font-size:12px;font-weight:800;color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0);
+    border:none;border-radius:999px;padding:7px 13px;cursor:pointer}
+
+  /* последнее (события) */
+  .ev{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid rgba(255,255,255,.06)}
+  .ev .ei{width:30px;height:30px;border-radius:9px;flex:none;display:grid;place-items:center;font-size:15px;color:var(--c);
+    background:rgba(255,255,255,.05);border:1px solid color-mix(in srgb,var(--c) 30%,transparent)}
+  .ev .ex{flex:1;min-width:0}
+  .ev .e1{font-size:13px;font-weight:700;color:#dbe6ff;line-height:1.25}
+  .ev .e2{font-size:11px;color:var(--muted);font-weight:600;margin-top:1px}
+  .ev .em{flex:none;font-size:11px;color:var(--muted);font-weight:700}
+
+  /* ── нижняя навигация ── */
+  .pnav{position:absolute;left:0;right:0;bottom:0;z-index:16;display:flex;
+    background:linear-gradient(0deg,rgba(5,4,15,.96) 70%,transparent);padding:8px 10px calc(12px);gap:4px}
+  .pnav button{flex:1;border:none;background:none;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:3px;
+    color:#6f80a6;font-weight:800;font-size:10.5px;padding:6px 4px;border-radius:14px;position:relative}
+  .pnav button .ig{font-size:20px;line-height:1}
+  .pnav button.on{color:#fff}
+  .pnav button.on .ig{filter:drop-shadow(0 0 8px currentColor)}
+  .pnav button.on{background:rgba(255,255,255,.05)}
+  .pnav .nb{position:absolute;top:3px;right:18px;min-width:16px;height:16px;border-radius:9px;background:var(--pink);color:#fff;font-size:9px;font-weight:800;display:grid;place-items:center;padding:0 4px}
+
+  /* ── шторка ── */
+  .ov{position:absolute;inset:0;z-index:40;background:rgba(4,3,14,.66);backdrop-filter:blur(3px);display:none;align-items:flex-end;justify-content:center}
+  .ov.show{display:flex;animation:fade .18s both}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .sheet{width:100%;border-radius:24px 24px 0 0;padding:8px 16px 20px;background:linear-gradient(180deg,rgba(24,21,52,.99),rgba(10,9,26,1));
+    border-top:1.5px solid color-mix(in srgb,var(--accent) 55%,transparent);max-height:86%;overflow:auto;animation:up .24s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes up{from{transform:translateY(100%)}to{transform:none}}
+  .grip{width:42px;height:5px;border-radius:3px;background:rgba(255,255,255,.28);margin:6px auto 12px}
+  .sheet h2{font-family:'Russo One','Rubik',sans-serif;font-weight:400;font-size:19px;margin:0 0 12px;text-align:center;color:#fff}
+  .srow{display:flex;align-items:center;gap:11px;width:100%;text-align:left;font-family:inherit;cursor:pointer;
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:12px 13px;margin-bottom:8px}
+  .srow .a{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-size:19px;background:linear-gradient(150deg,rgba(25,227,255,.25),rgba(166,75,255,.3))}
+  .srow .nm{font-weight:800;font-size:14.5px;color:#eaf2ff;flex:1}
+  .srow .ck{color:var(--green);font-size:18px}
+  .srow.on{border-color:var(--cyan)}
+  .amts{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin:4px 0 10px}
+  .amts button{border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#eaf2ff;font-family:inherit;font-weight:800;
+    font-size:15px;border-radius:13px;padding:12px 4px;cursor:pointer}
+  .amts button.on{border-color:var(--pink);background:rgba(255,61,176,.14);color:#fff}
+  .field input{width:100%;border:1.6px solid rgba(255,255,255,.14);border-radius:14px;padding:13px 14px;font-family:inherit;font-size:15px;font-weight:600;
+    color:var(--ink);background:rgba(255,255,255,.04);outline:none;margin-bottom:10px}
+  .field input::placeholder{color:#6f80a6}
+  .sgo{display:flex;gap:9px;margin-top:6px}
+  .sgo button{flex:1;border:none;cursor:pointer;font-family:inherit;font-weight:800;font-size:15px;border-radius:14px;padding:14px}
+  .sgo .cancel{flex:.6;background:rgba(255,255,255,.06);color:#aab8d6}
+  .sgo .ok{background:linear-gradient(180deg,#ff5db0,#d51a82);color:#fff}
+  .dettop{display:flex;gap:13px;align-items:flex-start;margin-bottom:6px}
+  .dettop .big{width:64px;height:64px;border-radius:16px;flex:none;display:grid;place-items:center;font-size:32px;
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14)}
+  .detnote{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:13px;padding:12px;font-size:14px;line-height:1.5;color:#dbe6ff;margin:8px 0}
+  .detnote b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#8aa0c8;margin-bottom:5px}
+  .tl{margin:6px 0 4px}
+  .tl .r{display:flex;align-items:center;gap:9px;padding:6px 0}
+  .tl .r .d{width:9px;height:9px;border-radius:50%;flex:none;background:var(--c)}
+  .tl .r .x{flex:1;font-size:13px;font-weight:700;color:#dbe6ff}
+  .tl .r .dt{font-size:11px;color:var(--muted);font-weight:700}
+  .robanner{display:flex;align-items:center;gap:8px;background:rgba(25,227,255,.08);border:1px solid rgba(25,227,255,.3);
+    border-radius:13px;padding:11px 13px;font-size:12.5px;font-weight:700;color:#bdeeff;margin-bottom:12px}
+  .note{font-size:12px;color:var(--muted);text-align:center;line-height:1.5;margin-top:12px}
+
+  /* чат */
+  .chthread{display:flex;align-items:center;gap:11px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:15px;padding:12px 13px;margin-bottom:9px;cursor:pointer}
+  .chthread .a{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-size:21px;background:linear-gradient(150deg,rgba(59,107,255,.3),rgba(166,75,255,.3));flex:none}
+  .chthread .cx{flex:1;min-width:0}
+  .chthread .c1{font-weight:800;font-size:14.5px;color:#eaf2ff}
+  .chthread .c2{font-size:12.5px;color:#9fb0d6;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .chthread .un{flex:none;min-width:20px;height:20px;border-radius:11px;background:var(--pink);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center;padding:0 5px}
+  .bubble{max-width:78%;padding:10px 13px;border-radius:16px;font-size:14px;line-height:1.4;margin-bottom:8px}
+  .bubble.them{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#eaf2ff;border-bottom-left-radius:5px}
+  .bubble.me{background:linear-gradient(180deg,#3b6bff,#2b4fd6);color:#fff;margin-left:auto;border-bottom-right-radius:5px}
+  .bubble .who{font-size:10.5px;font-weight:800;opacity:.7;margin-bottom:3px}
+  .composer{display:flex;gap:8px;margin-top:8px}
+  .composer input{flex:1;border:1.6px solid rgba(255,255,255,.14);border-radius:999px;padding:12px 16px;font-family:inherit;font-size:14px;color:var(--ink);background:rgba(255,255,255,.04);outline:none}
+  .composer button{width:46px;border:none;border-radius:50%;background:linear-gradient(180deg,#3b6bff,#2b4fd6);color:#fff;font-size:18px;cursor:pointer}
+</style>
+</head>
+<body>
+  <div class="head">
+    <div>
+      <h1>RobTop <b>·</b> Родитель v2</h1>
+      <div class="sub">Прототип переосмысления родительского приложения</div>
+    </div>
+    <div class="tools">
+      <span class="demo">Прототип</span>
+      <div class="lang" id="lang">
+        <button data-l="ru" class="on">RU</button>
+        <button data-l="en">EN</button>
+        <button data-l="lv">LV</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stagewrap">
+    <p class="hint">Домашний экран это <b>сетка приложений как у ребёнка, но расширенная</b>. Тап по плитке открывает
+      <b>область</b> приложения с виджетами: статистика, записи ребёнка (кликаются и показывают детали), управление.
+      Игры скрыты по умолчанию. Дети переключаются <b>чипами сверху</b>, семьи в Настройках, внизу <b>Копилка и Чат</b>.</p>
+
+    <div class="phone">
+      <div class="screen">
+        <div class="chrome">
+          <button id="cBell" title="Оповещения">🔔<span class="dot" id="bellDot">2</span></button>
+          <button id="cGear" title="Настройки">⚙</button>
+        </div>
+        <div class="scroll" id="scroll"></div>
+        <div class="pnav" id="pnav"></div>
+        <div class="ov" id="ov"><div class="sheet" id="sheet"></div></div>
+      </div>
+    </div>
+
+    <p class="hint" style="margin-top:16px">Попробуйте: переключите ребёнка чипами, откройте <b>Чистку зубов</b> или
+      <b>Оценку дня</b> и кликните запись (деталь теперь видна, что чинит бесполезный журнал), нажмите <b>«Скрытые»</b> чтобы
+      вернуть игру, загляните в <b>⚙ Настройки</b> для переключения семьи.</p>
+  </div>
+
+<script>
+"use strict";
+
+/* ===================== данные-демо ===================== */
+var MOD = {
+  wishlist:{ name:"Виш-лист",      c:"#ff3db0", ic:"🎁" },
+  teeth:   { name:"Чистка зубов",  c:"#19e3ff", ic:"🪥" },
+  rating:  { name:"Оценка дня",    c:"#ffd23b", ic:"⭐" },
+  mood:    { name:"Настроение",    c:"#ffb43b", ic:"😊" },
+  walk:    { name:"Прогулка",      c:"#38e8a0", ic:"🐾" },
+  tasks:   { name:"Задания",       c:"#2bf0c0", ic:"✅" },
+  shop:    { name:"Магазин",       c:"#ff2bd6", ic:"🛍️" },
+  bank:    { name:"Копилка",       c:"#ff4d6d", ic:"🐷" },
+  chat:    { name:"Чат",           c:"#3b6bff", ic:"💬" },
+  snake:   { name:"Змейка",        c:"#19e3ff", ic:"🐍", game:true },
+  guess:   { name:"Угадай число",  c:"#a64bff", ic:"🔢", game:true },
+  reverse: { name:"Слова наоборот",c:"#ff7a3d", ic:"🔤", game:true },
+  names:   { name:"Смешные имена",  c:"#38e8a0", ic:"😄", game:true }
+};
+var GRID = ["wishlist","teeth","rating","mood","walk","tasks","shop","bank","chat"];
+var GAMES = ["snake","guess","reverse","names"];
+
+var MOOD_E = { happy:"😀", mid:"😐", sad:"😢" };
+var MOOD_N = { happy:"Весёлое", mid:"Среднее", sad:"Грустное" };
+
+var KIDS = {
+  artem:{ name:"Артём", ava:"🧑‍🚀", sub:"8 лет", points:240, streak:5, plus:3,
+    teeth:{ streak:5, count:12, log:[
+      {day:"8 июн",status:"done"},{day:"7 июн",status:"done"},{day:"6 июн",status:"done"},
+      {day:"5 июн",status:"skipped"},{day:"4 июн",status:"done"},{day:"3 июн",status:"done"}]},
+    rating:{ avg:"4.2", n:9, items:[
+      {day:"8 июн",stars:4,text:"Гулял с папой, играли в футбол во дворе"},
+      {day:"7 июн",stars:5,text:"Получил пятёрку по математике!"},
+      {day:"6 июн",stars:3,text:""},
+      {day:"5 июн",stars:5,text:"Ходили всей семьёй в кино на мультик"}]},
+    mood:{ top:"happy", items:[
+      {day:"8 июн",mood:"happy",note:"Скоро каникулы"},
+      {day:"7 июн",mood:"mid",note:""},
+      {day:"6 июн",mood:"happy",note:"Побил рекорд в Змейке"},
+      {day:"5 июн",mood:"sad",note:"Поссорился с другом"}]},
+    wishlist:{ want:4, thinking:2, bought:3, items:[
+      {title:"Лего Техник: экскаватор",status:"want",fav:true,icon:"🧱",note:"Очень хочу, видел у Миши такой",
+        hist:[{t:"Добавил",d:"20 мая"},{t:"Отметил ★",d:"24 мая"}]},
+      {title:"Самокат трюковой",status:"want",icon:"🛴",note:"Чтобы кататься в парке",hist:[{t:"Добавил",d:"28 мая"}]},
+      {title:"Беспроводные наушники",status:"thinking",icon:"🎧",note:"",hist:[{t:"Добавил",d:"1 июн"},{t:"Передумал",d:"3 июн"}]},
+      {title:"Книга про космос",status:"bought",icon:"📚",note:"Про планеты и звёзды",hist:[{t:"Добавил",d:"10 мая"},{t:"Куплено",d:"18 мая"}]}]},
+    walk:{ count:6, items:[
+      {day:"8 июн",txt:"Прогулка с собакой, 35 минут"},
+      {day:"6 июн",txt:"Двор и площадка, 50 минут"},
+      {day:"4 июн",txt:"Парк с мамой"}]},
+    tasks:{ active:3, pending:1, items:[
+      {title:"Убрать комнату",points:15,status:"pending"},
+      {title:"Сделать домашку",points:10,status:"active"},
+      {title:"Помыть посуду",points:10,status:"active"},
+      {title:"Выгулять собаку",points:20,status:"active"}]},
+    shop:{ prizes:4, orders:1, prizeItems:[
+      {title:"Час игры на планшете",cost:50},{title:"Поход в кино",cost:200},
+      {title:"Мороженое на выбор",cost:30},{title:"Пицца в пятницу",cost:150}],
+      orderItems:[{title:"Мороженое на выбор",cost:30}]},
+    chat:{ unread:2 },
+    feed:[
+      {m:"tasks",txt:"Нажал «Сделал!»: Убрать комнату",t:"14:20",day:"Сегодня"},
+      {m:"teeth",txt:"Почистил зубы · +10",t:"08:05",day:"Сегодня"},
+      {m:"rating",txt:"Оценил день: ★★★★",t:"21:10",day:"Вчера"},
+      {m:"shop",txt:"Заказал приз: Мороженое",t:"19:40",day:"Вчера"},
+      {m:"wishlist",txt:"Добавил желание: Самокат",t:"16:02",day:"28 мая"}]
+  },
+  mia:{ name:"Мия", ava:"👧", sub:"6 лет", points:95, streak:2, plus:1,
+    teeth:{ streak:2, count:7, log:[
+      {day:"8 июн",status:"done"},{day:"7 июн",status:"done"},{day:"6 июн",status:"skipped"},{day:"5 июн",status:"done"}]},
+    rating:{ avg:"4.8", n:5, items:[
+      {day:"8 июн",stars:5,text:"Рисовала единорога весь день"},
+      {day:"7 июн",stars:5,text:"Каталась на качелях"},
+      {day:"6 июн",stars:4,text:""}]},
+    mood:{ top:"happy", items:[
+      {day:"8 июн",mood:"happy",note:"Рисование"},
+      {day:"7 июн",mood:"happy",note:""}]},
+    wishlist:{ want:2, thinking:1, bought:1, items:[
+      {title:"Набор для рисования",status:"want",fav:true,icon:"🎨",note:"С блёстками!",hist:[{t:"Добавила",d:"2 июн"},{t:"Отметила ★",d:"4 июн"}]},
+      {title:"Кукольный домик",status:"want",icon:"🏠",note:"",hist:[{t:"Добавила",d:"5 июн"}]},
+      {title:"Радужный единорог",status:"bought",icon:"🦄",note:"Мягкий",hist:[{t:"Добавила",d:"20 мая"},{t:"Куплено",d:"25 мая"}]}]},
+    walk:{ count:3, items:[{day:"7 июн",txt:"Площадка, 40 минут"},{day:"5 июн",txt:"Прогулка с бабушкой"}]},
+    tasks:{ active:2, pending:0, items:[
+      {title:"Собрать игрушки",points:10,status:"active"},{title:"Покормить рыбок",points:5,status:"active"}]},
+    shop:{ prizes:2, orders:0, prizeItems:[{title:"Новый фломастер",cost:40},{title:"Наклейки",cost:20}],orderItems:[]},
+    chat:{ unread:0 },
+    feed:[
+      {m:"rating",txt:"Оценил день: ★★★★★",t:"20:30",day:"Сегодня"},
+      {m:"teeth",txt:"Почистила зубы · +10",t:"08:30",day:"Сегодня"},
+      {m:"wishlist",txt:"Добавила желание: Кукольный домик",t:"17:15",day:"Вчера"}]
+  }
+};
+
+/* активная семья и список детей (семьи переключаются в Настройках) */
+var FAMILIES = {
+  tilley:{ label:"Семья Тилли", kids:["artem","mia"] },
+  granny:{ label:"Семья Бабушки", kids:["leo"] }
+};
+/* Лео это ребёнок другой семьи (Джефф там со-родитель). Лёгкие данные, чтобы переключение семьи было видно. */
+KIDS.leo={ name:"Лео", ava:"🧒", sub:"7 лет", points:60, streak:1, plus:0,
+  teeth:{streak:1,count:4,log:[{day:"8 июн",status:"done"},{day:"7 июн",status:"skipped"}]},
+  rating:{avg:"4.0",n:3,items:[{day:"8 июн",stars:4,text:"Строил из конструктора"}]},
+  mood:{top:"mid",items:[{day:"8 июн",mood:"mid",note:""}]},
+  wishlist:{want:1,thinking:0,bought:0,items:[{title:"Машинка на пульте",status:"want",icon:"🚗",note:"",hist:[{t:"Добавил",d:"6 июн"}]}]},
+  walk:{count:1,items:[{day:"8 июн",txt:"Двор"}]},
+  tasks:{active:1,pending:0,items:[{title:"Застелить кровать",points:10,status:"active"}]},
+  shop:{prizes:1,orders:0,prizeItems:[{title:"Конфета",cost:15}],orderItems:[]},
+  chat:{unread:0}, feed:[{m:"teeth",txt:"Почистил зубы · +10",t:"08:00",day:"Сегодня"}] };
+
+/* ===================== состояние ===================== */
+var S = { lang:"ru", tab:"apps", kid:"artem", family:"tilley", mod:null,
+  hiddenParent:{ snake:1, guess:1, reverse:1, names:1 }, /* игры скрыты по умолчанию у родителя */
+  showHidden:false,
+  childOff:{} /* приложения, выключенные ребёнку: { "artem:teeth":true } */
+};
+
+/* ===================== i18n (chrome) ===================== */
+var L = {
+  ru:{ apps:"Приложения", bank:"Копилка", chat:"Чат", give:"Начислить", pen:"Штраф",
+    ptsL:"очков всего", streak:"винстрик", back:"назад", open:"Открыть приложение",
+    recent:"Последнее", controls:"Управление", content:"Записи ребёнка", stat:"Статистика",
+    hidden:"Скрытые приложения", showHidden:"Скрытые приложения", hide:"Скрыть у себя", restore:"Вернуть",
+    enableChild:"Показывать ребёнку", enableSub:"Плитка на домашнем экране ребёнка",
+    approve:"Подтвердить", waiting:"ждёт проверки", addTask:"Создать задание", addPrize:"Добавить приз",
+    logwalk:"Записать прогулку", settings:"Настройки", family:"Семья", switchFam:"Активная семья",
+    closeS:"Закрыть", giveT:"Начислить очки", penT:"Штраф", forWhat:"За что? (увидит ребёнок)",
+    switchKid:"Выбрать ребёнка", noText:"без комментария", history:"История желания", ro:"Только просмотр, редактирует ребёнок" },
+  en:{ apps:"Apps", bank:"Bank", chat:"Chat", give:"Give", pen:"Penalty",
+    ptsL:"points total", streak:"streak", back:"back", open:"Open app",
+    recent:"Recent", controls:"Controls", content:"Child's entries", stat:"Stats",
+    hidden:"Hidden apps", showHidden:"Hidden apps", hide:"Hide for me", restore:"Restore",
+    enableChild:"Show to child", enableSub:"Tile on the child's home screen",
+    approve:"Approve", waiting:"waiting for check", addTask:"New task", addPrize:"Add prize",
+    logwalk:"Log a walk", settings:"Settings", family:"Family", switchFam:"Active family",
+    closeS:"Close", giveT:"Give points", penT:"Penalty", forWhat:"What for? (child will see)",
+    switchKid:"Choose a child", noText:"no comment", history:"Wish history", ro:"View only, the child edits" },
+  lv:{ apps:"Lietotnes", bank:"Krājkase", chat:"Čats", give:"Piešķirt", pen:"Sods",
+    ptsL:"punkti kopā", streak:"sērija", back:"atpakaļ", open:"Atvērt lietotni",
+    recent:"Pēdējie", controls:"Vadība", content:"Bērna ieraksti", stat:"Statistika",
+    hidden:"Slēptās lietotnes", showHidden:"Slēptās lietotnes", hide:"Slēpt sev", restore:"Atjaunot",
+    enableChild:"Rādīt bērnam", enableSub:"Elements bērna sākuma ekrānā",
+    approve:"Apstiprināt", waiting:"gaida pārbaudi", addTask:"Jauns uzdevums", addPrize:"Pievienot balvu",
+    logwalk:"Pierakstīt pastaigu", settings:"Iestatījumi", family:"Ģimene", switchFam:"Aktīvā ģimene",
+    closeS:"Aizvērt", giveT:"Piešķirt punktus", penT:"Sods", forWhat:"Par ko? (bērns redzēs)",
+    switchKid:"Izvēlēties bērnu", noText:"bez komentāra", history:"Vēlmes vēsture", ro:"Tikai skatīšanās" }
+};
+function t(k){ return (L[S.lang] && L[S.lang][k]) || L.ru[k] || k; }
+
+/* ===================== утилиты ===================== */
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+function el(id){ return document.getElementById(id); }
+function kd(){ return KIDS[S.kid]; }
+function familyKids(){ return FAMILIES[S.family].kids; }
+function stars(n){ var s=""; for(var i=0;i<n;i++) s+="★"; return s; }
+function isHidden(id){ return !!S.hiddenParent[id]; }
+function childEnabled(id){ return !S.childOff[S.kid+":"+id]; }
+
+/* ===================== строка статуса плитки ===================== */
+function statLine(id){
+  var k=kd();
+  switch(id){
+    case "wishlist": return k.wishlist.want+" хочу · "+k.wishlist.bought+" куплено";
+    case "teeth":    return "серия "+k.teeth.streak+" 🔥";
+    case "rating":   return "средняя "+k.rating.avg+"★";
+    case "mood":     return "чаще "+MOOD_E[k.mood.top];
+    case "walk":     return k.walk.count+" прогулок";
+    case "tasks":    return k.tasks.pending>0 ? "⏳ "+k.tasks.pending+" ждёт проверки" : k.tasks.active+" активных";
+    case "shop":     return k.shop.orders>0 ? "🛍 "+k.shop.orders+" на подтверждении" : k.shop.prizes+" призов";
+    case "bank":     return k.points+" очков · "+k.streak+" 🔥";
+    case "chat":     return k.chat.unread>0 ? "💬 "+k.chat.unread+" новых" : "открыть переписку";
+    default:         return "";
+  }
+}
+function tileBadge(id){
+  var k=kd();
+  if(id==="tasks" && k.tasks.pending>0) return k.tasks.pending;
+  if(id==="shop" && k.shop.orders>0) return k.shop.orders;
+  if(id==="chat" && k.chat.unread>0) return k.chat.unread;
+  return null;
+}
+
+/* ===================== HOME (вкладка «Приложения») ===================== */
+function homeHtml(){
+  var kids=familyKids(), h="";
+  /* переключатель детей: чипы при >1, иначе имя */
+  h+='<div class="ptop">';
+  if(kids.length>1){
+    h+='<div class="kidrow">';
+    kids.forEach(function(id){ var k=KIDS[id];
+      h+='<div class="kidchip'+(id===S.kid?' on':'')+'" data-kid="'+id+'"><span class="av">'+k.ava+'</span><span class="nm">'+esc(k.name)+'</span></div>';
+    });
+    h+='</div>';
+  } else {
+    var k=KIDS[kids[0]];
+    h+='<div class="singlekid"><span class="av">'+k.ava+'</span><div><div class="nm">'+esc(k.name)+'</div><div class="sb">'+esc(k.sub)+'</div></div></div>';
+  }
+  h+='</div>';
+  /* баланс очков */
+  var k=kd();
+  h+='<div class="pts"><span class="pig">🐷</span><div><div class="n">'+k.points+'</div><div class="l">'+t("ptsL")+'</div></div>'
+    +'<div class="strk">🔥 '+k.streak+'<br>'+t("streak")+'</div></div>';
+  /* начислить / штраф */
+  h+='<div class="act"><button class="give" data-act="give">⭐ '+t("give")+'</button><button class="pen" data-act="pen">⚠️ '+t("pen")+'</button></div>';
+  /* сетка приложений (игры скрыты) */
+  h+='<div class="sect">'+t("apps")+'<span class="ln"></span></div>';
+  h+='<div class="apps">';
+  GRID.forEach(function(id){ h+=tileHtml(id); });
+  /* скрытые (игры): сворачиваемый блок с возвратом */
+  var hid=GRID.concat(GAMES).filter(isHidden);
+  if(hid.length){
+    h+='<div class="reveal" data-reveal>'+(S.showHidden?'▾ ':'▸ ')+t("showHidden")+' ('+hid.length+')</div>';
+    if(S.showHidden) hid.forEach(function(id){ h+=tileHtml(id); });
+  }
+  h+='</div>';
+  return h;
+}
+function tileHtml(id){
+  if(isHidden(id) && !S.showHidden) return "";
+  var m=MOD[id], badge=tileBadge(id), hidden=isHidden(id);
+  return '<button class="tile'+(hidden?' hidden':'')+'" data-mod="'+id+'" style="--c:'+m.c+'">'
+    +(badge!=null && !hidden?'<span class="badge">'+badge+'</span>':'')
+    +(hidden?'<span class="eye" style="display:grid" data-restore="'+id+'">↩︎</span>':'')
+    +'<span class="ic">'+m.ic+'</span>'
+    +'<span class="nm">'+esc(m.name)+'</span>'
+    +'<span class="stt">'+esc(hidden?(MOD[id].game?"игра · скрыта":"скрыта"):statLine(id))+'</span></button>';
+}
+
+/* ===================== ОБЛАСТЬ приложения ===================== */
+function areaHtml(id){
+  var m=MOD[id], k=kd(), kids=familyKids(), h="";
+  h+='<div class="ahead" style="--c:'+m.c+'">'
+    +'<div class="back" data-back>‹</div>'
+    +'<div class="mic">'+m.ic+'</div>'
+    +'<div class="ttl"><div class="t1">'+esc(m.name)+'</div><div class="t2">'+esc(k.name)+' · '+esc(k.sub)+'</div></div>'
+    +(kids.length>1?'<div class="kidav" data-switchkid><span class="a">'+k.ava+'</span><span class="nm">'+esc(k.name)+'</span><span class="cv">▾</span></div>':'')
+    +'</div>';
+  /* виджеты по контракту (здесь захардкожено для демо; в проде это module.parent.*) */
+  h+=widgetStat(id);
+  h+=widgetContent(id);
+  h+=widgetControls(id);
+  h+=widgetRecent(id);
+  return h;
+}
+function statBox(n,l){ return '<div class="s"><div class="n">'+n+'</div><div class="l">'+esc(l)+'</div></div>'; }
+function widgetStat(id){
+  var k=kd(), s="";
+  if(id==="teeth")   s=statBox(k.teeth.streak+" 🔥","винстрик")+statBox(k.teeth.count,"за период");
+  else if(id==="rating") s=statBox(k.rating.avg+"★","средняя")+statBox(k.rating.n,"оценок");
+  else if(id==="mood")   s=statBox(MOOD_E[k.mood.top],"чаще всего")+statBox(k.mood.items.length,"записей");
+  else if(id==="wishlist") s=statBox(k.wishlist.want,"хочу")+statBox(k.wishlist.thinking,"думаю")+statBox(k.wishlist.bought,"куплено");
+  else if(id==="walk")   s=statBox(k.walk.count,"прогулок");
+  else if(id==="tasks")  s=statBox(k.tasks.active,"активных")+statBox(k.tasks.pending,"ждут проверки");
+  else if(id==="shop")   s=statBox(k.shop.prizes,"призов")+statBox(k.shop.orders,"заказов");
+  else if(id==="bank")   s=statBox(k.points,"очков")+statBox(k.streak+" 🔥","винстрик")+statBox(k.plus+" ⚡","плюсы");
+  else if(id==="chat")   s=statBox(k.chat.unread,"непрочитано");
+  if(!s) return "";
+  return '<div class="wlabel">'+t("stat")+'</div><div class="stats">'+s+'</div>';
+}
+function widgetContent(id){
+  var k=kd(), h="", rows="";
+  if(id==="teeth"){
+    k.teeth.log.forEach(function(r){ var ok=r.status!=="skipped";
+      rows+=crow(id,(ok?'<span class="okc">✓</span>':'<span class="badc">—</span>'),(ok?"Почистил зубы":"Пропустил чистку"),"",r.day,false);
+    });
+  } else if(id==="rating"){
+    k.rating.items.forEach(function(r,i){
+      rows+=crow(id,'<span class="gold">'+r.stars+'★</span>',(r.text||'<i class="dimc">'+t("noText")+'</i>'),"",r.day,true,"rating:"+i);
+    });
+  } else if(id==="mood"){
+    k.mood.items.forEach(function(r,i){
+      rows+=crow(id,MOOD_E[r.mood],MOOD_N[r.mood]+(r.note?" · "+r.note:""),"",r.day,true,"mood:"+i);
+    });
+  } else if(id==="wishlist"){
+    k.wishlist.items.forEach(function(r,i){
+      var tag=r.status==="want"?"хочу":(r.status==="thinking"?"думаю":"куплено");
+      rows+=crow(id,(r.icon||"🎁"),(r.fav?"★ ":"")+r.title,tag+(r.note?" · "+r.note:""),"",true,"wishlist:"+i,true);
+    });
+  } else if(id==="walk"){
+    k.walk.items.forEach(function(r){ rows+=crow(id,"🐾",r.txt,"",r.day,false); });
+  } else if(id==="tasks"){
+    k.tasks.items.forEach(function(r,i){
+      var st=r.status==="pending"?'<span class="gold">⏳ ждёт проверки</span>':"активно";
+      rows+=crow(id,(r.status==="pending"?"⏳":"✅"),r.title,"+"+r.points+" очков · "+st,"",r.status==="pending","tasks:"+i);
+    });
+  } else if(id==="shop"){
+    k.shop.orderItems.forEach(function(r,i){ rows+=crow(id,"🛍️","Заказ: "+r.title,r.cost+" очков · ⏳ подтвердить","",true,"order:"+i); });
+    k.shop.prizeItems.forEach(function(r){ rows+=crow(id,"🎁",r.title,r.cost+" очков","",false); });
+  } else if(id==="bank"){
+    rows+=crow(id,"⭐","Начислено: помощь по дому","+15 очков","сегодня",false);
+    rows+=crow(id,"✅","Задание: домашка","+10 очков","вчера",false);
+    rows+=crow(id,"🛍️","Покупка: мороженое","−30 очков","вчера",false);
+  } else if(id==="chat"){
+    return ""; /* у чата своя вкладка/кнопка открыть */
+  }
+  if(!rows) return "";
+  h+='<div class="wlabel">'+t("content")+'</div>'+rows;
+  return h;
+}
+function crow(modId, icon, c1, c2, ct, clickable, key, isEmoji){
+  var m=MOD[modId];
+  return '<'+(clickable?'button':'div')+' class="crow" style="--c:'+m.c+'"'+(clickable?' data-det="'+(key||"")+'"':'')+'>'
+    +'<span class="ci">'+icon+'</span>'
+    +'<span class="cx"><span class="c1">'+esc(c1).replace("&lt;i","<i").replace("&lt;/i&gt;","</i>").replace('class=&quot;dimc&quot;&gt;','class="dimc">')+'</span>'
+    +(c2?'<span class="c2">'+esc(c2)+'</span>':'')+'</span>'
+    +(ct?'<span class="ct">'+esc(ct)+'</span>':'')
+    +(clickable?'<span class="chev">›</span>':'')
+    +'</'+(clickable?'button':'div')+'>';
+}
+function widgetControls(id){
+  var k=kd(), h='<div class="wlabel">'+t("controls")+'</div>';
+  /* приложение-специфичные «модификации» */
+  if(id==="bank"){
+    h+='<button class="cbtn primary" data-act="give">⭐ '+t("give")+'</button>';
+    h+='<button class="cbtn" data-act="pen">⚠️ '+t("pen")+'</button>';
+    h+='<button class="cbtn ok" data-open="bank">↗ '+t("open")+'</button>';
+  }
+  if(id==="tasks"){
+    if(k.tasks.pending>0){
+      k.tasks.items.forEach(function(r,i){ if(r.status==="pending")
+        h+='<div class="ctrlrow"><div class="cm"><div class="ct1">'+esc(r.title)+'</div><div class="ct2">+'+r.points+' очков · '+t("waiting")+'</div></div><button class="pillbtn" data-approve="'+i+'">✓ '+t("approve")+'</button></div>';
+      });
+    }
+    h+='<button class="cbtn" data-toast="'+t("addTask")+'">＋ '+t("addTask")+'</button>';
+  }
+  if(id==="shop"){
+    if(k.shop.orders>0)
+      h+='<div class="ctrlrow"><div class="cm"><div class="ct1">'+esc(k.shop.orderItems[0].title)+'</div><div class="ct2">'+k.shop.orderItems[0].cost+' очков · '+t("waiting")+'</div></div><button class="pillbtn" data-approve="order">✓ '+t("approve")+'</button></div>';
+    h+='<button class="cbtn" data-toast="'+t("addPrize")+'">＋ '+t("addPrize")+'</button>';
+    h+='<button class="cbtn ok" data-open="shop">↗ '+t("open")+'</button>';
+  }
+  if(id==="walk"){
+    h+='<button class="cbtn ok" data-open="walk">🐾 '+t("logwalk")+'</button>';
+  }
+  if(id==="chat"){
+    h+='<button class="cbtn ok" data-open="chat">↗ '+t("open")+'</button>';
+  }
+  if(id==="wishlist"){
+    h+='<div class="robanner">👁 '+t("ro")+'</div>';
+  }
+  /* общий «модификатор»: показывать ли приложение ребёнку */
+  if(id!=="bank"){
+    var on=childEnabled(id);
+    h+='<div class="ctrlrow"><div class="cm"><div class="ct1">'+t("enableChild")+'</div><div class="ct2">'+t("enableSub")+'</div></div>'
+      +'<button class="toggle'+(on?' on':'')+'" data-childtoggle="'+id+'"></button></div>';
+  }
+  return h;
+}
+function widgetRecent(id){
+  var k=kd(), evs=k.feed.filter(function(e){ return e.m===id; });
+  if(id==="bank") evs=k.feed; /* копилка собирает всё связанное с очками для демо */
+  if(!evs.length) return "";
+  var h='<div class="wlabel">'+t("recent")+'</div>';
+  evs.slice(0,5).forEach(function(e){ var m=MOD[e.m];
+    h+='<div class="ev" style="--c:'+m.c+'"><span class="ei">'+m.ic+'</span><span class="ex"><span class="e1">'+esc(e.txt)+'</span><span class="e2">'+esc(e.day)+'</span></span><span class="em">'+e.t+'</span></div>';
+  });
+  return h;
+}
+
+/* ===================== ВКЛАДКА Копилка ===================== */
+function bankHtml(){
+  var kids=familyKids(), h='<div class="ptop">';
+  if(kids.length>1){ h+='<div class="kidrow">';
+    kids.forEach(function(id){ var k=KIDS[id];
+      h+='<div class="kidchip'+(id===S.kid?' on':'')+'" data-kid="'+id+'"><span class="av">'+k.ava+'</span><span class="nm">'+esc(k.name)+'</span></div>'; });
+    h+='</div>'; }
+  h+='</div>';
+  h+=areaInner("bank");
+  return h;
+}
+/* область без шапки-назад (для вкладки) */
+function areaInner(id){
+  return '<div class="ahead" style="--c:'+MOD[id].c+';padding-top:8px"><div class="mic">'+MOD[id].ic+'</div>'
+    +'<div class="ttl"><div class="t1">'+esc(MOD[id].name)+'</div><div class="t2">'+esc(kd().name)+'</div></div></div>'
+    +widgetStat(id)+widgetContent(id)+widgetControls(id)+widgetRecent(id);
+}
+
+/* ===================== ВКЛАДКА Чат ===================== */
+function chatHtml(){
+  var h='<div class="ahead" style="--c:#3b6bff;padding-top:46px"><div class="mic">💬</div><div class="ttl"><div class="t1">Семейный чат</div><div class="t2">'+esc(FAMILIES[S.family].label)+'</div></div></div>';
+  h+='<div class="wlabel">Переписки</div>';
+  h+='<div class="chthread" data-thread="artem"><span class="a">🧑‍🚀</span><div class="cx"><div class="c1">Артём</div><div class="c2">Мам, можно гулять подольше?</div></div><span class="un">2</span></div>';
+  h+='<div class="chthread" data-thread="mia"><span class="a">👧</span><div class="cx"><div class="c1">Мия</div><div class="c2">Я нарисовала единорога 🦄</div></div></div>';
+  h+='<div class="chthread" data-thread="all"><span class="a">👨‍👩‍👧‍👦</span><div class="cx"><div class="c1">Вся семья</div><div class="c2">Папа: ужин в 7!</div></div></div>';
+  return h;
+}
+function chatThreadHtml(who){
+  var name = who==="artem"?"Артём":(who==="mia"?"Мия":"Вся семья");
+  var ava = who==="artem"?"🧑‍🚀":(who==="mia"?"👧":"👨‍👩‍👧‍👦");
+  var h='<div class="ahead" style="--c:#3b6bff;padding-top:46px"><div class="back" data-backchat>‹</div><div class="mic">'+ava+'</div><div class="ttl"><div class="t1">'+name+'</div><div class="t2">в сети</div></div></div>';
+  h+='<div style="padding:8px 2px">';
+  if(who==="artem"){
+    h+='<div class="bubble them"><div class="who">Артём</div>Привет! Я убрал комнату ✅</div>';
+    h+='<div class="bubble me">Молодец! Начислила тебе +15 ⭐</div>';
+    h+='<div class="bubble them"><div class="who">Артём</div>Мам, можно гулять подольше?</div>';
+    h+='<div class="bubble them"><div class="who">Артём</div>Я сделаю домашку потом 🙏</div>';
+  } else if(who==="mia"){
+    h+='<div class="bubble them"><div class="who">Мия</div>Я нарисовала единорога 🦄</div>';
+    h+='<div class="bubble me">Какая красота! Покажешь вечером?</div>';
+  } else {
+    h+='<div class="bubble them"><div class="who">Папа</div>Ужин в 7!</div>';
+    h+='<div class="bubble me">Идём 👍</div>';
+  }
+  h+='</div>';
+  h+='<div class="composer"><input placeholder="Сообщение..." readonly><button>➤</button></div>';
+  return h;
+}
+
+/* ===================== нижняя навигация ===================== */
+function navHtml(){
+  function b(id,ic,label,badge){
+    return '<button data-tab="'+id+'"'+(S.tab===id?' class="on"':'')+'><span class="ig">'+ic+'</span>'+esc(label)+(badge?'<span class="nb">'+badge+'</span>':'')+'</button>';
+  }
+  var unread=0; familyKids().forEach(function(id){ unread+=KIDS[id].chat.unread; });
+  return b("apps","🏠",t("apps"))+b("bank","🐷",t("bank"))+b("chat","💬",t("chat"),unread||null);
+}
+
+/* ===================== рендер ===================== */
+function render(){
+  var sc=el("scroll");
+  if(S.tab==="apps"){ sc.innerHTML = S.mod ? areaHtml(S.mod) : homeHtml(); }
+  else if(S.tab==="bank"){ sc.innerHTML = bankHtml(); }
+  else if(S.tab==="chat"){ sc.innerHTML = S.chatThread ? chatThreadHtml(S.chatThread) : chatHtml(); }
+  sc.firstChild && sc.firstChild.classList && sc.firstChild.classList.add("anim");
+  el("pnav").innerHTML = navHtml();
+  el("bellDot").textContent = (KIDS.artem.chat.unread+KIDS.mia.chat.unread) || "";
+  wire();
+}
+
+/* ===================== шторки ===================== */
+function openSheet(html){ el("sheet").innerHTML='<div class="grip"></div>'+html; el("ov").classList.add("show"); }
+function closeSheet(){ el("ov").classList.remove("show"); }
+function toast(msg){
+  var t=document.createElement("div");
+  t.textContent=msg;
+  t.style.cssText="position:absolute;left:50%;bottom:88px;transform:translateX(-50%);z-index:60;background:rgba(10,10,28,.96);color:#eaf6ff;padding:11px 16px;border-radius:18px;font-weight:700;font-size:13.5px;border:1.5px solid rgba(25,227,255,.5);box-shadow:0 0 24px -6px var(--cyan);max-width:80%;text-align:center";
+  document.querySelector(".screen").appendChild(t);
+  setTimeout(function(){ t.style.transition="opacity .3s"; t.style.opacity="0"; setTimeout(function(){ t.remove(); },300); },1400);
+}
+function sheetSwitchKid(){
+  var h='<h2>'+t("switchKid")+'</h2>';
+  familyKids().forEach(function(id){ var k=KIDS[id];
+    h+='<button class="srow'+(id===S.kid?' on':'')+'" data-pickkid="'+id+'"><span class="a">'+k.ava+'</span><span class="nm">'+esc(k.name)+' · '+esc(k.sub)+'</span>'+(id===S.kid?'<span class="ck">✓</span>':'')+'</button>';
+  });
+  openSheet(h);
+}
+function sheetPoints(pen){
+  var amts=pen?[5,10,20,50]:[10,20,25,50], sg=pen?"−":"+";
+  var h='<h2>'+(pen?t("penT"):t("giveT"))+' · '+esc(kd().name)+'</h2><div class="amts">';
+  amts.forEach(function(a,i){ h+='<button data-a="'+a+'"'+(i===0?' class="on"':'')+'>'+sg+a+'</button>'; });
+  h+='<button data-a="0">'+sg+'…</button></div>';
+  h+='<div class="field"><input id="pnote" placeholder="'+t("forWhat")+'"></div>';
+  h+='<div class="sgo"><button class="cancel" data-close>'+t("closeS")+'</button><button class="ok" id="pgo">'+(pen?sg:sg)+(amts[0])+'</button></div>';
+  openSheet(h);
+  var amt=amts[0];
+  Array.prototype.forEach.call(el("sheet").querySelectorAll("[data-a]"),function(b){
+    b.onclick=function(){ Array.prototype.forEach.call(el("sheet").querySelectorAll("[data-a]"),function(x){x.classList.toggle("on",x===b);});
+      amt=parseInt(b.getAttribute("data-a"),10)||0; el("pgo").textContent=sg+(amt||"…"); };
+  });
+  el("pgo").onclick=function(){
+    if(!amt){ toast("Введите сумму"); return; }
+    var k=kd(); k.points += pen?-amt:amt;
+    closeSheet();
+    toast((pen?"−":"+")+amt+" очков · "+k.name);
+    render();
+  };
+}
+function sheetDetail(key){
+  var k=kd(), parts=key.split(":"), kind=parts[0], i=+parts[1];
+  if(kind==="rating"){ var r=k.rating.items[i];
+    openSheet('<h2>Оценка дня</h2><div class="dettop"><div class="big">⭐</div><div><div style="font-size:24px;color:#ffd23b">'+stars(r.stars)+'</div><div style="color:#9fb0d6;font-weight:700;margin-top:4px">'+esc(r.day)+'</div></div></div>'
+      +'<div class="detnote"><b>Что записал ребёнок</b>'+(r.text?esc(r.text):'<i style="color:#6f80a6">'+t("noText")+'</i>')+'</div>'
+      +'<div class="sgo"><button class="cancel" data-close style="flex:1">'+t("closeS")+'</button></div>');
+  } else if(kind==="mood"){ var m=k.mood.items[i];
+    openSheet('<h2>Настроение дня</h2><div class="dettop"><div class="big">'+MOOD_E[m.mood]+'</div><div><div style="font-size:18px;color:#fff;font-weight:800">'+MOOD_N[m.mood]+'</div><div style="color:#9fb0d6;font-weight:700;margin-top:4px">'+esc(m.day)+'</div></div></div>'
+      +'<div class="detnote"><b>Комментарий</b>'+(m.note?esc(m.note):'<i style="color:#6f80a6">'+t("noText")+'</i>')+'</div>'
+      +'<div class="sgo"><button class="cancel" data-close style="flex:1">'+t("closeS")+'</button></div>');
+  } else if(kind==="wishlist"){ var w=k.wishlist.items[i];
+    var tl=""; w.hist.forEach(function(x){ tl+='<div class="r" style="--c:#ff3db0"><span class="d"></span><span class="x">'+esc(x.t)+'</span><span class="dt">'+esc(x.d)+'</span></div>'; });
+    openSheet('<h2>Желание</h2><div class="dettop"><div class="big">'+(w.icon||"🎁")+'</div><div><div style="font-size:17px;color:#fff;font-weight:800">'+(w.fav?"★ ":"")+esc(w.title)+'</div><div style="color:#9fb0d6;font-weight:700;margin-top:4px">'+(w.status==="want"?"Хочу":(w.status==="thinking"?"Думаю":"Куплено"))+'</div></div></div>'
+      +(w.note?'<div class="detnote"><b>Почему хочу</b>'+esc(w.note)+'</div>':'')
+      +'<div class="wlabel">'+t("history")+'</div><div class="tl">'+tl+'</div>'
+      +'<div class="robanner">👁 '+t("ro")+'</div>'
+      +'<div class="sgo"><button class="cancel" data-close style="flex:1">'+t("closeS")+'</button></div>');
+  } else if(kind==="tasks"){ var ta=k.tasks.items[i];
+    openSheet('<h2>Задание</h2><div class="dettop"><div class="big">'+(ta.status==="pending"?"⏳":"✅")+'</div><div><div style="font-size:17px;color:#fff;font-weight:800">'+esc(ta.title)+'</div><div style="color:#2bf0c0;font-weight:800;margin-top:4px">+'+ta.points+' очков</div></div></div>'
+      +(ta.status==="pending"?'<div class="robanner" style="background:rgba(255,210,59,.1);border-color:rgba(255,210,59,.4);color:#ffe9a8">⏳ Ребёнок нажал «Сделал!». Подтвердите выполнение.</div>':'')
+      +'<div class="sgo">'+(ta.status==="pending"?'<button class="cancel" data-close>'+t("closeS")+'</button><button class="ok" data-approve="'+i+'" style="background:linear-gradient(180deg,#3df0c0,#19c7e0);color:#04212b">✓ '+t("approve")+'</button>':'<button class="cancel" data-close style="flex:1">'+t("closeS")+'</button>')+'</div>');
+  } else if(kind==="order"){ var o=k.shop.orderItems[i];
+    openSheet('<h2>Заказ приза</h2><div class="dettop"><div class="big">🛍️</div><div><div style="font-size:17px;color:#fff;font-weight:800">'+esc(o.title)+'</div><div style="color:#ff2bd6;font-weight:800;margin-top:4px">'+o.cost+' очков</div></div></div>'
+      +'<div class="robanner" style="background:rgba(255,210,59,.1);border-color:rgba(255,210,59,.4);color:#ffe9a8">⏳ Ждёт вашего подтверждения.</div>'
+      +'<div class="sgo"><button class="cancel" data-close>'+t("closeS")+'</button><button class="ok" data-approve="order" style="background:linear-gradient(180deg,#3df0c0,#19c7e0);color:#04212b">✓ '+t("approve")+'</button></div>');
+  }
+}
+function sheetSettings(){
+  var h='<h2>'+t("settings")+'</h2>';
+  h+='<div class="wlabel" style="margin-top:0">'+t("switchFam")+'</div>';
+  Object.keys(FAMILIES).forEach(function(fid){ var f=FAMILIES[fid];
+    var members=f.kids.map(function(id){return KIDS[id].name;}).join(", ");
+    h+='<button class="srow'+(fid===S.family?' on':'')+'" data-pickfam="'+fid+'"><span class="a">👨‍👩‍👧</span><span class="nm">'+esc(f.label)+'<br><span style="font-size:11.5px;color:#9fb0d6;font-weight:600">'+esc(members)+'</span></span>'+(fid===S.family?'<span class="ck">✓</span>':'')+'</button>';
+  });
+  h+='<div class="note">Управление семьёй, дети, приглашения и со-родители живут здесь, в Настройках (правило «семья только в настройках»). Активная семья определяет, чьи дети в ряду чипов.</div>';
+  h+='<div class="sgo"><button class="cancel" data-close style="flex:1">'+t("closeS")+'</button></div>';
+  openSheet(h);
+}
+
+/* ===================== обработчики ===================== */
+function wire(){
+  var sc=el("scroll");
+  /* выбор ребёнка чипом */
+  Array.prototype.forEach.call(sc.querySelectorAll("[data-kid]"),function(b){
+    b.onclick=function(){ S.kid=b.getAttribute("data-kid"); render(); };
+  });
+  /* открыть область */
+  Array.prototype.forEach.call(sc.querySelectorAll(".tile[data-mod]"),function(b){
+    b.onclick=function(e){
+      var id=b.getAttribute("data-mod");
+      if(e.target.closest("[data-restore]")){ var rid=e.target.closest("[data-restore]").getAttribute("data-restore"); delete S.hiddenParent[rid]; toast(MOD[rid].name+": возвращено"); render(); return; }
+      if(isHidden(id)) return;
+      if(id==="bank"){ S.tab="bank"; S.mod=null; render(); return; }
+      if(id==="chat"){ S.tab="chat"; S.mod=null; render(); return; }
+      S.mod=id; render(); sc.scrollTop=0;
+    };
+  });
+  /* раскрыть скрытые */
+  var rv=sc.querySelector("[data-reveal]"); if(rv) rv.onclick=function(){ S.showHidden=!S.showHidden; render(); };
+  /* назад из области */
+  var bk=sc.querySelector("[data-back]"); if(bk) bk.onclick=function(){ S.mod=null; render(); sc.scrollTop=0; };
+  var bkc=sc.querySelector("[data-backchat]"); if(bkc) bkc.onclick=function(){ S.chatThread=null; render(); };
+  /* начислить/штраф */
+  Array.prototype.forEach.call(sc.querySelectorAll("[data-act]"),function(b){
+    b.onclick=function(){ sheetPoints(b.getAttribute("data-act")==="pen"); };
+  });
+  /* сменить ребёнка из шапки области */
+  var swk=sc.querySelector("[data-switchkid]"); if(swk) swk.onclick=sheetSwitchKid;
+  /* деталь записи */
+  Array.prototype.forEach.call(sc.querySelectorAll("[data-det]"),function(b){
+    b.onclick=function(){ var k=b.getAttribute("data-det"); if(k) sheetDetail(k); };
+  });
+  /* тумблер «показывать ребёнку» */
+  Array.prototype.forEach.call(sc.querySelectorAll("[data-childtoggle]"),function(b){
+    b.onclick=function(){ var id=b.getAttribute("data-childtoggle"); var key=S.kid+":"+id;
+      if(S.childOff[key]) delete S.childOff[key]; else S.childOff[key]=true;
+      toast(MOD[id].name+(S.childOff[key]?": скрыто у ребёнка":": показано ребёнку")); render(); };
+  });
+  /* подтвердить задание/заказ */
+  Array.prototype.forEach.call(sc.querySelectorAll("[data-approve]"),function(b){
+    b.onclick=function(){ approve(b.getAttribute("data-approve")); };
+  });
+  /* открыть настоящий модуль (демо: тост) */
+  Array.prototype.forEach.call(sc.querySelectorAll("[data-open]"),function(b){
+    b.onclick=function(){ toast("Открывается модуль: "+MOD[b.getAttribute("data-open")].name); };
+  });
+  Array.prototype.forEach.call(sc.querySelectorAll("[data-toast]"),function(b){
+    b.onclick=function(){ toast(b.getAttribute("data-toast")+" (демо)"); };
+  });
+  /* чат: открыть тред */
+  Array.prototype.forEach.call(sc.querySelectorAll("[data-thread]"),function(b){
+    b.onclick=function(){ S.chatThread=b.getAttribute("data-thread"); render(); };
+  });
+}
+function approve(which){
+  var k=kd();
+  if(which==="order"){ if(k.shop.orderItems.length){ k.points-=k.shop.orderItems[0].cost; k.shop.orderItems.shift(); k.shop.orders=k.shop.orderItems.length; } toast("Заказ подтверждён"); }
+  else { var i=+which; if(k.tasks.items[i]){ k.points+=k.tasks.items[i].points; k.tasks.items[i].status="active"; k.tasks.pending=k.tasks.items.filter(function(x){return x.status==="pending";}).length; } toast("Задание подтверждено · +очки"); }
+  closeSheet(); render();
+}
+
+/* делегаты вне scroll */
+el("pnav").addEventListener("click",function(e){ var b=e.target.closest("[data-tab]"); if(!b) return;
+  S.tab=b.getAttribute("data-tab"); S.mod=null; S.chatThread=null; render(); el("scroll").scrollTop=0; });
+el("ov").addEventListener("click",function(e){
+  if(e.target===el("ov") || e.target.closest("[data-close]")) { closeSheet(); return; }
+  var pk=e.target.closest("[data-pickkid]"); if(pk){ S.kid=pk.getAttribute("data-pickkid"); closeSheet(); render(); return; }
+  var pf=e.target.closest("[data-pickfam]"); if(pf){ S.family=pf.getAttribute("data-pickfam"); S.kid=FAMILIES[S.family].kids[0]; S.mod=null; closeSheet(); render(); return; }
+  var ap=e.target.closest("[data-approve]"); if(ap){ approve(ap.getAttribute("data-approve")); return; }
+});
+el("cGear").onclick=sheetSettings;
+el("cBell").onclick=function(){ toast("Оповещения (демо)"); };
+el("lang").addEventListener("click",function(e){ var b=e.target.closest("[data-l]"); if(!b) return;
+  S.lang=b.getAttribute("data-l");
+  Array.prototype.forEach.call(el("lang").children,function(x){ x.classList.toggle("on",x===b); });
+  render();
+});
+
+render();
+</script>
+</body>
+</html>

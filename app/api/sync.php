@@ -70,7 +70,9 @@ try {
     $t = [$q['c'], $q['u'], $q['n']];
 } catch (Throwable $e) { /* таблицы тикетов может не быть (миграция 015) */ }
 /* чат (миграция 023): сообщения ВСЕЙ семьи (родитель видит все треды; участникам над-триггер
-   безвреден) + мои маркеры прочитанности (read на другом устройстве гасит бейджи тут) */
+   безвреден) + сумма маркеров прочтения ВСЕХ участников семьи (read-receipts, миграция 027):
+   меняется, когда КТО-УГОДНО читает → у отправителя срабатывает refresh() и галочки прочтения
+   обновляются вживую (и read на другом устройстве гасит бейджи тут — частный случай суммы) */
 $c = ['0', '0', '0', '0'];
 try {
     $fid = rt_user_family_id($db, $uid);
@@ -83,11 +85,22 @@ try {
         $s->execute([$fid]);
         $q = $s->fetch();
         $c[0] = $q['c']; $c[1] = $q['m']; $c[2] = $q['d'];
+        $s = $db->prepare(
+            "SELECT COALESCE(SUM(cm.last_read_id),0) FROM chat_members cm
+             JOIN chat_threads t ON t.id = cm.thread_id WHERE t.family_id = ?"
+        );
+        $s->execute([$fid]);
+        $c[3] = (string)$s->fetchColumn();
+    } else {
+        $s = $db->prepare("SELECT COALESCE(SUM(last_read_id),0) FROM chat_members WHERE user_id = ?");
+        $s->execute([$uid]);
+        $c[3] = (string)$s->fetchColumn();
     }
-    $s = $db->prepare("SELECT COALESCE(SUM(last_read_id),0) lr FROM chat_members WHERE user_id = ?");
-    $s->execute([$uid]);
-    $c[3] = (string)$s->fetchColumn();
 } catch (Throwable $e) { /* таблиц чата может не быть (миграция 023) */ }
+/* присутствие для статуса «доставлено»: отмечаем активность участника на КАЖДЫЙ поллинг.
+   Отдельный try (колонки seen_at нет до миграции 027); seen_at НЕ в отпечатке — циклов не плодит. */
+try { $db->prepare("UPDATE chat_members SET seen_at = NOW() WHERE user_id = ?")->execute([$uid]); }
+catch (Throwable $e) { /* до миграции 027 нет колонки seen_at */ }
 /* задания (миграция 024, ОТДЕЛЬНАЯ таблица tasks — не module_data): тот же скоуп uid,
    что и данные модулей; любой оп tasks.php бьёт updated_at — COUNT+MAX(id)+MAX(updated_at)
    ловят всё (создание/правка/«Сделал!»/проверка/удаление) для Копилки и модуля «Задания» */

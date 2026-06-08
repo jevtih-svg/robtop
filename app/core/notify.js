@@ -57,7 +57,12 @@ window.RobTop = window.RobTop || {};
         share_grant:"{child} shared their wishlist with you" },
       chat:{
         message:"{name}: {text}",
-        photo:"{name} sent a photo 📷" }
+        photo:"{name} sent a photo 📷" },
+      find:{
+        pending:"{name} sent a photo to check — “{desc}”",
+        correct:"Find the Object: correct! +{n}",
+        wrong:"Find the Object: not counted −{n}",
+        bonus:"Difficulty bonus +{n}!" }
     }
   }},
   ru:{ ntf:{
@@ -89,7 +94,12 @@ window.RobTop = window.RobTop || {};
         share_grant:"{child} открыл(а) тебе свой виш-лист" },
       chat:{
         message:"{name}: {text}",
-        photo:"{name} прислал(а) фото 📷" }
+        photo:"{name} прислал(а) фото 📷" },
+      find:{
+        pending:"{name}: фото на проверку — «{desc}»",
+        correct:"Найти предмет: верно! +{n}",
+        wrong:"Найти предмет: не засчитано −{n}",
+        bonus:"Бонус за сложность +{n}!" }
     }
   }},
   lv:{ ntf:{
@@ -121,7 +131,12 @@ window.RobTop = window.RobTop || {};
         share_grant:"{child} padalījās ar savu vēlmju sarakstu" },
       chat:{
         message:"{name}: {text}",
-        photo:"{name} atsūtīja foto 📷" }
+        photo:"{name} atsūtīja foto 📷" },
+      find:{
+        pending:"{name}: foto pārbaudei — “{desc}”",
+        correct:"Atrodi priekšmetu: pareizi! +{n}",
+        wrong:"Atrodi priekšmetu: netika ieskaitīts −{n}",
+        bonus:"Grūtības bonuss +{n}!" }
     }
   }}
   });

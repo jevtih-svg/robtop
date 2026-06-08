@@ -32,6 +32,21 @@ $u  = rt_require_parent($db);
 rt_block_if_must_change($u);
 $pid = (int)$u['id'];
 
+/* ---------- скрытые плитки родительского дашборда v2 (миграция 025) ----------
+   NULL = родитель не настраивал → клиент сам прячет игры (дефолт); массив (в т.ч. пустой) =
+   явный выбор родителя. Пишет accounts.php (op tile_hidden_parent). Колонки может не быть до
+   миграции — читаем через try/catch, тогда hiddenParent остаётся null (дефолт). */
+$hiddenParent = null;
+try {
+    $hpq = $db->prepare("SELECT hidden_tiles_parent FROM user_prefs WHERE user_id = ? LIMIT 1");
+    $hpq->execute([$pid]);
+    $hpr = $hpq->fetch();
+    if ($hpr && $hpr['hidden_tiles_parent'] !== null && $hpr['hidden_tiles_parent'] !== '') {
+        $dec = json_decode($hpr['hidden_tiles_parent'], true);
+        if (is_array($dec)) $hiddenParent = array_values($dec);
+    }
+} catch (Throwable $e) { $hiddenParent = null; }
+
 /* ---------- дети родителя: опекунства + дети семьи (без дублей) ---------- */
 function rt_parent_children($db, $pid) {
     $out = []; $seen = [];
@@ -302,4 +317,5 @@ rt_json([
     'eventsHasMore' => $evHasMore,
     'content'       => $content,
     'lastActivityAt'=> $lastAt,
+    'hiddenParent'  => $hiddenParent,
 ]);

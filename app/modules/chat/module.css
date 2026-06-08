@@ -7,22 +7,26 @@
    Клавиатуру отрабатывает JS: высота слоя = visualViewport.height, поэтому композер всегда
    ровно над клавиатурой. Никаких sticky/transform на самом композере — они давали щель. */
 
-/* ---- слой на весь экран (в <body>) ---- */
+/* ---- слой на весь экран (в <body>) ----
+   БЕЗ will-change:transform — иначе слой изолируется в свой композит-слой и backdrop-filter
+   шапки перестаёт «видеть» фон #bg за слоем (шапка выходила плоским тёмным баром сверху). */
 .ch-app{position:fixed;left:0;right:0;top:0;z-index:24;
   max-width:480px;margin:0 auto;height:100dvh;
   display:flex;flex-direction:column;
-  background:transparent; /* фон #bg виден сквозь ленту, как и раньше */
-  will-change:height,transform}
+  background:transparent} /* фон #bg виден сквозь ленту, как и раньше */
 @supports not (height:100dvh){ .ch-app{height:100vh} }
 /* тело страницы под слоем заблокировано — нет баунса/дёрганья позади */
 html.ch-lock,html.ch-lock body{overflow:hidden;height:100%}
 
 [data-mod="chat"] .ch{flex:1;min-height:0;display:flex;flex-direction:column;padding:0 16px}
 
-/* ---- шапка (паттерн md-header), flex:none ---- */
+/* ---- шапка (паттерн md-header), flex:none ----
+   ФРОСТ вместо плоского тёмного бара: лёгкий полупрозрачный градиент + backdrop-blur, чтобы
+   неоновый фон просвечивал размытым (как в нативных мессенджерах), а не отрезался тёмным блоком. */
 [data-mod="chat"] .ch-head{display:flex;align-items:center;gap:12px;flex:none;
-  padding:calc(20px + env(safe-area-inset-top)) 2px 8px;
-  background:linear-gradient(rgba(var(--panel-rgb),.94) 78%,transparent)}
+  padding:calc(20px + env(safe-area-inset-top)) 2px 10px;
+  background:linear-gradient(rgba(var(--panel-rgb),.72),rgba(var(--panel-rgb),.42));
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
 [data-mod="chat"] .ch-head .ava{flex:none;width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   font-size:22px;background:color-mix(in srgb, var(--blue) 18%, transparent);border:1px solid color-mix(in srgb, var(--blue) 40%, transparent)}
 [data-mod="chat"] .ch-head-main{flex:1;min-width:0}
@@ -73,12 +77,20 @@ html.ch-lock,html.ch-lock body{overflow:hidden;height:100%}
   color:var(--muted);background:rgba(var(--panel-rgb),.7);border:1px solid rgba(255,255,255,.1)}
 
 [data-mod="chat"] .msg{max-width:80%;margin:2.5px 0;padding:8px 12px 5px;border-radius:17px 17px 17px 6px;
-  background:rgba(var(--panel-rgb),.78);border:1px solid rgba(255,255,255,.09);overflow-wrap:break-word}
+  background:rgba(var(--panel-rgb),.78);border:1px solid rgba(255,255,255,.09);overflow-wrap:break-word;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none} /* long-press = инфо, не нативное выделение */
 [data-mod="chat"] .msg.me{margin-left:auto;border-radius:17px 17px 6px 17px;cursor:pointer;
   background:color-mix(in srgb, var(--blue) 24%, transparent);border-color:color-mix(in srgb, var(--blue) 46%, transparent)}
 [data-mod="chat"] .msg .nm{font-size:11.5px;font-weight:800;margin:1px 0 3px}
 [data-mod="chat"] .msg .bd{font-size:14.5px;line-height:1.4;color:var(--ink);white-space:pre-wrap}
-[data-mod="chat"] .msg .mt{font-size:10px;color:var(--muted-2);text-align:right;margin-top:2px}
+[data-mod="chat"] .msg .mt{font-size:10px;color:var(--muted-2);margin-top:2px;display:flex;align-items:center;justify-content:flex-end;gap:3px}
+/* галочки статуса (✓ sent, ✓✓ delivered/read) — на своём пузыре и в шторке инфо (класс .rtk
+   НЕ скоупится [data-mod], т.к. шторка живёт вне слоя чата). Цвета читаемы и на синем пузыре, и в шторке. */
+[data-mod="chat"] .msg .rtk{margin-left:1px}
+.rtk{display:inline-flex;align-items:center;flex:none}
+.rtk svg{display:block;height:11px;width:auto}
+.rtk-sent,.rtk-delivered{color:rgba(255,255,255,.55)}
+.rtk-read{color:var(--cyan)}
 [data-mod="chat"] .msg.ph{padding:5px 5px 4px}
 [data-mod="chat"] .msg.ph .bd{padding:3px 7px 0}
 [data-mod="chat"] .msg.ph .mt{padding-right:7px}
@@ -87,7 +99,7 @@ html.ch-lock,html.ch-lock body{overflow:hidden;height:100%}
 
 /* ---- композер: обычный flex-низ слоя (НЕ sticky/НЕ fixed) ---- */
 [data-mod="chat"] .ch-comp{flex:none;margin:0 -16px;
-  padding:7px 14px calc(7px + env(safe-area-inset-bottom));
+  padding:7px 14px calc(4px + env(safe-area-inset-bottom));
   background:rgba(var(--panel-rgb),.96);border-top:1px solid rgba(255,255,255,.09)}
 /* при открытой клавиатуре композер сидит ВПЛОТНУЮ над ней — нижний safe-area убираем (иначе щель,
    как на скриншоте Джеффа). kb-open ставится по фокусу поля (module.js syncKb). #chApp несёт класс
@@ -117,6 +129,15 @@ html.ch-lock,html.ch-lock body{overflow:hidden;height:100%}
 /* ---- лайтбокс фото: шторка оболочки (sheet вне [data-mod] — префикс класса) ---- */
 .ch-lbimg{display:block;width:100%;max-height:72vh;object-fit:contain;border-radius:14px;
   background:rgba(0,0,0,.35);cursor:zoom-out}
+
+/* ---- шторка «инфо о сообщении» (доставлено/прочитано) по long-press; вне [data-mod] ---- */
+.rcpt-list{display:flex;flex-direction:column;gap:7px;margin:2px 0}
+.rcpt-row{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:13px;font-size:14px;color:var(--ink);
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09)}
+.rcpt-row .rtk svg{height:13px}
+.rcpt-tx{flex:1;min-width:0;overflow-wrap:anywhere}
+.btn.ch-del{background:color-mix(in srgb, var(--red) 20%, transparent);
+  border:1.5px solid color-mix(in srgb, var(--red) 50%, transparent);color:#ffdde4}
 
 /* ---- шторка «Новый чат» ---- */
 .ch-picks{display:flex;flex-direction:column;gap:8px;max-height:46vh;overflow-y:auto;margin-bottom:12px}
