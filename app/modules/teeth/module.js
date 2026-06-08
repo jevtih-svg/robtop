@@ -38,7 +38,10 @@
       secManualPoints:"Points manually", secMusicReward:"Music reward", shuffleLabel:"Shuffle tracks",
       secReminders:"Reminders", morning:"Morning", evening:"Evening", enableReminders:"Enable reminders",
       parentNote:"The reminder fires while the app is open. For background notifications, add the app to your Home screen.",
-      shuffleOn:"Shuffle on", shuffleOff:"Tracks in order"
+      shuffleOn:"Shuffle on", shuffleOff:"Tracks in order",
+      lockClosedTitle:"Not brushing time", lockClosedText:"We brush in the morning from 5:00 to 10:00 and in the evening from 18:00 to 23:59.",
+      lockDoneTitle:"All done ✓", lockDoneText:"Great job! Points added. One brushing per time of day.",
+      lockNextIn:"Next brushing in {time}", unitH:"h", unitM:"min"
     }},
     ru:{ teeth:{
       title:"Таймер чистки зубов", subtitle:"Чисти 2 минуты — получай очки",
@@ -70,7 +73,10 @@
       secManualPoints:"Очки вручную", secMusicReward:"Музыка-награда", shuffleLabel:"Случайный порядок треков",
       secReminders:"Напоминания", morning:"Утро", evening:"Вечер", enableReminders:"Включить напоминания",
       parentNote:"Напоминание сработает, пока приложение открыто. Для фоновых уведомлений добавь приложение на экран «Домой».",
-      shuffleOn:"Случайный порядок включён", shuffleOff:"Треки по очереди"
+      shuffleOn:"Случайный порядок включён", shuffleOff:"Треки по очереди",
+      lockClosedTitle:"Сейчас не время чистки", lockClosedText:"Чистим зубки утром с 5:00 до 10:00 и вечером с 18:00 до 23:59.",
+      lockDoneTitle:"Уже почистили ✓", lockDoneText:"Молодец! Очки начислены. В каждый период чистим один раз.",
+      lockNextIn:"Снова можно через {time}", unitH:"ч", unitM:"мин"
     }},
     lv:{ teeth:{
       title:"Zobu tīrīšanas taimeris", subtitle:"Tīri 2 minūtes — pelni punktus",
@@ -102,7 +108,10 @@
       secManualPoints:"Punkti manuāli", secMusicReward:"Mūzikas balva", shuffleLabel:"Jaukt dziesmas",
       secReminders:"Atgādinājumi", morning:"Rīts", evening:"Vakars", enableReminders:"Ieslēgt atgādinājumus",
       parentNote:"Atgādinājums nostrādās, kamēr lietotne ir atvērta. Fona paziņojumiem pievieno lietotni sākuma ekrānam.",
-      shuffleOn:"Jaukšana ieslēgta", shuffleOff:"Dziesmas pēc kārtas"
+      shuffleOn:"Jaukšana ieslēgta", shuffleOff:"Dziesmas pēc kārtas",
+      lockClosedTitle:"Tagad nav tīrīšanas laiks", lockClosedText:"Tīrām zobiņus no rīta no 5:00 līdz 10:00 un vakarā no 18:00 līdz 23:59.",
+      lockDoneTitle:"Jau iztīrīts ✓", lockDoneText:"Lieliski! Punkti piešķirti. Katrā periodā tīrām vienu reizi.",
+      lockNextIn:"Atkal var pēc {time}", unitH:"st", unitM:"min"
     }}
   };
 
@@ -158,6 +167,7 @@
 
   var sdk=null, root=null, E={}, sessions=[], meta=null, metaId=null;
   var running=false, remaining=DURATION, timerId=null, audio=null, reminderTimers=[], curSheet=null;
+  var lockTimer=null, lastLockSig="", startPeriod=null;   // гейт окон чистки: утро 5:00–10:00, вечер 18:00–23:59, 1 раз за период (см. periodOf/doneInPeriod)
   var player=null, playing=false, curTrack=0;
   /* вкладки (История | Музыка), фильтр истории и НЕЗАВИСИМЫЙ плеер-превью для вкладки «Музыка».
      Превью не трогает звук во время чистки — это отдельная зона плеера (player/start/finish). */
@@ -172,6 +182,37 @@
   function todayStr(){ return dstr(new Date()); }
   function nowHM(){ var d=new Date(); return pad2(d.getHours())+":"+pad2(d.getMinutes()); }
   function humanDate(s){ try{ var p=String(s).split("-"); return sdk.formatDate(new Date(+p[0],+p[1]-1,+p[2])); }catch(e){ return s||""; } }
+
+  /* ----- окна чистки: антиспам -----
+     Чистить (и получать +10) можно только в двух окнах по времени устройства:
+     утро [5:00,10:00) и вечер [18:00,23:59], и НЕ больше одной засчитанной чистки за период.
+     Пропущенная (cancel/skipped) чистку не «съедает» — повторить можно, пока окно открыто. */
+  var MORN_FROM=5, MORN_TO=10, EVE_FROM=18;
+  function periodOf(d){ d=d||new Date(); var h=d.getHours(); if(h>=MORN_FROM&&h<MORN_TO) return "morning"; if(h>=EVE_FROM) return "evening"; return null; }
+  function periodOfHM(hm){ var h=parseInt(String(hm||"").split(":")[0],10); if(isNaN(h)) return null; if(h>=MORN_FROM&&h<MORN_TO) return "morning"; if(h>=EVE_FROM) return "evening"; return null; }
+  function doneInPeriod(per){
+    if(!per) return false; var today=todayStr();
+    for(var i=0;i<sessions.length;i++){ var it=sessions[i], d=it.data||{};
+      if((d.status||it.status)!=="done") continue; if(d.date!==today) continue;
+      if((d.period||periodOfHM(d.time))===per) return true; }
+    return false;
+  }
+  function doneThisPeriod(){ return doneInPeriod(periodOf()); }
+  function lockSig(){ return todayStr()+"|"+(periodOf()||"-")+"|"+(doneThisPeriod()?"1":"0"); }
+  /* ближайшее время, когда снова можно чистить (для обратного отсчёта на закрытом экране) */
+  function nextChanceAt(){
+    var n=new Date(), Y=n.getFullYear(), M=n.getMonth(), D=n.getDate(), h=n.getHours();
+    function at(dd,hh){ return new Date(Y,M,D+dd,hh,0,0,0); }
+    var per=periodOf(n);
+    if(per==="morning") return at(0,EVE_FROM);   // утром почистил → вечером 18:00
+    if(per==="evening") return at(1,MORN_FROM);  // вечером почистил → завтра 5:00
+    if(h<MORN_FROM) return at(0,MORN_FROM);       // ночью/рано → сегодня 5:00
+    return at(0,EVE_FROM);                         // днём (10–18) → сегодня 18:00
+  }
+  function lockCountdownStr(){
+    var min=Math.max(1, Math.ceil((nextChanceAt()-new Date())/60000)), hh=Math.floor(min/60), mm=min%60;
+    return hh>0 ? hh+" "+t("unitH")+" "+mm+" "+t("unitM") : mm+" "+t("unitM");
+  }
 
   /* ----- статистика ----- */
   function streak(set){
@@ -231,11 +272,30 @@
       +'<circle class="track" cx="115" cy="115" r="100" fill="none" stroke-width="14"/>'
       +'<circle class="prog" id="ttProg" cx="115" cy="115" r="100" fill="none" stroke-width="14" stroke-dasharray="'+C.toFixed(2)+'" stroke-dashoffset="'+off.toFixed(2)+'"/></svg>';
   }
+  /* экран покоя = диспетчер гейта: вне окна → «закрыто», уже почистил в этот период → «готово», иначе кнопка старта */
   function renderStageIdle(){
+    if(!E.stage || running) return;
+    lastLockSig=lockSig();
+    if(!periodOf()){ renderStageLocked("closed"); return; }
+    if(doneThisPeriod()){ renderStageLocked("done"); return; }
     E.stage.innerHTML='<div class="tt-ring-wrap">'+ringSVG(0)
       +'<div class="tt-center"><div class="tt-emoji">🪥</div><div class="tt-count">'+fmtTime(DURATION)+'</div><div class="tt-state">'+esc(t("idleMinutes"))+'</div></div></div>'
       +'<button class="tt-start" id="ttStart">'+esc(t("start"))+'</button>';
     E.stage.querySelector("#ttStart").onclick=start;
+  }
+  function renderStageLocked(mode){  // mode: "closed" (вне окна) | "done" (за период уже сделано)
+    var done=(mode==="done");
+    E.stage.innerHTML='<div class="tt-ring-wrap">'+ringSVG(done?1:0)
+      +'<div class="tt-center"><div class="tt-emoji">'+(done?"✅":"🕐")+'</div>'
+        +'<div class="tt-state tt-lock-title">'+esc(t(done?"lockDoneTitle":"lockClosedTitle"))+'</div></div></div>'
+      +'<div class="tt-lockmsg">'+esc(t(done?"lockDoneText":"lockClosedText"))+'</div>'
+      +'<div class="tt-next" id="ttNext">'+esc(t("lockNextIn",{time:lockCountdownStr()}))+'</div>';
+  }
+  /* раз в секунду: пока не чистим — следим за сменой окна/периода и обновляем обратный отсчёт */
+  function lockTick(){
+    if(!E.stage || running) return;
+    if(lockSig()!==lastLockSig){ renderStageIdle(); return; }
+    var el=E.stage.querySelector("#ttNext"); if(el) el.textContent=t("lockNextIn",{time:lockCountdownStr()});
   }
   function renderStageRunning(){
     E.stage.innerHTML='<div class="tt-ring-wrap">'+ringSVG(0)
@@ -248,7 +308,11 @@
     E.stage.querySelector("#ttCancel").onclick=cancel;
   }
   function start(){
-    if(running) return; running=true; remaining=DURATION; renderStageRunning();
+    if(running) return;
+    var per=periodOf();
+    if(!per || doneThisPeriod()){ renderStageIdle(); sdk.ui.toast(t(per?"lockDoneText":"lockClosedText")); return; }
+    startPeriod=per;
+    running=true; remaining=DURATION; renderStageRunning();
     curTrack=pickTrackForSession(); setTrack(curTrack, true);
     sdk.ui.haptics(10); sdk.events.track("started",{});
     var startMs=Date.now();
@@ -263,10 +327,13 @@
   function stopTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } stopMusic(); running=false; }
   function finish(){
     stopTimer();
+    var per=startPeriod||periodOf()||"";
+    /* защита от двойного начисления: если за этот период уже есть засчитанная чистка — без очков */
+    if(per && doneInPeriod(per)){ renderStageIdle(); refresh(); return; }
     sdk.ui.confetti(); sdk.ui.chime(); sdk.ui.haptics([25,40,25,40,70]);
     sdk.ui.toast(t("toastFinish"));
     sdk.points.add(10,"teeth");
-    sdk.data.create("sessions",{date:todayStr(),time:nowHM(),status:"done",points:10}).then(function(){ return reloadSessions(); }).then(function(){ renderStageIdle(); refresh(); });
+    sdk.data.create("sessions",{date:todayStr(),time:nowHM(),status:"done",points:10,period:per}).then(function(){ return reloadSessions(); }).then(function(){ renderStageIdle(); refresh(); });
   }
   function cancel(){
     if(!running) return;
@@ -485,10 +552,14 @@
     running=false; remaining=DURATION; reminderTimers=[]; curSheet=null;
     player=null; playing=false; curTrack=0;
     tab="history"; histFilter="all"; previewAudio=null; previewIdx=-1; previewPlaying=false;
+    lastLockSig=""; startPeriod=null;
     buildSkeleton();
-    Promise.resolve().then(loadMeta).then(reloadSessions).then(function(){ refresh(); applyReminders(); }).catch(function(){ refresh(); });
+    Promise.resolve().then(loadMeta).then(reloadSessions).then(function(){ renderStageIdle(); refresh(); applyReminders(); }).catch(function(){ refresh(); });
+    if(lockTimer) clearInterval(lockTimer);
+    lockTimer=setInterval(lockTick,1000);
   }
   function unmount(){
+    if(lockTimer){ clearInterval(lockTimer); lockTimer=null; }
     stopTimer(); clearReminders(); stopMusic(); stopPreview();
     try{ if(player){ player.src=""; player=null; } }catch(e){} playing=false;
     try{ if(previewAudio){ previewAudio.src=""; previewAudio=null; } }catch(e){}

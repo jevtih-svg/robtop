@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.08.74", d:"2026-06-08", t:{
+    en:"Toothbrushing Timer now counts once per time of day: brush from 5:00 to 10:00 and from 18:00 to 23:59.",
+    ru:"Таймер чистки зубов теперь засчитывает один раз за период: чистим с 5:00 до 10:00 и с 18:00 до 23:59.",
+    lv:"Zobu tīrīšanas taimeris tagad ieskaita vienu reizi periodā: tīrām no 5:00 līdz 10:00 un no 18:00 līdz 23:59." } },
   { v:"2026.06.08.70", d:"2026-06-08", t:{
     en:"Chat keyboard stays open after you send, the input sits flush above it, and the form arrows are gone.",
     ru:"Клавиатура в чате остаётся открытой после отправки, поле вплотную над ней, стрелки формы убраны.",

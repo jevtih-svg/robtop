@@ -24,6 +24,12 @@
   font-family:inherit;font-weight:800;font-size:16px;color:var(--red-soft);border:1.5px solid color-mix(in srgb,var(--red) 50%,transparent);background:color-mix(in srgb,var(--red) 12%,transparent)}
 .tt-cancel:active{transform:scale(.97)}
 
+/* экран-заглушка гейта (вне окна / чистка за период уже сделана) */
+.tt-lock-title{font-size:16px;color:#fff;text-shadow:0 0 12px color-mix(in srgb,var(--cyan) 45%,transparent)}
+.tt-lockmsg{margin-top:16px;width:100%;max-width:320px;text-align:center;color:var(--ink-2);font-weight:700;font-size:15px;line-height:1.45}
+.tt-next{margin-top:12px;padding:9px 18px;border-radius:22px;font-weight:800;font-size:14px;color:var(--cyan);
+  background:rgba(255,255,255,.05);border:1px solid color-mix(in srgb,var(--cyan) 30%,transparent);box-shadow:0 0 18px -8px var(--cyan)}
+
 /* строка «сейчас играет» на экране чистки */
 .tt-nowplaying{display:flex;align-items:center;gap:10px;width:100%;max-width:320px;margin-top:16px;padding:10px 12px;
   border-radius:16px;background:rgba(255,255,255,.05);border:1px solid color-mix(in srgb,var(--cyan) 28%,transparent);box-shadow:0 0 18px -8px var(--cyan)}
