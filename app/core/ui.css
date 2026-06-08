@@ -11,6 +11,7 @@
   --safe-left:env(safe-area-inset-left);   --safe-right:env(safe-area-inset-right);
   --gutter:16px;               /* единый боковой отступ контента (= .view) */
   --chrome-top:26px;           /* единый верх под статус-баром (унификация 20/26/30 — фаза 1) */
+  --bell-w:42px;               /* ширина глобального колокольчика .ntf-bell (для резерва в шапке) */
   --hdr-h:56px;                /* высота тела шапки модуля */
   --kidbar-h:64px;             /* детский нижний бар (фаза 3) */
   --tabbar-h:62px;             /* родительский таббар (≈ под текущий .pd-tabbar) */
@@ -144,6 +145,11 @@ body{
      .rt-bar  — детский нижний бар (домой · очки · система), зеркало .pd-tabbar. ===== */
 .rt-hdr{display:flex;align-items:center;gap:9px;
   padding:calc(var(--chrome-top) + var(--safe-top)) 2px 6px;min-height:var(--hdr-total)}
+/* ПРАВИЛО «владелец верхнего-правого угла» (см. ГАЙД-UI-guardrails §«Строгие правила»):
+   на экране модуля глобальный колокольчик 🔔 (.ntf-bell, fixed top-right) виден, поэтому шапка
+   РЕЗЕРВИРУЕТ под него место справа — действия модуля (.rt-actions) и правый блок (баланс
+   Магазина) НИКОГДА не залезают под колокольчик. ⚙ на экранах модулей живёт в нижнем баре. */
+body[data-view="module"] .rt-hdr{padding-right:calc(var(--bell-w) + 8px)}
 /* .rt-head-main — слот заголовка: модуль кладёт сюда свой заголовок (иконка/подзаголовок)
    через opts.titleHtml и СОХРАНЯЕТ своё оформление; рамка задаёт только раскладку.
    Заголовок и подзаголовок усекаются многоточием, а не ломают шапку при длинном тексте. */
@@ -186,10 +192,11 @@ body[data-view="module"] .hud{display:none}
    его ширину и усекаем имя. Иконка модуля уже починена (HDR_ICONS-коллизия). Правила здесь
    (в ui.css), а не в parent.js — параллельная сессия активно правит parent.js; выше специфичность
    (.pd-mhead .pd-kidsw = 0,2,0) перебивает инлайн-стиль .pd-kidsw, который инжектит parent.js. */
-.pd-mhead{gap:9px}
-.pd-mhead .mttl{flex:1 1 auto;min-width:0}
-.pd-mhead .pd-kidsw{flex:0 1 auto;max-width:44%;min-width:0;overflow:hidden}
+.pd-mhead{gap:8px}
+.pd-mhead .mttl{flex:1 1 auto;min-width:0}            /* приоритет у заголовка (правило R4) */
+.pd-mhead .pd-kidsw{flex:0 1 auto;max-width:38%;min-width:0;overflow:hidden}
 .pd-mhead .pd-kidsw .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* полный фикс переполнения родительской шапки (меньше элементов) — за parent.js (чужая зона) */
 
 /* ===================== HOME ===================== */
 #home{padding-bottom:46px}
