@@ -4,6 +4,24 @@
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
+  /* ===== GUARDRAILS: единые токены раскладки (канон — ГАЙД-UI-guardrails.md).
+     ФАЗА 0: значения = текущие, БЕЗ визуальных изменений; дальше всё смещение
+     считается от этих токенов, а не от чисел по месту. ===== */
+  --safe-top:env(safe-area-inset-top);     --safe-bottom:env(safe-area-inset-bottom);
+  --safe-left:env(safe-area-inset-left);   --safe-right:env(safe-area-inset-right);
+  --gutter:16px;               /* единый боковой отступ контента (= .view) */
+  --chrome-top:26px;           /* единый верх под статус-баром (унификация 20/26/30 — фаза 1) */
+  --hdr-h:56px;                /* высота тела шапки модуля */
+  --kidbar-h:64px;             /* детский нижний бар (фаза 3) */
+  --tabbar-h:62px;             /* родительский таббар (≈ под текущий .pd-tabbar) */
+  --hdr-total:calc(var(--chrome-top) + var(--hdr-h) + var(--safe-top));
+  --kidbar-total:calc(var(--kidbar-h) + var(--safe-bottom));
+  --tabbar-total:calc(var(--tabbar-h) + var(--safe-bottom));
+  /* нижние «полки» плавающих элементов — централизованы (бывшие 70/120 по месту);
+     фаза 3 переведёт их на бар-относительные значения в ОДНОМ месте. */
+  --fab-bottom:calc(70px + var(--safe-bottom));
+  --toast-bottom:calc(120px + var(--safe-bottom));
+
   --cyan:#19e3ff; --magenta:#ff2bd6; --pink:#ff3db0; --purple:#a64bff;
   --blue:#3b6bff; --green:#2bf0c0; --mint:#38e8a0; --gold:#ffd23b; --red:#ff4d6d;
   --ink:#eaf2ff; --muted:#93a6cf;
@@ -116,9 +134,27 @@ body{
 .view.active{display:block;animation:viewin .32s ease both}
 @keyframes viewin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
+/* ===== УНИВЕРСАЛЬНАЯ РАМКА (guardrails) — КАНОН: ГАЙД-UI-guardrails.md.
+   ФАЗА 0: классы добавлены, но ещё НИЧЕМ не используются (нулевой эффект). Модули
+   переводятся помодульно (фазы 1–4) через sdk.ui.frame(). Контракт:
+     .rt-hdr  — единая шапка (‹ назад · заголовок · действия), один верх --chrome-top;
+     .rt-body — единственный скролл-контейнер, нижний резерв = высота бара + safe-area;
+     .rt-bar  — детский нижний бар (домой · очки · система), зеркало .pd-tabbar. ===== */
+.rt-hdr{display:flex;align-items:center;gap:12px;
+  padding:calc(var(--chrome-top) + var(--safe-top)) 2px 8px;min-height:var(--hdr-total)}
+.rt-hdr .rt-title{flex:1;min-width:0;font-family:var(--font-display);font-weight:400;font-size:22px;
+  color:#fff;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  text-shadow:0 0 12px color-mix(in srgb,var(--accent) 60%, transparent)}
+.rt-hdr .rt-actions{flex:none;display:flex;align-items:center;gap:8px}
+.rt-body{padding-bottom:calc(var(--kidbar-total) + 16px)}
+.rt-bar{position:fixed;left:0;right:0;bottom:0;z-index:14;max-width:480px;margin:0 auto;
+  display:flex;align-items:center;gap:10px;min-height:var(--kidbar-total);
+  padding:8px var(--gutter) calc(8px + var(--safe-bottom));
+  background:var(--tabbar-grad);border-top:1px solid rgba(255,255,255,.09);backdrop-filter:blur(8px)}
+
 /* ===================== HOME ===================== */
 #home{padding-bottom:46px}
-.hometop{padding:calc(30px + env(safe-area-inset-top)) 6px 14px;position:relative}
+.hometop{padding:calc(30px + var(--safe-top)) 6px 14px;position:relative}
 .brand{font-family:var(--font-display);font-size:40px;letter-spacing:1px;line-height:1;margin:0;color:#fff;
   text-shadow:var(--brand-glow)}
 .brand b{color:var(--pink);font-weight:400}
@@ -131,7 +167,7 @@ body{
    каждый переход экрана делает scrollTo(0,0), так что при входе кнопки всегда видны.
    На остальных экранах скрыта (настройки/модули/lock); в демо видна — настройки и
    магазин нужны и там. */
-.gear{position:absolute;top:calc(30px + env(safe-area-inset-top));right:6px;z-index:15;width:42px;height:42px;border-radius:13px;
+.gear{position:absolute;top:calc(30px + var(--safe-top));right:6px;z-index:15;width:42px;height:42px;border-radius:13px;
   display:none;place-items:center;cursor:pointer;font-size:20px;color:var(--chrome-ink);
   background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14);box-shadow:0 0 18px -7px var(--cyan)}
 body[data-view="home"] .gear,body[data-view="parent"] .gear{display:grid}
@@ -182,7 +218,7 @@ body[data-view="home"] .hud,body[data-view="lock"] .hud,body[data-view="settings
 body[data-view="settings"] .fab{display:none}
 .hud{position:fixed;left:0;right:0;bottom:0;z-index:14;pointer-events:none;
   max-width:480px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;
-  padding:0 22px calc(16px + env(safe-area-inset-bottom));
+  padding:0 22px calc(16px + var(--safe-bottom));
   background:var(--hud-grad)}
 .hud .big{font-family:var(--font-display);font-size:34px;color:#fff;line-height:.95;text-shadow:0 0 14px rgba(255,255,255,.22)}
 .hud .lbl{font-weight:700;font-size:13px;letter-spacing:.4px;margin-top:3px}
@@ -193,7 +229,7 @@ body[data-view="settings"] .fab{display:none}
 
 /* ===================== FAB (общий, управляется через sdk.ui.fab) ===================== */
 .fab{position:fixed;z-index:20;display:none;align-items:center;gap:10px;
-  bottom:calc(70px + env(safe-area-inset-bottom));right:max(18px, calc(50vw - 222px));
+  bottom:var(--fab-bottom);right:max(18px, calc(50vw - 222px));
   height:58px;padding:0 22px 0 18px;border:none;border-radius:30px;cursor:pointer;color:#fff;
   font-family:var(--font-display);font-size:15px;letter-spacing:.3px;
   background:var(--accent-grad);
@@ -207,7 +243,7 @@ body[data-view="settings"] .fab{display:none}
   display:none;align-items:flex-end;justify-content:center}
 .overlay.show{display:flex;animation:fade .2s both}
 @keyframes fade{from{opacity:0}to{opacity:1}}
-.sheet{width:100%;max-width:480px;border-radius:26px 26px 0 0;padding:10px 18px calc(22px + env(safe-area-inset-bottom));
+.sheet{width:100%;max-width:480px;border-radius:26px 26px 0 0;padding:10px 18px calc(22px + var(--safe-bottom));
   background:var(--sheet-bg);
   border-top:1.5px solid color-mix(in srgb,var(--accent) 55%, transparent);
   box-shadow:0 -12px 50px color-mix(in srgb,var(--accent) 18%, transparent);max-height:92vh;overflow:auto;
@@ -215,14 +251,14 @@ body[data-view="settings"] .fab{display:none}
 @keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
 .grip{width:44px;height:5px;border-radius:3px;background:rgba(255,255,255,.28);margin:6px auto 12px;cursor:grab}
 .grip-hit{padding:6px 0 2px;margin:-6px 0 0;touch-action:none}
-.demo-badge{position:fixed;left:12px;bottom:calc(120px + env(safe-area-inset-bottom));z-index:16;display:none;
+.demo-badge{position:fixed;left:12px;bottom:var(--toast-bottom);z-index:16;display:none;
   background:rgba(255,210,59,.16);color:#ffd23b;border:1px solid rgba(255,210,59,.5);
   font-weight:800;font-size:11px;letter-spacing:.5px;text-transform:uppercase;padding:4px 9px;border-radius:999px}
 body.demo .demo-badge{display:block}
 /* индикатор версии (слева внизу) — маркер деплоя */
 /* едва заметный маркер деплоя: ПОД меню/HUD (z-index 1 — на родительском виде его
    накрывает таббар, и это ок); точная версия всегда видна в Настройках (.set-ver) */
-.appver{position:fixed;left:calc(10px + env(safe-area-inset-left));bottom:calc(4px + env(safe-area-inset-bottom));z-index:1;
+.appver{position:fixed;left:calc(10px + var(--safe-left));bottom:calc(4px + var(--safe-bottom));z-index:1;
   font-family:'Rubik',sans-serif;font-size:9px;font-weight:600;letter-spacing:.3px;color:rgba(147,166,207,.26);
   pointer-events:none;user-select:none}
 .set-ver{margin-top:18px;text-align:center;font-size:11px;font-weight:600;letter-spacing:.4px;color:rgba(147,166,207,.55)}
@@ -253,7 +289,7 @@ body.demo .demo-badge{display:block}
 /* радиус 22px, НЕ 999px: на однострочном тосте (высота ~44px) выглядит той же капсулой,
    а длинные сообщения переносятся на 2-3 строки и больше не вылезают из «облачка» углами */
 .toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);
-  bottom:calc(120px + env(safe-area-inset-bottom));z-index:50;max-width:90%;
+  bottom:var(--toast-bottom);z-index:50;max-width:90%;
   display:flex;align-items:center;gap:12px;
   background:rgba(10,10,28,.95);color:#eaf6ff;padding:11px 16px 11px 18px;border-radius:22px;font-weight:700;font-size:14.5px;
   line-height:1.35;border:1.5px solid rgba(25,227,255,.5);box-shadow:0 0 24px -6px var(--cyan), 0 10px 30px rgba(0,0,0,.5);
@@ -262,7 +298,7 @@ body.demo .demo-badge{display:block}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 /* верхняя позиция: пока активен режим перестановки, низ занят пилюлей «✓ Готово» —
    подсказка и любые тосты уезжают наверх, чтобы не накладываться */
-.toast.top{top:calc(24px + env(safe-area-inset-top));bottom:auto;transform:translateX(-50%) translateY(-20px)}
+.toast.top{top:calc(24px + var(--safe-top));bottom:auto;transform:translateX(-50%) translateY(-20px)}
 .toast.top.show{transform:translateX(-50%) translateY(0)}
 .toast.has-act{pointer-events:auto}
 .toast-act{border:none;cursor:pointer;font-family:inherit;font-weight:800;font-size:14px;color:#04121a;
@@ -291,7 +327,7 @@ body.demo .demo-badge{display:block}
 
 /* ===================== ЭКРАН НАСТРОЕК (#settings) ===================== */
 #settings{padding-bottom:46px}
-.set-top{display:flex;align-items:center;gap:12px;padding:calc(26px + env(safe-area-inset-top)) 0 8px}
+.set-top{display:flex;align-items:center;gap:12px;padding:calc(26px + var(--safe-top)) 0 8px}
 .set-top h1{font-family:var(--font-display);font-weight:400;font-size:23px;margin:0;color:#fff;
   text-shadow:0 0 12px color-mix(in srgb,var(--accent) 60%, transparent)}
 /* язык: сегмент-контрол в одну строку вместо стопки кнопок */
@@ -348,7 +384,7 @@ body[data-view="parent"] .fab{display:none}
 body[data-view="parent"] #bg{opacity:.15;filter:saturate(.65)}
 #parent{padding-bottom:6px}
 .pd-wrap{padding-bottom:96px}
-.pd-top{display:flex;align-items:center;gap:8px;padding:calc(26px + env(safe-area-inset-top)) 0 10px}
+.pd-top{display:flex;align-items:center;gap:8px;padding:calc(26px + var(--safe-top)) 0 10px}
 .pd-kid{display:flex;align-items:center;gap:9px;min-width:0;flex:1;border:none;background:none;cursor:pointer;
   font-family:inherit;color:var(--ink);text-align:left;padding:0}
 .pd-kid:disabled{cursor:default}
@@ -495,7 +531,7 @@ button.pd-ev{cursor:pointer;transition:border-color .15s} button.pd-ev:active{bo
 .pd-tabbar{display:none}
 body[data-view="parent"] .pd-tabbar{display:flex}
 .pd-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:14;max-width:480px;margin:0 auto;gap:4px;
-  padding:8px 14px calc(10px + env(safe-area-inset-bottom));
+  padding:8px 14px calc(10px + var(--safe-bottom));
   background:var(--tabbar-grad);border-top:1px solid rgba(255,255,255,.09);backdrop-filter:blur(8px)}
 .pd-tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;
   font-family:inherit;font-size:10px;font-weight:800;letter-spacing:.3px;color:var(--muted);padding:6px 4px;border-radius:12px;transition:.15s}
@@ -560,7 +596,7 @@ body[data-view="parent"] .pd-tabbar{display:flex}
 .jgl-ghost{position:fixed;z-index:45;margin:0;pointer-events:none;opacity:.95;will-change:transform;
   transition:none !important;animation:none !important;
   box-shadow:0 18px 44px rgba(0,0,0,.6),0 0 36px -6px var(--c,#19e3ff)}
-.jgl-done{position:fixed;left:50%;bottom:calc(120px + env(safe-area-inset-bottom));transform:translateX(-50%);
+.jgl-done{position:fixed;left:50%;bottom:var(--toast-bottom);transform:translateX(-50%);
   z-index:46;border:0;border-radius:999px;padding:13px 24px;cursor:pointer;
   font-family:inherit;font-weight:800;font-size:15px;color:#06121f;
   background:linear-gradient(135deg,#19e3ff,#38e8a0);box-shadow:0 10px 30px rgba(0,0,0,.55)}
@@ -631,7 +667,7 @@ body[data-view="parent"] .pd-tabbar{display:flex}
 /* хром колокольчика = хром ⚙ (один кластер, гармонизация v.65). С v.67 absolute, как ⚙:
    прибит к шапке страницы, уезжает со скроллом, НЕ висит над контентом (баннеры
    .ntf-banners остаются fixed — всплывашки должны быть видны при любом скролле). */
-.ntf-bell{position:absolute;top:calc(30px + env(safe-area-inset-top));right:6px;z-index:15;width:42px;height:42px;
+.ntf-bell{position:absolute;top:calc(30px + var(--safe-top));right:6px;z-index:15;width:42px;height:42px;
   border-radius:13px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14);
   box-shadow:0 0 18px -7px var(--cyan);color:var(--chrome-ink);
   display:grid;place-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -640,7 +676,7 @@ body[data-view="parent"] .pd-tabbar{display:flex}
 /* там, где видна ⚙ (главный + дашборд), колокольчик встаёт слева от неё */
 body[data-view="home"] .ntf-bell,body[data-view="parent"] .ntf-bell{right:56px}
 body[data-view="lock"] .ntf-bell,body.demo .ntf-bell,.ntf-bell.ntf-hide{display:none}
-body[data-view="parent"] .pd-top{padding-right:100px;padding-top:calc(30px + env(safe-area-inset-top))} /* контент шапки не лезет под кластер [🔔][⚙]; верх выровнен с ним */
+body[data-view="parent"] .pd-top{padding-right:100px;padding-top:calc(30px + var(--safe-top))} /* контент шапки не лезет под кластер [🔔][⚙]; верх выровнен с ним */
 body[data-view="settings"] .set-top{padding-right:48px}
 .pd-kid .st{white-space:nowrap;overflow:hidden;text-overflow:ellipsis} /* «👁 Только просмотр · активность…» не ломает строку */
 .ntf-badge{position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;border-radius:10px;display:none;
@@ -648,7 +684,7 @@ body[data-view="settings"] .set-top{padding-right:48px}
   border:2px solid rgba(var(--panel-rgb),.9);box-shadow:0 0 12px -3px var(--red)}
 .ntf-bell.has .ntf-badge{display:grid}
 /* всплывающие баннеры (iOS-стиль): стек сверху по центру, поверх всего */
-.ntf-banners{position:fixed;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);
+.ntf-banners{position:fixed;top:calc(10px + var(--safe-top));left:50%;transform:translateX(-50%);
   z-index:70;width:min(480px,94vw);display:flex;flex-direction:column;gap:8px;pointer-events:none}
 .ntf-banner{pointer-events:auto;display:flex;align-items:center;gap:11px;padding:11px 14px;border-radius:18px;
   cursor:pointer;background:rgba(var(--panel-rgb),.97);border:1.5px solid var(--line-strong);
