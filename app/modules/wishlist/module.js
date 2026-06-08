@@ -165,8 +165,8 @@
   var E={};
 
   /* ----- helpers ----- */
-  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
+  function uid(){ return RobTop.util.uid(); }
+  function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
   function normUrl(u){ u=(u||"").trim(); if(!u) return ""; if(!/^https?:\/\//i.test(u)) u="https://"+u; return u; }
   function fmtDate(ts){ return sdk.formatDate(ts); }

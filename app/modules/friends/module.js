@@ -106,7 +106,7 @@
   /* =================== СОСТОЯНИЕ =================== */
   var sdk=null, root=null, E={}, items=[], currentTab="open";
 
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
+  function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
 
   /* ----- данные ----- */

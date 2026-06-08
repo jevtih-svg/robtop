@@ -174,9 +174,9 @@
   var tab="history", histFilter="all";
   var previewAudio=null, previewIdx=-1, previewPlaying=false;
 
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
+  function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
-  function pad2(n){ return (n<10?"0":"")+n; }
+  function pad2(n){ return RobTop.util.pad2(n); }
   function fmtTime(sec){ sec=Math.max(0,Math.round(sec)); return Math.floor(sec/60)+":"+pad2(sec%60); }
   function dstr(d){ return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
   function todayStr(){ return dstr(new Date()); }

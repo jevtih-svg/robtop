@@ -96,12 +96,12 @@
   var sdk=null, root=null, E={}, items=[], timer=null, lastSig="", sel=null, form=blankForm();
   function blankForm(){ return {open:false, mood:null, photo:null, why:"", liked:""}; }
 
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
+  function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
 
   /* ----- время: окно 6:00–22:00 по времени устройства ----- */
-  function pad2(n){ return (n<10?"0":"")+n; }
-  function dayKey(d){ d=d||new Date(); return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
+  function pad2(n){ return RobTop.util.pad2(n); }
+  function dayKey(d){ return RobTop.util.dayKey(d); }
   function inWindow(){ var h=new Date().getHours(); return h>=6 && h<22; }
   function msToOpen(){ // только когда окно закрыто: до 6:00 сегодня (ночью) или завтра (вечером)
     var n=new Date(), open=new Date(n.getFullYear(),n.getMonth(),n.getDate(),6,0,0);

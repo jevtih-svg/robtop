@@ -158,10 +158,10 @@
   var entries=[], behs=[], evts=[], cmds=[], iss=[], evtTypes=[], meta={id:null,puppy:1,reward:REWARD_DEF};
   var step="dur", cur=null, beh=null, ev=null, saving=false;
 
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
+  function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
-  function pad2(n){ return (n<10?"0":"")+n; }
-  function dayKey(d){ d=d||new Date(); return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
+  function pad2(n){ return RobTop.util.pad2(n); }
+  function dayKey(d){ return RobTop.util.dayKey(d); }
   function hhmm(d){ d=d||new Date(); return pad2(d.getHours())+":"+pad2(d.getMinutes()); }
   /* округление времени до БЛИЖАЙШИХ 15 минут (требование Джеффа): 08:37→08:30, 08:38→08:45, 23:55→23:45 (без перехода суток) */
   function r15(hm){

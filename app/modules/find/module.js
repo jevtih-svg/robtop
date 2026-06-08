@@ -139,7 +139,7 @@
   var ptab="pending";              // активная вкладка родителя
   var destroyed=false;
 
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
+  function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
   function lang(){ var g=(sdk.i18n&&sdk.i18n.get&&sdk.i18n.get())||"en"; return POOL_DATA.adj[g]?g:"en"; }
   function isParentView(){ return sdk.role==="parent"; }

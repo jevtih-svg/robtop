@@ -82,12 +82,12 @@
   function blankForm(){ return {open:false, id:null, title:"", date:"", emoji:DEFAULT_EMOJI, note:""}; }
   var form=blankForm();
 
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
+  function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
 
   /* ----- дни ----- */
-  function pad2(n){ return (n<10?"0":"")+n; }
-  function dayKey(d){ d=d||new Date(); return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
+  function pad2(n){ return RobTop.util.pad2(n); }
+  function dayKey(d){ return RobTop.util.dayKey(d); }
   function parseDate(s){ var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s||"")); return m?new Date(+m[1],+m[2]-1,+m[3]):null; }
   function daysTo(s){ // календарных дней от сегодня (время устройства) до даты; 0 — сегодня, <0 — прошло
     var tgt=parseDate(s); if(!tgt) return 0;

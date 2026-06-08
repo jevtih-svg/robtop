@@ -384,6 +384,9 @@ window.RobTop = window.RobTop || {};
         t: function(k,p){ return RT.i18n.t(k,p); }
       },
       uid: uid,
+      /* util — общие чистые хелперы ядра (core/util.js): esc/escAttr/uid/pad2/dayKey.
+         Новый код модулей берёт их отсюда; старый — через глобальный RobTop.util-алиас. */
+      util: RT.util || {},
       isDemo: function(){ return RT.isDemo(); }
     };
     return sdk;

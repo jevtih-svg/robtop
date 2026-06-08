@@ -74,7 +74,7 @@
   var S={ tasks:[], loaded:false, err:false };
   var TASK_W={ pending:0, active:1, done:2 };
 
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
+  function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
   function title(){ return sdk.i18n.t("tile.tasks"); /* готовый перевод плитки */ }
   function parentCtl(){ return sdk.role==="parent" || sdk.isDemo(); }

@@ -100,7 +100,7 @@
   var S={ items:[], orders:[], balance:0, loaded:false, err:false };
   var prevSt=null; /* id заказа → статус с прошлой загрузки (тост «вручено» ребёнку) */
 
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
+  function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
   /* родитель/демо управляют каталогом и подтверждают покупки; «детская сторона» (ребёнок или
      демо) покупает и имеет корзинку — у НАСТОЯЩЕГО родителя корзинки нет (фидбек Джеффа). */

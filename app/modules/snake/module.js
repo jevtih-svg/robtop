@@ -84,9 +84,9 @@
   var g=null;               // {snake[],dir,queue[],food,bonus,score,foods,level,paused}
   var timerId=null, speedSel=3, curSheet=null, saving=false, recJust=false, touchPt=null;
 
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
+  function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
-  function pad2(n){ return (n<10?"0":"")+n; }
+  function pad2(n){ return RobTop.util.pad2(n); }
   function todayStr(){ var d=new Date(); return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
   function nowHM(){ var d=new Date(); return pad2(d.getHours())+":"+pad2(d.getMinutes()); }
   function humanDate(s){ try{ var p=String(s).split("-"); return sdk.formatDate(new Date(+p[0],+p[1]-1,+p[2])); }catch(e){ return s||""; } }

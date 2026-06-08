@@ -87,7 +87,7 @@
   /* персональный оттенок имени в группах — токены тем (без жёстких цветов) */
   var NAME_VARS=["--cyan","--magenta","--gold","--green","--purple","--orange"];
 
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
+  function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
   function api(type,payload){ return sdk.api.post("action.php", Object.assign({module:"chat", type:type}, payload||{})); }
   function alive(){ return !!(S && S.alive); }

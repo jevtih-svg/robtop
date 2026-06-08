@@ -242,7 +242,7 @@
   var LIST_CAP=60;
   var TASK_W={ pending:0, active:1, done:2 };
 
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
+  function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
   function plural(n,k,p){ return sdk.plural(n,k,p); }
 

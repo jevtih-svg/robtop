@@ -79,12 +79,12 @@
   var sdk=null, root=null, E={}, items=[], timer=null, lastSig="", form=blankForm();
   function blankForm(){ return {open:false, stars:0, photo:null, editingId:null, why:"", liked:""}; }
 
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
+  function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
 
   /* ----- время: окно 20:00–00:00 по времени устройства ----- */
-  function pad2(n){ return (n<10?"0":"")+n; }
-  function dayKey(d){ d=d||new Date(); return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
+  function pad2(n){ return RobTop.util.pad2(n); }
+  function dayKey(d){ return RobTop.util.dayKey(d); }
   function inWindow(){ return new Date().getHours()>=20; }
   function msToOpen(){ var n=new Date(); return new Date(n.getFullYear(),n.getMonth(),n.getDate(),20,0,0)-n; }
   function countdownStr(){
