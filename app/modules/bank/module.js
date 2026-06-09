@@ -1,5 +1,9 @@
-/* RobTop — модуль «Копилка». Свинка с пунктами на боку, огонёк-винстрик, история
-   транзакций (вкладки «Игры»/«Родители») и родительская панель начислений (только роль parent; в демо открыта).
+/* RobTop — модуль «Копилка». ДВА ВИДА по роли (v1.10.0, 2026-06-09): РЕБЁНОК — свинка с
+   пунктами, огонёк-винстрик и чип-пунктстрик (геймификация); РОДИТЕЛЬ — экран управления
+   БЕЗ свинки/стриков: баланс + кнопки (Начислить/Снять/Штраф/★+5) прямо на экране (иконка-
+   человек и шторка-панель убраны), плюс создание заданий и очередь проверок во вкладке.
+   ДВЕ ВКЛАДКИ у обеих ролей: «Задания» (управление) и «История» (ЕДИНЫЙ лог ВСЕХ транзакций,
+   без разделения игры/родители). Вид выбирается parentCtl() = роль parent или демо.
    ЗАДАНИЯ (v1.9.0, слияние 2026-06-09): ОБЩИЙ движок sdk.tasks (отдельная таблица tasks +
    api/tasks.php, канон — ГАЙД-задания.md). Копилка — ЕДИНСТВЕННЫЙ полный UI заданий после
    удаления модуля «Задания» (заказ Джеффа: модуль избыточен). Вкладка «Задания» (по умолчанию)
@@ -30,9 +34,11 @@
     en:{ bank:{
       title:"Piggy Bank", subtitle:"Your points for games and tasks",
       ptsWord:"points", streakLabel:"win streak",
-      tabTasks:"Tasks", tabApps:"Games", tabParents:"Parents",
-      emptyApps:"Nothing yet — play and earn points!",
-      emptyParents:"Parent rewards will show up here",
+      tabTasks:"Tasks", tabLog:"History",
+      emptyLog:"No points yet — play games and do tasks!",
+      subParent:"Manage points and tasks",
+      mgrAdd:"+ Add points", mgrTake:"− Take", mgrFine:"⚠️ Fine", mgrDaily:"★ +5",
+      giveTitle:"Add points", takeTitle:"Take points", penTitle:"Fine",
       txCount:{one:"{n} entry",other:"{n} entries"},
       hudPts:"points", hudStreak:"streak",
       loadFail:"Could not load the piggy bank", retry:"Try again",
@@ -100,9 +106,11 @@
     ru:{ bank:{
       title:"Копилка", subtitle:"Твои пункты за игры и задания",
       ptsWord:"пункты", streakLabel:"винстрик",
-      tabTasks:"Задания", tabApps:"Игры", tabParents:"Родители",
-      emptyApps:"Пока пусто — играй и зарабатывай пункты!",
-      emptyParents:"Здесь появятся награды от родителей",
+      tabTasks:"Задания", tabLog:"История",
+      emptyLog:"Пунктов пока нет — играй и выполняй задания!",
+      subParent:"Управляй очками и заданиями",
+      mgrAdd:"+ Начислить", mgrTake:"− Снять", mgrFine:"⚠️ Штраф", mgrDaily:"★ +5",
+      giveTitle:"Начислить пункты", takeTitle:"Снять пункты", penTitle:"Штраф",
       txCount:{one:"{n} запись",few:"{n} записи",many:"{n} записей"},
       hudPts:"пунктов", hudStreak:"винстрик",
       loadFail:"Не получилось загрузить копилку", retry:"Попробовать ещё",
@@ -170,9 +178,11 @@
     lv:{ bank:{
       title:"Krājkase", subtitle:"Tavi punkti par spēlēm un uzdevumiem",
       ptsWord:"punkti", streakLabel:"uzvaru sērija",
-      tabTasks:"Uzdevumi", tabApps:"Spēles", tabParents:"Vecāki",
-      emptyApps:"Vēl tukšs — spēlē un krāj punktus!",
-      emptyParents:"Šeit parādīsies vecāku balvas",
+      tabTasks:"Uzdevumi", tabLog:"Vēsture",
+      emptyLog:"Punktu vēl nav — spēlē un pildi uzdevumus!",
+      subParent:"Pārvaldi punktus un uzdevumus",
+      mgrAdd:"+ Pieskaitīt", mgrTake:"− Noņemt", mgrFine:"⚠️ Sods", mgrDaily:"★ +5",
+      giveTitle:"Pieskaitīt punktus", takeTitle:"Noņemt punktus", penTitle:"Sods",
       txCount:{zero:"{n} ierakstu",one:"{n} ieraksts",other:"{n} ieraksti"},
       hudPts:"punkti", hudStreak:"sērija",
       loadFail:"Neizdevās ielādēt krājkasi", retry:"Mēģināt vēlreiz",
@@ -262,9 +272,8 @@
   var CLIP_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="16" rx="2.5"/><path d="M9 5V4a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 4v1"/><path d="M9 13l2.2 2.2 4.3-4.7"/></svg>';
 
   var sdk=null, root=null, alive=false, busy=false, curSheet=null;
-  var E={}, PE=null;
+  var E={};
   var S={ balance:0, streak:0, items:[], tasks:[], tab:"tasks", loaded:false, err:false };
-  var PARENT_KINDS={ parent:1, task_done:1, task_fail:1, daily_bonus:1, manual:1, bonus:1 };
   var KNOWN_R={ teeth:1, teeth_manual:1, guess_win:1, guess_wrong:1, guess_timeout:1, streak_bonus:1,
                 parent_give:1, parent_take:1, parent_penalty:1, task_done:1, task_fail:1, daily_bonus:1, spend:1, spend_refund:1 };
   var LIST_CAP=60;
@@ -274,12 +283,6 @@
   function t(k,p){ return sdk.t(k,p); }
   function plural(n,k,p){ return sdk.plural(n,k,p); }
 
-  function kindOf(d){
-    if(d && d.kind) return String(d.kind);
-    if(d && d.reason==="teeth_manual") return "manual";
-    return ((d && parseInt(d.n,10))||0) >= 0 ? "win" : "loss";
-  }
-  function tabOf(d){ return PARENT_KINDS[kindOf(d)] ? "parents" : "apps"; }
   function labelOf(d){
     /* штраф (2026-06-07): всегда явное слово «Штраф», причина — после двоеточия */
     if(d && d.reason==="parent_penalty") return t("r_parent_penalty")+(d.note?": "+String(d.note):"");
@@ -324,18 +327,17 @@
   /* ---------- задания от родителей: ОБЩИЙ движок sdk.tasks (ГАЙД-задания.md) ----------
      Плоский контракт: {id, title, points, type recur|once, status active|pending|done,
      timesDone, …}. Очки и оповещения — ВНУТРИ движка; модуль только рендерит и зовёт. */
-  function parentCtl(){ return sdk.role==="parent" || sdk.isDemo(); }
-  function kidCtl(){ return sdk.role!=="parent" || sdk.isDemo(); }
+  function parentCtl(){ return sdk.role==="parent" || sdk.isDemo(); }   /* экран управления (родитель/демо); иначе детский геймифицированный вид */
   function taskOf(id){
     for(var i=0;i<S.tasks.length;i++) if(String(S.tasks[i].id)===String(id)) return S.tasks[i];
     return null;
   }
   function taskPts(tk){ var n=parseInt(tk.points,10); return n>0?n:10; }
   function actionable(){
-    var c=0, i, st;
+    var c=0, i, st, mgr=parentCtl();
     for(i=0;i<S.tasks.length;i++){
       st=S.tasks[i].status;
-      if(sdk.role==="parent" ? st==="pending" : st==="active") c++;
+      if(mgr ? st==="pending" : st==="active") c++;
     }
     return c;
   }
@@ -594,39 +596,35 @@
   /* ---------- рендер ---------- */
   function render(){
     if(!alive) return;
-    E.pts.textContent = S.err ? "…" : S.balance;
-    if(E.earned){
-      E.earned.textContent = S.err ? "" : t("earnedAll",{n:S.earned||0});
-      E.earned.hidden = !!S.err;
+    if(parentCtl()){                                  /* экран управления: только баланс */
+      if(E.mgrBal) E.mgrBal.textContent = S.err ? "…" : S.balance;
+      sdk.ui.hud({ left:t("title"), cNum:(S.err?0:S.balance), cLbl:t("hudPts") });
+    } else {                                          /* детский вид: свинка + стрики */
+      if(E.pts) E.pts.textContent = S.err ? "…" : S.balance;
+      if(E.earned){ E.earned.textContent = S.err ? "" : t("earnedAll",{n:S.earned||0}); E.earned.hidden = !!S.err; }
+      if(E.flameN){ E.flameN.textContent=S.streak; E.flame.classList.toggle("off", !(S.streak>0)); }
+      if(E.plusN){ E.plusN.textContent=S.plus; E.plus.classList.toggle("off", !(S.plus>0)); }
+      sdk.ui.hud({ left:t("title"), cNum:(S.err?0:S.balance), cLbl:t("hudPts"), rNum:S.streak, rLbl:t("hudStreak") });
     }
-    E.flameN.textContent = S.streak;
-    E.flame.classList.toggle("off", !(S.streak>0));
-    E.plusN.textContent = S.plus;
-    E.plus.classList.toggle("off", !(S.plus>0));
-    sdk.ui.hud({ left:t("title"), cNum:(S.err?0:S.balance), cLbl:t("hudPts"), rNum:S.streak, rLbl:t("hudStreak") });
     var an=S.err?0:actionable();
     if(E.tabN){ E.tabN.textContent=an; E.tabN.hidden=!(an>0); }
     renderList();
-    if(PE){ PE.bal.textContent=S.balance; PE.str.textContent=S.streak; if(PE.plus) PE.plus.textContent=S.plus; }
   }
   function renderList(){
     var box=E.list;
     if(S.err){
       box.innerHTML='<div class="bk-empty"><p>'+esc(t("loadFail"))+'</p><button class="btn btn-cancel" id="bkRetry">'+esc(t("retry"))+'</button></div>';
-      var rb=box.querySelector("#bkRetry"); if(rb) rb.onclick=function(){ S.err=false; E.pts.textContent="…"; load(); };
+      var rb=box.querySelector("#bkRetry"); if(rb) rb.onclick=function(){ S.err=false; load(); };
       return;
     }
     if(S.tab==="tasks"){ renderTasks(); return; }   /* вкладка заданий — своё секционное управление */
-    var rows=[], i, it, d;
-    for(i=0;i<S.items.length;i++){ it=S.items[i]; d=it.data||{}; if(tabOf(d)===S.tab) rows.push(it); }
-    var html="";
+    /* вкладка «История»: ЕДИНЫЙ лог ВСЕХ транзакций (без разделения игры/родители), свежие сверху */
+    var rows=S.items||[], html="", i, it, d, n;
     if(!rows.length){
-      html='<div class="bk-empty"><p>'+esc(t(S.tab==="apps"?"emptyApps":"emptyParents"))+'</p></div>';
-      box.innerHTML=html;
+      box.innerHTML='<div class="bk-empty"><p>'+esc(t("emptyLog"))+'</p></div>';
       return;
     }
     html+='<div class="bk-count">'+esc(plural(rows.length,"txCount",{n:rows.length}))+'</div>';
-    var n;
     for(i=0;i<rows.length && i<LIST_CAP;i++){
       it=rows[i]; d=it.data||{}; n=parseInt(d.n,10)||0;
       html+='<div class="bk-row"><div class="bk-badge '+(n>=0?"plus":"minus")+'">'+(n>=0?"+":"−")+Math.abs(n)+'</div>'
@@ -684,106 +682,111 @@
     box.querySelector("[data-close]").onclick=function(){ ctl.close(); };
   }
 
-  /* ---------- родительская панель ----------
-     PIN упразднён (2026-06-07): панель открывает роль parent из сессии; демо — песочница без гейта.
-     Ребёнку кнопка не рендерится (parentAllowed), тост — защитная ветка. */
-  function parentAllowed(){ return sdk.role==="parent" || sdk.isDemo(); }
-  function openParentGate(){
-    if(parentAllowed()){ openParent(); return; }
-    sdk.ui.toast(t("parentOnly"));
+  /* ---------- действия родителя (прямо на экране управления; шторка-панель и иконка-человек убраны 2026-06-09) ----------
+     op: give (+N) | take (−N) | pen (штраф −N, причина обязательна). «★ +5» (daily) — без шторки. */
+  function pointsResult(out, op, amt, note){
+    if(!out || !out.ok){ sdk.ui.toast(t("loadFail")); return false; }
+    if(out.bonus) sdk.ui.toast(t("bonusToast",{n:out.bonus}));
+    else if(out.streak!=null) sdk.ui.toast(t("streakToast",{n:out.streak}));
+    else sdk.ui.toast(t("doneToast"));
+    sdk.ui.haptics("light");
+    if(sdk.notify){
+      if(op==="daily") sdk.notify.send("child","daily_bonus",{link:{module:"bank"}});
+      else sdk.notify.send("child", op==="pen"?"penalty":(op==="give"?"points_given":"points_taken"),
+            {params:{n:Math.abs(amt),note:note||""},link:{module:"bank"}});
+    }
+    return true;
   }
-  function openParent(){
-    var box=document.createElement("div");
-    box.innerHTML='<h2>'+esc(t("parentTitle"))+'</h2>'
-      +'<div class="bk-pgrid">'
-        +'<div class="bk-pstat"><div class="n" id="bkPBal">'+S.balance+'</div><div class="l">'+esc(t("balanceNow"))+'</div></div>'
-        +'<div class="bk-pstat"><div class="n" id="bkPStr">'+S.streak+'</div><div class="l">'+esc(t("streakNow"))+'</div></div>'
-        +'<div class="bk-pstat"><div class="n" id="bkPPlus">'+S.plus+'</div><div class="l">'+esc(t("plusLabel"))+'</div></div></div>'
-      +'<div class="store-section">'+esc(t("secBonus"))+'</div>'
-      +'<div class="bk-pbtns">'
-        +'<button class="btn btn-cancel" data-op="daily">'+esc(t("btnDailyBonus"))+'</button></div>'
-      +'<div class="store-section">'+esc(t("secCustom"))+'</div>'
-      +'<div class="bk-custom"><input type="number" id="bkAmt" inputmode="numeric" placeholder="'+esc(t("amountPh"))+'">'
-      +'<input type="text" id="bkNote" maxlength="60" placeholder="'+esc(t("notePh"))+'"></div>'
-      +'<div class="sheet-actions bk-pact"><button class="btn btn-cancel bk-pen" data-op="pen">'+esc(t("btnPen"))+'</button>'
-      +'<button class="btn btn-cancel" data-op="take">'+esc(t("btnTake"))+'</button>'
-      +'<button class="btn btn-primary" data-op="give">'+esc(t("btnGive"))+'</button></div>';
-    var ctl=sdk.ui.sheet(box); curSheet=ctl;
-    PE={ bal:box.querySelector("#bkPBal"), str:box.querySelector("#bkPStr"), plus:box.querySelector("#bkPPlus") };
-    function val(){ return parseInt((box.querySelector("#bkAmt").value||"").trim(),10)||0; }
-    function note(){ return (box.querySelector("#bkNote").value||"").trim(); }
-    box.querySelectorAll("[data-op]").forEach(function(b){
-      b.onclick=function(){
-        var op=b.getAttribute("data-op"), n, v;
-        if(busy) return;
-        if(op==="daily"){ n=[5,"daily_bonus",{kind:"daily_bonus",src:"parent"}]; }
-        else if(op==="pen"){ /* штраф: именованный минус, причина обязательна (ребёнок видит «Штраф: …») */
-          v=val();
-          if(!v){ sdk.ui.toast(t("needAmount")); return; }
-          if(!note()){ sdk.ui.toast(t("needNote")); return; }
-          n=[ -Math.abs(v), "parent_penalty", {kind:"parent",src:"parent",note:note()} ];
-        }
-        else {
-          v=val();
-          if(!v){ sdk.ui.toast(t("needAmount")); return; }
-          n=[ op==="give"?Math.abs(v):-Math.abs(v), op==="give"?"parent_give":"parent_take",
-              {kind:"parent",src:"parent",note:note()} ];
-        }
-        busy=true; b.disabled=true;
-        sdk.points.add(n[0],n[1],n[2]).then(function(out){
-          busy=false; b.disabled=false;
-          if(!out || !out.ok){ sdk.ui.toast(t("loadFail")); return; }
-          if(out.bonus) sdk.ui.toast(t("bonusToast",{n:out.bonus}));
-          else if(out.streak!=null) sdk.ui.toast(t("streakToast",{n:out.streak}));
-          else sdk.ui.toast(t("doneToast"));
-          sdk.ui.haptics("light");
-          /* оповещение ребёнку о начислении/снятии с панели (ГАЙД-оповещения.md) */
-          if(sdk.notify){
-            if(op==="daily") sdk.notify.send("child","daily_bonus",{link:{module:"bank"}});
-            else sdk.notify.send("child", op==="pen"?"penalty":(op==="give"?"points_given":"points_taken"),
-                  {params:{n:Math.abs(n[0]),note:n[2].note||""},link:{module:"bank"}});
-          }
-          load();
-        });
-      };
+  function doDaily(){ /* «★ +5» — бонус «все задания дня», без шторки */
+    if(busy) return; busy=true;
+    sdk.points.add(5,"daily_bonus",{kind:"daily_bonus",src:"parent"}).then(function(out){
+      busy=false; if(pointsResult(out,"daily",5,"")) load();
     });
+  }
+  function openPointsSheet(op){ /* give|take|pen — сумма (+ причина для штрафа) */
+    var titleKey = op==="pen"?"penTitle":(op==="take"?"takeTitle":"giveTitle");
+    var doLbl = op==="pen"?"mgrFine":(op==="take"?"mgrTake":"mgrAdd");
+    var box=document.createElement("div");
+    box.innerHTML='<h2>'+esc(t(titleKey))+'</h2>'
+      +'<div class="bk-custom"><input type="number" id="bkAmt" inputmode="numeric" placeholder="'+esc(t("amountPh"))+'">'
+        +'<input type="text" id="bkNote" maxlength="60" placeholder="'+esc(t("notePh"))+'"></div>'
+      +'<div class="sheet-actions"><button class="btn btn-cancel" data-close>'+esc(t("common.cancel"))+'</button>'
+        +'<button class="btn btn-primary'+(op==="pen"?" bk-pen":"")+'" id="bkPDo">'+esc(t(doLbl))+'</button></div>';
+    var ctl=sdk.ui.sheet(box); curSheet=ctl;
+    box.querySelector("[data-close]").onclick=function(){ ctl.close(); };
+    box.querySelector("#bkPDo").onclick=function(){
+      if(busy) return;
+      var v=parseInt((box.querySelector("#bkAmt").value||"").trim(),10)||0;
+      var note=(box.querySelector("#bkNote").value||"").trim();
+      if(!v){ sdk.ui.toast(t("needAmount")); return; }
+      if(op==="pen" && !note){ sdk.ui.toast(t("needNote")); return; }
+      var n = op==="pen" ? [ -Math.abs(v), "parent_penalty", {kind:"parent",src:"parent",note:note} ]
+            : op==="take"? [ -Math.abs(v), "parent_take",    {kind:"parent",src:"parent",note:note} ]
+            :              [  Math.abs(v), "parent_give",    {kind:"parent",src:"parent",note:note} ];
+      busy=true;
+      sdk.points.add(n[0],n[1],n[2]).then(function(out){
+        busy=false;
+        if(pointsResult(out, op, n[0], note)){ ctl.close(); load(); }
+      });
+    };
   }
 
   /* ---------- каркас ---------- */
   function mount(rootEl, theSdk){
-    sdk=theSdk; root=rootEl; alive=true; busy=false; curSheet=null; PE=null;
+    sdk=theSdk; root=rootEl; alive=true; busy=false; curSheet=null;
     S={ balance:0, streak:0, plus:0, items:[], tasks:[], tab:"tasks", loaded:false, err:false };
-    /* guardrails: шапку строит общая рамка (sdk.ui.frame); модуль наполняет только body */
+    var mgr=parentCtl();
+    /* guardrails: шапку строит общая рамка (sdk.ui.frame); модуль наполняет только body. Иконки-действия в шапке нет. */
     var body=sdk.ui.frame({
-      titleHtml:'<div class="bk-title">'+esc(t("title"))+'</div><div class="bk-sub">'+esc(t("subtitle"))+'</div>',
+      titleHtml:'<div class="bk-title">'+esc(t("title"))+'</div><div class="bk-sub">'+esc(t(mgr?"subParent":"subtitle"))+'</div>',
       backLabel:t("common.back"),
-      actions:[ parentAllowed()?{ icon:"parent", id:"bkParent", label:t("parentTitle"), onClick:openParentGate }:null ]
+      actions:[]
     }).body;
-    body.innerHTML='<div class="bk">'
-      +'<div class="bk-stage">'
-        +'<button class="bk-flame off" id="bkFlame" aria-label="'+esc(t("infoTitle"))+'">'+FLAME_IC
-          +'<span class="bk-flame-n" id="bkFlameN">0</span><span class="bk-flame-l">'+esc(t("streakLabel"))+'</span>'
-          +'<span class="bk-flame-i" aria-hidden="true">i</span></button>'
-        +'<button class="bk-plus off" id="bkPlus" aria-label="'+esc(t("pinfoTitle"))+'">'+BOLT_IC
-          +'<span class="bk-flame-n" id="bkPlusN">0</span><span class="bk-flame-l">'+esc(t("plusLabel"))+'</span>'
-          +'<span class="bk-flame-i" aria-hidden="true">i</span></button>'
-        +'<div class="bk-pig" id="bkPig">'+PIG_IC
-          +'<div class="bk-pig-label">'+esc(t("ptsWord"))+': <b id="bkPts">…</b></div></div>'
-        +'<div class="bk-earned" id="bkEarned" hidden></div></div>'
+    var stage = mgr
+      ? '<div class="bk-mgr">'
+          +'<div class="bk-mgr-bal"><span class="l">'+esc(t("balanceNow"))+'</span><b id="bkMgrBal">…</b></div>'
+          +'<div class="bk-mgr-btns">'
+            +'<button class="btn btn-primary" data-op="give">'+esc(t("mgrAdd"))+'</button>'
+            +'<button class="btn btn-cancel" data-op="take">'+esc(t("mgrTake"))+'</button>'
+            +'<button class="btn btn-cancel bk-pen" data-op="pen">'+esc(t("mgrFine"))+'</button>'
+            +'<button class="btn btn-cancel" data-op="daily">'+esc(t("mgrDaily"))+'</button>'
+          +'</div></div>'
+      : '<div class="bk-stage">'
+          +'<button class="bk-flame off" id="bkFlame" aria-label="'+esc(t("infoTitle"))+'">'+FLAME_IC
+            +'<span class="bk-flame-n" id="bkFlameN">0</span><span class="bk-flame-l">'+esc(t("streakLabel"))+'</span>'
+            +'<span class="bk-flame-i" aria-hidden="true">i</span></button>'
+          +'<button class="bk-plus off" id="bkPlus" aria-label="'+esc(t("pinfoTitle"))+'">'+BOLT_IC
+            +'<span class="bk-flame-n" id="bkPlusN">0</span><span class="bk-flame-l">'+esc(t("plusLabel"))+'</span>'
+            +'<span class="bk-flame-i" aria-hidden="true">i</span></button>'
+          +'<div class="bk-pig" id="bkPig">'+PIG_IC
+            +'<div class="bk-pig-label">'+esc(t("ptsWord"))+': <b id="bkPts">…</b></div></div>'
+          +'<div class="bk-earned" id="bkEarned" hidden></div>';
+    body.innerHTML='<div class="bk">'+stage
       +'<nav class="bk-tabs" id="bkTabs">'
         +'<button class="bk-tab active" data-tab="tasks">'+esc(t("tabTasks"))
           +'<span class="bk-tab-n" id="bkTabN" hidden>0</span></button>'
-        +'<button class="bk-tab" data-tab="apps">'+esc(t("tabApps"))+'</button>'
-        +'<button class="bk-tab" data-tab="parents">'+esc(t("tabParents"))+'</button></nav>'
+        +'<button class="bk-tab" data-tab="log">'+esc(t("tabLog"))+'</button></nav>'
       +'<section class="bk-list" id="bkList"></section>'
       +'</div>';
     var el=body.querySelector(".bk");
-    E={ pts:el.querySelector("#bkPts"), flame:el.querySelector("#bkFlame"), flameN:el.querySelector("#bkFlameN"),
-        plus:el.querySelector("#bkPlus"), plusN:el.querySelector("#bkPlusN"),
-        pig:el.querySelector("#bkPig"), tabs:el.querySelector("#bkTabs"), list:el.querySelector("#bkList"),
-        tabN:el.querySelector("#bkTabN"), earned:el.querySelector("#bkEarned") };
-    E.flame.onclick=openStreakInfo;
-    E.plus.onclick=openPlusInfo;
+    E={ tabs:el.querySelector("#bkTabs"), list:el.querySelector("#bkList"), tabN:el.querySelector("#bkTabN") };
+    if(mgr){
+      E.mgrBal=el.querySelector("#bkMgrBal");
+      el.querySelectorAll(".bk-mgr-btns [data-op]").forEach(function(b){
+        b.onclick=function(){ var op=b.getAttribute("data-op"); if(op==="daily") doDaily(); else openPointsSheet(op); };
+      });
+    } else {
+      E.pts=el.querySelector("#bkPts"); E.flame=el.querySelector("#bkFlame"); E.flameN=el.querySelector("#bkFlameN");
+      E.plus=el.querySelector("#bkPlus"); E.plusN=el.querySelector("#bkPlusN");
+      E.pig=el.querySelector("#bkPig"); E.earned=el.querySelector("#bkEarned");
+      E.flame.onclick=openStreakInfo;
+      E.plus.onclick=openPlusInfo;
+      E.pig.addEventListener("click",function(){
+        if(!alive) return;
+        E.pig.classList.remove("wobble"); void E.pig.offsetWidth; E.pig.classList.add("wobble");
+        sdk.ui.haptics("light"); sdk.ui.chime();
+      });
+    }
     E.tabs.addEventListener("click",function(e){
       var b=e.target.closest(".bk-tab"); if(!b || !alive) return;
       S.tab=b.getAttribute("data-tab");
@@ -792,17 +795,12 @@
     });
     /* делегат кликов по заданиям: узел #bkList пересоздаётся при каждом mount — листенер не копится */
     E.list.addEventListener("click", onListClick);
-    E.pig.addEventListener("click",function(){
-      if(!alive) return;
-      E.pig.classList.remove("wobble"); void E.pig.offsetWidth; E.pig.classList.add("wobble");
-      sdk.ui.haptics("light"); sdk.ui.chime();
-    });
     load();
   }
   function unmount(){
     alive=false; busy=false;
     if(curSheet && curSheet.close){ try{ curSheet.close(); }catch(e){} }
-    curSheet=null; PE=null; E={};
+    curSheet=null; E={};
   }
 
   /* живое обновление (sync-поллер оболочки, v2026.06.07.47): чужие изменения — задание

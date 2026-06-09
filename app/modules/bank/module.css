@@ -62,7 +62,19 @@
   [data-mod="bank"] .bk-pig.wobble{animation:none}
 }
 
-/* вкладки Задания / Родители */
+/* экран управления (родитель): баланс + кнопки вместо свинки/стриков */
+[data-mod="bank"] .bk-mgr{margin-top:14px;border-radius:18px;padding:16px;
+  background:linear-gradient(165deg, rgba(var(--panel-rgb),.55), rgba(var(--panel-rgb),.92));
+  border:1.5px solid color-mix(in srgb,var(--red) 45%,transparent);
+  box-shadow:0 8px 22px rgba(0,0,0,.4), 0 0 24px -12px var(--red)}
+[data-mod="bank"] .bk-mgr-bal{display:flex;align-items:baseline;gap:10px;margin-bottom:13px}
+[data-mod="bank"] .bk-mgr-bal .l{color:var(--muted);font-weight:700;font-size:13px}
+[data-mod="bank"] .bk-mgr-bal b{font-family:var(--font-display);font-size:30px;line-height:1;color:#fff;
+  text-shadow:0 0 12px color-mix(in srgb,var(--red) 70%,transparent)}
+[data-mod="bank"] .bk-mgr-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+[data-mod="bank"] .bk-mgr-btns .btn{min-height:48px;font-size:14px;padding:0 8px}
+
+/* вкладки Задания / История */
 [data-mod="bank"] .bk-tabs{display:flex;gap:8px;margin:16px 0 10px}
 [data-mod="bank"] .bk-tab{flex:1;min-height:46px;border-radius:14px;border:1.5px solid color-mix(in srgb,var(--muted) 35%,transparent);
   background:rgba(var(--panel-rgb),.7);color:var(--muted);font-weight:800;font-size:14px;cursor:pointer}
