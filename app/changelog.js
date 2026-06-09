@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.09.15", d:"2026-06-09", t:{
+    en:"Updates now reach the home-screen app reliably: tapping 'new version' fully reloads, even on iPhone.",
+    ru:"Обновления теперь надёжно доходят до приложения с домашнего экрана: «новая версия» перезагружает полностью, даже на iPhone.",
+    lv:"Atjauninājumi tagad uzticami nonāk līdz sākuma ekrāna lietotnei: «jauna versija» pārlādē pilnībā, arī iPhone." } },
   { v:"2026.06.09.14", d:"2026-06-09", t:{
     en:"Chat feels native now: a conversation opens full-screen, the keyboard stays up after you send, and the bottom menu no longer overlaps the message box.",
     ru:"Чат стал как настоящий мессенджер: переписка открывается на весь экран, клавиатура не прячется после отправки, а нижнее меню больше не налезает на поле ввода.",

@@ -1508,6 +1508,17 @@ window.RobTop = window.RobTop || {};
     if(isSettingsOpen()) loadTickets();
     return ok;
   }
+  /* перезагрузка со СБРОСОМ кэша входной страницы. iOS standalone-PWA «возрождает» старый снимок
+     index.html, и обычный location.reload() может отдать его же из кэша (в браузере no-cache
+     перепроверяется и работает, в PWA — нет). Навигация на URL с НОВЫМ ?v=<версия> = другой адрес →
+     гарантированно свежий index.html. Query приложение не читает (роутинг дефолтный) — параметр
+     безвреден. Фолбэк — обычный reload, если replace недоступен. */
+  function reloadFresh(ver){
+    try{
+      var v=ver||window.RT_VER||(""+Date.now());
+      location.replace(location.pathname+"?v="+encodeURIComponent(v));
+    }catch(e){ try{ location.reload(); }catch(e2){} }
+  }
   function syncTick(){
     if(demo || document.hidden || syncBusy) return;
     syncBusy=true; syncLast=Date.now();
@@ -1520,7 +1531,7 @@ window.RobTop = window.RobTop || {};
         if(r.ntf && RT.Notify) RT.Notify.sync(r.ntf);
         if(r.ver && window.RT_VER && r.ver!==window.RT_VER && syncVerShown!==r.ver){
           syncVerShown=r.ver;
-          toast(t("sync.newVer"), t("sync.reload"), function(){ location.reload(); });
+          toast(t("sync.newVer"), t("sync.reload"), function(){ reloadFresh(r.ver); });
         }
         if(!syncSeen){ syncSeen={data:r.data, reg:r.reg}; return; } // первый тик — запомнить базу
         var dataChanged=(r.data!==syncSeen.data), regChanged=(r.reg!==syncSeen.reg);
