@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.09.18", d:"2026-06-09", t:{
+    en:"Settings now sit on a calm background that matches your theme, so everything is much easier to read.",
+    ru:"Настройки теперь на спокойном фоне в цвет твоей темы — всё читается гораздо легче.",
+    lv:"Iestatījumi tagad ir uz mierīga fona tavas tēmas krāsā — viss lasāms daudz vieglāk." } },
   { v:"2026.06.09.17", d:"2026-06-09", t:{
     en:"After you close the keyboard in a chat, the message box now drops back to the very bottom instead of leaving a gap.",
     ru:"После закрытия клавиатуры в чате поле ввода теперь опускается к самому низу — без щели снизу.",
