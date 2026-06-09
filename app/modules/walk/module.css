@@ -59,9 +59,11 @@
 .wk-det-note{color:var(--ink-2);font-weight:600;font-size:15px;margin:2px 0 0;word-break:break-word}
 
 /* поле времени (детали прогулки и событие поведения) */
-.wk-time{width:100%;border:1.6px solid rgba(255,255,255,.14);border-radius:14px;padding:12px;
+.wk-time{width:100%;min-width:0;max-width:100%;border:1.6px solid rgba(255,255,255,.14);border-radius:14px;padding:12px;
   font-family:var(--font-display);font-size:18px;color:var(--ink);background:rgba(255,255,255,.04);outline:none;
   color-scheme:dark}
+/* нативные date/time имеют большую «собственную» ширину; в grid (min-width:auto) они НЕ сжимаются
+   и вылезают за карточку. min-width:0 + max-width:100% держат их в пределах ячейки. */
 .wk-time:focus{border-color:var(--mint);box-shadow:0 0 0 3px color-mix(in srgb,var(--mint) 16%,transparent)}
 [data-mod="walk"] .wk-card.warn .wk-time:focus{border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 16%,transparent)}
 
