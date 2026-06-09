@@ -3,8 +3,9 @@
    (плохо/средне/хорошо, позитив всегда справа) либо «Позже» (сразу сохранить и выйти) →
    необязательные детали: отработанные команды (быстрые — с предыдущей прогулки), «Непослушание»
    (только в режиме «Щенок»), несколько фото. Запись «Позже» можно дооценить из истории.
-   Очки: +meta.reward (настройка родителя в шторке настроек, деф. 10, 0 = выкл) за КАЖДУЮ
-   созданную прогулку, reason walk_done, kind win (винстрик не трогает) — см. ГАЙД-очки.md.
+   Очки: floor(минут/2) за прогулку, reason walk_done, kind win (винстрик не трогает) —
+   начисляются ТОЛЬКО когда прогулку логирует ребёнок; родительская прогулка очков не даёт.
+   Сумму решает сервер из длительности сохранённой записи (api/_points.php). См. ГАЙД-очки.md.
    Данные — generic-стор: walk/entries (прогулки), walk/commands и walk/issues (свои варианты
    семьи), walk/meta (одна строка: {puppy, reward}). Родитель пишет в общий семейный пул
    (data.php скоупит роль parent на ребёнка семьи), автор записи — в data.author. */
@@ -47,6 +48,7 @@
       rewardLbl:"Points per walk", rewardHint:"0 — no points",
       cmd:{ stop:"Stop", heel:"Heel", come:"Come", sit:"Sit", stand:"Stand", down:"Down", here:"Here", wait:"Wait / stay", no:"No", noPull:"Don't pull", go:"Let's go" },
       iss:{ toilet:"Had an accident at home", floor:"Ate from the floor", leash:"Pulled off the leash", ignore:"Ignored commands" },
+      delWalk:"Delete walk", delWalkTitle:"Delete this walk?", delWalkToast:"Walk deleted",
       aria:{ settings:"Walk settings", photo:"Photo", del:"Remove" }
     }, bank:{ r_walk_done:"Dog walk" }},
     ru:{ walk:{
@@ -83,6 +85,7 @@
       rewardLbl:"Очков за прогулку", rewardHint:"0 — без очков",
       cmd:{ stop:"Стоп", heel:"Рядом", come:"Ко мне", sit:"Сидеть", stand:"Стоять", down:"Лежать", here:"Сюда", wait:"Жди / стой", no:"Нельзя", noPull:"Не тяни", go:"Пошли" },
       iss:{ toilet:"Сходила дома в туалет", floor:"Кушала с пола", leash:"Вырывалась с поводка", ignore:"Не прибегала на команды" },
+      delWalk:"Удалить прогулку", delWalkTitle:"Удалить эту прогулку?", delWalkToast:"Прогулка удалена",
       aria:{ settings:"Настройки прогулки", photo:"Фото", del:"Убрать" }
     }, bank:{ r_walk_done:"Прогулка с собакой" }},
     lv:{ walk:{
@@ -119,6 +122,7 @@
       rewardLbl:"Punkti par pastaigu", rewardHint:"0 — bez punktiem",
       cmd:{ stop:"Stop", heel:"Blakus", come:"Pie manis", sit:"Sēdi", stand:"Stāvi", down:"Guli", here:"Šeit", wait:"Gaidi", no:"Nedrīkst", noPull:"Nevelc", go:"Ejam" },
       iss:{ toilet:"Notika negadījums mājās", floor:"Ēda no grīdas", leash:"Rāvās no pavadas", ignore:"Neklausīja komandām" },
+      delWalk:"Dzēst pastaigu", delWalkTitle:"Dzēst šo pastaigu?", delWalkToast:"Pastaiga dzēsta",
       aria:{ settings:"Pastaigas iestatījumi", photo:"Foto", del:"Noņemt" }
     }, bank:{ r_walk_done:"Pastaiga ar suni" }}
   };
@@ -289,7 +293,8 @@
     /* отдельные записи — НЕ часть прогулки (фидбек Джеффа): важное событие (всегда)
        и проблема с поведением (только режим «Щенок») */
     h+='<button type="button" class="wk-evtbtn" id="wkEvtBtn"><span class="ic">'+STAR_IC+'</span>'+esc(t("evtBtn"))+'</button>';
-    if(meta.puppy) h+='<button type="button" class="wk-behbtn" id="wkBehBtn"><span class="ic">'+WARN_IC+'</span>'+esc(t("behBtn"))+'</button>';
+    /* непослушание доступно обеим сторонам и независимо от режима «Щенок» (фидбек Джеффа) */
+    h+='<button type="button" class="wk-behbtn" id="wkBehBtn"><span class="ic">'+WARN_IC+'</span>'+esc(t("behBtn"))+'</button>';
     E.main.innerHTML=h;
   }
   /* экран отдельного события поведения: чипы вариантов + время (шаг 15 мин) + сохранить */
@@ -526,14 +531,20 @@
   function entryPayload(extra){
     var p={ day:dayKey(), time:cur.time||hhmm(), duration:cur.duration, rating:cur.rating,
       commands:(extra&&extra.commands)||[], issues:(extra&&extra.issues)||[],
-      photos:cur.photos.slice(), author:(sdk.user&&sdk.user.name)||"" };
+      photos:cur.photos.slice(), author:(sdk.user&&sdk.user.name)||"",
+      authorUid:(sdk.user&&sdk.user.id)||null };
     return p;
   }
   function afterCreate(item,payload,later){
     if(item) entries.unshift(item);
     sdk.events.track("walk_saved",{ duration:payload.duration, rating:payload.rating,
       commands:payload.commands.length, issues:payload.issues.length, photos:payload.photos.length, later:!!later });
-    if(meta.reward>0) sdk.points.add(meta.reward,"walk_done"); // kind win; винстрик не трогает (ГАЙД-очки.md)
+    // очки: floor(минут/2), reason walk_done, kind win — ТОЛЬКО когда прогулку логирует ребёнок;
+    // сервер пересчитывает сумму из сохранённой записи (см. api/_points.php rt_points_walk_claim).
+    if(sdk.role==="child" && item){
+      var pts=Math.floor((parseInt(payload.duration,10)||0)/2);
+      if(pts>0) sdk.points.add(pts,"walk_done",{entry:item.id});
+    }
     if(later) sdk.ui.toast(t("laterToast"));
   }
   function celebrate(rating){
@@ -578,20 +589,12 @@
 
   /* =================== настройки (щенок + очки) =================== */
   function openSettings(){
-    var isParent=sdk.role==="parent"||sdk.isDemo();
     var node=document.createElement("div");
     var h='<h2>'+esc(t("setTitle"))+'</h2>'
       +'<button type="button" class="wk-setrow" id="wkPuppy"><span class="tx">'+esc(t("puppyLbl"))
       +'<span class="hint">'+esc(t("puppyHint"))+'</span></span>'
-      +'<span class="wk-tgl'+(meta.puppy?" on":"")+'"></span></button>';
-    if(isParent){
-      h+='<div class="wk-setrow stat"><span class="tx">'+esc(t("rewardLbl"))
-        +'<span class="hint">'+esc(t("rewardHint"))+'</span></span>'
-        +'<span class="wk-step"><button type="button" class="wk-stepb" id="wkRewMinus">−</button>'
-        +'<b id="wkRewVal">'+meta.reward+'</b>'
-        +'<button type="button" class="wk-stepb" id="wkRewPlus">＋</button></span></div>';
-    }
-    h+='<div class="sheet-actions"><button class="btn btn-cancel" data-close style="flex:1">'+esc(t("common.close"))+'</button></div>';
+      +'<span class="wk-tgl'+(meta.puppy?" on":"")+'"></span></button>'
+      +'<div class="sheet-actions"><button class="btn btn-cancel" data-close style="flex:1">'+esc(t("common.close"))+'</button></div>';
     node.innerHTML=h;
     var sh=sdk.ui.sheet(node);
     node.querySelector("[data-close]").addEventListener("click",sh.close);
@@ -599,13 +602,6 @@
       var v=meta.puppy?0:1;
       metaSave({puppy:v}).then(function(){ if(!root) return; node.querySelector(".wk-tgl").classList.toggle("on",!!v); renderMain(); });
     });
-    var minus=node.querySelector("#wkRewMinus"), plus=node.querySelector("#wkRewPlus"), val=node.querySelector("#wkRewVal");
-    function bump(d){
-      var v=clampReward(meta.reward+d);
-      metaSave({reward:v}).then(function(){ if(val) val.textContent=String(v); });
-    }
-    if(minus) minus.addEventListener("click",function(){ bump(-REWARD_STEP); });
-    if(plus) plus.addEventListener("click",function(){ bump(REWARD_STEP); });
   }
 
   /* =================== история =================== */
@@ -682,6 +678,22 @@
     var sh=sdk.ui.sheet(node);
     node.querySelector("[data-close]").addEventListener("click",sh.close);
   }
+  /* родитель удаляет прогулку: откат очков (серверно, идемпотентно) + мягкое удаление записи */
+  function deleteWalk(id, sh){
+    sdk.ui.confirm({title:t("delWalkTitle"), ok:t("common.yes"), cancel:t("common.cancel")}).then(function(ok){
+      if(!ok) return;
+      sdk.points.reverse(id).catch(function(){}).then(function(){
+        return sdk.data.remove("entries", id);
+      }).then(function(){
+        if(!root) return;
+        entries=entries.filter(function(e){ return String(e.id)!==String(id); });
+        if(sh) sh.close();
+        renderMain(); renderList(); hud();
+        if(step==="cal" && typeof renderCal==="function") renderCal(); // обновить календарь, если открыт
+        sdk.ui.toast(t("delWalkToast"));
+      }).catch(function(){ sdk.ui.toast(t("saveFailed")); });
+    });
+  }
   function openDetail(id){
     var it=null; for(var i=0;i<entries.length;i++){ if(String(entries[i].id)===String(id)){ it=entries[i]; break; } }
     if(!it) return;
@@ -707,12 +719,16 @@
       h+='</div>';
     }
     if(d.author) h+='<p class="wk-author">'+esc(t("byAuthor",{name:d.author}))+'</p>';
+    var isParent=sdk.role==="parent"||sdk.isDemo();
     h+='<div class="sheet-actions" style="margin-top:14px">'
       +(!r&&sdk.can("edit")?'<button class="btn btn-primary" id="wkRateNow">'+esc(t("rateBtn"))+'</button>':'')
+      +(isParent?'<button class="btn btn-danger" id="wkDelWalk">'+esc(t("delWalk"))+'</button>':'')
       +'<button class="btn btn-cancel" data-close style="flex:1">'+esc(t("common.close"))+'</button></div>';
     node.innerHTML=h;
     var sh=sdk.ui.sheet(node);
     node.querySelector("[data-close]").addEventListener("click",sh.close);
+    var del=node.querySelector("#wkDelWalk");
+    if(del) del.addEventListener("click",function(){ deleteWalk(it.id, sh); });
     var rn=node.querySelector("#wkRateNow");
     if(rn) rn.addEventListener("click",function(){
       sh.close();
