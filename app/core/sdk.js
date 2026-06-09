@@ -149,7 +149,15 @@ window.RobTop = window.RobTop || {};
     }
     return n;
   }
-  function bankTxn(rec){ return dataOp("bank","create","points",{data:rec}); }
+  /* SEC 2026-06-09: запись очков — ТОЛЬКО через серверный авторитет api/points.php (op add);
+     data.php (bank/points) на запись закрыт (ребёнок мог начислить себе любую сумму). Сервер
+     решает сумму по reason/роли. Демо (file://) пишет в localStorage как раньше (паритета ради). */
+  function bankTxn(rec){
+    if(RT.isDemo()) return dataOp("bank","create","points",{data:rec});
+    var b={op:"add", reason:rec.reason, n:rec.n, kind:rec.kind, src:rec.src, note:rec.note||null};
+    var pc=parentChild(); if(pc) b.child=pc;
+    return API.post("points.php", b);
+  }
   /* Добавить транзакцию; никогда не reject (модули зовут fire-and-forget).
      → Promise<{ok, n, kind, streak|null, bonus}>
      task_done: после записи серия пересчитывается из леджера (включая эту строку),
@@ -282,22 +290,23 @@ window.RobTop = window.RobTop || {};
     var pts=(finalPts!=null)?clampPts(finalPts):(parseInt(task.points,10)||10);
     var title=String(task.title||""), isChild=(task.origin==="child");
     var recur=(task.type!=="once" && !isChild);
-    return bankAdd("tasks",pts,"task_done",{kind:"task_done",src:"parent",note:title}).then(function(out){
-      if(!out || !out.ok) return {ok:false,streak:null,bonus:0,points:pts};
-      var done;
-      if(RT.isDemo()){
+    if(RT.isDemo()){
+      return bankAdd("tasks",pts,"task_done",{kind:"task_done",src:"parent",note:title}).then(function(out){
+        if(!out || !out.ok) return {ok:false,streak:null,bonus:0,points:pts};
         if(recur) demoStatus(task.id,"active",{points:pts,timesDone:(parseInt(task.timesDone,10)||0)+1,lastDoneAt:Date.now(),claimedAt:null});
         else demoStatus(task.id,"done",{points:pts,doneAt:Date.now(),claimedAt:null});
-        done=Promise.resolve({ok:true});
-      } else {
-        done=tasksPost("approve",finalPts!=null?{id:task.id,points:pts}:{id:task.id}).then(function(r){ return {ok:!!(r&&r.ok)}; }).catch(function(){ return {ok:false}; });
-      }
-      return done.then(function(st){
-        if(!st.ok) return {ok:false,streak:null,bonus:0,points:pts};
         tasksNotify("child", isChild?"task_proposal_ok":"task_approved", {title:title,n:pts});
         return {ok:true,streak:out.streak,bonus:out.bonus,points:pts};
       });
-    });
+    }
+    /* СЕРВЕР (SEC 2026-06-09): очки task_done + бонус серии начисляет api/tasks.php approve
+       (порт bankAdd на сервер). Клиент очки больше НЕ пишет; берёт points/streak/bonus из ответа. */
+    return tasksPost("approve",finalPts!=null?{id:task.id,points:pts}:{id:task.id}).then(function(r){
+      if(!r || !r.ok) return {ok:false,streak:null,bonus:0,points:pts};
+      var fp=(r.points!=null)?r.points:pts;
+      tasksNotify("child", isChild?"task_proposal_ok":"task_approved", {title:title,n:fp});
+      return {ok:true, streak:(r.streak!=null?r.streak:null), bonus:(r.bonus||0), points:fp};
+    }).catch(function(){ return {ok:false,streak:null,bonus:0,points:pts}; });
   }
   function tasksDecline(task){ /* родитель: вернуть проверку выполнения в active (без очков) */
     var title=String(task.title||"");
@@ -408,6 +417,33 @@ window.RobTop = window.RobTop || {};
             return Promise.resolve({ ok:false, n:0, kind:"", streak:null, bonus:0, denied:true });
           }
           return bankAdd(mod,n,reason,opts);
+        },
+        /* SEC 2026-06-09: Магазин — цену решает СЕРВЕР (каталог), не клиент. spend(itemId): списать
+           цену товара; refund(orderId): родитель вернул цену заказа (идемпотентно). Демо — локально. */
+        spend: function(itemId){
+          if(!hasPerm("points")) return Promise.resolve({ ok:false, denied:true });
+          if(RT.isDemo()){
+            var its=(demoData("shop","list","items",null).items)||[], it=null, i;
+            for(i=0;i<its.length;i++){ if(String(its[i].id)===String(itemId)){ it=its[i]; break; } }
+            var pr=it?(parseInt(it.data&&it.data.price,10)||0):0;
+            if(pr<=0) return Promise.resolve({ ok:false });
+            return bankTxn({n:-pr,reason:"spend",src:"shop",kind:"spend",note:(it.data&&it.data.title)||""}).then(function(){ return {ok:true,price:pr}; });
+          }
+          var bs={op:"spend", item:itemId}; var pcs=parentChild(); if(pcs) bs.child=pcs;
+          return API.post("points.php", bs);
+        },
+        refund: function(orderId){
+          if(!hasPerm("points")) return Promise.resolve({ ok:false, denied:true });
+          if(RT.isDemo()){
+            var os=(demoData("shop","list","orders",null).items)||[], o=null, j;
+            for(j=0;j<os.length;j++){ if(String(os[j].id)===String(orderId)){ o=os[j]; break; } }
+            if(!o || o.status==="declined") return Promise.resolve({ ok:true, already:true });
+            var rp=parseInt(o.data&&o.data.price,10)||0;
+            if(rp<=0) return Promise.resolve({ ok:true, n:0 });
+            return bankTxn({n:rp,reason:"spend_refund",src:"shop",kind:"spend",note:(o.data&&o.data.title)||""}).then(function(){ return {ok:true,price:rp}; });
+          }
+          var br={op:"refund", order:orderId}; var pcr=parentChild(); if(pcr) br.child=pcr;
+          return API.post("points.php", br);
         },
         get: function(){ return bankSummary().then(function(s){ return s.balance; }).catch(function(){ return 0; }); },
         summary: function(){ return bankSummary(); }

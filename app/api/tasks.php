@@ -35,6 +35,7 @@
 
 require __DIR__ . '/_bootstrap.php';
 require_once __DIR__ . '/_tasks.php';   // переиспользуемые помощники: валидация, бэкфилл, счётчик
+require_once __DIR__ . '/_points.php';  // SEC 2026-06-09: approve начисляет очки server-side
 rt_guard();
 rt_require_login(rt_db()); // SEC 2026-06-09: вход обязателен (single_user-фолбэк убран)
 
@@ -172,10 +173,15 @@ switch ($op) {
         $q->execute([$id, $uid]);
         if ($q->rowCount() < 1) rt_json(['ok' => false, 'error' => 'state'], 409);
         $r2 = rt_task_row($db, $uid, $id);
+        $pts = $r2 ? (int)$r2['points'] : (int)$r['points'];
+        // SEC 2026-06-09: ОЧКИ начисляет СЕРВЕР (раньше клиент через sdk.points — ребёнок мог
+        // подделать сумму, SEC-1). Условный флип выше — гонко-гейт: начисляет только победитель.
+        // task_done + бонус серии = rt_points_award_task (порт bankAdd из core/sdk.js).
+        $award = rt_points_award_task($db, $uid, $pts, (string)$r['title']);
         rt_log('tasks', 'approved', $id, (string)$r['title'], 'pending', $recur ? 'active' : 'done',
-               ['points' => $r2 ? (int)$r2['points'] : (int)$r['points'], 'origin' => $r['origin']], $uid);
+               ['points' => $pts, 'origin' => $r['origin']], $uid);
         rt_json(['ok' => true, 'status' => $recur ? 'active' : 'done',
-                 'points' => $r2 ? (int)$r2['points'] : (int)$r['points']]);
+                 'points' => $award['points'], 'streak' => $award['streak'], 'bonus' => $award['bonus']]);
     }
 
     case 'decline': {
