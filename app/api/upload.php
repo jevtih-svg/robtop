@@ -11,6 +11,7 @@
 require __DIR__ . '/_bootstrap.php';
 require __DIR__ . '/_storage.php';
 rt_guard();
+rt_require_login(rt_db()); // SEC 2026-06-09: вход обязателен (single_user-фолбэк убран)
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') rt_json(['error' => 'method'], 405);
 
@@ -33,6 +34,12 @@ $info = @getimagesizefromstring($bytes);
 if ($info === false) rt_json(['error' => 'not_image', 'message' => 'This is not an image'], 422);
 
 $uid = rt_user_id();
+// SEC 2026-06-09: кап загрузок — не больше 120 файлов в час на пользователя (анти-абуз диска).
+try {
+    $cu = rt_db()->prepare("SELECT COUNT(*) FROM uploaded_files WHERE user_id=? AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)");
+    $cu->execute([$uid]);
+    if ((int)$cu->fetchColumn() >= 120) rt_json(['error' => 'rate_limited', 'message' => 'Too many uploads, try later'], 429);
+} catch (Throwable $e) { /* нет таблицы — без капа */ }
 $subdir = 'users/' . $uid . '/' . $kind;          // папка по пользователю (Rule: user-ready)
 $path = rt_storage()->put($bytes, $ext, $subdir);
 if (!$path) rt_json(['error' => 'save_failed', 'message' => 'Could not save the file (check uploads folder permissions)'], 500);

@@ -33,6 +33,9 @@ function rt_code($len = 6) {
     return $out;
 }
 function rt_token() { return rt_code(6); } // легаси-имя; новые вызовы используют rt_code напрямую
+/** Временный пароль нового/сброшенного детского аккаунта (показывается родителю ОДИН раз,
+    меняется при первом входе). Случайный, читаемый — заменил прежний общий «1234» (SEC 2026-06-09). */
+function rt_temp_password() { return rt_code(6); }
 function rt_token_hash($t) { return hash('sha256', (string)$t); }
 function rt_is_token($t) { return is_string($t) && preg_match('/^[A-Za-z0-9]{4,64}$/', $t) === 1; }
 /** Нормализация кода из ссылки/с клавиатуры: короткие приводим к ВЕРХНЕМУ регистру
@@ -201,7 +204,10 @@ function rt_set_session_cookie($token, $ttlDays = 30) {
     }
 }
 function rt_start_session($db, $userId) {
-    $tok = rt_token();
+    // SEC 2026-06-09: сессионный токен — 256 бит (64 hex), а не короткий rt_code(6) (~30 бит,
+    // онлайн-брутфорсился по таблице живых сессий). rt_is_token принимает [A-Za-z0-9]{4,64},
+    // поэтому старые короткие токены доживают свой 30-дневный срок без разлогина.
+    $tok = bin2hex(random_bytes(32));
     $ua  = isset($_SERVER['HTTP_USER_AGENT']) ? substr((string)$_SERVER['HTTP_USER_AGENT'], 0, 200) : null;
     $db->prepare(
         "INSERT INTO sessions (user_id, token_hash, created_at, expires_at, last_seen, user_agent)
@@ -285,8 +291,10 @@ function rt_family_banned($db, $familyId) {
    Блокировка аккаунта закрывает и переключение (switch проверяет status). */
 function rt_switch_token_new($db, $userId) {
     $tok = bin2hex(random_bytes(32)); // 64 hex; руками не набирается, в БД только хэш
+    // SEC 2026-06-09: токен живёт в localStorage (риск кражи через XSS) — TTL сокращён 180→90 дней,
+    // чтобы уменьшить окно. Полное решение (httpOnly-cookie) — отдельной задачей.
     $db->prepare("INSERT INTO switch_tokens (user_id, token_hash, created_at, last_used_at, expires_at)
-                  VALUES (?, ?, NOW(), NOW(), DATE_ADD(NOW(), INTERVAL 180 DAY))")
+                  VALUES (?, ?, NOW(), NOW(), DATE_ADD(NOW(), INTERVAL 90 DAY))")
        ->execute([(int)$userId, rt_token_hash($tok)]);
     return $tok;
 }

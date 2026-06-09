@@ -67,6 +67,11 @@ foreach ($clean as $name => $bytes) {
 $man['server'] = false;        // установленные модули не имеют серверного кода
 $man['source'] = 'installed';
 if (!isset($man['status'])) $man['status'] = 'active';
+// SEC 2026-06-09 (XSS): color попадает в клиентский style="--c:…"; пускаем только hex/rgb(a),
+// иначе значение вида  x" onmouseover="…  ломало бы атрибут. Невалидный — клиент берёт дефолт.
+if (isset($man['color']) && !preg_match('/^#[0-9a-fA-F]{3,8}$|^rgba?\([0-9 .,%]+\)$/', (string)$man['color'])) {
+    unset($man['color']);
+}
 $name    = isset($man['name']) ? (string)$man['name'] : $id;
 $version = isset($man['version']) ? (string)$man['version'] : '1.0.0';
 

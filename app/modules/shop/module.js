@@ -182,13 +182,14 @@
   function buy(it){
     if(busy) return; busy=true;
     var d=it.data||{}, p=price(d);
-    /* списание СРАЗУ (решение Джеффа): минус в леджер, затем заказ на подтверждение */
-    sdk.points.add(-p,"spend",{kind:"spend",note:d.title||""}).then(function(out){
+    /* SEC 2026-06-09: цену списывает СЕРВЕР по каталогу (sdk.points.spend), не клиент — затем заказ */
+    sdk.points.spend(it.id).then(function(out){
       if(!out || !out.ok){ busy=false; sdk.ui.toast(t("loadFail")); return; }
-      sdk.data.create("orders",{ itemId:String(it.id), title:d.title||"", price:p,
+      var paid=(out.price!=null)?out.price:p;
+      sdk.data.create("orders",{ itemId:String(it.id), title:d.title||"", price:paid,
         photo:d.photo||null, status:"pending" }).catch(function(){}).then(function(){
         busy=false;
-        sdk.events.track("shop_buy",{title:d.title||"",price:p});
+        sdk.events.track("shop_buy",{title:d.title||"",price:paid});
         sdk.ui.toast(t("sentToast")); sdk.ui.haptics("light"); sdk.ui.chime();
         load();
       });
@@ -210,8 +211,8 @@
   function declineOrder(o){
     if(busy) return; busy=true;
     var d=o.data||{}, p=price(d);
-    /* автовозврат отдельной строкой леджера (транзакции не удаляются — канон ГАЙД-очки.md §8.1) */
-    sdk.points.add(p,"spend_refund",{kind:"spend",src:"shop",note:d.title||""}).then(function(out){
+    /* SEC 2026-06-09: возврат считает СЕРВЕР по каталогу (sdk.points.refund), идемпотентно */
+    sdk.points.refund(o.id).then(function(out){
       if(!out || !out.ok){ busy=false; sdk.ui.toast(t("loadFail")); return; }
       sdk.data.move("orders",o.id,"declined").then(function(){
         return sdk.data.update("orders",o.id,{declinedAt:Date.now()});

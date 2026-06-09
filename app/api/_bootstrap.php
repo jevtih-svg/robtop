@@ -5,6 +5,7 @@ require __DIR__ . '/_db.php';
 require_once __DIR__ . '/_mail.php';
 require_once __DIR__ . '/_accounts.php';
 require_once __DIR__ . '/_push.php';
+require_once __DIR__ . '/_throttle.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
@@ -22,8 +23,9 @@ function rt_body() {
     return is_array($j) ? $j : [];
 }
 
-/** Необязательная проверка токена (если задан в config). */
+/** Необязательная проверка токена (если задан в config) + CSRF-проверка Origin. */
 function rt_guard() {
+    rt_check_origin(); // SEC 2026-06-09: CSRF defense-in-depth поверх SameSite=Lax
     $c = rt_config();
     if (!empty($c['api_token'])) {
         $hdr = isset($_SERVER['HTTP_X_API_TOKEN']) ? $_SERVER['HTTP_X_API_TOKEN'] : '';
@@ -33,24 +35,32 @@ function rt_guard() {
     }
 }
 
+/** CSRF (поверх SameSite=Lax): запрос с заголовком Origin ЧУЖОГО домена — 403. Origin часто
+ *  отсутствует (GET, прямые вызовы) — тогда пропускаем, чтобы не ломать легитимные запросы. */
+function rt_check_origin() {
+    if (empty($_SERVER['HTTP_ORIGIN'])) return;
+    $oh = parse_url((string)$_SERVER['HTTP_ORIGIN'], PHP_URL_HOST);
+    $hh = isset($_SERVER['HTTP_HOST']) ? preg_replace('/:\d+$/', '', (string)$_SERVER['HTTP_HOST']) : '';
+    if ($oh && $hh && strcasecmp($oh, $hh) !== 0) rt_json(['error' => 'bad_origin'], 403);
+}
+
 /**
  * Текущий пользователь — ЕДИНСТВЕННОЕ место определения личности.
- * Приоритет: валидная сессия (кто-то вошёл) → её user_id.
- * Иначе, если single_user=true (по умолчанию) — Артём (id 1), как раньше (ничего не ломается).
- * Иначе (single_user=false и нет сессии) — 0 (аноним); защищённые эндпоинты требуют вход сами.
+ * Приоритет: валидная сессия (кто-то вошёл) → её user_id. Иначе 0 (аноним).
+ *
+ * БЕЗОПАСНОСТЬ (2026-06-09): прежний single_user-фолбэк на Артёма (id 1) УБРАН. Он давал
+ * АНОНИМНЫЙ доступ к данным user 1 (любой запрос без сессии действовал как Артём). Теперь
+ * без валидной сессии личность — 0, и каждый защищённый эндпоинт ОБЯЗАН вызвать
+ * rt_require_login() (вернёт 401). Ключ config 'single_user' больше ни на что не влияет.
  */
-if (!defined('RT_DEFAULT_USER_ID')) define('RT_DEFAULT_USER_ID', 1);
-
 function rt_user_id() {
     static $uid = null;
     if ($uid !== null) return $uid;
     try {
         $sid = rt_session_user_id();
         if ($sid) { $uid = (int)$sid; return $uid; }
-    } catch (Throwable $e) { /* нет таблиц/сессии — падаем в фолбэк ниже */ }
-    $c = rt_config();
-    $single = !array_key_exists('single_user', $c) || !empty($c['single_user']);
-    $uid = $single ? RT_DEFAULT_USER_ID : 0;
+    } catch (Throwable $e) { /* нет таблиц/сессии — аноним (0) ниже */ }
+    $uid = 0;
     return $uid;
 }
 

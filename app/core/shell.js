@@ -403,6 +403,15 @@ window.RobTop = window.RobTop || {};
     renderLock(loading);
     window.scrollTo(0,0);
   }
+  /* SEC 2026-06-09: сессия истекла на защищённом эндпоинте (401) → вернуть на экран входа,
+     а не молча падать или показывать кэш/DEFAULTS. Зовётся из RT.API (sdk.js) и syncTick. */
+  RT._on401=function(){
+    if(demo) return;
+    if(body && body.getAttribute("data-view")==="lock") return; // уже на входе — без зацикливания
+    acct={authenticated:false};
+    syncStop();
+    showLock(false);
+  };
   /* ---- мульти-аккаунты устройства: localStorage rt_accounts = [{id,nick,kind,tok}] ----
      Токен переключения выдаёт сервер при входе (op login/register_parent → switchToken),
      обменивается на свежую сессию op switch. «Выйти» аккаунт с устройства НЕ убирает —
@@ -553,7 +562,7 @@ window.RobTop = window.RobTop || {};
     };
     setTimeout(function(){ lockView.querySelector("#regNick").focus(); },150);
   }
-  /* общий поток входа: успех → reload (меняется rt_user_id); 1234 → обязательная смена в target */
+  /* общий поток входа: успех → reload (меняется rt_user_id); временный пароль → обязательная смена в target */
   function loginFlow(loginV, passV, forceTarget){
     if(!loginV||!passV){ toast(t("account.badLogin")); return; }
     RT.API.post("accounts.php",{op:"login",login:loginV,password:passV}).then(function(r){
@@ -586,7 +595,7 @@ window.RobTop = window.RobTop || {};
   }
   function tileHtml(m){
     var soon=m.status!=="active";
-    return '<button class="tile'+(soon?' soon':' active')+(m.wide?' wide':'')+(!soon&&m.hidden?' hid':'')+'" style="--c:'+(m.color||"#19e3ff")+'" data-mod="'+esc(m.id)+'">'
+    return '<button class="tile'+(soon?' soon':' active')+(m.wide?' wide':'')+(!soon&&m.hidden?' hid':'')+'" style="--c:'+esc(m.color||"#19e3ff")+'" data-mod="'+esc(m.id)+'">'
       +(soon?'<span class="lock">'+ICONS.lock+'</span>':'<span class="ring"></span>')
       +'<span class="ic">'+iconHtml(m)+'</span>'
       +'<span class="txt"><span class="nm">'+esc(modName(m))+'</span><span class="st">'+(soon?esc(t("tile.status.soon")):esc(t("tile.status.open")))+'</span></span>'
@@ -807,7 +816,7 @@ window.RobTop = window.RobTop || {};
       if(!open) setTimeout(function(){ var f=box.querySelector("#acctLogin"); if(f) f.focus(); },100);
     };
   }
-  /* обязательная смена одноразового 1234 (target: settingsBody или форма на lock-экране) */
+  /* обязательная смена одноразового пароля (target: settingsBody или форма на lock-экране) */
   function renderForcePass(target){
     target=target||settingsBody;
     target.innerHTML='<h2>'+esc(t("account.changeTitle"))+'</h2>'
@@ -817,7 +826,7 @@ window.RobTop = window.RobTop || {};
     var inp=target.querySelector("#npIn");
     target.querySelector("#npSave").onclick=function(){
       var v=inp.value||"";
-      if(v.length<4||v==="1234"){ toast(t("account.weakPass")); return; }
+      if(v.length<4){ toast(t("account.weakPass")); return; }
       RT.API.post("accounts.php",{op:"set_password",new_password:v}).then(function(){
         location.reload();
       }).catch(function(){ toast(t("common.failed")); });
@@ -966,7 +975,7 @@ window.RobTop = window.RobTop || {};
     node.querySelector("#kidReset").onclick=function(){
       confirm({title:t("family.resetPass"), text:t("family.resetConfirm",{name:nick}), ok:t("common.yes"), cancel:t("common.cancel")}).then(function(ok){
         if(!ok) return;
-        famApi({op:"reset_child",child_id:id}).then(function(){ ctl.close(); toast(t("family.resetDone",{name:nick})); })
+        famApi({op:"reset_child",child_id:id}).then(function(r){ ctl.close(); toast(t("family.resetDone",{name:nick, pass:(r&&r.temp_password)||""})); })
           .catch(function(){ toast(t("common.failed")); });
       });
     };
@@ -994,8 +1003,8 @@ window.RobTop = window.RobTop || {};
     node.querySelector("#kidCancel").onclick=ctl.close;
     node.querySelector("#kidGo").onclick=function(){
       var nick=(node.querySelector("#kidNick").value||"").trim(); if(!nick) return;
-      famApi({op:"add_child",nickname:nick}).then(function(){
-        node.querySelector("#kidOut").innerHTML='<p class="set-note" style="color:#ffe08a">'+esc(t("family.created",{name:nick}))+'</p>';
+      famApi({op:"add_child",nickname:nick}).then(function(r){
+        node.querySelector("#kidOut").innerHTML='<p class="set-note" style="color:#ffe08a">'+esc(t("family.created",{name:nick, pass:(r&&r.temp_password)||""}))+'</p>';
         loadFamily();
       }).catch(function(){ toast(t("family.nickTaken")); });
     };
@@ -1386,7 +1395,7 @@ window.RobTop = window.RobTop || {};
       var rows=list.map(function(m,i){
         var ic=iconHtml(m);
         var sub=(m.source==="installed"?t("store.srcInstalled"):t("store.srcBuiltin"))+(m.status==="soon"?t("store.soonSuffix"):"")+(m.version?" · v"+esc(m.version):"");
-        return '<div class="store-row" style="--c:'+(m.color||"#19e3ff")+'" data-id="'+esc(m.id)+'">'
+        return '<div class="store-row" style="--c:'+esc(m.color||"#19e3ff")+'" data-id="'+esc(m.id)+'">'
           +'<span class="si">'+ic+'</span>'
           +'<span class="smeta"><div class="snm">'+esc(modName(m))+'</div><div class="ssub">'+sub+'</div></span>'
           +'<button class="hbtn" data-act="up" aria-label="'+esc(t("store.up"))+'" style="width:36px;height:36px">▲</button>'
@@ -1504,7 +1513,7 @@ window.RobTop = window.RobTop || {};
     if(demo || document.hidden || syncBusy) return;
     syncBusy=true; syncLast=Date.now();
     fetch("api/sync.php",{headers:{"Accept":"application/json"},cache:"no-store"})
-      .then(function(r){ if(r.status===401){ syncStop(); throw new Error("401"); } if(!r.ok) throw new Error("http"); return r.json(); })
+      .then(function(r){ if(r.status===401){ if(RT._on401) RT._on401(); throw new Error("401"); } if(!r.ok) throw new Error("http"); return r.json(); })
       .then(function(r){
         syncBusy=false;
         if(!(r && r.ok)) return;

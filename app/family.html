@@ -90,17 +90,16 @@ function boot(){
   location.replace('index.html'); // консоль упразднена: семьёй управляют в настройках приложения
 }
 
-/* ---------------- обязательная смена одноразового 1234 ---------------- */
+/* ---------------- обязательная смена одноразового пароля ---------------- */
 function screenChangePassword(){
   SUB.textContent = 'Смените одноразовый пароль';
   h('<div class="card"><h2>Новый пароль</h2>'+
-    '<div class="muted small">Ты вошёл по одноразовому паролю <b>1234</b>. Придумай новый пароль, чтобы продолжить.</div>'+
-    '<label>Новый пароль (не 1234)</label><input id="np" type="password" autocomplete="new-password">'+
+    '<div class="muted small">Ты вошёл по одноразовому паролю. Придумай новый пароль, чтобы продолжить.</div>'+
+    '<label>Новый пароль</label><input id="np" type="password" autocomplete="new-password">'+
     '<button class="btn" id="go">Сохранить</button><div id="msg"></div></div>');
   qs('go').onclick=function(){
     var np=qs('np').value;
     if(!np || np.length<4){ qs('msg').innerHTML=errBox('Минимум 4 символа'); return; }
-    if(np==='1234'){ qs('msg').innerHTML=errBox('Выбери другой пароль, не 1234'); return; }
     api('set_password',{new_password:np}).then(function(){ toApp(); })
       .catch(function(e){ qs('msg').innerHTML=errBox(e.message); });
   };
@@ -125,7 +124,7 @@ function screenInvite(token){
     var who = esc(info.inviter||'кто-то');
     if(info.type==='child_to_child'){
       h('<div class="card"><h2>Тебя позвал(а) '+who+' 🎉</h2>'+
-        '<div class="muted small">Придумай никнейм (не настоящее имя!). Пароль будет одноразовый <b>1234</b> — поменяешь сразу после входа.</div>'+
+        '<div class="muted small">Придумай никнейм (не настоящее имя!). Пароль задашь сразу после входа.</div>'+
         '<label>Твой никнейм</label><input id="nick">'+
         '<button class="btn pink" id="go">Присоединиться</button><div id="msg"></div></div>');
       qs('go').onclick=function(){
@@ -169,11 +168,11 @@ function screenInvite(token){
 function screenReset(token){
   SUB.textContent='Сброс пароля';
   h('<div class="card"><h2>Новый пароль</h2>'+
-    '<label>Новый пароль (не 1234)</label><input id="np" type="password" autocomplete="new-password">'+
+    '<label>Новый пароль</label><input id="np" type="password" autocomplete="new-password">'+
     '<button class="btn" id="go">Сохранить</button><div id="msg"></div></div>');
   qs('go').onclick=function(){
     var np=qs('np').value;
-    if(!np||np.length<4||np==='1234'){ qs('msg').innerHTML=errBox('Минимум 4 символа, не 1234'); return; }
+    if(!np||np.length<4){ qs('msg').innerHTML=errBox('Минимум 4 символа'); return; }
     api('reset',{token:token,new_password:np}).then(function(){
       qs('msg').innerHTML='<div class="note">Пароль изменён. Сейчас откроется приложение — войдите с новым паролем.</div>';
       setTimeout(toApp, 1400);

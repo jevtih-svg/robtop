@@ -3,6 +3,7 @@
 
 require __DIR__ . '/_bootstrap.php';
 rt_guard();
+rt_require_login(rt_db()); // SEC 2026-06-09: вход обязателен (single_user-фолбэк убран)
 
 $db = rt_db();
 $out = [];

@@ -146,6 +146,8 @@ function rt_push_post($endpoint, $headers, $body) {
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT        => 4,
         CURLOPT_CONNECTTIMEOUT => 2,
+        CURLOPT_FOLLOWLOCATION => false, // SEC 2026-06-09 (SSRF): без редиректов
+        CURLOPT_PROTOCOLS      => (defined('CURLPROTO_HTTPS') ? CURLPROTO_HTTPS : 2), // только https
     ]);
     curl_exec($ch);
     $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);

@@ -29,7 +29,23 @@ $op = isset($b['op']) ? (string)$b['op'] : '';
 function rt_push_endpoint($b) {
     $e = isset($b['endpoint']) ? trim((string)$b['endpoint']) : '';
     if ($e === '' || strlen($e) > 500 || strpos($e, 'https://') !== 0) rt_json(['error' => 'bad endpoint'], 422);
+    // SEC 2026-06-09 (SSRF): сервер потом сам POST'ит на этот endpoint (rt_push_post) — принимаем
+    // ТОЛЬКО известные хосты push-провайдеров, иначе подпиской можно увести сервер на внутренний адрес.
+    $host = parse_url($e, PHP_URL_HOST);
+    if (!$host || !rt_push_host_allowed($host)) rt_json(['error' => 'bad endpoint host'], 422);
     return $e;
+}
+/** Хост endpoint — известный push-провайдер (FCM/Mozilla/Apple/WNS), не IP, не внутренний. */
+function rt_push_host_allowed($host) {
+    $host = strtolower((string)$host);
+    if (filter_var($host, FILTER_VALIDATE_IP)) return false; // только доменные имена провайдеров
+    $ok = ['fcm.googleapis.com', 'android.googleapis.com', 'updates.push.services.mozilla.com',
+           'push.services.mozilla.com', 'web.push.apple.com', 'push.apple.com',
+           'notify.windows.com', 'wns.windows.com'];
+    foreach ($ok as $suf) {
+        if ($host === $suf || substr($host, -(strlen($suf) + 1)) === '.' . $suf) return true;
+    }
+    return false;
 }
 
 switch ($op) {

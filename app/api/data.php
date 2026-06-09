@@ -10,6 +10,7 @@
 
 require __DIR__ . '/_bootstrap.php';
 rt_guard();
+rt_require_login(rt_db()); // SEC 2026-06-09: вход обязателен (single_user-фолбэк убран)
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') rt_json(['error' => 'method'], 405);
 
@@ -32,6 +33,14 @@ $role  = rt_user_role();
 $writes = ['create','update','move','favorite','delete','restore'];
 if (in_array($op, $writes, true) && !rt_role_can($mod, 'edit', $role)) {
     rt_json(['error' => 'forbidden'], 403);
+}
+
+// SEC 2026-06-09 (SEC-1): запись очков (bank/points) через универсальный data.php ЗАПРЕЩЕНА.
+// Раньше ребёнок мог начислить себе любую сумму: fetch data.php {module:'bank',collection:'points',
+// data:{n:1000000}}. Теперь леджер пишут ТОЛЬКО api/points.php и api/tasks.php (серверный
+// авторитет суммы). Чтение (list/get) остаётся — клиент сам считает баланс/винстрик.
+if ($module === 'bank' && $coll === 'points' && in_array($op, $writes, true)) {
+    rt_json(['error' => 'points_readonly', 'message' => 'use api/points.php'], 403);
 }
 
 // Скоуп данных (2026-06-07, три уровня):
