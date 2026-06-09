@@ -43,6 +43,9 @@ window.RobTop = window.RobTop || {};
     if(RT._pendingLink && RT._pendingLink.module!==id) RT._pendingLink=null;
     var nm=(RT.i18n?RT.i18n.t("tile."+id,{fallback:meta.name}):meta.name);
     if(meta.status==="soon"){ RT._shell.toast(RT.i18n?RT.i18n.t("tile.soonToast",{name:nm}):(nm+": soon!")); return; }
+    /* закрыть ТЕКУЩИЙ модуль перед открытием нового (модуль→модуль из нижнего меню, напр. Чат→Копилка):
+       иначе предыдущий не размонтируется и его слой #chApp/оверлеи залипают. */
+    if(RT._current && RT._current!==id) closeCurrent();
     var dir=folder(meta);
     var bundle = (meta.source==="installed" && RT.isDemo() && RT._shell.demoBundle) ? RT._shell.demoBundle(id) : null;
     var styles=meta.styles||"module.css", entry=meta.entry||"module.js";
@@ -69,19 +72,24 @@ window.RobTop = window.RobTop || {};
     }).catch(function(){ RT._shell.toast(RT.i18n?RT.i18n.t("err.module_open",{name:nm}):("Couldn't open “"+nm+"”")); });
   };
 
-  RT.close = function(){
+  /* размонтировать ТЕКУЩИЙ модуль БЕЗ навигации: unmount + снять авто-слушатели (sdk.on/_dispose)
+     + очистить moduleView. ВАЖНО при переходе модуль→модуль / →оповещения / →настройки: иначе
+     таймеры/слушатели текут, а у Чата его слой #chApp в <body> (не в moduleView) ЗАЛИПАЕТ поверх
+     экрана (фидбек Джеффа: оповещения у родителя открывались поверх чата и не убирались). */
+  function closeCurrent(){
     var id=RT._current;
     if(id){
       var m=RT.modules[id];
       if(m && m.def && m.def.unmount){ try{ m.def.unmount(); }catch(e){} }
-      /* Ф5: снять все авто-слушатели модуля (sdk.on/cleanup), даже если unmount забыл/упал. */
       if(m && m.sdk && m.sdk._dispose){ try{ m.sdk._dispose(); }catch(e){} }
+      delete RT.modules[id];
     }
     if(RT._shell.fabDestroy) RT._shell.fabDestroy();
-    var view=RT._shell.moduleView(); view.innerHTML=""; view.removeAttribute("data-mod");
+    var view=RT._shell.moduleView(); if(view){ view.innerHTML=""; view.removeAttribute("data-mod"); }
     RT._current=null;
-    RT._shell.showHome();
-  };
+  }
+  RT.closeCurrent = closeCurrent;
+  RT.close = function(){ closeCurrent(); RT._shell.showHome(); };
 
   RT.current = function(){ return RT._current; };
 })(window.RobTop);

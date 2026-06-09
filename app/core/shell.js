@@ -718,9 +718,12 @@ window.RobTop = window.RobTop || {};
      (ребёнок showHome / родитель дашборд RT.Parent.setTab("apps")). NOTIFICATIONS — экран (Ф2),
      SETTINGS — настройки. Видно на всех экранах. ---- */
   function parentMode(){ return !demo && isParent() && !!RT.Parent; }
+  function closeModuleIfAny(){ if(RT.current()){ if(RT.closeCurrent) RT.closeCurrent(); else RT.close(); } }
   function navTo(tab){
-    if(tab==="notifications"){ showNotifications(); return; }
-    if(tab==="settings"){ openSettings(); return; }
+    /* ВАЖНО: уходя с открытого модуля на оповещения/настройки, его НАДО размонтировать
+       (RT.closeCurrent), иначе слой Чата #chApp/оверлеи залипают поверх (фидбек Джеффа). */
+    if(tab==="notifications"){ closeModuleIfAny(); showNotifications(); return; }
+    if(tab==="settings"){ closeModuleIfAny(); openSettings(); return; }
     if(tab==="bank"){ if(RT.current()!=="bank") RT.open("bank"); else setNavActive(); return; }
     if(tab==="chat"){ if(RT.current()!=="chat") RT.open("chat"); else setNavActive(); return; }
     /* apps */
