@@ -1648,4 +1648,17 @@ window.RobTop = window.RobTop || {};
     });
   }
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",boot); else boot();
+
+  /* iOS standalone (PWA, добавлено на домашний экран): на ПЕРВОМ кадре layout-вьюпорт иногда
+     ещё без нижней safe-area, поэтому фиксированное нижнее меню (bottom:0) стоит ВЫШЕ реального
+     низа — виден отступ под home-indicator. Первый переход (смена data-view + анимация .view.active)
+     делает реflow и отступ пропадает. Форсируем тот же реflow на load/pageshow/resize, чтобы
+     меню встало вплотную сразу. Дёшево и безопасно: чтение offsetHeight + scrollTo(0,0). */
+  function rtViewportNudge(){
+    try{ window.scrollTo(0,0); }catch(e){}
+    void document.documentElement.offsetHeight; /* форс синхронного реflow */
+  }
+  window.addEventListener("load", function(){ rtViewportNudge(); setTimeout(rtViewportNudge,80); setTimeout(rtViewportNudge,350); });
+  window.addEventListener("pageshow", rtViewportNudge);
+  if(window.visualViewport) window.visualViewport.addEventListener("resize", rtViewportNudge);
 })(window.RobTop);
