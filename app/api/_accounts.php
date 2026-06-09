@@ -201,7 +201,10 @@ function rt_set_session_cookie($token, $ttlDays = 30) {
     }
 }
 function rt_start_session($db, $userId) {
-    $tok = rt_token();
+    // SEC 2026-06-09: сессионный токен — 256 бит (64 hex), а не короткий rt_code(6) (~30 бит,
+    // онлайн-брутфорсился по таблице живых сессий). rt_is_token принимает [A-Za-z0-9]{4,64},
+    // поэтому старые короткие токены доживают свой 30-дневный срок без разлогина.
+    $tok = bin2hex(random_bytes(32));
     $ua  = isset($_SERVER['HTTP_USER_AGENT']) ? substr((string)$_SERVER['HTTP_USER_AGENT'], 0, 200) : null;
     $db->prepare(
         "INSERT INTO sessions (user_id, token_hash, created_at, expires_at, last_seen, user_agent)

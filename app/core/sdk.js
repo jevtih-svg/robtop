@@ -7,8 +7,16 @@ window.RobTop = window.RobTop || {};
 
   var API = {
     base: "api/",
-    get: function(p){ return fetch(API.base+p,{headers:{"Accept":"application/json"}}).then(function(r){ if(!r.ok) throw new Error("http "+r.status); return r.json(); }); },
-    post: function(p,b){ return fetch(API.base+p,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}).then(function(r){ if(!r.ok) throw new Error("http "+r.status); return r.json(); }); }
+    // SEC 2026-06-09: единая обработка ответа. 401 на защищённом эндпоинте (кроме accounts.php,
+    // где 401 = неверный логин/пароль при входе) → шелл возвращает на экран входа (RT._on401),
+    // а не молча падает в кэш/DEFAULTS.
+    _h: function(r,p){
+      if(r.status===401 && String(p).indexOf("accounts.php")!==0 && typeof RT._on401==="function"){ try{ RT._on401(); }catch(e){} }
+      if(!r.ok) throw new Error("http "+r.status);
+      return r.json();
+    },
+    get: function(p){ return fetch(API.base+p,{headers:{"Accept":"application/json"}}).then(function(r){ return API._h(r,p); }); },
+    post: function(p,b){ return fetch(API.base+p,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}).then(function(r){ return API._h(r,p); }); }
   };
   RT.API = API;
 

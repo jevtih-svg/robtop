@@ -403,6 +403,15 @@ window.RobTop = window.RobTop || {};
     renderLock(loading);
     window.scrollTo(0,0);
   }
+  /* SEC 2026-06-09: сессия истекла на защищённом эндпоинте (401) → вернуть на экран входа,
+     а не молча падать или показывать кэш/DEFAULTS. Зовётся из RT.API (sdk.js) и syncTick. */
+  RT._on401=function(){
+    if(demo) return;
+    if(body && body.getAttribute("data-view")==="lock") return; // уже на входе — без зацикливания
+    acct={authenticated:false};
+    syncStop();
+    showLock(false);
+  };
   /* ---- мульти-аккаунты устройства: localStorage rt_accounts = [{id,nick,kind,tok}] ----
      Токен переключения выдаёт сервер при входе (op login/register_parent → switchToken),
      обменивается на свежую сессию op switch. «Выйти» аккаунт с устройства НЕ убирает —
@@ -1504,7 +1513,7 @@ window.RobTop = window.RobTop || {};
     if(demo || document.hidden || syncBusy) return;
     syncBusy=true; syncLast=Date.now();
     fetch("api/sync.php",{headers:{"Accept":"application/json"},cache:"no-store"})
-      .then(function(r){ if(r.status===401){ syncStop(); throw new Error("401"); } if(!r.ok) throw new Error("http"); return r.json(); })
+      .then(function(r){ if(r.status===401){ if(RT._on401) RT._on401(); throw new Error("401"); } if(!r.ok) throw new Error("http"); return r.json(); })
       .then(function(r){
         syncBusy=false;
         if(!(r && r.ok)) return;

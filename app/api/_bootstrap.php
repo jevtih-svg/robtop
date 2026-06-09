@@ -35,22 +35,21 @@ function rt_guard() {
 
 /**
  * Текущий пользователь — ЕДИНСТВЕННОЕ место определения личности.
- * Приоритет: валидная сессия (кто-то вошёл) → её user_id.
- * Иначе, если single_user=true (по умолчанию) — Артём (id 1), как раньше (ничего не ломается).
- * Иначе (single_user=false и нет сессии) — 0 (аноним); защищённые эндпоинты требуют вход сами.
+ * Приоритет: валидная сессия (кто-то вошёл) → её user_id. Иначе 0 (аноним).
+ *
+ * БЕЗОПАСНОСТЬ (2026-06-09): прежний single_user-фолбэк на Артёма (id 1) УБРАН. Он давал
+ * АНОНИМНЫЙ доступ к данным user 1 (любой запрос без сессии действовал как Артём). Теперь
+ * без валидной сессии личность — 0, и каждый защищённый эндпоинт ОБЯЗАН вызвать
+ * rt_require_login() (вернёт 401). Ключ config 'single_user' больше ни на что не влияет.
  */
-if (!defined('RT_DEFAULT_USER_ID')) define('RT_DEFAULT_USER_ID', 1);
-
 function rt_user_id() {
     static $uid = null;
     if ($uid !== null) return $uid;
     try {
         $sid = rt_session_user_id();
         if ($sid) { $uid = (int)$sid; return $uid; }
-    } catch (Throwable $e) { /* нет таблиц/сессии — падаем в фолбэк ниже */ }
-    $c = rt_config();
-    $single = !array_key_exists('single_user', $c) || !empty($c['single_user']);
-    $uid = $single ? RT_DEFAULT_USER_ID : 0;
+    } catch (Throwable $e) { /* нет таблиц/сессии — аноним (0) ниже */ }
+    $uid = 0;
     return $uid;
 }
 

@@ -10,6 +10,7 @@
 
 require __DIR__ . '/_bootstrap.php';
 rt_guard();
+rt_require_login(rt_db()); // SEC 2026-06-09: вход обязателен (single_user-фолбэк убран)
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') rt_json(['error' => 'method'], 405);
 
