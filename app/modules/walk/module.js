@@ -19,7 +19,7 @@
     en:{ walk:{
       subtitle:"Family dog walks — everyone logs, everyone sees",
       hudLeft:"Dog <b>walk</b>", hudCLbl:"walks", hudRLbl:"minutes",
-      durTitle:"How long was the walk?", durMin:"{n} min", durOther:"Other",
+      durTitle:"How long was the walk?", durMin:"{n} min", durOther:"Other", hUnit:"h", minWord:"min",
       numTitle:"How many minutes?",
       rateTitle:"How was the walk?", rateLater:"Later",
       rnames:{ sad:"Bad", mid:"Okay", happy:"Good" },
@@ -64,7 +64,7 @@
     ru:{ walk:{
       subtitle:"Семейные прогулки с собакой — пишут все, видят все",
       hudLeft:"Прогулка <b>с собакой</b>", hudCLbl:"прогулок", hudRLbl:"минут",
-      durTitle:"Сколько гуляли?", durMin:"{n} мин", durOther:"Другое",
+      durTitle:"Сколько гуляли?", durMin:"{n} мин", durOther:"Другое", hUnit:"ч", minWord:"мин",
       numTitle:"Сколько минут?",
       rateTitle:"Как прошла прогулка?", rateLater:"Позже",
       rnames:{ sad:"Плохо", mid:"Средне", happy:"Хорошо" },
@@ -109,7 +109,7 @@
     lv:{ walk:{
       subtitle:"Ģimenes pastaigas ar suni — raksta visi, redz visi",
       hudLeft:"Pastaiga <b>ar suni</b>", hudCLbl:"pastaigas", hudRLbl:"minūtes",
-      durTitle:"Cik ilgi pastaigājāties?", durMin:"{n} min", durOther:"Cits",
+      durTitle:"Cik ilgi pastaigājāties?", durMin:"{n} min", durOther:"Cits", hUnit:"st", minWord:"min",
       numTitle:"Cik minūtes?",
       rateTitle:"Kā gāja pastaigā?", rateLater:"Vēlāk",
       rnames:{ sad:"Slikti", mid:"Viduvēji", happy:"Labi" },
@@ -219,6 +219,13 @@
   }
   function dataOf(it){ return (it&&it.data)||{}; }
   function rateOf(it){ var r=dataOf(it).rating; return RATE_KEYS.indexOf(r)>=0?r:null; }
+  /* длительность: ≤60 мин — «N мин»; >60 — в часах «N ч M мин» / «N ч» (фидбек Джеффа) */
+  function fmtDur(min){
+    min=parseInt(min,10)||0;
+    if(min<=60) return t("durMin",{n:min});
+    var h=Math.floor(min/60), m=min%60;
+    return m ? (h+" "+t("hUnit")+" "+m+" "+t("minWord")) : (h+" "+t("hUnit"));
+  }
 
   /* =================== дата/агрегация для календаря и статистики =================== */
   function ymd(y,m,d){ return y+"-"+pad2(m+1)+"-"+pad2(d); } // m: 0..11
@@ -316,7 +323,10 @@
 
   function hud(){
     var min=0; entries.forEach(function(it){ min+=parseInt(dataOf(it).duration,10)||0; });
-    sdk.ui.hud({ left:t("hudLeft"), cNum:entries.length, cLbl:t("hudCLbl"), rNum:min, rLbl:t("hudRLbl") });
+    /* суммарное время: >60 мин показываем в часах (число — часы, подпись — «ч»/«ч M мин») */
+    var rN=min, rL=t("hudRLbl");
+    if(min>60){ var hh=Math.floor(min/60), mm=min%60; rN=hh; rL=mm ? (t("hUnit")+" "+mm+" "+t("minWord")) : t("hUnit"); }
+    sdk.ui.hud({ left:t("hudLeft"), cNum:entries.length, cLbl:t("hudCLbl"), rNum:rN, rLbl:rL });
   }
 
   /* =================== подписи команд/вариантов =================== */
@@ -412,7 +422,7 @@
     var h='<div class="wk-card gold"><h3 class="wk-card-title">'+esc(t("evtTitle"))+'</h3>'
       +chipsHtml(evtOrder(), ev.sel, "evt")
       +'<div class="wk-sect">'+esc(t("evtWhen"))+'</div>'
-      +'<div class="wk-when">'
+      +'<div class="wk-when stack">'
       +'<input type="date" class="wk-time" id="wkEvtDate" value="'+esc(ev.day)+'">'
       +'<input type="time" class="wk-time" id="wkEvtTime" step="900" value="'+esc(ev.time)+'">'
       +'</div>'
@@ -715,7 +725,7 @@
     var face=r?('<span class="wk-mini f-'+r+'">'+FACE[r]+'</span>'):('<span class="wk-mini f-none">'+FACE.none+'</span>');
     var thumb=ph?'<div class="wk-thumb" style="background-image:url(\''+esc(ph)+'\')"></div>'
       :'<div class="wk-thumb f-'+(r||"none")+'">'+(r?FACE[r]:FACE.none)+'</div>';
-    var bits=[esc(t("durMin",{n:parseInt(d.duration,10)||0}))];
+    var bits=[esc(fmtDur(d.duration))];
     if(r) bits.push(esc(t("rnames."+r))); else bits.push('<i>'+esc(t("noRate"))+'</i>');
     if(d.commands&&d.commands.length) bits.push(esc(String(d.commands.length))+" ✓");
     if(authBit(d)) bits.push(authBit(d));
@@ -799,7 +809,7 @@
     var d=dataOf(it), r=rateOf(it);
     var node=document.createElement("div"); node.className="wk-detail";
     var h='<h2>'+esc(fmtDay(d.day))+(d.time?' · '+esc(d.time):'')+'</h2>'
-      +'<div class="wk-det-dur">'+esc(t("durMin",{n:parseInt(d.duration,10)||0}))+'</div>'
+      +'<div class="wk-det-dur">'+esc(fmtDur(d.duration))+'</div>'
       +(r?'<div class="wk-faces solo"><span class="wk-face f-'+r+' on">'+FACE[r]+'<span class="nm">'+esc(t("rnames."+r))+'</span></span></div>'
          :'<div class="wk-det-norate">'+esc(t("noRate"))+'</div>');
     if(d.commands&&d.commands.length){
@@ -866,7 +876,7 @@
     function card(lbl,val){ return '<div class="wk-stat"><b>'+esc(val)+'</b><span>'+esc(lbl)+'</span></div>'; }
     var h='<div class="wk-stats today">'
       +card(t("statWalks"), String(today.walks.length))
-      +card(t("statTime"), t("minShort",{n:today.min}))
+      +card(t("statTime"), fmtDur(today.min))
       +'</div>'
       +'<div class="wk-period">'
       +'<button type="button" class="wk-perb'+(calPeriod==="week"?" on":"")+'" data-per="week">'+esc(t("perWeek"))+'</button>'
@@ -875,8 +885,8 @@
       +'</div>'
       +'<div class="wk-stats">'
       +card(t("statWalks"), String(s.walks))
-      +card(t("statTime"), t("minShort",{n:s.min}))
-      +card(t("statLongest"), t("minShort",{n:s.longest}))
+      +card(t("statTime"), fmtDur(s.min))
+      +card(t("statLongest"), fmtDur(s.longest))
       +card(t("statStreak"), String(s.streak))
       +'</div>';
     box.innerHTML='<div class="wk-sect">'+esc(t("statToday"))+'</div>'+h;
