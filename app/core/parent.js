@@ -196,7 +196,10 @@ window.RobTop = window.RobTop || {};
 
   /* игры скрыты в дашборде по умолчанию; области открываются для трекеров, остальные — RobTop.open */
   var GAMES={ snake:1, guess:1, reverse:1, names:1 };
-  var AREA_MODS={ wishlist:1, teeth:1, rating:1, mood:1, walk:1 };
+  /* walk НЕ здесь: у родителя плитка «Прогулка» открывает САМ модуль (RT.open), как у ребёнка —
+     единый опыт (календарь, статистика, полный семейный лог, расписание ухода). Очки даёт только
+     прогулка ребёнка; родителю модуль показывает управление уходом. См. walk/module.js. */
+  var AREA_MODS={ wishlist:1, teeth:1, rating:1, mood:1 };
 
   function t(k,p){ return I.t(k,p); }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
