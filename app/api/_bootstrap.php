@@ -5,6 +5,7 @@ require __DIR__ . '/_db.php';
 require_once __DIR__ . '/_mail.php';
 require_once __DIR__ . '/_accounts.php';
 require_once __DIR__ . '/_push.php';
+require_once __DIR__ . '/_throttle.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');

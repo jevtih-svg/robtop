@@ -562,7 +562,7 @@ window.RobTop = window.RobTop || {};
     };
     setTimeout(function(){ lockView.querySelector("#regNick").focus(); },150);
   }
-  /* общий поток входа: успех → reload (меняется rt_user_id); 1234 → обязательная смена в target */
+  /* общий поток входа: успех → reload (меняется rt_user_id); временный пароль → обязательная смена в target */
   function loginFlow(loginV, passV, forceTarget){
     if(!loginV||!passV){ toast(t("account.badLogin")); return; }
     RT.API.post("accounts.php",{op:"login",login:loginV,password:passV}).then(function(r){
@@ -816,7 +816,7 @@ window.RobTop = window.RobTop || {};
       if(!open) setTimeout(function(){ var f=box.querySelector("#acctLogin"); if(f) f.focus(); },100);
     };
   }
-  /* обязательная смена одноразового 1234 (target: settingsBody или форма на lock-экране) */
+  /* обязательная смена одноразового пароля (target: settingsBody или форма на lock-экране) */
   function renderForcePass(target){
     target=target||settingsBody;
     target.innerHTML='<h2>'+esc(t("account.changeTitle"))+'</h2>'
@@ -826,7 +826,7 @@ window.RobTop = window.RobTop || {};
     var inp=target.querySelector("#npIn");
     target.querySelector("#npSave").onclick=function(){
       var v=inp.value||"";
-      if(v.length<4||v==="1234"){ toast(t("account.weakPass")); return; }
+      if(v.length<4){ toast(t("account.weakPass")); return; }
       RT.API.post("accounts.php",{op:"set_password",new_password:v}).then(function(){
         location.reload();
       }).catch(function(){ toast(t("common.failed")); });
@@ -975,7 +975,7 @@ window.RobTop = window.RobTop || {};
     node.querySelector("#kidReset").onclick=function(){
       confirm({title:t("family.resetPass"), text:t("family.resetConfirm",{name:nick}), ok:t("common.yes"), cancel:t("common.cancel")}).then(function(ok){
         if(!ok) return;
-        famApi({op:"reset_child",child_id:id}).then(function(){ ctl.close(); toast(t("family.resetDone",{name:nick})); })
+        famApi({op:"reset_child",child_id:id}).then(function(r){ ctl.close(); toast(t("family.resetDone",{name:nick, pass:(r&&r.temp_password)||""})); })
           .catch(function(){ toast(t("common.failed")); });
       });
     };
@@ -1003,8 +1003,8 @@ window.RobTop = window.RobTop || {};
     node.querySelector("#kidCancel").onclick=ctl.close;
     node.querySelector("#kidGo").onclick=function(){
       var nick=(node.querySelector("#kidNick").value||"").trim(); if(!nick) return;
-      famApi({op:"add_child",nickname:nick}).then(function(){
-        node.querySelector("#kidOut").innerHTML='<p class="set-note" style="color:#ffe08a">'+esc(t("family.created",{name:nick}))+'</p>';
+      famApi({op:"add_child",nickname:nick}).then(function(r){
+        node.querySelector("#kidOut").innerHTML='<p class="set-note" style="color:#ffe08a">'+esc(t("family.created",{name:nick, pass:(r&&r.temp_password)||""}))+'</p>';
         loadFamily();
       }).catch(function(){ toast(t("family.nickTaken")); });
     };

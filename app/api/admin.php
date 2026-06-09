@@ -164,12 +164,13 @@ switch ($op) {
         rt_json(['ok' => true]);
     }
 
-    case 'user_reset_pass': { // и детям, и родителям: одноразовый 1234 + обязательная смена
+    case 'user_reset_pass': { // и детям, и родителям: одноразовый временный пароль + обязательная смена
         $uid = (int)($b['user_id'] ?? 0);
         if (!$uid) rt_json(['error' => 'bad input'], 422);
-        rt_set_password($db, $uid, '1234', 1);
+        $temp = rt_temp_password(); // SEC 2026-06-09: случайный временный пароль вместо «1234»
+        rt_set_password($db, $uid, $temp, 1);
         alog('password_reset_by_admin', $uid);
-        rt_json(['ok' => true, 'temp_password' => '1234']);
+        rt_json(['ok' => true, 'temp_password' => $temp]);
     }
 
     case 'user_block': case 'user_unblock': {
@@ -357,7 +358,7 @@ switch ($op) {
     }
 
     case 'user_create': {
-        // Создать пользователя из админки. Ребёнок: никнейм + семья (пароль 1234, смена при входе).
+        // Создать пользователя из админки. Ребёнок: никнейм + семья (временный пароль, смена при входе).
         // Родитель: никнейм + email (+семья или своя новая) + язык письма-приглашения.
         $kind = ($b['kind'] ?? '') === 'parent' ? 'parent' : 'child';
         $nick = trim((string)($b['nickname'] ?? ''));
@@ -369,20 +370,22 @@ switch ($op) {
             $o = $db->prepare("SELECT owner_id FROM families WHERE id = ? AND deleted_at IS NULL"); $o->execute([$fid]);
             $own = $o->fetch();
             if (!$own) rt_json(['error' => 'family not found'], 404);
+            $temp = rt_temp_password(); // SEC 2026-06-09: случайный временный пароль вместо «1234»
             $cid = rt_create_user($db, $nick, 'child', [
-                'password_hash' => password_hash('1234', PASSWORD_DEFAULT), 'must_change' => 1, 'invited_by' => $AID,
+                'password_hash' => password_hash($temp, PASSWORD_DEFAULT), 'must_change' => 1, 'invited_by' => $AID,
             ]);
             rt_add_member($db, $fid, $cid, 'child');
             rt_add_guardianship($db, $cid, (int)$own['owner_id'], $fid, 'primary', 'created');
             alog('user_created', $cid, $nick, ['kind' => 'child', 'family' => $fid]);
-            rt_json(['ok' => true, 'id' => $cid, 'temp_password' => '1234']);
+            rt_json(['ok' => true, 'id' => $cid, 'temp_password' => $temp]);
         }
         $email = (string)($b['email'] ?? '');
         if (!rt_valid_email($email)) rt_json(['error' => 'bad email'], 422);
         if (rt_email_taken($db, $email)) rt_json(['error' => 'email taken'], 409);
         if (rt_email_banned($db, $email)) rt_json(['error' => 'banned'], 403);
+        $temp = rt_temp_password(); // SEC 2026-06-09: случайный временный пароль вместо «1234»
         $pid = rt_create_user($db, $nick, 'parent', [
-            'email' => rt_norm_email($email), 'password_hash' => password_hash('1234', PASSWORD_DEFAULT),
+            'email' => rt_norm_email($email), 'password_hash' => password_hash($temp, PASSWORD_DEFAULT),
             'must_change' => 1, 'invited_by' => $AID,
         ]);
         if ($fid) {
@@ -398,14 +401,14 @@ switch ($op) {
         $mailOk = false;
         if ($notify) {
             $mail = rt_mail_send_tpl(rt_norm_email($email), 'admin_invite_parent', rt_mail_lang($b), [
-                'nickname' => $nick, 'link' => rt_app_url(''),
+                'nickname' => $nick, 'link' => rt_app_url(''), 'temp_password' => $temp,
             ]);
             $mailOk = !empty($mail['ok']);
         }
         $c = rt_config();
         $logOnly = $notify && ((isset($c['mail_driver']) ? (string)$c['mail_driver'] : 'log') === 'log');
         alog('user_created', $pid, $nick, ['kind' => 'parent', 'family' => $fid, 'notify' => $notify, 'mail_ok' => $mailOk]);
-        rt_json(['ok' => true, 'id' => $pid, 'temp_password' => '1234',
+        rt_json(['ok' => true, 'id' => $pid, 'temp_password' => $temp,
                  'notify' => $notify, 'mailOk' => $mailOk, 'mailLogOnly' => $logOnly]);
     }
 

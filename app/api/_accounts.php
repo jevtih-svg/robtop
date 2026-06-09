@@ -33,6 +33,9 @@ function rt_code($len = 6) {
     return $out;
 }
 function rt_token() { return rt_code(6); } // легаси-имя; новые вызовы используют rt_code напрямую
+/** Временный пароль нового/сброшенного детского аккаунта (показывается родителю ОДИН раз,
+    меняется при первом входе). Случайный, читаемый — заменил прежний общий «1234» (SEC 2026-06-09). */
+function rt_temp_password() { return rt_code(6); }
 function rt_token_hash($t) { return hash('sha256', (string)$t); }
 function rt_is_token($t) { return is_string($t) && preg_match('/^[A-Za-z0-9]{4,64}$/', $t) === 1; }
 /** Нормализация кода из ссылки/с клавиатуры: короткие приводим к ВЕРХНЕМУ регистру

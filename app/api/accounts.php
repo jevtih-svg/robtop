@@ -8,14 +8,14 @@
  *   login          {login,password}            login = email(родитель) или никнейм(ребёнок)
  *   logout         {}
  *   me             {}
- *   set_password   {new_password}               (обязательная смена 1234)
+ *   set_password   {new_password}               (обязательная смена временного пароля)
  *   set_theme      {theme}                       (тема оформления аккаунта; allowlist в case)
  *   tile_order     {order:[id,…]}                (личный порядок плиток; []/null = сброс)
  *   tile_hidden    {hidden:[id,…]}               (личные скрытые плитки; []/null = ничего не скрыто)
  *   forgot         {email}                       (родителю; единый ответ)
  *   reset          {token,new_password}
- *   add_child      {nickname}                    (родитель → детский аккаунт, пароль 1234)
- *   reset_child    {child_id}                    (опекун сбрасывает пароль ребёнка → 1234)
+ *   add_child      {nickname}                    (родитель → детский аккаунт, временный пароль)
+ *   reset_child    {child_id}                    (опекун сбрасывает пароль ребёнка → временный)
  *   invite         {type,email?,target_child_id?}  type: child_to_child|co_parent|transfer_child|child_invite_parent
  *                  child_invite_parent: РЕБЁНОК без primary-родителя зовёт своего родителя по email;
  *                  одно живое приглашение, отзыв/повтор — invite_action; принятие = семья + primary (ветка transfer)
@@ -69,10 +69,17 @@ switch ($op) {
         $login = isset($b['login']) ? trim((string)$b['login']) : '';
         $pass  = isset($b['password']) ? (string)$b['password'] : '';
         if ($login === '' || $pass === '') rt_json(['error' => 'bad credentials'], 422);
+        // SEC 2026-06-09: троттлинг перебора — по IP и по самому логину (целевой подбор пароля).
+        rt_throttle_check($db, 'login_ip', rt_throttle_ip());
+        rt_throttle_check($db, 'login_acc', $login);
         $acc = (strpos($login, '@') !== false) ? rt_account_by_email($db, $login) : rt_account_by_nickname($db, $login);
         if (!$acc || $acc['status'] === 'disabled' || empty($acc['password_hash']) || !password_verify($pass, $acc['password_hash'])) {
+            rt_throttle_fail($db, 'login_ip', rt_throttle_ip());
+            rt_throttle_fail($db, 'login_acc', $login);
             rt_json(['error' => 'Неверный логин или пароль'], 401);
         }
+        rt_throttle_ok($db, 'login_ip', rt_throttle_ip());
+        rt_throttle_ok($db, 'login_acc', $login);
         rt_start_session($db, (int)$acc['id']);
         $db->prepare("UPDATE accounts SET last_login_at = NOW() WHERE user_id = ?")->execute([(int)$acc['id']]);
         rt_log('accounts', 'login', (int)$acc['id'], null, null, null, ['kind' => $acc['kind']]);
@@ -136,7 +143,6 @@ switch ($op) {
         $u = rt_require_login($db);
         $np = isset($b['new_password']) ? (string)$b['new_password'] : '';
         if (!rt_valid_password($np)) rt_json(['error' => 'weak password'], 422);
-        if ($np === '1234') rt_json(['error' => 'Выбери другой пароль, не 1234'], 422);
         $wasMust = !empty($u['must_change_password']);
         rt_set_password($db, (int)$u['id'], $np, 0);
         rt_log('accounts', $wasMust ? 'first_password_set' : 'password_changed', (int)$u['id']);
@@ -239,11 +245,13 @@ switch ($op) {
     case 'reset': {
         $tok = rt_norm_code(isset($b['token']) ? (string)$b['token'] : '');
         $np  = isset($b['new_password']) ? (string)$b['new_password'] : '';
-        if (!rt_is_token($tok) || !rt_valid_password($np) || $np === '1234') rt_json(['error' => 'bad input'], 422);
+        if (!rt_is_token($tok) || !rt_valid_password($np)) rt_json(['error' => 'bad input'], 422);
+        rt_throttle_check($db, 'reset_ip', rt_throttle_ip()); // SEC 2026-06-09: перебор кода сброса
         $s = $db->prepare("SELECT id, user_id FROM password_resets WHERE token_hash = ? AND used_at IS NULL AND expires_at > NOW() LIMIT 1");
         $s->execute([rt_token_hash($tok)]);
         $r = $s->fetch();
-        if (!$r) rt_json(['error' => 'invalid or expired'], 400);
+        if (!$r) { rt_throttle_fail($db, 'reset_ip', rt_throttle_ip()); rt_json(['error' => 'invalid or expired'], 400); }
+        rt_throttle_ok($db, 'reset_ip', rt_throttle_ip());
         rt_set_password($db, (int)$r['user_id'], $np, 0);
         $db->prepare("UPDATE password_resets SET used_at = NOW() WHERE id = ?")->execute([(int)$r['id']]);
         rt_log('accounts', 'password_reset_done', (int)$r['user_id']);
@@ -258,15 +266,16 @@ switch ($op) {
         if (rt_nickname_taken($db, $nick)) rt_json(['error' => 'nickname taken'], 409);
         $fid = rt_user_family_id($db, (int)$p['id']);
         if (!$fid) { $fid = rt_create_family($db, (int)$p['id'], 'Семья'); rt_add_member($db, $fid, (int)$p['id'], 'owner'); }
+        $temp = rt_temp_password(); // SEC 2026-06-09: случайный временный пароль вместо общего «1234»
         $cid = rt_create_user($db, $nick, 'child', [
-            'password_hash' => password_hash('1234', PASSWORD_DEFAULT),
+            'password_hash' => password_hash($temp, PASSWORD_DEFAULT),
             'must_change' => 1, 'invited_by' => (int)$p['id'],
         ]);
         rt_add_member($db, $fid, $cid, 'child');
         $gid = rt_add_guardianship($db, $cid, (int)$p['id'], $fid, 'primary', 'created');
         rt_log('accounts', 'account_created', $cid, 'child', null, null, ['by' => (int)$p['id']]);
         rt_log('accounts', 'guardianship_created', $gid, 'primary', null, null, ['child' => $cid, 'guardian' => (int)$p['id']]);
-        rt_json(['ok' => true, 'child' => ['id' => $cid, 'nickname' => $nick], 'temp_password' => '1234']);
+        rt_json(['ok' => true, 'child' => ['id' => $cid, 'nickname' => $nick], 'temp_password' => $temp]);
     }
 
     /* ---------------- сброс пароля ребёнку (опекун) ---------------- */
@@ -276,9 +285,10 @@ switch ($op) {
         if (!$cid || !rt_is_guardian($db, (int)$p['id'], $cid)) rt_json(['error' => 'forbidden'], 403);
         $acc = rt_account($db, $cid);
         if (!$acc || $acc['kind'] !== 'child') rt_json(['error' => 'not a child'], 422);
-        rt_set_password($db, $cid, '1234', 1);
+        $temp = rt_temp_password(); // SEC 2026-06-09: случайный временный пароль вместо «1234»
+        rt_set_password($db, $cid, $temp, 1);
         rt_log('accounts', 'password_reset_by_parent', $cid, null, null, null, ['by' => (int)$p['id']]);
-        rt_json(['ok' => true, 'temp_password' => '1234']);
+        rt_json(['ok' => true, 'temp_password' => $temp]);
     }
 
     /* ---------------- блокировка/разблокировка ребёнка (§4.9: любой родитель/опекун) ---------------- */
@@ -348,10 +358,11 @@ switch ($op) {
     case 'invite_info': {
         $tok = rt_norm_code(isset($b['token']) ? (string)$b['token'] : '');
         if (!rt_is_token($tok)) rt_json(['error' => 'bad token'], 422);
+        rt_throttle_check($db, 'token_ip', rt_throttle_ip()); // SEC 2026-06-09: перебор токенов приглашений
         $s = $db->prepare("SELECT i.*, u.name AS inviter_nick FROM invitations i JOIN users u ON u.id = i.inviter_id WHERE i.token_hash = ? LIMIT 1");
         $s->execute([rt_token_hash($tok)]);
         $inv = $s->fetch();
-        if (!$inv) rt_json(['ok' => true, 'valid' => false]);
+        if (!$inv) { rt_throttle_fail($db, 'token_ip', rt_throttle_ip()); rt_json(['ok' => true, 'valid' => false]); }
         $valid = ($inv['status'] === 'pending' && strtotime($inv['expires_at']) >= time());
         rt_json(['ok' => true, 'valid' => $valid, 'type' => $inv['type'], 'status' => $inv['status'],
                  'inviter' => $inv['inviter_nick'], 'needs_email' => ($inv['type'] !== 'child_to_child')]);
@@ -361,10 +372,12 @@ switch ($op) {
     case 'accept': {
         $tok = rt_norm_code(isset($b['token']) ? (string)$b['token'] : '');
         if (!rt_is_token($tok)) rt_json(['error' => 'bad token'], 422);
+        rt_throttle_check($db, 'token_ip', rt_throttle_ip()); // SEC 2026-06-09: перебор токенов приглашений
         $s = $db->prepare("SELECT * FROM invitations WHERE token_hash = ? LIMIT 1");
         $s->execute([rt_token_hash($tok)]);
         $inv = $s->fetch();
-        if (!$inv) rt_json(['error' => 'not found'], 404);
+        if (!$inv) { rt_throttle_fail($db, 'token_ip', rt_throttle_ip()); rt_json(['error' => 'not found'], 404); }
+        rt_throttle_ok($db, 'token_ip', rt_throttle_ip()); // валидный токен — сбросить счётчик IP
         if ($inv['status'] !== 'pending') rt_json(['error' => 'already ' . $inv['status']], 409);
         if (strtotime($inv['expires_at']) < time()) {
             $db->prepare("UPDATE invitations SET status = 'expired' WHERE id = ?")->execute([(int)$inv['id']]);
@@ -389,7 +402,7 @@ switch ($op) {
             }
             if (!$guardian) rt_json(['error' => 'no guardian'], 409);
             $cid = rt_create_user($db, $nick, 'child', [
-                'password_hash' => password_hash('1234', PASSWORD_DEFAULT),
+                'password_hash' => password_hash(rt_temp_password(), PASSWORD_DEFAULT), // авто-вход ниже; пароль сменят при первом входе
                 'must_change' => 1, 'invited_by' => $inviter,
             ]);
             $fid = rt_create_family($db, $guardian, 'Гость');

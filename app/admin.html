@@ -344,7 +344,7 @@ users:function(){
           '<label style="display:flex;gap:8px;align-items:center;font-weight:700;font-size:13px;margin-top:10px"><input type="checkbox" id="cNotify" checked style="width:auto"> Отправить письмо-приглашение</label>'+
           '<div id="cLangBox"><div class="grp" style="margin-top:8px">Язык письма</div><select id="cLang" style="width:100%">'+
             '<option value="ru">Русский</option><option value="en">English</option><option value="lv">Latviešu</option></select>'+
-          '<p class="lead" style="margin-top:8px">Письмо «Вас пригласили в RobTop»: что это за приложение, зачем присоединяться (задания за очки), вход по email + одноразовый 1234.</p></div>'+
+          '<p class="lead" style="margin-top:8px">Письмо «Вас пригласили в RobTop»: что это за приложение, зачем присоединяться (задания за очки), вход по email + одноразовый пароль.</p></div>'+
         '</div>'+
         '<div class="row" style="margin-top:14px"><button class="btn ghost" id="cCancel">Отмена</button><button class="btn" id="cGo" style="flex:1">Создать</button></div>');
       var kindEls=m.root.querySelectorAll('[name="ck"]');
@@ -362,13 +362,13 @@ users:function(){
         if(!nick){ toast('Введите никнейм'); return; }
         if(kind==='child'){
           api('user_create',{kind:'child',nickname:nick,family_id:parseInt(m.root.querySelector('#cFam').value,10)})
-            .then(function(){ m.close(); toast(nick+': создан, пароль для первого входа 1234'); load('',0); }).catch(fail);
+            .then(function(r){ m.close(); toast(nick+': создан, пароль для первого входа '+((r&&r.temp_password)||'')); load('',0); }).catch(fail);
         } else {
           var em=m.root.querySelector('#cEmail').value.trim();
           if(!em){ toast('Введите email'); return; }
           var notif=m.root.querySelector('#cNotify').checked;
           api('user_create',{kind:'parent',nickname:nick,email:em,family_id:parseInt(m.root.querySelector('#cFam2').value,10),notify:notif?1:0,lang:m.root.querySelector('#cLang').value})
-            .then(function(r){ m.close(); toast(notif?(r.mailLogOnly?'Создан. Письмо в журнале (драйвер log), пароль 1234':'Создан, приглашение отправлено на '+em):'Создан без письма, пароль 1234'); load('',0); }).catch(fail);
+            .then(function(r){ m.close(); toast(notif?(r.mailLogOnly?'Создан. Письмо в журнале (драйвер log), пароль '+((r&&r.temp_password)||''):'Создан, приглашение отправлено на '+em):'Создан без письма, пароль '+((r&&r.temp_password)||'')); load('',0); }).catch(fail);
         }
       };
     }).catch(fail);
@@ -380,7 +380,7 @@ users:function(){
       var adm=u.isAdmin?' <span class="pill warn">АДМИН</span>':'';
       var imgs=u.images?'<span class="lock">🔒 '+u.images+' шт.</span>':'<span class="lock" style="border-style:solid;color:var(--muted)">нет</span>';
       var acts='<button class="btn ghost xs" data-a="rename" data-id="'+u.id+'" data-n="'+esc(u.nickname)+'">✏️</button> '+
-        '<button class="btn ghost xs" data-a="reset" data-id="'+u.id+'" data-n="'+esc(u.nickname)+'" title="Сбросить пароль → 1234">🔑</button> '+
+        '<button class="btn ghost xs" data-a="reset" data-id="'+u.id+'" data-n="'+esc(u.nickname)+'" title="Сбросить пароль (выдаст новый одноразовый)">🔑</button> '+
         (u.status==='active'
           ?'<button class="btn danger xs" data-a="block" data-id="'+u.id+'" data-n="'+esc(u.nickname)+'">⛔</button> '
           :'<button class="btn xs" data-a="unblock" data-id="'+u.id+'" data-n="'+esc(u.nickname)+'">✅</button> ')+
@@ -394,7 +394,7 @@ users:function(){
         '<td>'+role+'</td><td>'+esc(u.familyLabel||('#'+(u.familyId||'—')))+'</td><td>'+st+'</td>'+
         '<td>'+u.records+'</td><td>'+imgs+'</td><td>'+dt(u.lastLogin)+'</td><td class="row">'+acts+'</td></tr>';
     }).join('');
-    V('<div class="card"><h2>Все пользователи</h2><p class="lead">✏️ переименовать · 🔑 пароль→1234 · ⛔/✅ блок · 👑 права админа (родителям) · 💎 очки (детям) · 🗑 удалить.</p>'+
+    V('<div class="card"><h2>Все пользователи</h2><p class="lead">✏️ переименовать · 🔑 сброс пароля · ⛔/✅ блок · 👑 права админа (родителям) · 💎 очки (детям) · 🗑 удалить.</p>'+
       '<div class="row" style="margin-bottom:10px"><input id="q" placeholder="Поиск: имя, email, семья…" value="'+esc(q)+'" style="flex:1">'+
       '<button class="btn ghost" id="search">Найти</button><button class="btn" id="createUser">＋ Создать пользователя</button></div>'+
       '<table><thead><tr><th>Имя</th><th>Роль</th><th>Семья</th><th>Статус</th><th>Записи</th><th>Картинки</th><th>Был(а)</th><th>Действия</th></tr></thead><tbody>'+rows+'</tbody></table>'+
@@ -410,8 +410,8 @@ users:function(){
         var done=function(){ toast('Готово'); load(q,page); };
         if(a==='rename') askText('Переименовать','Новый никнейм для «'+n+'»',n).then(function(nn){
           if(nn&&nn.trim()) api('user_update',{user_id:id,nickname:nn.trim()}).then(done).catch(fail); });
-        if(a==='reset') askConfirm('Сброс пароля','Сбросить пароль «'+n+'» на одноразовый 1234? Сменит при первом входе.','Сбросить').then(function(ok){
-          if(ok) api('user_reset_pass',{user_id:id}).then(function(){ toast(n+': пароль 1234, сменит при входе'); }).catch(fail); });
+        if(a==='reset') askConfirm('Сброс пароля','Сбросить пароль «'+n+'»? Будет выдан новый одноразовый пароль, сменит при первом входе.','Сбросить').then(function(ok){
+          if(ok) api('user_reset_pass',{user_id:id}).then(function(r){ toast(n+': новый пароль '+((r&&r.temp_password)||'')+', сменит при входе'); }).catch(fail); });
         if(a==='block') askConfirm('Блокировка','Заблокировать «'+n+'»? Сессии будут разорваны, данные сохранятся.','Заблокировать',true).then(function(ok){
           if(ok) api('user_block',{user_id:id}).then(done).catch(fail); });
         if(a==='unblock') api('user_unblock',{user_id:id}).then(done).catch(fail);
@@ -530,7 +530,7 @@ families:function(){
       };
     }
     function stepCreate(){
-      body.innerHTML='<p class="lead">Новый родитель будет создан и сразу привязан к семье #'+fid+'. Вход: email + одноразовый 1234.</p>'+
+      body.innerHTML='<p class="lead">Новый родитель будет создан и сразу привязан к семье #'+fid+'. Вход: email + одноразовый пароль.</p>'+
         '<input id="apNick" placeholder="Никнейм" style="width:100%">'+
         '<input id="apEmail" type="email" placeholder="Email" style="width:100%;margin-top:8px">'+
         '<label style="display:flex;gap:8px;align-items:center;font-weight:700;font-size:13px;margin-top:10px"><input type="checkbox" id="apNotify" checked style="width:auto"> Отправить письмо-приглашение (что за приложение + как войти)</label>'+
@@ -546,7 +546,7 @@ families:function(){
         api('user_create',{kind:'parent',nickname:nick,email:em,family_id:fid,notify:cb.checked?1:0,lang:body.querySelector('.apLang').value})
           .then(function(r){
             m.close(); VIEWS.families();
-            toast(cb.checked?(r.mailLogOnly?'Создан и привязан. Письмо в журнале (драйвер log)':'Создан, приглашение отправлено на '+em):'Создан и привязан, без письма (пароль 1234)');
+            toast(cb.checked?(r.mailLogOnly?'Создан и привязан. Письмо в журнале (драйвер log)':'Создан, приглашение отправлено на '+em):'Создан и привязан, без письма (пароль '+((r&&r.temp_password)||'')+')');
           }).catch(fail);
       };
       setTimeout(function(){ body.querySelector('#apNick').focus(); },100);
