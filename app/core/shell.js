@@ -1661,18 +1661,25 @@ window.RobTop = window.RobTop || {};
   }
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",boot); else boot();
 
-  /* iOS standalone (PWA, добавлено на домашний экран): на ПЕРВОМ кадре layout-вьюпорт иногда
-     ещё без нижней safe-area, поэтому фиксированное нижнее меню (bottom:0) стоит ВЫШЕ реального
-     низа — виден отступ под home-indicator. Первый переход (смена data-view + анимация .view.active)
-     делает реflow и отступ пропадает. Форсируем тот же реflow на load/pageshow/resize, чтобы
-     меню встало вплотную сразу. Дёшево и безопасно: чтение offsetHeight + scrollTo(0,0). */
+  /* iOS standalone (PWA): на ПЕРВОМ кадре layout-вьюпорт КОРОЧЕ полного. Диагностика на устройстве:
+     innerHeight 873 → 909 (~нижняя safe-area) ПОСЛЕ первого касания. Бар стоит у низа короткого
+     вьюпорта (bottom:0 === низ вьюпорта, gap=0), а полоска ПОД ним — НИЖЕ вьюпорта, и страница её
+     не закрашивает (поэтому .rt-nav::after не помогал). Лечится только разворотом вьюпорта на полную
+     высоту сразу. Прежний scrollTo(0,0) был no-op: страница не скроллится, реального скролла нет.
+     Делаем НАСТОЯЩИЙ скролл (тот же триггер, что «клик по экрану»): временно делаем body на 2px выше,
+     скроллим на 1px и обратно — iOS пересчитывает вьюпорт. На visualViewport.resize НЕ вешаем, чтобы
+     не конфликтовать с клавиатурным лифтом шторок (#3). */
   function rtViewportNudge(){
-    try{ window.scrollTo(0,0); }catch(e){}
+    try{
+      var b=document.body, prev=b.style.minHeight;
+      b.style.minHeight=(window.innerHeight+2)+"px";
+      window.scrollTo(0,1); window.scrollTo(0,0);
+      b.style.minHeight=prev||"";
+    }catch(e){}
     void document.documentElement.offsetHeight; /* форс синхронного реflow */
   }
-  window.addEventListener("load", function(){ rtViewportNudge(); setTimeout(rtViewportNudge,80); setTimeout(rtViewportNudge,350); });
+  window.addEventListener("load", function(){ rtViewportNudge(); setTimeout(rtViewportNudge,60); setTimeout(rtViewportNudge,200); setTimeout(rtViewportNudge,500); setTimeout(rtViewportNudge,1200); });
   window.addEventListener("pageshow", rtViewportNudge);
-  if(window.visualViewport) window.visualViewport.addEventListener("resize", rtViewportNudge);
 
   /* ===== Клавиатура iOS перекрывала нижние шторки (.overlay/.sheet якорятся к низу).
      Поднимаем их над клавиатурой через VisualViewport: --kb = высота клавиатуры (CSS

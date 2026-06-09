@@ -43,7 +43,6 @@
   --accent-grad:linear-gradient(180deg,#ff5db0,#d51a82);
   --hud-grad:linear-gradient(0deg, rgba(5,4,15,.86), transparent);
   --tabbar-grad:linear-gradient(0deg, rgba(5,4,15,.94) 60%, transparent);
-  --tabbar-fill:rgba(5,4,15,.94);  /* непрозрачный НИЗ бара = заливка под ним (iOS PWA: фикс отступа на 1-м кадре) */
   /* ---- расширенная палитра ДЛЯ МОДУЛЕЙ (значения = исходный неон; модули обязаны
      использовать ТОЛЬКО токены — правило в ГАЙД-новое-субприложение.md и КОНТЕКСТ §8) ---- */
   --orange:#ff7a3d;
@@ -90,7 +89,6 @@ body[data-theme="tilley"]{
   --accent-grad:linear-gradient(180deg,#F25420,#C93A08);
   --hud-grad:linear-gradient(0deg, rgba(17,31,25,.88), transparent);
   --tabbar-grad:linear-gradient(0deg, rgba(17,31,25,.95) 60%, transparent);
-  --tabbar-fill:rgba(17,31,25,.95);
   /* расширенная палитра модулей — лес/лён/янтарь, спокойные тона */
   --orange:#CE8A4A;
   --ink-2:#D9D0B8; --ink-3:#CCC3A8;
@@ -171,14 +169,6 @@ body{
 .rt-nav{display:none;position:fixed;left:0;right:0;bottom:0;z-index:14;max-width:480px;margin:0 auto;gap:2px;
   min-height:var(--kidbar-total);padding:6px 8px calc(6px + var(--safe-bottom));
   background:var(--tabbar-grad);border-top:1px solid rgba(255,255,255,.09);backdrop-filter:blur(8px)}
-/* iOS standalone (PWA): на ПЕРВОМ кадре layout-вьюпорт ещё без нижней safe-area, и фикс. бар
-   (bottom:0) встаёт ВЫШЕ реального низа — под ним виден отступ (фон) высотой ~home-indicator.
-   Детерминированный фикс: продлеваем НЕПРОЗРАЧНУЮ заливку бара ВНИЗ за его коробку. Пока вьюпорт
-   «короткий» — полоска перекрывает отступ; когда вьюпорт устаканился и бар у реального низа —
-   полоска уходит за край экрана (не видна, скролл не создаёт: subtree у position:fixed).
-   48px с запасом перекрывает любой home-indicator; не зависит от того, успел ли env() посчитаться. */
-.rt-nav::after{content:"";position:absolute;left:0;right:0;top:100%;height:48px;
-  background:var(--tabbar-fill);pointer-events:none}
 body[data-view="home"] .rt-nav,body[data-view="module"] .rt-nav,body[data-view="settings"] .rt-nav,body[data-view="notifications"] .rt-nav,body[data-view="parent"] .rt-nav{display:flex}
 .rt-nav.rt-bar-hide{display:none}
 .rt-nav-b{flex:1;min-width:0;position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;
