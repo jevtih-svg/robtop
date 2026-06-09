@@ -48,12 +48,13 @@ AddDefaultCharset UTF-8
   ExpiresByType image/webp     "access plus 7 days"
 </IfModule>
 
-# ===== Принудительный HTTPS =====
-# Включи (убери #), когда у домена активен SSL в hPanel:
-# <IfModule mod_rewrite.c>
-#   RewriteCond %{HTTPS} off
-#   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
-# </IfModule>
+# ===== Принудительный HTTPS (SEC 2026-06-09: включён) =====
+# X-Forwarded-Proto — чтобы не зациклиться за SSL-терминирующим прокси (LiteSpeed/Hostinger).
+<IfModule mod_rewrite.c>
+  RewriteCond %{HTTPS} off
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+</IfModule>
 
 # ВЕСЬ HTML и манифест — без кэша без перепроверки (2026-06-07): прод отдавал
 # по явному адресу app/index.html копию ДВУХДНЕВНОЙ давности (v2026.06.05.9 при
@@ -66,6 +67,16 @@ AddDefaultCharset UTF-8
 <IfModule mod_headers.c>
   <FilesMatch "\.(html|webmanifest)$">
     Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+  # SEC 2026-06-09: заголовки безопасности. Кадрирование запрещено (кликджекинг), MIME-sniffing off.
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
+  Header always set Referrer-Policy "same-origin"
+  # CSP: ресурсы только свои + Google Fonts (index.html их грузит). Inline-скрипт/стиль разрешён
+  # ('unsafe-inline') — в index.html есть инлайны; ужесточить до nonce можно позже. Фрейминг и
+  # плагины запрещены. Картинки — свои + data: (превью с canvas).
+  <FilesMatch "\.html$">
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
   </FilesMatch>
 </IfModule>
 

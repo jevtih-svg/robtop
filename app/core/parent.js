@@ -604,7 +604,8 @@ window.RobTop = window.RobTop || {};
       +'<div><h2 style="text-align:left;margin:0 0 6px">'+(w.favorite?'<span style="color:var(--gold)">★</span> ':'')+esc(w.title||"")+'</h2>'
       +'<span class="pd-pill">'+esc(t("parent.wl."+w.status))+'</span></div></div>';
     if(w.note) h+='<div class="pd-dnote"><b>'+esc(t("parent.wl.note"))+'</b>'+esc(w.note)+'</div>';
-    if(w.link) h+='<a class="pd-dlink" href="'+esc(w.link)+'" target="_blank" rel="noopener">🔗 '+esc(t("parent.wl.openLink"))+'</a>';
+    if(w.link){ var pdLnk=/^https?:\/\//i.test(w.link)?w.link:("https://"+w.link); /* SEC 2026-06-09: не пускаем javascript:/data: — родитель открывает ссылку ребёнка */
+      h+='<a class="pd-dlink" href="'+esc(pdLnk)+'" target="_blank" rel="noopener">🔗 '+esc(t("parent.wl.openLink"))+'</a>'; }
     h+='<div class="pd-dcnt">'
       +'<span class="h"><span class="n">'+cm+'</span><span class="l">'+esc(t("parent.wl.cnt.changed"))+'</span></span>'
       +'<span class="h"><span class="n">'+bu+'</span><span class="l">'+esc(t("parent.wl.cnt.bought"))+'</span></span>'

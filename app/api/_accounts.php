@@ -291,8 +291,10 @@ function rt_family_banned($db, $familyId) {
    Блокировка аккаунта закрывает и переключение (switch проверяет status). */
 function rt_switch_token_new($db, $userId) {
     $tok = bin2hex(random_bytes(32)); // 64 hex; руками не набирается, в БД только хэш
+    // SEC 2026-06-09: токен живёт в localStorage (риск кражи через XSS) — TTL сокращён 180→90 дней,
+    // чтобы уменьшить окно. Полное решение (httpOnly-cookie) — отдельной задачей.
     $db->prepare("INSERT INTO switch_tokens (user_id, token_hash, created_at, last_used_at, expires_at)
-                  VALUES (?, ?, NOW(), NOW(), DATE_ADD(NOW(), INTERVAL 180 DAY))")
+                  VALUES (?, ?, NOW(), NOW(), DATE_ADD(NOW(), INTERVAL 90 DAY))")
        ->execute([(int)$userId, rt_token_hash($tok)]);
     return $tok;
 }

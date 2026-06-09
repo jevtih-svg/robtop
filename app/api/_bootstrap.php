@@ -23,8 +23,9 @@ function rt_body() {
     return is_array($j) ? $j : [];
 }
 
-/** Необязательная проверка токена (если задан в config). */
+/** Необязательная проверка токена (если задан в config) + CSRF-проверка Origin. */
 function rt_guard() {
+    rt_check_origin(); // SEC 2026-06-09: CSRF defense-in-depth поверх SameSite=Lax
     $c = rt_config();
     if (!empty($c['api_token'])) {
         $hdr = isset($_SERVER['HTTP_X_API_TOKEN']) ? $_SERVER['HTTP_X_API_TOKEN'] : '';
@@ -32,6 +33,15 @@ function rt_guard() {
             rt_json(['error' => 'unauthorized'], 401);
         }
     }
+}
+
+/** CSRF (поверх SameSite=Lax): запрос с заголовком Origin ЧУЖОГО домена — 403. Origin часто
+ *  отсутствует (GET, прямые вызовы) — тогда пропускаем, чтобы не ломать легитимные запросы. */
+function rt_check_origin() {
+    if (empty($_SERVER['HTTP_ORIGIN'])) return;
+    $oh = parse_url((string)$_SERVER['HTTP_ORIGIN'], PHP_URL_HOST);
+    $hh = isset($_SERVER['HTTP_HOST']) ? preg_replace('/:\d+$/', '', (string)$_SERVER['HTTP_HOST']) : '';
+    if ($oh && $hh && strcasecmp($oh, $hh) !== 0) rt_json(['error' => 'bad_origin'], 403);
 }
 
 /**

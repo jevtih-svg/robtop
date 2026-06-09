@@ -595,7 +595,7 @@ window.RobTop = window.RobTop || {};
   }
   function tileHtml(m){
     var soon=m.status!=="active";
-    return '<button class="tile'+(soon?' soon':' active')+(m.wide?' wide':'')+(!soon&&m.hidden?' hid':'')+'" style="--c:'+(m.color||"#19e3ff")+'" data-mod="'+esc(m.id)+'">'
+    return '<button class="tile'+(soon?' soon':' active')+(m.wide?' wide':'')+(!soon&&m.hidden?' hid':'')+'" style="--c:'+esc(m.color||"#19e3ff")+'" data-mod="'+esc(m.id)+'">'
       +(soon?'<span class="lock">'+ICONS.lock+'</span>':'<span class="ring"></span>')
       +'<span class="ic">'+iconHtml(m)+'</span>'
       +'<span class="txt"><span class="nm">'+esc(modName(m))+'</span><span class="st">'+(soon?esc(t("tile.status.soon")):esc(t("tile.status.open")))+'</span></span>'
@@ -1395,7 +1395,7 @@ window.RobTop = window.RobTop || {};
       var rows=list.map(function(m,i){
         var ic=iconHtml(m);
         var sub=(m.source==="installed"?t("store.srcInstalled"):t("store.srcBuiltin"))+(m.status==="soon"?t("store.soonSuffix"):"")+(m.version?" · v"+esc(m.version):"");
-        return '<div class="store-row" style="--c:'+(m.color||"#19e3ff")+'" data-id="'+esc(m.id)+'">'
+        return '<div class="store-row" style="--c:'+esc(m.color||"#19e3ff")+'" data-id="'+esc(m.id)+'">'
           +'<span class="si">'+ic+'</span>'
           +'<span class="smeta"><div class="snm">'+esc(modName(m))+'</div><div class="ssub">'+sub+'</div></span>'
           +'<button class="hbtn" data-act="up" aria-label="'+esc(t("store.up"))+'" style="width:36px;height:36px">▲</button>'
