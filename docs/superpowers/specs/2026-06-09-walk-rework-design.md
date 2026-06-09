@@ -113,6 +113,25 @@ is not missing it. The inline behaviour section inside the walk wizard can keep
 its current puppy mode gate; only the standalone misbehaviour entry point is
 made always available to both roles. No schema change.
 
+### Phase 1: parent can delete a walk
+
+Parents can delete a walk entry, as a safety valve for bad or fake records.
+Kids cannot delete walks.
+
+- **UI.** A delete action on each walk row, shown only when `sdk.role === "parent"`.
+  It appears in the history list now and in the Phase 2 day detail. A short
+  confirm step guards against accidental taps.
+- **Points reversal.** Deleting a walk reverses any points it awarded, so a
+  removed fake walk does not leave phantom points. The client calls a new
+  parent only `reverse` op on the points API referencing the entry id; the
+  server finds that entry's `walk_done` ledger row, writes one compensating row
+  `{ n: -<paid>, reason: "walk_reversed", src: "walk", kind: "loss", ref: <entryId> }`,
+  and is idempotent (an entry already reversed, or one that never paid, is a no
+  op). Then the client soft deletes the entry through the existing data store.
+- **Authorisation.** The `reverse` op requires `rt_user_role() === "parent"`
+  and the existing manage-child check. A walk authored by a parent (no points)
+  deletes cleanly with a no op reversal.
+
 ### Phase 2: dog calendar and statistics
 
 A new full screen surface inside the `walk` module, opened from a calendar
@@ -253,6 +272,10 @@ text) are added in en, ru, and lv, following the existing `MESSAGES` pattern in
 - Points: a kid logging a 30 minute walk earns 15 points; a 60 minute walk earns
   30; a 1 minute walk earns 0; a parent logging any walk earns 0; claiming the
   same entry twice pays once; a kid cannot claim a parent authored entry.
+- Delete: a parent can delete a walk; deleting a walk that paid points writes one
+  compensating reversal so the balance returns to before; deleting again is a no
+  op; a kid has no delete action and the server refuses a kid's reverse call;
+  deleting a parent authored walk reverses nothing.
 - Calendar: days with walks, misbehaviour, and events render the right markers;
   day detail lists the correct records with authors and points; period totals
   and the day streak compute correctly across week, month, and all time.
