@@ -49,6 +49,9 @@
       cmd:{ stop:"Stop", heel:"Heel", come:"Come", sit:"Sit", stand:"Stand", down:"Down", here:"Here", wait:"Wait / stay", no:"No", noPull:"Don't pull", go:"Let's go" },
       iss:{ toilet:"Had an accident at home", floor:"Ate from the floor", leash:"Pulled off the leash", ignore:"Ignored commands" },
       delWalk:"Delete walk", delWalkTitle:"Delete this walk?", delWalkToast:"Walk deleted",
+      calTitle:"Dog calendar", statToday:"Today", statWalks:"Walks", statTime:"Time",
+      statLongest:"Longest", statStreak:"Day streak", perWeek:"Week", perMonth:"Month", perAll:"All time",
+      dayEmpty:"Nothing logged this day", minShort:"{n} min",
       aria:{ settings:"Walk settings", photo:"Photo", del:"Remove" }
     }, bank:{ r_walk_done:"Dog walk" }},
     ru:{ walk:{
@@ -86,6 +89,9 @@
       cmd:{ stop:"Стоп", heel:"Рядом", come:"Ко мне", sit:"Сидеть", stand:"Стоять", down:"Лежать", here:"Сюда", wait:"Жди / стой", no:"Нельзя", noPull:"Не тяни", go:"Пошли" },
       iss:{ toilet:"Сходила дома в туалет", floor:"Кушала с пола", leash:"Вырывалась с поводка", ignore:"Не прибегала на команды" },
       delWalk:"Удалить прогулку", delWalkTitle:"Удалить эту прогулку?", delWalkToast:"Прогулка удалена",
+      calTitle:"Календарь собаки", statToday:"Сегодня", statWalks:"Прогулок", statTime:"Время",
+      statLongest:"Дольше всего", statStreak:"Дней подряд", perWeek:"Неделя", perMonth:"Месяц", perAll:"Всё время",
+      dayEmpty:"В этот день записей нет", minShort:"{n} мин",
       aria:{ settings:"Настройки прогулки", photo:"Фото", del:"Убрать" }
     }, bank:{ r_walk_done:"Прогулка с собакой" }},
     lv:{ walk:{
@@ -123,6 +129,9 @@
       cmd:{ stop:"Stop", heel:"Blakus", come:"Pie manis", sit:"Sēdi", stand:"Stāvi", down:"Guli", here:"Šeit", wait:"Gaidi", no:"Nedrīkst", noPull:"Nevelc", go:"Ejam" },
       iss:{ toilet:"Notika negadījums mājās", floor:"Ēda no grīdas", leash:"Rāvās no pavadas", ignore:"Neklausīja komandām" },
       delWalk:"Dzēst pastaigu", delWalkTitle:"Dzēst šo pastaigu?", delWalkToast:"Pastaiga dzēsta",
+      calTitle:"Suņa kalendārs", statToday:"Šodien", statWalks:"Pastaigas", statTime:"Laiks",
+      statLongest:"Garākā", statStreak:"Dienas pēc kārtas", perWeek:"Nedēļa", perMonth:"Mēnesis", perAll:"Viss laiks",
+      dayEmpty:"Šajā dienā nav ierakstu", minShort:"{n} min",
       aria:{ settings:"Pastaigas iestatījumi", photo:"Foto", del:"Noņemt" }
     }, bank:{ r_walk_done:"Pastaiga ar suni" }}
   };
@@ -141,6 +150,7 @@
   var PAW_IC='<svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="6.4" cy="10" rx="1.7" ry="2.3"/><ellipse cx="9.9" cy="7.3" rx="1.7" ry="2.4"/><ellipse cx="14.1" cy="7.3" rx="1.7" ry="2.4"/><ellipse cx="17.6" cy="10" rx="1.7" ry="2.3"/><path d="M12 11.2c2.9 0 5.3 2.1 5.7 4.8.3 1.9-1.1 3.4-3 3.4-1.3 0-1.9-.6-2.7-.6s-1.4.6-2.7.6c-1.9 0-3.3-1.5-3-3.4.4-2.7 2.8-4.8 5.7-4.8z"/></svg>';
   var WARN_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.2L21 19.4H3z"/><path d="M12 10v4.4"/><circle cx="12" cy="16.9" r=".4" fill="currentColor" stroke="none"/></svg>';
   var STAR_IC='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.7 5.7 6.3.8-4.6 4.4 1.2 6.2L12 17.8 6.4 20.1l1.2-6.2L3 9.5l6.3-.8z"/></svg>';
+  var CAL_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3"/></svg>';
 
   /* три смайлика в стиле mood; цвет — в CSS по классу f-<key> */
   function faceSvg(mouth){
@@ -161,6 +171,7 @@
   var sdk=null, root=null, E={};
   var entries=[], behs=[], evts=[], cmds=[], iss=[], evtTypes=[], meta={id:null,puppy:1,reward:REWARD_DEF};
   var step="dur", cur=null, beh=null, ev=null, saving=false;
+  var calMonth=null, calPeriod="week"; // calMonth: Date (1-е число месяца); calPeriod: week|month|all
 
   function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
@@ -188,6 +199,36 @@
   }
   function dataOf(it){ return (it&&it.data)||{}; }
   function rateOf(it){ var r=dataOf(it).rating; return RATE_KEYS.indexOf(r)>=0?r:null; }
+
+  /* =================== дата/агрегация для календаря и статистики =================== */
+  function ymd(y,m,d){ return y+"-"+pad2(m+1)+"-"+pad2(d); } // m: 0..11
+  function parseDay(s){ var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s||"")); return m?new Date(+m[1],+m[2]-1,+m[3],12,0,0):null; }
+  function todayKey(){ return dayKey(); }
+  function dayMinus(key,n){ var d=parseDay(key); if(!d) return key; d.setDate(d.getDate()-n); return dayKey(d); }
+  /* индекс «что было с собакой» по дню: { 'YYYY-MM-DD': {walks:[], behs:[], evts:[], min:Σ} } */
+  function buildDayIndex(){
+    var ix={};
+    function bucket(k){ if(!ix[k]) ix[k]={walks:[],behs:[],evts:[],min:0}; return ix[k]; }
+    entries.forEach(function(it){ var d=dataOf(it); if(d.day){ var b=bucket(d.day); b.walks.push(it); b.min+=parseInt(d.duration,10)||0; } });
+    behs.forEach(function(it){ var d=dataOf(it); if(d.day) bucket(d.day).behs.push(it); });
+    evts.forEach(function(it){ var d=dataOf(it); if(d.day) bucket(d.day).evts.push(it); });
+    return ix;
+  }
+  /* статистика за период: fromKey=null → всё время. Возвращает {walks,min,longest,streak}. */
+  function statsFor(fromKey){
+    var walks=0,min=0,longest=0;
+    entries.forEach(function(it){ var d=dataOf(it); if(!d.day) return; if(fromKey && d.day<fromKey) return;
+      walks++; var du=parseInt(d.duration,10)||0; min+=du; if(du>longest) longest=du; });
+    return { walks:walks, min:min, longest:longest, streak:walkStreak() };
+  }
+  /* серия календарных дней подряд (до сегодня или вчера) с хотя бы одной прогулкой */
+  function walkStreak(){
+    var days={}; entries.forEach(function(it){ var d=dataOf(it); if(d.day) days[d.day]=1; });
+    var k=todayKey(), n=0;
+    if(!days[k]){ k=dayMinus(k,1); if(!days[k]) return 0; }
+    while(days[k] && n<366){ n++; k=dayMinus(k,1); }
+    return n;
+  }
 
   /* =================== данные =================== */
   function load(){
@@ -279,6 +320,7 @@
   /* =================== главная карточка (мастер) =================== */
   function renderMain(){
     if(!root||!E.main) return;
+    if(step==="cal") return renderCal(); // календарь доступен всем, в т.ч. read-only
     if(!sdk.can("edit")){ E.main.innerHTML=""; return; }
     if(step==="dur") return renderDur();
     if(step==="rate") return renderRate();
@@ -742,6 +784,103 @@
     });
   }
 
+  /* =================== календарь и статистика =================== */
+  function openCal(){
+    if(!calMonth){ var n=new Date(); calMonth=new Date(n.getFullYear(), n.getMonth(), 1, 12); }
+    step="cal"; renderMain(); window.scrollTo(0,0);
+  }
+  function renderCal(){
+    if(!root||!E.main) return;
+    E.main.innerHTML='<div class="wk-cal"><div id="wkCalStats"></div><div id="wkCalGrid"></div></div>';
+    renderCalStats(); renderCalGrid(); renderCalExtras();
+  }
+  /* точка расширения для Phase 3 (кнопка «Уход» родителю); в Phase 2 — пусто */
+  function renderCalExtras(){}
+  function renderCalStats(){
+    var box=E.main&&E.main.querySelector("#wkCalStats"); if(!box) return;
+    var ix=buildDayIndex(), today=ix[todayKey()]||{walks:[],min:0};
+    var from = calPeriod==="week" ? dayMinus(todayKey(),6) : (calPeriod==="month" ? dayMinus(todayKey(),29) : null);
+    var s=statsFor(from);
+    function card(lbl,val){ return '<div class="wk-stat"><b>'+esc(val)+'</b><span>'+esc(lbl)+'</span></div>'; }
+    var h='<div class="wk-stats today">'
+      +card(t("statWalks"), String(today.walks.length))
+      +card(t("statTime"), t("minShort",{n:today.min}))
+      +'</div>'
+      +'<div class="wk-period">'
+      +'<button type="button" class="wk-perb'+(calPeriod==="week"?" on":"")+'" data-per="week">'+esc(t("perWeek"))+'</button>'
+      +'<button type="button" class="wk-perb'+(calPeriod==="month"?" on":"")+'" data-per="month">'+esc(t("perMonth"))+'</button>'
+      +'<button type="button" class="wk-perb'+(calPeriod==="all"?" on":"")+'" data-per="all">'+esc(t("perAll"))+'</button>'
+      +'</div>'
+      +'<div class="wk-stats">'
+      +card(t("statWalks"), String(s.walks))
+      +card(t("statTime"), t("minShort",{n:s.min}))
+      +card(t("statLongest"), t("minShort",{n:s.longest}))
+      +card(t("statStreak"), String(s.streak))
+      +'</div>';
+    box.innerHTML='<div class="wk-sect">'+esc(t("statToday"))+'</div>'+h;
+  }
+  function renderCalGrid(){
+    var box=E.main&&E.main.querySelector("#wkCalGrid"); if(!box) return;
+    var ix=buildDayIndex();
+    var y=calMonth.getFullYear(), m=calMonth.getMonth();
+    var first=new Date(y,m,1,12), startDow=(first.getDay()+6)%7; // понедельник=0
+    var daysIn=new Date(y,m+1,0).getDate();
+    var careDays=careDaysInMonth(y,m); // Phase 3: маркеры ухода; в Phase 2 — пусто
+    var title=sdk.formatDate(first,{month:"long", year:"numeric"});
+    var h='<div class="wk-calnav"><button type="button" class="wk-navb" data-mon="-1">‹</button>'
+      +'<b>'+esc(title)+'</b><button type="button" class="wk-navb" data-mon="1">›</button></div>'
+      +'<div class="wk-grid">';
+    var i; for(i=0;i<startDow;i++) h+='<span class="wk-cell empty"></span>';
+    for(i=1;i<=daysIn;i++){
+      var key=ymd(y,m,i), c=ix[key];
+      var dots='';
+      if(c){ if(c.walks.length) dots+='<i class="dot walk"></i>'; if(c.behs.length) dots+='<i class="dot beh"></i>'; if(c.evts.length) dots+='<i class="dot evt"></i>'; }
+      if(careDays[key]) dots+='<i class="dot care"></i>';
+      var isToday=key===todayKey();
+      h+='<button type="button" class="wk-cell'+(isToday?" today":"")+((c||careDays[key])?" has":"")+'" data-day="'+esc(key)+'"><span class="dn">'+i+'</span><span class="dots">'+dots+'</span></button>';
+    }
+    h+='</div>'
+      +'<div class="wk-legend"><span><i class="dot walk"></i>'+esc(t("statWalks"))+'</span>'
+      +'<span><i class="dot beh"></i>'+esc(t("behBtn"))+'</span>'
+      +'<span><i class="dot evt"></i>'+esc(t("evtBtn"))+'</span></div>';
+    box.innerHTML=h;
+  }
+  /* Phase 3 переопределит через careOccurrencesInMonth; в Phase 2 ухода нет → пусто */
+  function careDaysInMonth(y,m){ return {}; }
+  function openDayDetail(key){
+    var ix=buildDayIndex(), c=ix[key]||{walks:[],behs:[],evts:[]};
+    var careHere=careForDay(key);
+    var node=document.createElement("div"); node.className="wk-detail wk-day";
+    var h='<h2>'+esc(fmtDay(key))+'</h2>';
+    if(!c.walks.length && !c.behs.length && !c.evts.length && !careHere.length){
+      h+='<p class="wk-det-norate">'+esc(t("dayEmpty"))+'</p>';
+    } else {
+      h+='<div class="wk-list">'
+        +c.walks.map(walkRowHtml).join("")
+        +c.behs.map(behRowHtml).join("")
+        +c.evts.map(evtRowHtml).join("")
+        +'</div>';
+      if(careHere.length){
+        h+='<div class="wk-sect">'+esc(t("calTitle"))+'</div><div class="wk-chips ro">';
+        careHere.forEach(function(it){ h+='<span class="wk-chip gold on">'+esc(careLabel(dataOf(it).type))+'</span>'; });
+        h+='</div>';
+      }
+    }
+    h+='<div class="sheet-actions" style="margin-top:14px"><button class="btn btn-cancel" data-close style="flex:1">'+esc(t("common.close"))+'</button></div>';
+    node.innerHTML=h;
+    var sh=sdk.ui.sheet(node);
+    node.querySelector("[data-close]").addEventListener("click",sh.close);
+    node.addEventListener("click",function(e){
+      var row=e.target.closest(".wk-row"); if(!row) return;
+      sh.close();
+      if(row.getAttribute("data-bid")) openBehDetail(row.getAttribute("data-bid"));
+      else if(row.getAttribute("data-eid")) openEvtDetail(row.getAttribute("data-eid"));
+      else openDetail(row.getAttribute("data-id"));
+    });
+  }
+  /* Phase 3 переопределит; в Phase 2 ухода нет → пусто */
+  function careForDay(key){ return []; }
+
   /* =================== mount / unmount =================== */
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; E={};
@@ -752,13 +891,17 @@
       titleHtml:'<div class="wk-title"><span class="sic">'+PAW_IC+'</span> '+esc(title)+'</div><div class="wk-sub">'+esc(t("subtitle"))+'</div>',
       backLabel:t("common.back"),
       back:function(){
+        if(step==="cal"){ step="dur"; renderMain(); return; }
         if(step==="details"){ step="rate"; renderMain(); return; }
         if(step==="rate"){ step="dur"; cur=null; renderMain(); return; }
         if(step==="beh"){ step="dur"; beh=null; renderMain(); return; }
         if(step==="evt"){ step="dur"; ev=null; renderMain(); return; }
         sdk.ui.back();
       },
-      actions:[{ icon:GEAR_IC, id:"wkGear", label:t("aria.settings"), onClick:openSettings }]
+      actions:[
+        { icon:CAL_IC, id:"wkCal", label:t("calTitle"), onClick:openCal },
+        { icon:GEAR_IC, id:"wkGear", label:t("aria.settings"), onClick:openSettings }
+      ]
     }).body;
     body.innerHTML='<div class="wk">'
       +'<div id="wkMain"></div>'
@@ -769,6 +912,11 @@
        иначе при повторных открытиях модуля обработчики накапливаются (двойные тосты/тоглы) */
     E.onRootClick=function(e){
       var b;
+      /* календарь доступен всем (в т.ч. read-only): период / навигация по месяцам / день */
+      b=e.target.closest("[data-per]"); if(b){ calPeriod=b.getAttribute("data-per"); renderCalStats(); return; }
+      b=e.target.closest("[data-mon]"); if(b){ calMonth=new Date(calMonth.getFullYear(), calMonth.getMonth()+parseInt(b.getAttribute("data-mon"),10), 1, 12); renderCalGrid(); return; }
+      b=e.target.closest("[data-day]"); if(b){ openDayDetail(b.getAttribute("data-day")); return; }
+      if(e.target.closest("#wkCareBtn")){ openCare(); return; }
       if(!sdk.can("edit")) {
         var row0=e.target.closest(".wk-row");
         if(row0){

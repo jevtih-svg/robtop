@@ -182,3 +182,53 @@
 .wk-bigphoto{border-radius:16px;height:140px;background-size:cover;background-position:center;
   border:1px solid rgba(255,255,255,.14)}
 .wk-author{color:var(--muted-2);font-weight:600;font-size:12.5px;text-align:center;margin:12px 0 0}
+
+/* =================== календарь + статистика =================== */
+[data-mod="walk"] .wk-cal{padding-top:4px}
+[data-mod="walk"] .wk-stats{display:flex;gap:9px;margin-top:8px}
+[data-mod="walk"] .wk-stats.today{margin-bottom:2px}
+[data-mod="walk"] .wk-stat{flex:1;border-radius:16px;padding:12px 6px;text-align:center;
+  background:color-mix(in srgb,var(--mint) 7%,transparent);border:1.5px solid color-mix(in srgb,var(--mint) 30%,transparent)}
+[data-mod="walk"] .wk-stat b{display:block;font-family:var(--font-display);font-size:21px;color:var(--mint);
+  text-shadow:0 0 12px color-mix(in srgb,var(--mint) 50%,transparent)}
+[data-mod="walk"] .wk-stat span{display:block;color:var(--muted-2);font-weight:700;font-size:11px;margin-top:3px}
+
+[data-mod="walk"] .wk-period{display:flex;gap:8px;margin:12px 0 4px}
+[data-mod="walk"] .wk-perb{flex:1;min-height:40px;border-radius:12px;cursor:pointer;font-family:'Rubik',sans-serif;font-weight:800;font-size:13px;
+  color:var(--ink-3);background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.16)}
+[data-mod="walk"] .wk-perb:active{transform:scale(.96)}
+[data-mod="walk"] .wk-perb.on{color:var(--on-bright);background:var(--mint);border-color:var(--mint);
+  box-shadow:0 0 14px -2px color-mix(in srgb,var(--mint) 80%,transparent)}
+
+[data-mod="walk"] .wk-calnav{display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px}
+[data-mod="walk"] .wk-calnav b{font-family:var(--font-display);font-size:17px;color:var(--green-soft);text-transform:capitalize}
+[data-mod="walk"] .wk-navb{width:40px;height:40px;border-radius:12px;cursor:pointer;font-size:20px;font-weight:800;color:var(--ink);
+  background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.16)}
+[data-mod="walk"] .wk-navb:active{transform:scale(.93)}
+
+[data-mod="walk"] .wk-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+[data-mod="walk"] .wk-cell{position:relative;aspect-ratio:1/1;min-height:42px;border-radius:12px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);color:var(--ink-2);font-weight:700;font-size:14px}
+[data-mod="walk"] .wk-cell.empty{background:none;border:none;cursor:default}
+[data-mod="walk"] .wk-cell.has{background:rgba(255,255,255,.06)}
+[data-mod="walk"] .wk-cell.today{border-color:var(--mint);box-shadow:0 0 12px -3px color-mix(in srgb,var(--mint) 80%,transparent)}
+[data-mod="walk"] .wk-cell:active{transform:scale(.95)}
+[data-mod="walk"] .wk-cell .dn{line-height:1}
+[data-mod="walk"] .wk-cell .dots{display:flex;gap:3px;min-height:6px}
+[data-mod="walk"] .wk-cell .dot,[data-mod="walk"] .wk-legend .dot{width:6px;height:6px;border-radius:999px;display:inline-block}
+[data-mod="walk"] .dot.walk{background:var(--mint)}
+[data-mod="walk"] .dot.beh{background:var(--red)}
+[data-mod="walk"] .dot.evt{background:var(--gold)}
+[data-mod="walk"] .dot.care{background:var(--cyan)}
+
+[data-mod="walk"] .wk-legend{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:12px}
+[data-mod="walk"] .wk-legend span{display:inline-flex;align-items:center;gap:5px;color:var(--muted-2);font-weight:600;font-size:12px}
+
+/* бейдж «уход скоро / просрочено» на главном экране */
+[data-mod="walk"] .wk-carebadge{display:flex;align-items:center;gap:9px;width:100%;margin-top:12px;
+  border-radius:14px;padding:11px 13px;font-weight:700;font-size:13px;color:var(--gold-soft);
+  background:color-mix(in srgb,var(--gold) 9%,transparent);border:1.5px solid color-mix(in srgb,var(--gold) 45%,transparent)}
+[data-mod="walk"] .wk-carebadge svg{width:20px;height:20px;flex:none}
+[data-mod="walk"] .wk-carebadge.overdue{color:var(--red-soft);
+  background:color-mix(in srgb,var(--red) 9%,transparent);border-color:color-mix(in srgb,var(--red) 45%,transparent)}
