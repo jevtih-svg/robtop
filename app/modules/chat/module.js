@@ -17,7 +17,20 @@
      на самом композере (старый приём давал щель из скриншота).
    ─ Композер — contenteditable div (НЕ textarea): iOS Safari не рисует над ним панель формы
      (‹ › Готово). Только текст: вставка как plain-text, лимит 1000, плейсхолдер через :empty,
-     Enter — отправка, Shift+Enter — перенос, IME-safe. Рост — CSS max-height, дальше скролл. */
+     Enter — отправка, Shift+Enter — перенос, IME-safe. Рост — CSS max-height, дальше скролл.
+
+   РАСКЛАДКА (v1.3.0, 2026-06-09 — поведение «как WhatsApp»):
+   ─ ПЕРЕПИСКА полноэкранная: renderThread добавляет слою класс .ch-thread (высота 100dvh, без
+     резерва под нижний бар) и прячет нижнее меню через sdk.ui.hud({hidden:true}). Причина: при
+     открытой клавиатуре iOS поднимает fixed-бар (bottom:0) НАД клавиатуру, и он накладывался на
+     композер (баг со скриншота). Список чатов (renderList) — наоборот: бар ВИДЕН (это вкладка
+     «Чат» нижнего меню), слой укорочен на --kidbar-total. Назад из треда → renderList вернёт бар.
+   ─ КЛАВИАТУРА не гаснет при отправке: фокус удерживает preventDefault на pointerdown кнопок
+     композера (#chComp .cbtn). iOS НЕ держит фокус синтетическим mousedown — поэтому ведущий
+     слушатель именно pointerdown (mousedown оставлен фолбэком). + фолбэк-рефокус поля после send.
+   ─ «ЩЕЛЬ» СНИЗУ ПОСЛЕ ЧАТА: html.ch-lock (overflow:hidden) + клавиатура схлопывают iOS-PWA
+     layout-вьюпорт ниже экрана → нижний бар застревает выше реального низа. unmount зовёт
+     sdk.ui.fixViewport() (= rtForceFullViewport оболочки) — заново разворачивает вьюпорт. */
 (function(){
   "use strict";
   var MESSAGES={
@@ -131,6 +144,10 @@
   function renderList(){
     if(!alive()) return;
     S.view="list"; S.tid=null;
+    /* список чатов = вкладка нижнего меню (как «Чаты» в WhatsApp): бар ВИДЕН, слой укорочен
+       на его высоту (без .ch-thread). Переписка же полноэкранная — бар прячется (см. renderThread). */
+    if(E.app) E.app.classList.remove("ch-thread");
+    if(sdk&&sdk.ui&&sdk.ui.hud) sdk.ui.hud({hidden:false});
     var h='<div class="ch-head"><button class="back" id="chBack" aria-label="'+esc(sdk.i18n.t("common.back"))+'">'+BACK_IC+'</button>'
       +'<div class="ch-head-main"><div class="ch-title">'+BUBBLE_E+' '+esc(sdk.i18n.t("tile.chat"))+'</div>'
       +'<div class="ch-sub">'+esc(t("subtitle"))+'</div></div>'
@@ -189,6 +206,11 @@
   }
   function renderThread(){
     var th=threadById(S.tid); if(!th) return;
+    /* переписка — ПОЛНОЭКРАННАЯ (как чат в WhatsApp): прячем нижнее меню (иначе при открытой
+       клавиатуре fixed-бар всплывает над ней и накладывается на композер) и разворачиваем слой
+       на всю высоту (.ch-thread = 100dvh, без резерва под бар). Назад → renderList вернёт бар. */
+    if(E.app) E.app.classList.add("ch-thread");
+    if(sdk&&sdk.ui&&sdk.ui.hud) sdk.ui.hud({hidden:true});
     var names=(th.members||[]).map(function(m){ return m.id===S.me?t("you"):m.name; });
     var sub=th.kind==="group" ? t("members",{names:names.join(", ")}) : t("subtitle");
     var h='<div class="ch-head"><button class="back" id="chToList" tabindex="-1" aria-label="'+esc(sdk.i18n.t("common.back"))+'">'+BACK_IC+'</button>'
@@ -346,6 +368,9 @@
       var th=threadById(S.tid);
       if(th){ th.last={uid:r.item.uid,name:r.item.name,body:r.item.body,photo:r.item.photo?1:0,at:r.item.at}; th.at=r.item.at; }
       S.stick=true; renderMsgs(); scrollBottom();
+      /* клавиатура остаётся открытой (как в WhatsApp): фокус удержан pointerdown'ом на кнопке;
+         фолбэк для Android/десктопа — если фокус всё же слетел, вернуть его в поле. */
+      if(E.input && document.activeElement!==E.input){ try{ E.input.focus(); placeCaretEnd(); }catch(e){} }
       sdk.ui.haptics(6);
       sdk.events.track("message_sent_ui",{thread:S.tid, photo:r.item.photo?1:0});
     }).catch(function(e){
@@ -650,8 +675,14 @@
     function cancelLp(){ if(S.lpTimer){ clearTimeout(S.lpTimer); S.lpTimer=null; } }
     E.app.addEventListener("pointerup",cancelLp);
     E.app.addEventListener("pointercancel",cancelLp);
-    /* тап по кнопке композера НЕ должен уводить фокус с поля (иначе Android гасит клавиатуру
-       при отправке). preventDefault на mousedown держит фокус в contenteditable; click проходит. */
+    /* тап по кнопке композера НЕ должен уводить фокус с поля (иначе клавиатура гаснет при отправке —
+       как в WhatsApp, она остаётся открытой). preventDefault держит фокус в contenteditable; click
+       всё равно проходит. iOS Safari синтезирует mousedown с задержкой и НЕ гасит им фокус надёжно,
+       поэтому ведущий слушатель — pointerdown (iOS поддерживает с 13): он бьёт раньше и держит фокус.
+       mousedown оставлен как фолбэк для старых вебвью. Оба — на саму кнопку, НЕ на поле/ленту. */
+    E.app.addEventListener("pointerdown",function(e){
+      if(e.target.closest && e.target.closest("#chComp .cbtn")) e.preventDefault();
+    });
     E.app.addEventListener("mousedown",function(e){
       if(e.target.closest && e.target.closest("#chComp .cbtn")) e.preventDefault();
     });
@@ -699,8 +730,20 @@
     if(S) S.alive=false;
     kbTeardown(); /* visualViewport — глобальные слушатели, снять обязательно */
     if(S && S.sheet){ try{ S.sheet.close(); }catch(e){} S.sheet=null; }
-    document.documentElement.classList.remove("ch-lock");
+    /* переписка прячет нижнее меню — вернуть его при выходе (на случай выхода прямо из треда) */
+    if(sdk&&sdk.ui&&sdk.ui.hud){ try{ sdk.ui.hud({hidden:false}); }catch(e){} }
+    document.documentElement.classList.remove("ch-lock"); /* тело снова прокручиваемо */
     if(E.app && E.app.parentNode) E.app.parentNode.removeChild(E.app); /* слой #chApp из <body> */
+    /* iOS-PWA: ch-lock (overflow:hidden) + клавиатура могли схлопнуть layout-вьюпорт НИЖЕ экрана —
+       тогда нижний бар (fixed bottom:0) застревает выше реального низа, под ним native-полоса = «щель»
+       снизу, держится до перезагрузки. Тело снова прокручиваемо → просим оболочку заново развернуть
+       вьюпорт на полную высоту (сразу + следующим кадром + с запасом: iOS пересчитывает асинхронно). */
+    var fixVp=(sdk&&sdk.ui&&sdk.ui.fixViewport)?sdk.ui.fixViewport:null;
+    if(fixVp){
+      try{ fixVp(); }catch(e){}
+      requestAnimationFrame(function(){ try{ fixVp(); }catch(e){} });
+      setTimeout(function(){ try{ fixVp(); }catch(e){} },300);
+    }
     S=null; E={};
   }
   /* тап по оповещению: открыть конкретную переписку (link {module:"chat", item:"<tid>"}) */

@@ -1616,7 +1616,12 @@ window.RobTop = window.RobTop || {};
     applyTileHidden:applyTileHidden, jglEye:jglEye,
     /* для оповещений (core/notify.js): открыть переписку тикета из ссылки {view:"ticket",id} */
     openTicket:function(id){ openSettings(); openTicketThread(id); },
-    demoBundle:function(id){ return RT._shell_demoBundle(id); }
+    demoBundle:function(id){ return RT._shell_demoBundle(id); },
+    /* модулям, которые блокируют прокрутку тела (chat: html.ch-lock) и/или гоняют клавиатуру:
+       iOS-PWA после такого оставляет layout-вьюпорт КОРОЧЕ экрана → fixed-бар застревает выше
+       реального низа, под ним native-полоса = «щель». Зовётся при размонтировании, чтобы
+       заново развернуть вьюпорт на полную высоту (та же механика, что на load/pageshow). */
+    fixViewport:rtForceFullViewport
   };
 
   /* Восстановить экран после обновления страницы (память rt_screen).
