@@ -1664,4 +1664,53 @@ window.RobTop = window.RobTop || {};
   window.addEventListener("load", function(){ rtViewportNudge(); setTimeout(rtViewportNudge,80); setTimeout(rtViewportNudge,350); });
   window.addEventListener("pageshow", rtViewportNudge);
   if(window.visualViewport) window.visualViewport.addEventListener("resize", rtViewportNudge);
+
+  /* ===== Клавиатура iOS перекрывала нижние шторки (.overlay/.sheet якорятся к низу).
+     Поднимаем их над клавиатурой через VisualViewport: --kb = высота клавиатуры (CSS
+     лифтит оверлей и ужимает шторку), плюс держим фокусное поле в зоне видимости.
+     App-wide: компонент шторки общий у родителя и детских модулей. ===== */
+  (function(){
+    var vv=window.visualViewport; if(!vv) return;
+    var root=document.documentElement;
+    function kbH(){ return Math.max(0, window.innerHeight - vv.height - vv.offsetTop); }
+    function applyKb(){
+      var h=kbH();
+      root.style.setProperty("--kb", h+"px");
+      root.classList.toggle("kb-open", h>80);
+      if(h>80){
+        var el=document.activeElement;
+        if(el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)){
+          try{ el.scrollIntoView({block:"center"}); }catch(e){}
+        }
+      }
+    }
+    vv.addEventListener("resize", applyKb);
+    vv.addEventListener("scroll", applyKb);
+    document.addEventListener("focusin", applyKb);
+    document.addEventListener("focusout", function(){ setTimeout(applyKb,60); });
+  })();
+
+  /* ===== TEMP ДИАГНОСТИКА отступа iOS-PWA на 1-м кадре (убрать в следующей версии).
+     Печатает метрики вьюпорта; виден ТОЛЬКО на родителе/локе (#rtdiag в ui.css), дети не видят.
+     Нужен скрин ПЕРВОГО открытия: сравнить 1st vs now, увидеть gap = ih - barB. ===== */
+  (function(){
+    var el=document.getElementById("rtdiag"); if(!el) return;
+    var probe=document.getElementById("rtdiagProbe");
+    var first=null;
+    function snap(){
+      var vv=window.visualViewport||{};
+      var bar=document.getElementById("kidBar");
+      var b=bar?Math.round(bar.getBoundingClientRect().bottom):0;
+      return { ih:window.innerHeight, vh:Math.round(vv.height||0),
+               sab:probe?probe.offsetHeight:0, sh:(window.screen&&screen.height)||0, barB:b };
+    }
+    function show(){
+      var s=snap(); if(!first) first=s;
+      el.textContent="1st ih"+first.ih+" barB"+first.barB+" vh"+first.vh+" sab"+first.sab+" sh"+first.sh
+        +" | now ih"+s.ih+" barB"+s.barB+" gap"+(s.ih-s.barB)+" vh"+s.vh;
+    }
+    window.addEventListener("load", function(){ show(); setTimeout(show,120); setTimeout(show,500); setTimeout(show,1500); });
+    if(window.visualViewport) visualViewport.addEventListener("resize", show);
+    show();
+  })();
 })(window.RobTop);

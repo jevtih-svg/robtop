@@ -358,15 +358,9 @@ window.RobTop = window.RobTop || {};
     var s=document.createElement("style"); s.id="pdv-css";
     s.textContent=
       ".pdv-top{padding-top:6px}"+
-      ".pdv-chips{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 4px;-webkit-overflow-scrolling:touch}"+
-      ".pdv-chips::-webkit-scrollbar{height:0}"+
-      ".pdv-chip{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 13px 6px 6px;border-radius:999px;cursor:pointer;"+
-        "background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);font-family:inherit;transition:.15s}"+
-      ".pdv-chip .av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:14px;color:#04212b;"+
-        "background:linear-gradient(150deg,#5fd0ff,#a86bff)}"+
-      ".pdv-chip .nm{font-weight:800;font-size:13.5px;color:#dbe6ff}"+
-      ".pdv-chip.on{border-color:var(--cyan);background:rgba(25,227,255,.12);box-shadow:0 0 18px -6px var(--cyan)}"+
-      ".pdv-chip.on .nm{color:#fff}"+
+      /* выбор ребёнка на домашнем — пилюля-дропдаун .pdv-kidsw (стиль ниже, после .pd-kidsw),
+         открывает шторку выбора. Заменила горизонтальный скролл-ряд чипов, в котором выбранный
+         ребёнок уезжал за правый край ("в невидимую линию"). */
       ".pdv-one{display:flex;align-items:center;gap:11px;padding:2px 2px 2px}"+
       ".pdv-one .av{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:22px;font-weight:800;color:#04212b;"+
         "background:linear-gradient(150deg,#5fd0ff,#a86bff)}"+
@@ -387,6 +381,11 @@ window.RobTop = window.RobTop || {};
         "background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);font-family:inherit}"+
       ".pd-kidsw .a{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;color:#04212b;background:linear-gradient(150deg,#5fd0ff,#a86bff)}"+
       ".pd-kidsw .nm{font-weight:800;font-size:12.5px;color:#dbe6ff}"+
+      /* домашний вариант пилюли: крупнее (как заголовок), слева, не на всю ширину */
+      ".pdv-kidsw{display:inline-flex;margin-left:0;padding:6px 15px 6px 6px;gap:10px}"+
+      ".pdv-kidsw .a{width:38px;height:38px;font-size:16px}"+
+      ".pdv-kidsw .nm{font-family:var(--font-display);font-weight:400;font-size:18px;color:#fff}"+
+      ".pdv-kidsw .cv{color:var(--muted);font-size:13px;align-self:center}"+
       /* верх контента не должен лезть под статус-бар и кластер [🔔][⚙] (как у .pd-top) */
       "body[data-view=\"parent\"] .pdv-top{padding-top:calc(30px + env(safe-area-inset-top));padding-right:100px}"+
       /* контент должен прокручиваться полностью над фиксированным таббаром (.pd-tabbar) */
@@ -410,11 +409,12 @@ window.RobTop = window.RobTop || {};
       : t("parent.never");
     var h='<div class="pdv-top">';
     if(kids.length>1){
-      h+='<div class="pdv-chips" id="pdChips">';
-      kids.forEach(function(k){
-        h+='<button class="pdv-chip'+(k.id===S.childId?' on':'')+'" data-kid="'+k.id+'"><span class="av">'+esc(initial(k.nickname))+'</span><span class="nm">'+esc(k.nickname)+'</span></button>';
-      });
-      h+='</div>';
+      /* пилюля текущего ребёнка → тап открывает шторку выбора (openChildSwitch).
+         id="pdKidSw" уже привязан в wire() — отдельный обработчик не нужен. */
+      h+='<button class="pd-kidsw pdv-kidsw" id="pdKidSw" aria-label="'+esc(t("parent.switchChild"))+'">'
+        +'<span class="a">'+esc(initial(kidName()))+'</span>'
+        +'<span class="nm">'+esc(kidName())+'</span>'
+        +'<span class="cv">▾</span></button>';
     } else {
       h+='<div class="pdv-one"><span class="av">'+esc(initial(kidName()))+'</span><div><div class="nm">'+esc(kidName())+'</div>'
         +'<div class="sb">👁 '+esc(t("parent.badge"))+'</div></div></div>';
@@ -835,10 +835,6 @@ window.RobTop = window.RobTop || {};
     var ob=root.querySelector("#pdOpenBank"); if(ob) ob.onclick=function(){ if(RT.open) RT.open("bank"); };
     var ot=root.querySelector("#pdOpenTasks"); if(ot) ot.onclick=function(){ if(RT.open) RT.open("tasks"); };
     var oc=root.querySelector("#pdOpenChat"); if(oc) oc.onclick=function(){ if(RT.open) RT.open("chat"); };
-    /* чипы детей */
-    Array.prototype.forEach.call(root.querySelectorAll(".pdv-chip[data-kid]"),function(b){
-      b.onclick=function(){ var id=parseInt(b.getAttribute("data-kid"),10); if(id!==S.childId) fetchData(id); };
-    });
     /* плитки приложений */
     Array.prototype.forEach.call(root.querySelectorAll(".tile[data-mod]"),function(b){
       b.onclick=function(e){
