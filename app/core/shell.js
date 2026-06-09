@@ -1712,18 +1712,20 @@ window.RobTop = window.RobTop || {};
   (function(){
     var el=document.getElementById("rtdiag"); if(!el) return;
     var probe=document.getElementById("rtdiagProbe");
+    function uh(id){ var e=document.getElementById(id); return e?e.offsetHeight:0; }
     var first=null;
     function snap(){
       var vv=window.visualViewport||{};
       var bar=document.getElementById("kidBar");
       var b=bar?Math.round(bar.getBoundingClientRect().bottom):0;
       return { ih:window.innerHeight, vh:Math.round(vv.height||0),
+               svh:uh("rtUsvh"), dvh:uh("rtUdvh"), lvh:uh("rtUlvh"),
                sab:probe?probe.offsetHeight:0, sh:(window.screen&&screen.height)||0, barB:b };
     }
     function show(){
       var s=snap(); if(!first) first=s;
-      el.textContent="1st ih"+first.ih+" barB"+first.barB+" vh"+first.vh+" sab"+first.sab+" sh"+first.sh
-        +" | now ih"+s.ih+" barB"+s.barB+" gap"+(s.ih-s.barB)+" vh"+s.vh;
+      el.textContent="1st ih"+first.ih+" barB"+first.barB+" svh"+first.svh+" dvh"+first.dvh+" lvh"+first.lvh+" sh"+first.sh
+        +" | now ih"+s.ih+" gap"+(s.ih-s.barB)+" lvh"+s.lvh;
     }
     window.addEventListener("load", function(){ show(); setTimeout(show,120); setTimeout(show,500); setTimeout(show,1500); });
     if(window.visualViewport) visualViewport.addEventListener("resize", show);
