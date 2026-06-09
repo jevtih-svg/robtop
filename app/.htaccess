@@ -72,6 +72,11 @@ AddDefaultCharset UTF-8
   Header always set X-Content-Type-Options "nosniff"
   Header always set X-Frame-Options "DENY"
   Header always set Referrer-Policy "same-origin"
+  # HSTS — HTTPS уже принудительный выше; max-age 180 дней (без includeSubDomains/preload,
+  # т.к. на apps.tilley.live могут жить другие приложения). Защита от SSL-stripping.
+  Header always set Strict-Transport-Security "max-age=15552000"
+  # Отключаем неиспользуемые возможности браузера. camera НЕ трогаем — нужна для фото в приложении.
+  Header always set Permissions-Policy "geolocation=(), microphone=(), payment=(), usb=()"
   # CSP: ресурсы только свои + Google Fonts (index.html их грузит). Inline-скрипт/стиль разрешён
   # ('unsafe-inline') — в index.html есть инлайны; ужесточить до nonce можно позже. Фрейминг и
   # плагины запрещены. Картинки — свои + data: (превью с canvas).
