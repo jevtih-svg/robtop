@@ -7,7 +7,9 @@
    начисляются ТОЛЬКО когда прогулку логирует ребёнок; родительская прогулка очков не даёт.
    Сумму решает сервер из длительности сохранённой записи (api/_points.php). См. ГАЙД-очки.md.
    Данные — generic-стор: walk/entries (прогулки), walk/commands и walk/issues (свои варианты
-   семьи), walk/meta (одна строка: {puppy, reward}). Родитель пишет в общий семейный пул
+   семьи), walk/meta (одна строка: {puppy}; сервер дописывает lastCareCheck — гейт напоминаний).
+   БАЛАНС очков модуль НЕ хранит: только начисляет/откатывает через системный api/points.php.
+   Родитель пишет в общий семейный пул
    (data.php скоупит роль parent на ребёнка семьи), автор записи — в data.author. */
 (function(){
   "use strict";
@@ -45,7 +47,6 @@
       byAuthor:"Logged by {name}",
       setTitle:"Walk settings",
       puppyLbl:"Puppy mode", puppyHint:"Show the behaviour section",
-      rewardLbl:"Points per walk", rewardHint:"0 — no points",
       cmd:{ stop:"Stop", heel:"Heel", come:"Come", sit:"Sit", stand:"Stand", down:"Down", here:"Here", wait:"Wait / stay", no:"No", noPull:"Don't pull", go:"Let's go" },
       iss:{ toilet:"Had an accident at home", floor:"Ate from the floor", leash:"Pulled off the leash", ignore:"Ignored commands" },
       delWalk:"Delete walk", delWalkTitle:"Delete this walk?", delWalkToast:"Walk deleted",
@@ -91,7 +92,6 @@
       byAuthor:"Записал(а): {name}",
       setTitle:"Настройки прогулки",
       puppyLbl:"Режим «Щенок»", puppyHint:"Показывать раздел про поведение",
-      rewardLbl:"Очков за прогулку", rewardHint:"0 — без очков",
       cmd:{ stop:"Стоп", heel:"Рядом", come:"Ко мне", sit:"Сидеть", stand:"Стоять", down:"Лежать", here:"Сюда", wait:"Жди / стой", no:"Нельзя", noPull:"Не тяни", go:"Пошли" },
       iss:{ toilet:"Сходила дома в туалет", floor:"Кушала с пола", leash:"Вырывалась с поводка", ignore:"Не прибегала на команды" },
       delWalk:"Удалить прогулку", delWalkTitle:"Удалить эту прогулку?", delWalkToast:"Прогулка удалена",
@@ -137,7 +137,6 @@
       byAuthor:"Pierakstīja: {name}",
       setTitle:"Pastaigas iestatījumi",
       puppyLbl:"Kucēna režīms", puppyHint:"Rādīt uzvedības sadaļu",
-      rewardLbl:"Punkti par pastaigu", rewardHint:"0 — bez punktiem",
       cmd:{ stop:"Stop", heel:"Blakus", come:"Pie manis", sit:"Sēdi", stand:"Stāvi", down:"Guli", here:"Šeit", wait:"Gaidi", no:"Nedrīkst", noPull:"Nevelc", go:"Ejam" },
       iss:{ toilet:"Notika negadījums mājās", floor:"Ēda no grīdas", leash:"Rāvās no pavadas", ignore:"Neklausīja komandām" },
       delWalk:"Dzēst pastaigu", delWalkTitle:"Dzēst šo pastaigu?", delWalkToast:"Pastaiga dzēsta",
@@ -162,7 +161,7 @@
   var SYS_EVT=["vet","birthday","vaccine","groom"]; // важные события: ветеринар, ДР, прививка, груминг
   var CARE_TYPES=["vaccine","deworm","flea","vet","groom"]; // расписание ухода (+ свои типы u_<id> из eventTypes)
   var CARE_UNITS=["none","day","week","month"];
-  var PHOTO_MAX=10, REWARD_DEF=10, REWARD_STEP=5, REWARD_MAX=100;
+  var PHOTO_MAX=10;
 
   var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
   var GEAR_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.2a7.6 7.6 0 0 0 0-2.4l2-1.5-2-3.5-2.4.8a7.6 7.6 0 0 0-2-1.2L14.5 3h-5l-.5 2.4a7.6 7.6 0 0 0-2 1.2l-2.4-.8-2 3.5 2 1.5a7.6 7.6 0 0 0 0 2.4l-2 1.5 2 3.5 2.4-.8a7.6 7.6 0 0 0 2 1.2l.5 2.4h5l.5-2.4a7.6 7.6 0 0 0 2-1.2l2.4.8 2-3.5z"/></svg>';
@@ -189,7 +188,7 @@
 
   /* =================== состояние =================== */
   var sdk=null, root=null, E={};
-  var entries=[], behs=[], evts=[], cmds=[], iss=[], evtTypes=[], meta={id:null,puppy:1,reward:REWARD_DEF};
+  var entries=[], behs=[], evts=[], cmds=[], iss=[], evtTypes=[], meta={id:null,puppy:1};
   var step="dur", cur=null, beh=null, ev=null, saving=false;
   var calMonth=null, calPeriod="week"; // calMonth: Date (1-е число месяца); calPeriod: week|month|all
   var careItems=[]; // расписание ухода (walk/care), только родитель пишет
@@ -303,19 +302,14 @@
       careItems=(rr[7]||[]).slice().sort(careSort);
       var m=(rr[3]||[])[0];
       if(m){ meta={ id:m.id,
-        puppy: dataOf(m).puppy==null ? 1 : (dataOf(m).puppy?1:0),
-        reward: clampReward(dataOf(m).reward) }; }
+        puppy: dataOf(m).puppy==null ? 1 : (dataOf(m).puppy?1:0) }; }
       renderMain(); renderList(); hud();
     }).catch(function(){ if(!root) return; renderMain(); renderList(); hud(); });
   }
-  function clampReward(v){
-    var n=parseInt(v,10); if(isNaN(n)) n=REWARD_DEF;
-    return Math.min(Math.max(n,0), REWARD_MAX);
-  }
   function metaSave(patch){
-    var data={ puppy:meta.puppy, reward:meta.reward };
+    var data={ puppy:meta.puppy };
     Object.keys(patch||{}).forEach(function(k){ data[k]=patch[k]; });
-    meta.puppy=data.puppy; meta.reward=data.reward;
+    meta.puppy=data.puppy;
     if(meta.id!=null) return sdk.data.update("meta", meta.id, data);
     return sdk.data.create("meta", data).then(function(item){ if(item) meta.id=item.id; });
   }
@@ -1034,7 +1028,7 @@
   /* =================== mount / unmount =================== */
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; E={};
-    entries=[]; behs=[]; evts=[]; cmds=[]; iss=[]; evtTypes=[]; careItems=[]; meta={id:null,puppy:1,reward:REWARD_DEF};
+    entries=[]; behs=[]; evts=[]; cmds=[]; iss=[]; evtTypes=[]; careItems=[]; meta={id:null,puppy:1};
     step="dur"; cur=null; beh=null; ev=null; saving=false; calMonth=null; calPeriod="week";
     var title=sdk.i18n.t("tile.walk");
     var body=sdk.ui.frame({
@@ -1114,7 +1108,7 @@
   function unmount(){
     if(root && E.onRootClick) root.removeEventListener("click",E.onRootClick);
     E={}; entries=[]; behs=[]; evts=[]; cmds=[]; iss=[]; evtTypes=[]; careItems=[]; root=null;
-    step="dur"; cur=null; beh=null; ev=null; saving=false; calMonth=null; meta={id:null,puppy:1,reward:REWARD_DEF};
+    step="dur"; cur=null; beh=null; ev=null; saving=false; calMonth=null; meta={id:null,puppy:1};
   }
 
   /* живое обновление (sync-поллер оболочки, v2026.06.07.47): общесемейный пул — прогулку
