@@ -1684,11 +1684,15 @@ window.RobTop = window.RobTop || {};
      Чиним так же: временно делаем страницу ВЫШЕ экрана → она становится прокручиваемой → iOS
      разворачивает вьюпорт на полную высоту. Как только вьюпорт дорос — снимаем подпорку (без
      постоянного лишнего скролла). screen.height доступен сразу (в отличие от коротких CSS-единиц). */
-  function rtForceFullViewport(){
-    var root=document.getElementById("root"); if(!root) return;
-    if(window.innerHeight>=screen.height-2){ root.style.minHeight=""; return; } // уже полный
+  /* onDone (необязательно) — вызывается, когда вьюпорт развернулся (или по страховочному таймауту).
+     Зовущие на load/pageshow передают Event (не функцию) — onDone там просто не сработает. Нужен
+     модулям, которые на время разворота снимают свой scroll-lock и должны вернуть его ПОСЛЕ (chat). */
+  function rtForceFullViewport(onDone){
+    function fin(){ if(typeof onDone==="function") try{ onDone(); }catch(e){} }
+    var root=document.getElementById("root"); if(!root){ fin(); return; }
+    if(window.innerHeight>=screen.height-2){ root.style.minHeight=""; fin(); return; } // уже полный
     var vv=window.visualViewport, done=false;
-    function reset(){ if(done) return; done=true; root.style.minHeight=""; if(vv) vv.removeEventListener("resize",settle); }
+    function reset(){ if(done) return; done=true; root.style.minHeight=""; if(vv) vv.removeEventListener("resize",settle); fin(); }
     function settle(){ if(window.innerHeight>=screen.height-2) reset(); }
     root.style.minHeight=(screen.height+120)+"px"; // подпорка: страница выше экрана → прокручиваемая
     try{ window.scrollTo(0,2); }catch(e){}

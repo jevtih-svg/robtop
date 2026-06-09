@@ -430,6 +430,23 @@
      Класс kb-open — по ФОКУСУ поля (syncKb), не по высоте (на Android resizes-content высотная
      эвристика давала 0). Тело страницы заблокировано html.ch-lock. */
   function syncKb(){ if(E.app) E.app.classList.toggle("kb-open", !!(E.input && document.activeElement===E.input)); }
+  /* iOS-PWA: открытие/закрытие клавиатуры схлопывает LAYOUT-вьюпорт ниже экрана (innerHeight<screen).
+     Тогда 100dvh треда короче экрана — композер не достаёт до низа («щель снизу», уходила только при
+     ВЫХОДЕ из чата, где unmount зовёт fixViewport). Чиним на месте: разворачиваем вьюпорт через
+     оболочечный fixViewport (подпорка-скролл). Ей нужна прокручиваемость тела — на время снимаем
+     ch-lock и возвращаем в колбэке. #bg фиксирован, слой чата фиксирован → скролл тела невидим.
+     Зовётся из vpApply (расфокус в треде); сам себя гасит, если вьюпорт уже полный или идёт разворот. */
+  function reExpandViewport(){
+    if(!alive() || S.reExpanding) return;
+    if(!(sdk&&sdk.ui&&sdk.ui.fixViewport)) return;
+    if(!(screen&&screen.height) || window.innerHeight>=screen.height-2) return; /* вьюпорт уже полный — нечего чинить */
+    S.reExpanding=true;
+    document.documentElement.classList.remove("ch-lock"); /* fixViewport разворачивает скроллом — тело должно быть прокручиваемо */
+    sdk.ui.fixViewport(function(){
+      if(alive()) document.documentElement.classList.add("ch-lock"); /* вернуть блок прокрутки тела за слоем */
+      if(S) S.reExpanding=false;
+    });
+  }
   function vpApply(){
     if(!alive() || !E.app) return;
     var vv=window.visualViewport;
@@ -440,6 +457,7 @@
       E.app.style.transform = off>0 ? "translateY("+off+"px)" : "";
     } else {
       E.app.style.height=""; E.app.style.transform=""; /* нет фокуса → полный экран (100dvh) */
+      if(S.view==="thread") reExpandViewport(); /* клавиатура закрыта в треде — добить вьюпорт до экрана */
     }
     syncKb();
     if(focused && !S.kbOpen) scrollBottom(); /* доскролл только на переходе «открылась» */
@@ -616,7 +634,7 @@
     S={ alive:true, view:"list", tid:null, threads:[], roster:[], me:0, isParent:false,
         family:true, loaded:false, msgs:[], readers:[], more:false, msgsLoaded:false,
         sending:false, photo:null, sheet:null, pendingTid:null, vv:null, ty:null, stick:true, kbOpen:false,
-        lpTimer:null, lpX:0, lpY:0, suppressClick:false };
+        reExpanding:false, lpTimer:null, lpX:0, lpY:0, suppressClick:false };
     E={};
     /* guardrails: детский бар «Домой» виден и в чате (универсально) — слой .ch-app укорочен на его
        высоту (module.css), композер сидит над баром; раньше тут было hud({hidden:true}), убрано.
