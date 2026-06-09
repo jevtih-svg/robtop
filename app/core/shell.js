@@ -56,10 +56,9 @@ window.RobTop = window.RobTop || {};
     cube:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>',
     gift:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="1.6"/><path d="M4 12.5h16M12 9v11"/><path d="M12 9c-4 0-5.4-2-4.6-3.6C8.2 3.8 11 4.6 12 9zM12 9c4 0 5.4-2 4.6-3.6C15.8 3.8 13 4.6 12 9z"/></svg>',
     chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.6a7.6 7.6 0 0 1-7.6 7.6c-1.3 0-2.5-.3-3.6-.9L4.4 19.6l1.3-5A7.6 7.6 0 1 1 21 11.6z"/><circle cx="9.6" cy="11.6" r="1" fill="currentColor" stroke="none"/><circle cx="13.4" cy="11.6" r="1" fill="currentColor" stroke="none"/><circle cx="17.2" cy="11.6" r="1" fill="currentColor" stroke="none"/></svg>',
-    tasks:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="16" rx="2.5"/><path d="M9 5V4a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 4v1"/><path d="M9 13l2.2 2.2 4.3-4.7"/></svg>',
     friends:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.1"/><path d="M3.6 19.2a5.4 5.4 0 0 1 10.8 0"/><path d="M15.5 5.6a3 3 0 0 1 .2 5.6"/><path d="M16.3 13.3a5.4 5.4 0 0 1 4.1 5.9"/></svg>'
   };
-  var TILE_ICON={ wishlist:"cherry", reverse:"reverse", mood:"smile", teeth:"tooth", guess:"quiz", names:"tag", days:"calendar", find:"search", museum:"museum", rating:"star", friends:"friends", lost:"gem", walk:"paw", snake:"snake", tasks:"tasks", bank:"bank", shop:"gift", chat:"chat" };
+  var TILE_ICON={ wishlist:"cherry", reverse:"reverse", mood:"smile", teeth:"tooth", guess:"quiz", names:"tag", days:"calendar", find:"search", museum:"museum", rating:"star", friends:"friends", lost:"gem", walk:"paw", snake:"snake", bank:"bank", shop:"gift", chat:"chat" };
   var BACK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg>';
 
   /* ---- встроенный список модулей (демо/фолбэк). name — фолбэк, отображается tile.<id> ---- */
@@ -78,7 +77,6 @@ window.RobTop = window.RobTop || {};
     {id:"lost",name:"Lost & Found",color:"#2bf0c0",status:"soon",source:"native",sort:110},
     {id:"walk",name:"Dog Walk",color:"#38e8a0",status:"active",source:"native",sort:115},
     {id:"snake",name:"Snake",color:"#19e3ff",status:"active",source:"native",sort:117},
-    {id:"tasks",name:"Tasks",color:"#2bf0c0",status:"active",source:"native",sort:118},
     {id:"bank",name:"Piggy Bank",color:"#ff4d6d",status:"active",source:"native",wide:true,sort:120},
     {id:"shop",name:"Shop",color:"#ff2bd6",status:"active",source:"native",sort:130},
     {id:"chat",name:"Chat",color:"#3b6bff",status:"active",source:"native",server:true,sort:135}
@@ -708,7 +706,8 @@ window.RobTop = window.RobTop || {};
   function openSettings(){
     if(isSettingsOpen()) return;
     if(homeJgl) homeJgl.exit(); // уходим с главного — режим перестановки закрыт
-    screenSave({v:"settings"});
+    /* НЕ сохраняем экран настроек в rt_screen: настройки — служебный экран, перезапуск/возврат
+       должен открывать дом/дашборд (или восстановленный модуль), а не настройки (фидбек Джеффа). */
     renderSettings();
     body.setAttribute("data-view","settings");
     homeView.classList.remove("active"); moduleView.classList.remove("active"); hideParent(); hideNotif();
@@ -1626,7 +1625,7 @@ window.RobTop = window.RobTop || {};
   function restoreScreen(savedSt){
     try{
       if(!savedSt || !savedSt.v || savedSt.v==="home") return;
-      if(savedSt.v==="settings"){ openSettings(); return; }
+      if(savedSt.v==="settings") return; // настройки НЕ восстанавливаем (+ чистит старый кэш): остаёмся на доме/дашборде
       if(savedSt.v==="module" && savedSt.id){
         var ok=false;
         RT._registry.forEach(function(m){ if(m.id===savedSt.id && m.status==="active" && m.enabled!==0) ok=true; });
