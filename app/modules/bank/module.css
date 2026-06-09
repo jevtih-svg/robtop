@@ -86,7 +86,7 @@
 [data-mod="bank"] .bk-empty{text-align:center;color:var(--muted);font-weight:700;padding:26px 14px}
 [data-mod="bank"] .bk-empty .btn{margin-top:10px}
 
-/* счётчик на вкладке «Родители»: ребёнку — активные задания, родителю — ждущие проверки */
+/* счётчик на вкладке «Задания»: ребёнку — активные задания, родителю — ждущие проверки */
 [data-mod="bank"] .bk-tab-n{display:inline-block;min-width:20px;margin-left:7px;padding:2px 6px;border-radius:999px;
   font-family:var(--font-display);font-size:12px;line-height:1.2;color:var(--panel-2);background:var(--gold);
   box-shadow:0 0 10px -2px color-mix(in srgb,var(--gold) 90%,transparent)}
@@ -121,6 +121,29 @@
 [data-mod="bank"] .bk-chip{flex:none;padding:7px 10px;border-radius:999px;font-size:11px;font-weight:800;
   color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,transparent);border:1px solid color-mix(in srgb,var(--gold) 45%,transparent)}
 [data-mod="bank"] .bk-chip.ok{color:var(--green);background:color-mix(in srgb,var(--green) 8%,transparent);border-color:color-mix(in srgb,var(--green) 40%,transparent)}
+
+/* вкладка «Задания»: секции-стопка («Ждут проверки» / «Активные» / «Выполнено» и детские) */
+[data-mod="bank"] .bk-sec{margin-bottom:18px}
+[data-mod="bank"] .bk-sec-h{display:flex;align-items:center;gap:8px;margin:0 2px 9px;
+  color:var(--muted);font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+[data-mod="bank"] .bk-sec-n{flex:none;min-width:20px;height:20px;padding:0 6px;border-radius:999px;
+  display:inline-flex;align-items:center;justify-content:center;font-size:11px;
+  color:var(--red-soft);background:color-mix(in srgb,var(--red) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--red) 40%,transparent)}
+/* тег предложения ребёнка (origin=child) */
+[data-mod="bank"] .bk-tag{display:inline-block;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:800;
+  color:var(--cyan);background:color-mix(in srgb,var(--cyan) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--cyan) 45%,transparent);margin-right:5px;vertical-align:middle}
+/* иконка пустого состояния вкладки «Задания» */
+[data-mod="bank"] .bk-empty-ic{width:64px;height:64px;margin:0 auto 4px;color:var(--red-soft);opacity:.8}
+[data-mod="bank"] .bk-empty-ic svg{width:100%;height:100%;filter:drop-shadow(0 0 10px color-mix(in srgb,var(--red) 50%,transparent))}
+/* подсказка под формой предложения + шторка проверки предложения (голубой акцент) */
+.bk-thint{margin:8px 2px 0;color:var(--muted);font-size:12.5px;font-weight:600;text-align:center}
+.bk-review{margin:4px 0 8px}
+.bk-rv-title{color:#fff;font-weight:800;font-size:18px;margin-bottom:12px;line-height:1.25}
+.bk-review input{min-height:46px;width:100%;border-radius:12px;border:1.5px solid color-mix(in srgb,var(--cyan) 50%,transparent);
+  background:rgba(var(--panel-rgb),.8);color:var(--ink);font-weight:800;font-size:16px;padding:0 14px}
+.bk-review input:focus{outline:none;border-color:color-mix(in srgb,var(--cyan) 80%,transparent)}
 
 /* шторка «что такое огонёк?» (объяснение для ребёнка) */
 .bk-info{margin:2px 0 6px}

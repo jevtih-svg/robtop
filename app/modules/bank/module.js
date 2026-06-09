@@ -1,8 +1,12 @@
 /* RobTop — модуль «Копилка». Свинка с пунктами на боку, огонёк-винстрик, история
-   транзакций (вкладки «Задания»/«Родители») и родительская панель начислений (только роль parent; в демо открыта).
-   ЗАДАНИЯ (v1.8.0, рефактор 2026-06-08): ОБЩИЙ движок sdk.tasks (отдельная таблица tasks +
-   api/tasks.php, канон — ГАЙД-задания.md). ГЛАВНЫЙ хаб заданий — модуль «Задания»; блок
-   здесь — ЛЁГКОЕ зеркало того же источника (Копилка = кошелёк), своей логики не держит.
+   транзакций (вкладки «Игры»/«Родители») и родительская панель начислений (только роль parent; в демо открыта).
+   ЗАДАНИЯ (v1.9.0, слияние 2026-06-09): ОБЩИЙ движок sdk.tasks (отдельная таблица tasks +
+   api/tasks.php, канон — ГАЙД-задания.md). Копилка — ЕДИНСТВЕННЫЙ полный UI заданий после
+   удаления модуля «Задания» (заказ Джеффа: модуль избыточен). Вкладка «Задания» (по умолчанию)
+   = полное секционное управление: РОДИТЕЛЬ — «Ждут проверки» (предложения детей + проверки
+   выполнения) / «Активные» / «Выполнено» + создание/правка; РЕБЁНОК — «Сделать» / «На проверке»
+   / «Выполнено» + «Предложить задание» (логирует дело со своей оценкой, родитель правит очки в
+   шторке-ревью и одобряет/отклоняет). Своей логики заданий не держит — всё в движке sdk.tasks.
    ВСЕ выполнения идут через подтверждение родителя (универсально, и once, и recur):
    ребёнок «Сделал!» → pending → родитель ✓ (очки kind=task_done через sdk.points; recur →
    назад в active, once → done) или ↩ (без очков). Предложения ребёнка (origin=child, голубой
@@ -26,9 +30,9 @@
     en:{ bank:{
       title:"Piggy Bank", subtitle:"Your points for games and tasks",
       ptsWord:"points", streakLabel:"win streak",
-      tabApps:"Quests", tabParents:"Parents",
+      tabTasks:"Tasks", tabApps:"Games", tabParents:"Parents",
       emptyApps:"Nothing yet — play and earn points!",
-      emptyParents:"Parent tasks and rewards will show up here",
+      emptyParents:"Parent rewards will show up here",
       txCount:{one:"{n} entry",other:"{n} entries"},
       hudPts:"points", hudStreak:"streak",
       loadFail:"Could not load the piggy bank", retry:"Try again",
@@ -74,13 +78,20 @@
       btnGive:"Give", btnTake:"Take", btnPen:"⚠️ Penalty", needAmount:"Enter a number first",
       needNote:"Write what the penalty is for", doneToast:"Done!",
       streakToast:"Win streak: {n} 🔥", bonusToast:"Streak bonus +{n}!",
-      btnAddTask:"+ New task", btnIDid:"I did it!",
+      btnAddTask:"+ New task", btnPropose:"+ Log a task", btnIDid:"I did it!", btnReview:"Review",
+      secReview:"Needs review", secActive:"Active & recurring", secTodo:"To do",
+      secWaiting:"Waiting for check", secDone:"Done",
       chipPending:"waiting for check ⏳", chipDone:"done ✓",
-      chipProposed:"proposed +{n}", propTag:"kid's idea", denyA11y:"Decline proposal",
+      chipProposed:"proposed +{n}", propTag:"kid's idea", tagProposal:"my idea", denyA11y:"Decline proposal",
       typeRecur:"Repeating", typeOnce:"One-time",
-      metaRecur:"🔁 repeats", metaOnce:"1× one-time", doneTimes:"done ×{n}",
+      metaRecur:"🔁 repeats", metaOnce:"1× one-time", doneTimes:"done ×{n}", doneOn:"done {d}",
       approveBtn:"✓ +{n}", declineA11y:"Return without points",
       claimToast:"Sent to parents for checking!", returnedToast:"Returned without points",
+      deniedToast:"Proposal declined", proposedToast:"Sent to your parents!",
+      proposeTitle:"Log a task you did", proposeTitlePh:"What did you do?",
+      proposePtsLbl:"How many points, you think?", proposeHint:"A parent will check it and decide.", proposeSend:"Propose",
+      reviewTitle:"Review proposal", reviewPtsLbl:"Points for this", approveAdj:"Approve +{n}", denyBtn:"Decline",
+      emptyKid:"No tasks yet — ask your parents, or log one you did!", emptyParent:"No tasks yet. Create the first one!",
       newTask:"New task", editTask:"Edit task",
       taskTitlePh:"What needs to be done", taskPtsLbl:"Points for completion",
       deleteTask:"Delete task", confirmDel:"Delete the task “{t}”?",
@@ -89,9 +100,9 @@
     ru:{ bank:{
       title:"Копилка", subtitle:"Твои пункты за игры и задания",
       ptsWord:"пункты", streakLabel:"винстрик",
-      tabApps:"Задания", tabParents:"Родители",
+      tabTasks:"Задания", tabApps:"Игры", tabParents:"Родители",
       emptyApps:"Пока пусто — играй и зарабатывай пункты!",
-      emptyParents:"Здесь появятся задания и награды от родителей",
+      emptyParents:"Здесь появятся награды от родителей",
       txCount:{one:"{n} запись",few:"{n} записи",many:"{n} записей"},
       hudPts:"пунктов", hudStreak:"винстрик",
       loadFail:"Не получилось загрузить копилку", retry:"Попробовать ещё",
@@ -137,13 +148,20 @@
       btnGive:"Начислить", btnTake:"Снять", btnPen:"⚠️ Штраф", needAmount:"Сначала введи число",
       needNote:"Сначала напиши, за что штраф", doneToast:"Готово!",
       streakToast:"Винстрик: {n} 🔥", bonusToast:"Бонус серии +{n}!",
-      btnAddTask:"+ Новое задание", btnIDid:"Сделал!",
+      btnAddTask:"+ Новое задание", btnPropose:"+ Предложить задание", btnIDid:"Сделал!", btnReview:"Проверить",
+      secReview:"Ждут проверки", secActive:"Активные и повторяющиеся", secTodo:"Сделать",
+      secWaiting:"На проверке", secDone:"Выполнено",
       chipPending:"ждёт проверки ⏳", chipDone:"выполнено ✓",
-      chipProposed:"предложено +{n}", propTag:"предложил ребёнок", denyA11y:"Отклонить предложение",
+      chipProposed:"предложено +{n}", propTag:"предложил ребёнок", tagProposal:"моё", denyA11y:"Отклонить предложение",
       typeRecur:"Повторяющееся", typeOnce:"Одноразовое",
-      metaRecur:"🔁 повторяется", metaOnce:"1× одноразовое", doneTimes:"сделано ×{n}",
+      metaRecur:"🔁 повторяется", metaOnce:"1× одноразовое", doneTimes:"сделано ×{n}", doneOn:"выполнено {d}",
       approveBtn:"✓ +{n}", declineA11y:"Вернуть без очков",
       claimToast:"Отправлено родителям на проверку!", returnedToast:"Вернул без очков",
+      deniedToast:"Предложение отклонено", proposedToast:"Отправлено родителям!",
+      proposeTitle:"Залогируй своё дело", proposeTitlePh:"Что ты сделал(а)?",
+      proposePtsLbl:"Сколько очков, по-твоему?", proposeHint:"Родитель проверит и решит.", proposeSend:"Предложить",
+      reviewTitle:"Проверить предложение", reviewPtsLbl:"Очки за это", approveAdj:"Одобрить +{n}", denyBtn:"Отклонить",
+      emptyKid:"Заданий пока нет — попроси родителей или предложи своё!", emptyParent:"Заданий пока нет. Создай первое!",
       newTask:"Новое задание", editTask:"Изменить задание",
       taskTitlePh:"Что нужно сделать", taskPtsLbl:"Очков за выполнение",
       deleteTask:"Удалить задание", confirmDel:"Удалить задание «{t}»?",
@@ -152,9 +170,9 @@
     lv:{ bank:{
       title:"Krājkase", subtitle:"Tavi punkti par spēlēm un uzdevumiem",
       ptsWord:"punkti", streakLabel:"uzvaru sērija",
-      tabApps:"Uzdevumi", tabParents:"Vecāki",
+      tabTasks:"Uzdevumi", tabApps:"Spēles", tabParents:"Vecāki",
       emptyApps:"Vēl tukšs — spēlē un krāj punktus!",
-      emptyParents:"Šeit parādīsies vecāku uzdevumi un balvas",
+      emptyParents:"Šeit parādīsies vecāku balvas",
       txCount:{zero:"{n} ierakstu",one:"{n} ieraksts",other:"{n} ieraksti"},
       hudPts:"punkti", hudStreak:"sērija",
       loadFail:"Neizdevās ielādēt krājkasi", retry:"Mēģināt vēlreiz",
@@ -200,13 +218,20 @@
       btnGive:"Pieskaitīt", btnTake:"Noņemt", btnPen:"⚠️ Sods", needAmount:"Vispirms ievadi skaitli",
       needNote:"Vispirms uzraksti, par ko sods", doneToast:"Gatavs!",
       streakToast:"Uzvaru sērija: {n} 🔥", bonusToast:"Sērijas bonuss +{n}!",
-      btnAddTask:"+ Jauns uzdevums", btnIDid:"Izdarīju!",
+      btnAddTask:"+ Jauns uzdevums", btnPropose:"+ Piedāvāt uzdevumu", btnIDid:"Izdarīju!", btnReview:"Pārbaudīt",
+      secReview:"Gaida pārbaudi", secActive:"Aktīvie un atkārtotie", secTodo:"Jāizdara",
+      secWaiting:"Pārbaudē", secDone:"Izpildīts",
       chipPending:"gaida pārbaudi ⏳", chipDone:"izpildīts ✓",
-      chipProposed:"piedāvāts +{n}", propTag:"bērna ideja", denyA11y:"Noraidīt piedāvājumu",
+      chipProposed:"piedāvāts +{n}", propTag:"bērna ideja", tagProposal:"mans", denyA11y:"Noraidīt piedāvājumu",
       typeRecur:"Atkārtojas", typeOnce:"Vienreizējs",
-      metaRecur:"🔁 atkārtojas", metaOnce:"1× vienreizējs", doneTimes:"izpildīts ×{n}",
+      metaRecur:"🔁 atkārtojas", metaOnce:"1× vienreizējs", doneTimes:"izpildīts ×{n}", doneOn:"izpildīts {d}",
       approveBtn:"✓ +{n}", declineA11y:"Atgriezt bez punktiem",
       claimToast:"Nosūtīts vecākiem pārbaudei!", returnedToast:"Atgriezts bez punktiem",
+      deniedToast:"Piedāvājums noraidīts", proposedToast:"Nosūtīts vecākiem!",
+      proposeTitle:"Pieraksti savu darbu", proposeTitlePh:"Ko tu izdarīji?",
+      proposePtsLbl:"Cik punktu, tavuprāt?", proposeHint:"Vecāks pārbaudīs un izlems.", proposeSend:"Piedāvāt",
+      reviewTitle:"Pārbaudīt piedāvājumu", reviewPtsLbl:"Punkti par to", approveAdj:"Apstiprināt +{n}", denyBtn:"Noraidīt",
+      emptyKid:"Uzdevumu vēl nav — palūdz vecākiem vai piedāvā savu!", emptyParent:"Uzdevumu vēl nav. Izveido pirmo!",
       newTask:"Jauns uzdevums", editTask:"Mainīt uzdevumu",
       taskTitlePh:"Kas jāizdara", taskPtsLbl:"Punkti par izpildi",
       deleteTask:"Dzēst uzdevumu", confirmDel:"Dzēst uzdevumu “{t}”?",
@@ -233,15 +258,17 @@
     +'<path d="M80 41l28-5" class="bk-slot"/>'
     +'<g class="bk-coin"><circle cx="94" cy="16" r="10"/><path d="M94 11v10M89 16h10"/></g>'
     +'</svg>';
+  /* иконка-чеклист для пустого состояния вкладки «Задания» (порт из модуля tasks) */
+  var CLIP_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="16" rx="2.5"/><path d="M9 5V4a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 4v1"/><path d="M9 13l2.2 2.2 4.3-4.7"/></svg>';
 
   var sdk=null, root=null, alive=false, busy=false, curSheet=null;
   var E={}, PE=null;
-  var S={ balance:0, streak:0, items:[], tasks:[], tab:"apps", loaded:false, err:false };
+  var S={ balance:0, streak:0, items:[], tasks:[], tab:"tasks", loaded:false, err:false };
   var PARENT_KINDS={ parent:1, task_done:1, task_fail:1, daily_bonus:1, manual:1, bonus:1 };
   var KNOWN_R={ teeth:1, teeth_manual:1, guess_win:1, guess_wrong:1, guess_timeout:1, streak_bonus:1,
                 parent_give:1, parent_take:1, parent_penalty:1, task_done:1, task_fail:1, daily_bonus:1, spend:1, spend_refund:1 };
   var LIST_CAP=60;
-  var TASK_W={ pending:0, active:1, done:2 };
+  var DONE_CAP=50;          /* лог «Выполнено» во вкладке «Задания» */
 
   function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
@@ -268,6 +295,7 @@
     var d=new Date(ts), hh=d.getHours(), mm=d.getMinutes();
     return sdk.formatDate(ts,{day:"numeric",month:"short"})+" · "+hh+":"+(mm<10?"0":"")+mm;
   }
+  function fmtDay(ts){ return ts ? sdk.formatDate(ts,{day:"numeric",month:"short"}) : ""; }
 
   /* ---------- данные ---------- */
   function load(){
@@ -322,9 +350,9 @@
     });
   }
 
-  function approveTask(tk){ /* родитель: подтвердить — движок начислит очки и сдвинет статус */
+  function approveTask(tk, pts){ /* родитель: подтвердить (+опц. поправка очков для предложения ребёнка) */
     if(busy) return; busy=true;
-    sdk.tasks.approve(tk).then(function(out){
+    sdk.tasks.approve(tk, pts).then(function(out){
       busy=false;
       if(!out || !out.ok){ sdk.ui.toast(t("loadFail")); load(); return; }
       if(out.bonus) sdk.ui.toast(t("bonusToast",{n:out.bonus}));
@@ -413,65 +441,152 @@
     if(del) del.onclick=function(){ ctl.close(); deleteTask(tk); };
   }
 
-  function tasksHtml(){ /* блок заданий в начале вкладки «Родители» */
-    var isP=parentCtl(), isK=kidCtl();
-    var list=S.tasks.filter(function(x){
-      if(x.status==="done") return isP;           /* выполненные одноразовые видит родитель */
-      return x.status==="active"||x.status==="pending";
-    });
-    list.sort(function(a,b){
-      return ((TASK_W[a.status]!=null?TASK_W[a.status]:9)-(TASK_W[b.status]!=null?TASK_W[b.status]:9))
-        || ((b.createdAt||0)-(a.createdAt||0));
-    });
-    var h="";
-    if(isP) h+='<button class="btn btn-cancel bk-addtask" data-act="add">'+esc(t("btnAddTask"))+'</button>';
-    for(var i=0;i<list.length;i++){
-      var tk=list[i], pts=taskPts(tk), once=(tk.type==="once");
-      var meta=esc(once?t("metaOnce"):t("metaRecur"));
-      var n=parseInt(tk.timesDone,10)||0;
-      if(!once && n) meta+=' · '+esc(t("doneTimes",{n:n}));
-      var prop=(tk.origin==="child");  /* предложение ребёнка (origin=child, всегда pending) */
-      if(prop) meta=esc(t("propTag"))+' · '+esc(t("chipProposed",{n:pts}));
-      var act="";
-      if(tk.status==="pending"){
-        if(prop){
-          /* предложение: родитель одобряет как есть или отклоняет (тонкая правка очков — в модуле «Задания»);
-             ребёнок видит, что предложение ждёт. */
-          if(isP) act+='<button class="bk-tbtn ok" data-act="ok" data-tid="'+esc(tk.id)+'">'+esc(t("approveBtn",{n:pts}))+'</button>'
-                     +'<button class="bk-tbtn x" data-act="deny" data-tid="'+esc(tk.id)+'" aria-label="'+esc(t("denyA11y"))+'">✕</button>';
-          else act+='<span class="bk-chip">'+esc(t("chipProposed",{n:pts}))+'</span>';
-        } else {
-          if(isP) act+='<button class="bk-tbtn ok" data-act="ok" data-tid="'+esc(tk.id)+'">'+esc(t("approveBtn",{n:pts}))+'</button>'
-                     +'<button class="bk-tbtn no" data-act="no" data-tid="'+esc(tk.id)+'" aria-label="'+esc(t("declineA11y"))+'">↩</button>';
-          else act+='<span class="bk-chip">'+esc(t("chipPending"))+'</span>';
-        }
-      } else if(tk.status==="active"){
-        if(isK) act+='<button class="bk-tbtn do" data-act="claim" data-tid="'+esc(tk.id)+'">'+esc(t("btnIDid"))+'</button>';
-        if(isP) act+='<button class="bk-tbtn x" data-act="del" data-tid="'+esc(tk.id)+'" aria-label="'+esc(t("deleteTask"))+'">✕</button>';
-      } else { /* done */
-        act+='<span class="bk-chip ok">'+esc(t("chipDone"))+'</span>';
-        if(isP) act+='<button class="bk-tbtn x" data-act="del" data-tid="'+esc(tk.id)+'" aria-label="'+esc(t("deleteTask"))+'">✕</button>';
-      }
-      var editable=isP && tk.status==="active";
-      h+='<div class="bk-task st-'+esc(tk.status)+(prop?" prop":"")+'"'
-        +(editable?' data-act="edit" data-tid="'+esc(tk.id)+'" role="button" tabindex="0"':'')+'>'
-        +'<div class="bk-badge plus">+'+pts+'</div>'
-        +'<div class="bk-task-main"><div class="bk-task-t">'+esc(tk.title||"")+'</div>'
-        +'<div class="bk-task-m">'+meta+'</div></div>'
-        +'<div class="bk-tact">'+act+'</div></div>';
+  function openProposeSheet(){ /* ребёнок: залогировать сделанное дело со своей оценкой очков */
+    var box=document.createElement("div");
+    box.innerHTML='<h2>'+esc(t("proposeTitle"))+'</h2>'
+      +'<div class="bk-tform">'
+        +'<input type="text" id="bkPTitle" maxlength="60" placeholder="'+esc(t("proposeTitlePh"))+'">'
+        +'<label class="bk-tlbl" for="bkPPts">'+esc(t("proposePtsLbl"))+'</label>'
+        +'<input type="number" id="bkPPts" inputmode="numeric" min="1" max="1000" value="10">'
+      +'</div>'
+      +'<p class="bk-thint">'+esc(t("proposeHint"))+'</p>'
+      +'<div class="sheet-actions"><button class="btn btn-cancel" data-close>'+esc(t("common.cancel"))+'</button>'
+        +'<button class="btn btn-primary" id="bkPSend">'+esc(t("proposeSend"))+'</button></div>';
+    var ctl=sdk.ui.sheet(box); curSheet=ctl;
+    box.querySelector("[data-close]").onclick=function(){ ctl.close(); };
+    box.querySelector("#bkPSend").onclick=function(){
+      if(busy) return;
+      var ttl=(box.querySelector("#bkPTitle").value||"").trim();
+      if(!ttl){ sdk.ui.toast(t("needTitle")); return; }
+      var pts=parseInt(box.querySelector("#bkPPts").value,10);
+      if(!(pts>0)) pts=10; if(pts>1000) pts=1000;
+      busy=true;
+      sdk.tasks.propose({title:ttl,points:pts}).then(function(out){
+        busy=false;
+        if(!out || !out.ok){ sdk.ui.toast(t("loadFail")); return; }
+        ctl.close(); sdk.ui.toast(t("proposedToast")); sdk.ui.haptics("light");
+        load();
+      });
+    };
+  }
+
+  function openReviewSheet(tk){ /* родитель: проверить предложение ребёнка (правка очков + одобрить/отклонить) */
+    var box=document.createElement("div");
+    box.innerHTML='<h2>'+esc(t("reviewTitle"))+'</h2>'
+      +'<div class="bk-review">'
+        +'<div class="bk-rv-title">'+esc(tk.title||"")+'</div>'
+        +'<label class="bk-tlbl" for="bkRvPts">'+esc(t("reviewPtsLbl"))+'</label>'
+        +'<input type="number" id="bkRvPts" inputmode="numeric" min="1" max="1000" value="'+(tk.points>0?tk.points:10)+'">'
+      +'</div>'
+      +'<div class="sheet-actions"><button class="btn btn-cancel" id="bkRvDeny">'+esc(t("denyBtn"))+'</button>'
+        +'<button class="btn btn-primary" id="bkRvOk">'+esc(t("approveAdj",{n:tk.points||10}))+'</button></div>';
+    var ctl=sdk.ui.sheet(box); curSheet=ctl;
+    var inp=box.querySelector("#bkRvPts"), ok=box.querySelector("#bkRvOk");
+    inp.oninput=function(){ var n=parseInt(inp.value,10); ok.textContent=t("approveAdj",{n:(n>0?Math.min(n,1000):10)}); };
+    box.querySelector("#bkRvDeny").onclick=function(){ ctl.close(); denyTask(tk); };
+    ok.onclick=function(){
+      var n=parseInt(inp.value,10); if(!(n>0)) n=10; if(n>1000) n=1000;
+      ctl.close(); approveTask(tk, n);
+    };
+  }
+
+  /* ---------- вкладка «Задания»: полное управление (стопка секций, порт модуля tasks) ---------- */
+  function bucket(){ /* разложить задания по корзинам */
+    var b={ review:[], active:[], done:[], todo:[], waiting:[] }, i, tk;
+    for(i=0;i<S.tasks.length;i++){
+      tk=S.tasks[i];
+      if(tk.status==="pending"){ b.review.push(tk); b.waiting.push(tk); }
+      else if(tk.status==="active"){ b.active.push(tk); }
+      else if(tk.status==="done"){ b.done.push(tk); }
     }
-    return h;
+    /* очередь проверки: предложения детей (origin=child) — первыми, затем по свежести */
+    b.review.sort(function(a,c){
+      var pa=(a.origin==="child")?0:1, pc=(c.origin==="child")?0:1;
+      return pa-pc || ((c.claimedAt||c.createdAt||0)-(a.claimedAt||a.createdAt||0));
+    });
+    b.waiting.sort(function(a,c){ return (c.claimedAt||c.createdAt||0)-(a.claimedAt||a.createdAt||0); });
+    b.active.sort(function(a,c){ return (c.createdAt||0)-(a.createdAt||0); });
+    b.todo=b.active.slice();
+    b.done.sort(function(a,c){ return (c.doneAt||c.updatedAt||0)-(a.doneAt||a.updatedAt||0); });
+    return b;
+  }
+  function metaLine(tk){
+    var once=(tk.type==="once"), m=esc(once?t("metaOnce"):t("metaRecur"));
+    if(!once && tk.timesDone) m+=' · '+esc(t("doneTimes",{n:tk.timesDone}));
+    return m;
+  }
+  function taskCard(tk, kind){ /* kind: review|active|done|todo|waiting */
+    var pts=taskPts(tk), prop=(tk.origin==="child"), act="", sub="", cls="";
+    if(kind==="review"){
+      if(prop){
+        /* предложение ребёнка: родитель открывает шторку-ревью (правит очки), одобряет или отклоняет */
+        cls=" prop"; sub='<span class="bk-tag">'+esc(t("propTag"))+'</span> '+esc(t("chipProposed",{n:pts}));
+        act='<button class="bk-tbtn ok" data-act="review" data-tid="'+esc(tk.id)+'">'+esc(t("btnReview"))+'</button>';
+      } else {
+        sub=metaLine(tk);
+        act='<button class="bk-tbtn ok" data-act="ok" data-tid="'+esc(tk.id)+'">'+esc(t("approveBtn",{n:pts}))+'</button>'
+           +'<button class="bk-tbtn no" data-act="no" data-tid="'+esc(tk.id)+'" aria-label="'+esc(t("declineA11y"))+'">↩</button>';
+      }
+    } else if(kind==="active"){
+      sub=metaLine(tk);
+      act='<button class="bk-tbtn x" data-act="del" data-tid="'+esc(tk.id)+'" aria-label="'+esc(t("deleteTask"))+'">✕</button>';
+    } else if(kind==="todo"){
+      sub=metaLine(tk);
+      act='<button class="bk-tbtn do" data-act="claim" data-tid="'+esc(tk.id)+'">'+esc(t("btnIDid"))+'</button>';
+    } else if(kind==="waiting"){
+      sub=prop?('<span class="bk-tag">'+esc(t("tagProposal"))+'</span> '+esc(t("chipProposed",{n:pts}))):metaLine(tk);
+      act='<span class="bk-chip">'+esc(t("chipPending"))+'</span>';
+    } else { /* done */
+      sub=tk.doneAt?esc(t("doneOn",{d:fmtDay(tk.doneAt)})):metaLine(tk);
+      act='<span class="bk-chip ok">'+esc(t("chipDone"))+'</span>';
+      if(parentCtl()) act+='<button class="bk-tbtn x" data-act="del" data-tid="'+esc(tk.id)+'" aria-label="'+esc(t("deleteTask"))+'">✕</button>';
+    }
+    /* активную карточку родитель может тапнуть для правки */
+    var editable=(kind==="active" && parentCtl());
+    return '<div class="bk-task st-'+esc(tk.status)+cls+'"'
+      +(editable?' data-act="edit" data-tid="'+esc(tk.id)+'" role="button" tabindex="0"':'')+'>'
+      +'<div class="bk-badge plus">+'+pts+'</div>'
+      +'<div class="bk-task-main"><div class="bk-task-t">'+esc(tk.title||"")+'</div>'
+      +'<div class="bk-task-m">'+sub+'</div></div>'
+      +'<div class="bk-tact">'+act+'</div></div>';
+  }
+  function section(titleKey, list, kind){
+    if(!list.length) return "";
+    var h='<div class="bk-sec"><div class="bk-sec-h"><span>'+esc(t(titleKey))+'</span><span class="bk-sec-n">'+list.length+'</span></div>';
+    for(var i=0;i<list.length;i++) h+=taskCard(list[i],kind);
+    return h+'</div>';
+  }
+  function renderTasks(){ /* вкладка «Задания»: родитель/ребёнок (в демо — родительский вид) */
+    var box=E.list, b=bucket(), h="";
+    if(parentCtl()){
+      h+='<button class="btn btn-cancel bk-addtask" data-act="add">'+esc(t("btnAddTask"))+'</button>';
+      h+=section("secReview", b.review, "review");
+      h+=section("secActive", b.active, "active");
+      h+=section("secDone", b.done.slice(0,DONE_CAP), "done");
+      if(!b.review.length && !b.active.length && !b.done.length)
+        h+='<div class="bk-empty"><div class="bk-empty-ic">'+CLIP_IC+'</div><p>'+esc(t("emptyParent"))+'</p></div>';
+    } else {
+      h+='<button class="btn btn-cancel bk-addtask" data-act="propose">'+esc(t("btnPropose"))+'</button>';
+      h+=section("secTodo", b.todo, "todo");
+      h+=section("secWaiting", b.waiting, "waiting");
+      h+=section("secDone", b.done.slice(0,DONE_CAP), "done");
+      if(!b.todo.length && !b.waiting.length && !b.done.length)
+        h+='<div class="bk-empty"><div class="bk-empty-ic">'+CLIP_IC+'</div><p>'+esc(t("emptyKid"))+'</p></div>';
+    }
+    box.innerHTML=h;
   }
   function onListClick(e){
     if(!alive) return;
     var b=e.target.closest("[data-act]"); if(!b || !E.list.contains(b)) return;
     var act=b.getAttribute("data-act");
     if(act==="add"){ openTaskSheet(null); return; }
+    if(act==="propose"){ openProposeSheet(); return; }
     var tk=taskOf(b.getAttribute("data-tid")); if(!tk) return;
     if(act==="edit"){ openTaskSheet(tk); }
     else if(act==="claim"){ claimTask(tk); }
     else if(act==="ok"){ approveTask(tk); }
     else if(act==="no"){ declineTask(tk); }
+    else if(act==="review"){ openReviewSheet(tk); }
     else if(act==="deny"){ denyTask(tk); }
     else if(act==="del"){ deleteTask(tk); }
   }
@@ -501,12 +616,12 @@
       var rb=box.querySelector("#bkRetry"); if(rb) rb.onclick=function(){ S.err=false; E.pts.textContent="…"; load(); };
       return;
     }
+    if(S.tab==="tasks"){ renderTasks(); return; }   /* вкладка заданий — своё секционное управление */
     var rows=[], i, it, d;
     for(i=0;i<S.items.length;i++){ it=S.items[i]; d=it.data||{}; if(tabOf(d)===S.tab) rows.push(it); }
     var html="";
-    if(S.tab==="parents") html+=tasksHtml();
     if(!rows.length){
-      if(!html) html='<div class="bk-empty"><p>'+esc(t(S.tab==="apps"?"emptyApps":"emptyParents"))+'</p></div>';
+      html='<div class="bk-empty"><p>'+esc(t(S.tab==="apps"?"emptyApps":"emptyParents"))+'</p></div>';
       box.innerHTML=html;
       return;
     }
@@ -637,7 +752,7 @@
   /* ---------- каркас ---------- */
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; alive=true; busy=false; curSheet=null; PE=null;
-    S={ balance:0, streak:0, plus:0, items:[], tasks:[], tab:"apps", loaded:false, err:false };
+    S={ balance:0, streak:0, plus:0, items:[], tasks:[], tab:"tasks", loaded:false, err:false };
     /* guardrails: шапку строит общая рамка (sdk.ui.frame); модуль наполняет только body */
     var body=sdk.ui.frame({
       titleHtml:'<div class="bk-title">'+esc(t("title"))+'</div><div class="bk-sub">'+esc(t("subtitle"))+'</div>',
@@ -656,9 +771,10 @@
           +'<div class="bk-pig-label">'+esc(t("ptsWord"))+': <b id="bkPts">…</b></div></div>'
         +'<div class="bk-earned" id="bkEarned" hidden></div></div>'
       +'<nav class="bk-tabs" id="bkTabs">'
-        +'<button class="bk-tab active" data-tab="apps">'+esc(t("tabApps"))+'</button>'
-        +'<button class="bk-tab" data-tab="parents">'+esc(t("tabParents"))
-          +'<span class="bk-tab-n" id="bkTabN" hidden>0</span></button></nav>'
+        +'<button class="bk-tab active" data-tab="tasks">'+esc(t("tabTasks"))
+          +'<span class="bk-tab-n" id="bkTabN" hidden>0</span></button>'
+        +'<button class="bk-tab" data-tab="apps">'+esc(t("tabApps"))+'</button>'
+        +'<button class="bk-tab" data-tab="parents">'+esc(t("tabParents"))+'</button></nav>'
       +'<section class="bk-list" id="bkList"></section>'
       +'</div>';
     var el=body.querySelector(".bk");
