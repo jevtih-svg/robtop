@@ -379,6 +379,9 @@ body.demo .demo-badge{display:block}
 
 /* ===================== ЭКРАН НАСТРОЕК (#settings) ===================== */
 #settings{padding-bottom:calc(var(--kidbar-total) + 16px)} /* нижнее меню всегда видно на настройках — резерв снизу */
+/* экран оповещений (вкладка нижнего меню): тот же резерв снизу под меню; шапка .set-top, список .ntf-list, секция «Настройки» .store-section+.ntf-push */
+#notifications{padding-bottom:calc(var(--kidbar-total) + 16px)}
+#notifications .ntf-list{max-height:none}  /* на экране (не в шторке) список во всю высоту, скролл страницы */
 .set-top{display:flex;align-items:center;gap:12px;padding:calc(26px + var(--safe-top)) 0 8px}
 .set-top h1{font-family:var(--font-display);font-weight:400;font-size:23px;margin:0;color:#fff;
   text-shadow:0 0 12px color-mix(in srgb,var(--accent) 60%, transparent)}

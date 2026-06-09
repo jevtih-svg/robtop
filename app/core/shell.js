@@ -95,7 +95,7 @@ window.RobTop = window.RobTop || {};
   /* ---- DOM ---- */
   var body, appsEl, homeView, moduleView, lockView, parentView, settingsView, fabEl, toastEl, demoBadge,
       hudEl,hudL,hudCnum,hudClbl,hudRnum,hudRlbl, settingsBody,
-      storeOverlay, storeBody, gearBtn, kidBarEl, homeJgl=null;
+      storeOverlay, storeBody, gearBtn, kidBarEl, notifView, homeJgl=null;
 
   /* ================= общие UI-сервисы ================= */
   function buzz(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
@@ -362,6 +362,16 @@ window.RobTop = window.RobTop || {};
   function moduleViewEl(){ return moduleView; }
   function hideParent(){ if(parentView) parentView.classList.remove("active"); }
   function hideSettings(){ if(settingsView) settingsView.classList.remove("active"); }
+  function hideNotif(){ if(notifView) notifView.classList.remove("active"); }
+  /* экран оповещений (вкладка NOTIFICATIONS единого меню, Ф2): контент рисует core/notify.js */
+  function showNotifications(){
+    if(RT.Notify && RT.Notify.renderInto && notifView) RT.Notify.renderInto(notifView);
+    body.setAttribute("data-view","notifications");
+    if(lockView) lockView.classList.remove("active"); hideParent(); hideSettings();
+    homeView.classList.remove("active"); moduleView.classList.remove("active");
+    if(notifView) notifView.classList.add("active");
+    window.scrollTo(0,0); fabDestroy(); setNavActive();
+  }
   /* ---- память экрана: обновление страницы возвращает туда же (rt_screen) ----
      Пишем при каждом переходе; на буте читаем ДО первого showHome (иначе затрётся). */
   function screenSave(st){ try{ lsSet("rt_screen",st); }catch(e){} }
@@ -371,14 +381,14 @@ window.RobTop = window.RobTop || {};
   function showHome(){
     screenSave({v:"home"});
     if(!demo && isParent() && RT.Parent){ showParent(); return; }
-    body.setAttribute("data-view","home"); if(lockView) lockView.classList.remove("active"); hideParent(); hideSettings(); moduleView.classList.remove("active"); homeView.classList.add("active"); window.scrollTo(0,0); fabDestroy(); homeHud(); setNavActive();
+    body.setAttribute("data-view","home"); if(lockView) lockView.classList.remove("active"); hideParent(); hideSettings(); hideNotif(); moduleView.classList.remove("active"); homeView.classList.add("active"); window.scrollTo(0,0); fabDestroy(); homeHud(); setNavActive();
   }
-  function showModule(){ screenSave({v:"module",id:RT._current||null}); body.setAttribute("data-view","module"); if(lockView) lockView.classList.remove("active"); hideParent(); hideSettings(); homeView.classList.remove("active"); moduleView.classList.add("active"); if(kidBarEl) kidBarEl.classList.remove("rt-bar-hide"); window.scrollTo(0,0); setNavActive(); }
+  function showModule(){ screenSave({v:"module",id:RT._current||null}); body.setAttribute("data-view","module"); if(lockView) lockView.classList.remove("active"); hideParent(); hideSettings(); hideNotif(); homeView.classList.remove("active"); moduleView.classList.add("active"); if(kidBarEl) kidBarEl.classList.remove("rt-bar-hide"); window.scrollTo(0,0); setNavActive(); }
   /* родительский дашборд (core/parent.js); read-only поверхность вместо детского дома */
   function showParent(){
     body.setAttribute("data-view","parent");
     if(lockView) lockView.classList.remove("active");
-    homeView.classList.remove("active"); moduleView.classList.remove("active"); hideSettings();
+    homeView.classList.remove("active"); moduleView.classList.remove("active"); hideSettings(); hideNotif();
     if(parentView) parentView.classList.add("active");
     window.scrollTo(0,0); fabDestroy();
     if(RT.Parent) RT.Parent.show();
@@ -388,7 +398,7 @@ window.RobTop = window.RobTop || {};
   /* ---- экран входа (lock): на сервере без сессии приложение закрыто ---- */
   function showLock(loading){
     body.setAttribute("data-view","lock");
-    homeView.classList.remove("active"); moduleView.classList.remove("active"); hideParent(); hideSettings();
+    homeView.classList.remove("active"); moduleView.classList.remove("active"); hideParent(); hideSettings(); hideNotif();
     lockView.classList.add("active");
     renderLock(loading);
     window.scrollTo(0,0);
@@ -592,6 +602,7 @@ window.RobTop = window.RobTop || {};
     if(homeJgl && !keep) homeJgl.exit(); // обычная перерисовка сбрасывает режим перестановки
     var act=[], soon=[], hid=[];
     RT._registry.forEach(function(m){
+      if(m.id==="bank"||m.id==="chat") return; /* BANK/CHAT — вкладки нижнего меню, НЕ плитки (Ф4) */
       if(m.status!=="active"){ soon.push(m); return; }
       (m.hidden?hid:act).push(m);
     });
@@ -691,7 +702,7 @@ window.RobTop = window.RobTop || {};
     screenSave({v:"settings"});
     renderSettings();
     body.setAttribute("data-view","settings");
-    homeView.classList.remove("active"); moduleView.classList.remove("active"); hideParent();
+    homeView.classList.remove("active"); moduleView.classList.remove("active"); hideParent(); hideNotif();
     if(lockView) lockView.classList.remove("active");
     settingsView.classList.add("active");
     window.scrollTo(0,0); fabDestroy(); setNavActive();
@@ -703,32 +714,33 @@ window.RobTop = window.RobTop || {};
   function closeSettings(){ if(!isSettingsOpen()) return; showHome(); }
 
   /* ---- ЕДИНОЕ НИЖНЕЕ МЕНЮ (#kidBar.rt-nav): маршрутизация 5 вкладок (ПЛАН-нижнее-меню.md).
-     РОЛЕ-ОСОЗНАННО: у ребёнка APPS=сетка, BANK/CHAT=модули прямо; у РОДИТЕЛЯ apps/bank/chat —
-     вкладки дашборда (RT.Parent.setTab, его #pdTabs скрыт). NOTIFICATIONS=центр (Ф1 — пока шторка),
-     SETTINGS=настройки — общие для обеих ролей. Видно на всех экранах (Ф3). ---- */
+     BANK/CHAT — у ОБЕИХ ролей открывают САМ модуль (RT.open), без гейтов (Ф4). APPS — сетка
+     (ребёнок showHome / родитель дашборд RT.Parent.setTab("apps")). NOTIFICATIONS — экран (Ф2),
+     SETTINGS — настройки. Видно на всех экранах. ---- */
   function parentMode(){ return !demo && isParent() && !!RT.Parent; }
   function navTo(tab){
-    if(tab==="notifications"){ if(RT.Notify && RT.Notify.open) RT.Notify.open(); setNavActive(); return; }
+    if(tab==="notifications"){ showNotifications(); return; }
     if(tab==="settings"){ openSettings(); return; }
+    if(tab==="bank"){ if(RT.current()!=="bank") RT.open("bank"); else setNavActive(); return; }
+    if(tab==="chat"){ if(RT.current()!=="chat") RT.open("chat"); else setNavActive(); return; }
+    /* apps */
     if(parentMode()){
-      /* apps/bank/chat — на дашборд и переключить его вкладку */
       if(RT.current()) RT.close();                                    /* закрыть открытый модуль → showParent */
       else if(body.getAttribute("data-view")!=="parent") showParent();
-      if(RT.Parent.setTab) RT.Parent.setTab(tab);
-      setNavActive(); return;
+      if(RT.Parent.setTab) RT.Parent.setTab("apps");
+    } else {
+      if(RT.current()) RT.close(); else showHome();
     }
-    if(tab==="apps"){ if(RT.current()) RT.close(); else showHome(); }
-    else if(tab==="bank"){ if(RT.current()!=="bank") RT.open("bank"); }
-    else if(tab==="chat"){ if(RT.current()!=="chat") RT.open("chat"); }
     setNavActive();
   }
   function setNavActive(){
     if(!kidBarEl) return;
     var v=body.getAttribute("data-view"), cur=RT.current(), act;
-    if(v==="settings") act="settings";
-    else if(parentMode() && v==="parent") act=(RT.Parent.tab && RT.Parent.tab()) || "apps";
+    if(v==="notifications") act="notifications";
+    else if(v==="settings") act="settings";
     else if(cur==="bank") act="bank";
     else if(cur==="chat") act="chat";
+    else if(parentMode() && v==="parent") act=(RT.Parent.tab && RT.Parent.tab()) || "apps";
     else act="apps"; /* дом и любой другой открытый модуль → APPS */
     Array.prototype.forEach.call(kidBarEl.querySelectorAll(".rt-nav-b"),function(b){
       b.classList.toggle("on", b.getAttribute("data-nav")===act);
@@ -1535,6 +1547,7 @@ window.RobTop = window.RobTop || {};
     settingsView=document.getElementById("settings");
     storeOverlay=document.getElementById("storeOverlay"); storeBody=document.getElementById("storeBody"); gearBtn=document.getElementById("gearBtn");
     kidBarEl=document.getElementById("kidBar");
+    notifView=document.getElementById("notifications");
   }
   function wire(){
     appsEl.addEventListener("click",function(e){

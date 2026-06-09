@@ -27,7 +27,7 @@ window.RobTop = window.RobTop || {};
   /* =================== СЛОВАРИ (en/ru/lv) =================== */
   I.add({
   en:{ ntf:{
-    title:"Notifications", empty:"Nothing here yet", readAll:"Mark all as read",
+    title:"Notifications", empty:"Nothing here yet", readAll:"Mark all as read", settings:"Settings",
     allRead:"All caught up!", open:"Notifications", app:"RobTop",
     generic:"News from {app}", gone:"This app is not available now",
     push:{ row:"Notifications on this device",
@@ -70,7 +70,7 @@ window.RobTop = window.RobTop || {};
     }
   }},
   ru:{ ntf:{
-    title:"Оповещения", empty:"Пока пусто", readAll:"Прочитать все",
+    title:"Оповещения", empty:"Пока пусто", readAll:"Прочитать все", settings:"Настройки",
     allRead:"Все прочитаны!", open:"Оповещения", app:"RobTop",
     generic:"Новость из «{app}»", gone:"Это приложение сейчас недоступно",
     push:{ row:"Уведомления на этом устройстве",
@@ -111,7 +111,7 @@ window.RobTop = window.RobTop || {};
     }
   }},
   lv:{ ntf:{
-    title:"Paziņojumi", empty:"Pagaidām tukšs", readAll:"Atzīmēt visus kā izlasītus",
+    title:"Paziņojumi", empty:"Pagaidām tukšs", readAll:"Atzīmēt visus kā izlasītus", settings:"Iestatījumi",
     allRead:"Viss izlasīts!", open:"Paziņojumi", app:"RobTop",
     generic:"Jaunums no “{app}”", gone:"Šī lietotne šobrīd nav pieejama",
     push:{ row:"Paziņojumi šajā ierīcē",
@@ -330,6 +330,39 @@ window.RobTop = window.RobTop || {};
     wirePush(node);
   }
 
+  /* экран оповещений (ЕДИНОЕ МЕНЮ Ф2): список + секция «Настройки» (push + место под будущие
+     пункты) В КОНТЕЙНЕР (вкладка NOTIFICATIONS), без шторки. Зовёт shell.showNotifications. */
+  function renderInto(container){
+    if(!container) return;
+    container.innerHTML='<div class="set-top"><h1>'+esc(I.t("ntf.title"))+'</h1>'
+      +'<button class="btn btn-cancel ntf-readall" id="ntfReadAll" style="display:none;flex:none;min-width:0;padding:9px 14px;margin-left:auto">'+esc(I.t("ntf.readAll"))+'</button></div>'
+      +'<div class="ntf-list" id="ntfList"><p class="set-note" style="text-align:center">…</p></div>'
+      +'<div class="store-section">'+esc(I.t("ntf.settings"))+'</div>'
+      +'<div class="ntf-push" id="ntfPushRow" style="display:none"><span class="lbl" id="ntfPushLbl"></span>'
+      +'<button class="toggle" id="ntfPushTgl" type="button" aria-label="push"></button></div>';
+    var listEl=container.querySelector("#ntfList"), allBtn=container.querySelector("#ntfReadAll");
+    var items=[];
+    function paint(){
+      listEl.innerHTML=items.length ? items.map(rowHtml).join("") : '<p class="ntf-empty">'+esc(I.t("ntf.empty"))+'</p>';
+      allBtn.style.display=items.some(function(it){ return !it.read; })?"":"none";
+    }
+    api({op:"list"}).then(function(r){ items=(r&&r.items)||[]; if(items.length) seenMax=Math.max(seenMax, items[0].id); paint(); })
+      .catch(function(){ listEl.innerHTML='<p class="ntf-empty">'+esc(I.t("common.failed"))+'</p>'; });
+    listEl.addEventListener("click",function(e){
+      var b=e.target.closest("[data-ntf]"); if(!b) return;
+      var id=parseInt(b.getAttribute("data-ntf"),10), it=null;
+      items.forEach(function(x){ if(x.id===id) it=x; });
+      if(!it) return;
+      if(!it.read){ it.read=true; markRead(id); }
+      if(it.link) navigate(it.link); else paint(); /* navigate сам уводит на нужный экран */
+    });
+    allBtn.onclick=function(){
+      api({op:"read_all"}).then(function(){ items.forEach(function(x){ x.read=true; }); badge(0); paint(); if(shell().toast) shell().toast(I.t("ntf.allRead")); })
+        .catch(function(){ if(shell().toast) shell().toast(I.t("common.failed")); });
+    };
+    wirePush(container);
+  }
+
   /* =================== WEB PUSH (PWA) =================== */
   function b64uToU8(s){
     s=String(s).replace(/-/g,"+").replace(/_/g,"/");
@@ -454,6 +487,6 @@ window.RobTop = window.RobTop || {};
   /* модуль спрятал HUD (полноэкранная сцена) — прячем и колокольчик (класс на body ставит shell) */
   function hide(b){ if(bellEl) bellEl.classList.toggle("ntf-hide", !!b); }
 
-  RT.Notify={ boot:boot, sync:sync, open:openCenter, navigate:navigate,
+  RT.Notify={ boot:boot, sync:sync, open:openCenter, renderInto:renderInto, navigate:navigate,
               decorateAccounts:decorateAccounts, hide:hide };
 })(window.RobTop);
