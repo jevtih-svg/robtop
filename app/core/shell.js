@@ -708,7 +708,8 @@ window.RobTop = window.RobTop || {};
   function openSettings(){
     if(isSettingsOpen()) return;
     if(homeJgl) homeJgl.exit(); // уходим с главного — режим перестановки закрыт
-    screenSave({v:"settings"});
+    /* НЕ сохраняем экран настроек в rt_screen: настройки — служебный экран, перезапуск/возврат
+       должен открывать дом/дашборд (или восстановленный модуль), а не настройки (фидбек Джеффа). */
     renderSettings();
     body.setAttribute("data-view","settings");
     homeView.classList.remove("active"); moduleView.classList.remove("active"); hideParent(); hideNotif();
@@ -1626,7 +1627,7 @@ window.RobTop = window.RobTop || {};
   function restoreScreen(savedSt){
     try{
       if(!savedSt || !savedSt.v || savedSt.v==="home") return;
-      if(savedSt.v==="settings"){ openSettings(); return; }
+      if(savedSt.v==="settings") return; // настройки НЕ восстанавливаем (+ чистит старый кэш): остаёмся на доме/дашборде
       if(savedSt.v==="module" && savedSt.id){
         var ok=false;
         RT._registry.forEach(function(m){ if(m.id===savedSt.id && m.status==="active" && m.enabled!==0) ok=true; });
