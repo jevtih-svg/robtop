@@ -26,7 +26,7 @@ function rt_ntf_push_templates() {
     if ($T !== null) return $T;
     $T = [
         'en' => [
-            '_app' => ['tasks'=>'Tasks','bank'=>'Piggy Bank','wishlist'=>'Wishlist','chat'=>'Chat','tickets'=>'Support'],
+            '_app' => ['tasks'=>'Tasks','bank'=>'Piggy Bank','wishlist'=>'Wishlist','chat'=>'Chat','tickets'=>'Support','walk'=>'Dog'],
             'generic' => 'New notification',
             'tickets'  => [
                 'reply'  => ['who'=>'', 'body'=>'Reply to “{subject}”'],
@@ -56,9 +56,12 @@ function rt_ntf_push_templates() {
                 'message' => ['who'=>'name', 'body'=>'{text}'],
                 'photo'   => ['who'=>'name', 'body'=>'📷 Photo'],
             ],
+            'walk' => [
+                'care_due' => ['who'=>'', 'body'=>'🐶 Time for dog care'],
+            ],
         ],
         'ru' => [
-            '_app' => ['tasks'=>'Задания','bank'=>'Копилка','wishlist'=>'Виш-лист','chat'=>'Чат','tickets'=>'Поддержка'],
+            '_app' => ['tasks'=>'Задания','bank'=>'Копилка','wishlist'=>'Виш-лист','chat'=>'Чат','tickets'=>'Поддержка','walk'=>'Собака'],
             'generic' => 'Новое оповещение',
             'tickets'  => [
                 'reply'  => ['who'=>'', 'body'=>'Ответ по обращению «{subject}»'],
@@ -88,9 +91,12 @@ function rt_ntf_push_templates() {
                 'message' => ['who'=>'name', 'body'=>'{text}'],
                 'photo'   => ['who'=>'name', 'body'=>'📷 Фото'],
             ],
+            'walk' => [
+                'care_due' => ['who'=>'', 'body'=>'🐶 Пора по уходу за собакой'],
+            ],
         ],
         'lv' => [
-            '_app' => ['tasks'=>'Uzdevumi','bank'=>'Krājkase','wishlist'=>'Vēlmju saraksts','chat'=>'Čats','tickets'=>'Atbalsts'],
+            '_app' => ['tasks'=>'Uzdevumi','bank'=>'Krājkase','wishlist'=>'Vēlmju saraksts','chat'=>'Čats','tickets'=>'Atbalsts','walk'=>'Suns'],
             'generic' => 'Jauns paziņojums',
             'tickets'  => [
                 'reply'  => ['who'=>'', 'body'=>'Atbilde uz pieteikumu “{subject}”'],
@@ -119,6 +125,9 @@ function rt_ntf_push_templates() {
             'chat' => [
                 'message' => ['who'=>'name', 'body'=>'{text}'],
                 'photo'   => ['who'=>'name', 'body'=>'📷 Foto'],
+            ],
+            'walk' => [
+                'care_due' => ['who'=>'', 'body'=>'🐶 Laiks suņa aprūpei'],
             ],
         ],
     ];

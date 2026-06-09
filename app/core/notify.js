@@ -66,7 +66,8 @@ window.RobTop = window.RobTop || {};
         pending:"{name} sent a photo to check — “{desc}”",
         correct:"Find the Object: correct! +{n}",
         wrong:"Find the Object: not counted −{n}",
-        bonus:"Difficulty bonus +{n}!" }
+        bonus:"Difficulty bonus +{n}!" },
+      walk:{ care_due:"Dog care is due" }
     }
   }},
   ru:{ ntf:{
@@ -107,7 +108,8 @@ window.RobTop = window.RobTop || {};
         pending:"{name}: фото на проверку — «{desc}»",
         correct:"Найти предмет: верно! +{n}",
         wrong:"Найти предмет: не засчитано −{n}",
-        bonus:"Бонус за сложность +{n}!" }
+        bonus:"Бонус за сложность +{n}!" },
+      walk:{ care_due:"Пора по уходу за собакой" }
     }
   }},
   lv:{ ntf:{
@@ -148,7 +150,8 @@ window.RobTop = window.RobTop || {};
         pending:"{name}: foto pārbaudei — “{desc}”",
         correct:"Atrodi priekšmetu: pareizi! +{n}",
         wrong:"Atrodi priekšmetu: netika ieskaitīts −{n}",
-        bonus:"Grūtības bonuss +{n}!" }
+        bonus:"Grūtības bonuss +{n}!" },
+      walk:{ care_due:"Laiks suņa aprūpei" }
     }
   }}
   });
