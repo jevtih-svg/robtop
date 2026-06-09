@@ -60,6 +60,17 @@
   --gold-grad:linear-gradient(180deg,#ffe08a,#ffc23b);
   --purple-grad:linear-gradient(135deg,#a64bff,#7a2bd6);
   --cyan-grad:linear-gradient(135deg,#19e3ff,#0e9fd6);
+  /* ===== ЭКРАН НАСТРОЕК: спокойный фон вместо анимированного неонового канваса =====
+     Определено через токены темы (var(--accent)/--accent-2/--bg0/--ink резолвятся по АКТИВНОЙ теме
+     в точке применения), поэтому ОДНО правило подходит всем темам — и детской «Неон», и «Tilley».
+     --settings-bg: тёмная база темы с лёгким вертикальным акцентным градиентом (моно-тон, читаемо).
+     --settings-panel: заливка карточек/строк на тон светлее (тинт цветом текста темы) — заметнее
+     прежних rgba(255,255,255,.04), которые тонули в анимированном фоне. */
+  --settings-bg:linear-gradient(180deg,
+    color-mix(in srgb, var(--accent) 14%, var(--bg0)) 0%,
+    var(--bg0) 50%,
+    color-mix(in srgb, var(--accent-2) 12%, var(--bg0)) 100%);
+  --settings-panel:color-mix(in srgb, var(--ink) 14%, transparent);
 }
 
 /* ===================== ТЕМЫ (body[data-theme], хранится на аккаунте) =====================
@@ -389,6 +400,16 @@ body.demo .demo-badge{display:block}
 
 /* ===================== ЭКРАН НАСТРОЕК (#settings) ===================== */
 #settings{padding-bottom:calc(var(--kidbar-total) + 16px)} /* нижнее меню всегда видно на настройках — резерв снизу */
+/* ФОН НАСТРОЕК: прячем анимированный неоновый канвас (#bg) и кладём спокойный градиент темы на body
+   (покрывает весь экран, в т.ч. когда контент короче вьюпорта). Контент читается заметно
+   контрастнее в ОБЕИХ ролях/темах. Только в этом виде — на остальных экранах канвас как был. */
+body[data-view="settings"] #bg{display:none}
+body[data-view="settings"]{background-image:var(--settings-bg)}
+/* поверхности настроек заметнее на спокойном фоне: бьём ТОЛЬКО заливку (рамки и состояния
+   .on/:focus заданы отдельно и не ломаются — подсветка выбора/фокуса цела). Скоуп #settings (а НЕ
+   body[data-view=settings]) — чтобы тинт НЕ протекал в шторки (они дети body, со своим --sheet-bg).
+   .store-install (пунктирная CTA «добавить») намеренно НЕ включена. */
+#settings :is(.acct-row,.set-in,.lang-seg,.theme-card,.invlink,.store-row){background:var(--settings-panel)}
 /* экран оповещений (вкладка нижнего меню): тот же резерв снизу под меню; шапка .set-top, список .ntf-list, секция «Настройки» .store-section+.ntf-push */
 #notifications{padding-bottom:calc(var(--kidbar-total) + 16px)}
 #notifications .ntf-list{max-height:none}  /* на экране (не в шторке) список во всю высоту, скролл страницы */
