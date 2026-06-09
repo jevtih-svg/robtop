@@ -834,7 +834,7 @@ window.RobTop = window.RobTop || {};
     var sw=root.querySelector("#pdKidSw"); if(sw) sw.onclick=openChildSwitch;
     /* открыть полноэкранные модули из вкладок Копилка/Чат */
     var ob=root.querySelector("#pdOpenBank"); if(ob) ob.onclick=function(){ if(RT.open) RT.open("bank"); };
-    var ot=root.querySelector("#pdOpenTasks"); if(ot) ot.onclick=function(){ if(RT.open) RT.open("tasks"); };
+    var ot=root.querySelector("#pdOpenTasks"); if(ot) ot.onclick=function(){ if(RT.open) RT.open("bank"); }; /* задания теперь во вкладке Копилки (модуль «Задания» удалён) */
     var oc=root.querySelector("#pdOpenChat"); if(oc) oc.onclick=function(){ if(RT.open) RT.open("chat"); };
     /* плитки приложений */
     Array.prototype.forEach.call(root.querySelectorAll(".tile[data-mod]"),function(b){
