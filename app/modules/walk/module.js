@@ -51,7 +51,7 @@
       iss:{ toilet:"Had an accident at home", floor:"Ate from the floor", leash:"Pulled off the leash", ignore:"Ignored commands" },
       delWalk:"Delete walk", delWalkTitle:"Delete this walk?", delWalkToast:"Walk deleted",
       calTitle:"Dog calendar", statToday:"Today", statWalks:"Walks", statTime:"Time",
-      statLongest:"Longest", statStreak:"Day streak", perWeek:"Week", perMonth:"Month", perAll:"All time",
+      statLongest:"Longest", statStreak:"Days clean", perWeek:"Week", perMonth:"Month", perAll:"All time",
       dayEmpty:"Nothing logged this day", minShort:"{n} min",
       careTitle:"Care dates", careAdd:"Add care date", careType:"Type", careNext:"Next date",
       careRepeat:"Repeat", careEvery:"every", careNote:"Note", careDone:"Mark done", careDelete:"Delete",
@@ -96,7 +96,7 @@
       iss:{ toilet:"Сходила дома в туалет", floor:"Кушала с пола", leash:"Вырывалась с поводка", ignore:"Не прибегала на команды" },
       delWalk:"Удалить прогулку", delWalkTitle:"Удалить эту прогулку?", delWalkToast:"Прогулка удалена",
       calTitle:"Календарь собаки", statToday:"Сегодня", statWalks:"Прогулок", statTime:"Время",
-      statLongest:"Дольше всего", statStreak:"Дней подряд", perWeek:"Неделя", perMonth:"Месяц", perAll:"Всё время",
+      statLongest:"Дольше всего", statStreak:"Дней без шалостей", perWeek:"Неделя", perMonth:"Месяц", perAll:"Всё время",
       dayEmpty:"В этот день записей нет", minShort:"{n} мин",
       careTitle:"Уход и даты", careAdd:"Добавить дату ухода", careType:"Тип", careNext:"Следующая дата",
       careRepeat:"Повтор", careEvery:"каждые", careNote:"Заметка", careDone:"Отметить выполнено", careDelete:"Удалить",
@@ -141,7 +141,7 @@
       iss:{ toilet:"Notika negadījums mājās", floor:"Ēda no grīdas", leash:"Rāvās no pavadas", ignore:"Neklausīja komandām" },
       delWalk:"Dzēst pastaigu", delWalkTitle:"Dzēst šo pastaigu?", delWalkToast:"Pastaiga dzēsta",
       calTitle:"Suņa kalendārs", statToday:"Šodien", statWalks:"Pastaigas", statTime:"Laiks",
-      statLongest:"Garākā", statStreak:"Dienas pēc kārtas", perWeek:"Nedēļa", perMonth:"Mēnesis", perAll:"Viss laiks",
+      statLongest:"Garākā", statStreak:"Bez palaidnībām", perWeek:"Nedēļa", perMonth:"Mēnesis", perAll:"Viss laiks",
       dayEmpty:"Šajā dienā nav ierakstu", minShort:"{n} min",
       careTitle:"Aprūpes datumi", careAdd:"Pievienot aprūpes datumu", careType:"Veids", careNext:"Nākamais datums",
       careRepeat:"Atkārtot", careEvery:"katras", careNote:"Piezīme", careDone:"Atzīmēt izpildītu", careDelete:"Dzēst",
@@ -246,14 +246,19 @@
     var walks=0,min=0,longest=0;
     entries.forEach(function(it){ var d=dataOf(it); if(!d.day) return; if(fromKey && d.day<fromKey) return;
       walks++; var du=parseInt(d.duration,10)||0; min+=du; if(du>longest) longest=du; });
-    return { walks:walks, min:min, longest:longest, streak:walkStreak() };
+    return { walks:walks, min:min, longest:longest, streak:cleanStreak() };
   }
-  /* серия календарных дней подряд (до сегодня или вчера) с хотя бы одной прогулкой */
-  function walkStreak(){
-    var days={}; entries.forEach(function(it){ var d=dataOf(it); if(d.day) days[d.day]=1; });
+  /* «дней без шалостей»: подряд дни до сегодня без записей о непослушании. Прогулка каждый
+     день — норма (пропуск прогулки не «срыв»), поэтому метрика про ПОВЕДЕНИЕ (фидбек Джеффа).
+     Считаем от сегодня назад до первого дня с непослушанием; не раньше начала ведения. */
+  function cleanStreak(){
+    var behDays={}; behs.forEach(function(it){ var d=dataOf(it).day; if(d) behDays[d]=1; });
+    var earliest=null;
+    entries.forEach(function(it){ var d=dataOf(it).day; if(d && (!earliest||d<earliest)) earliest=d; });
+    behs.forEach(function(it){ var d=dataOf(it).day; if(d && (!earliest||d<earliest)) earliest=d; });
+    if(!earliest) return 0;
     var k=todayKey(), n=0;
-    if(!days[k]){ k=dayMinus(k,1); if(!days[k]) return 0; }
-    while(days[k] && n<366){ n++; k=dayMinus(k,1); }
+    while(k>=earliest && n<999){ if(behDays[k]) break; n++; k=dayMinus(k,1); }
     return n;
   }
 
@@ -922,6 +927,7 @@
     var ix=buildDayIndex(), c=ix[key]||{walks:[],behs:[],evts:[]};
     var careHere=careForDay(key);
     var node=document.createElement("div"); node.className="wk-detail wk-day";
+    node.setAttribute("data-mod","walk"); // шторка вне #module-view: даём скоуп, иначе строки (.wk-row/.wk-thumb) без стилей
     var h='<h2>'+esc(fmtDay(key))+'</h2>';
     if(!c.walks.length && !c.behs.length && !c.evts.length && !careHere.length){
       h+='<p class="wk-det-norate">'+esc(t("dayEmpty"))+'</p>';
