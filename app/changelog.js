@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.09.16", d:"2026-06-09", t:{
+    en:"Bottom menu now truly hides inside a conversation (and during a full-screen game), so it no longer floats over the keyboard on iPhone.",
+    ru:"Нижнее меню теперь по-настоящему скрывается в переписке (и в полноэкранной игре) — больше не всплывает над клавиатурой на iPhone.",
+    lv:"Apakšējā izvēlne tagad patiešām paslēpjas sarunā (un pilnekrāna spēlē) — vairs neuzpeld virs tastatūras iPhone." } },
   { v:"2026.06.09.15", d:"2026-06-09", t:{
     en:"Updates now reach the home-screen app reliably: tapping 'new version' fully reloads, even on iPhone.",
     ru:"Обновления теперь надёжно доходят до приложения с домашнего экрана: «новая версия» перезагружает полностью, даже на iPhone.",

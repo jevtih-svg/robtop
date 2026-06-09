@@ -170,7 +170,11 @@ body{
   min-height:var(--kidbar-total);padding:6px 8px calc(6px + var(--safe-bottom));
   background:var(--tabbar-grad);border-top:1px solid rgba(255,255,255,.09);backdrop-filter:blur(8px)}
 body[data-view="home"] .rt-nav,body[data-view="module"] .rt-nav,body[data-view="settings"] .rt-nav,body[data-view="notifications"] .rt-nav,body[data-view="parent"] .rt-nav{display:flex}
-.rt-nav.rt-bar-hide{display:none}
+/* ВАЖНО — специфичность: префикс body[data-view] обязателен. Без него `.rt-nav.rt-bar-hide`
+   имеет вес (0,2,0) и ПРОИГРЫВАЕТ показу `body[data-view="module"] .rt-nav` (0,2,1) — тогда
+   hud({hidden:true}) не прячет бар в модулях (он оставался видимым, всплывал над клавиатурой в
+   iOS-PWA). С body[data-view] вес (0,3,1) бьёт показ во всех видах. Держать ПОСЛЕ правила показа. */
+body[data-view] .rt-nav.rt-bar-hide{display:none}
 .rt-nav-b{flex:1;min-width:0;position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;
   border:none;background:none;cursor:pointer;font-family:inherit;font-size:10px;font-weight:800;letter-spacing:.2px;
   color:var(--muted);padding:6px 2px;border-radius:12px;transition:color .15s, transform .1s}
