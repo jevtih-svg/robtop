@@ -21,6 +21,8 @@
  */
 
 require __DIR__ . '/_bootstrap.php';
+require_once __DIR__ . '/_points.php'; // rt_points_tz для часового пояса семьи (care-проверка)
+require_once __DIR__ . '/_care.php';   // rt_care_check — оппортунистические напоминания об уходе
 rt_guard();
 rt_require_login(rt_db()); // SEC 2026-06-09: вход обязателен (single_user-фолбэк убран)
 
@@ -114,6 +116,9 @@ try {
     $tk = [$q['c'], $q['m'], $q['u']];
 } catch (Throwable $e) { /* таблицы заданий может не быть (миграция 024) */ }
 $data = md5(implode('|', $d) . '#' . implode('|', $t) . '#' . implode('|', $c) . '#' . implode('|', $tk));
+
+/* напоминания об уходе за собакой: раз в день на семью, веб-пуш родителям (своя try, не ломает поллер) */
+try { rt_care_check($db, $uid); } catch (Throwable $e) { /* не ломаем sync */ }
 
 /* ---- отпечаток реестра плиток ---- */
 $reg = '';

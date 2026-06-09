@@ -38,13 +38,15 @@ function rt_points_clamp_grant($n) {
     return $n;
 }
 
-/** ЕДИНСТВЕННЫЙ писатель леджера очков. Вставляет строку module_data bank/points. */
-function rt_points_write($db, $uid, $n, $reason, $src, $kind, $note = null) {
+/** ЕДИНСТВЕННЫЙ писатель леджера очков. Вставляет строку module_data bank/points.
+ *  $ref (необяз.) — id записи-источника (прогулки) для идемпотентности начисления/отката. */
+function rt_points_write($db, $uid, $n, $reason, $src, $kind, $note = null, $ref = null) {
     $n = (int)$n;
     if ($n >  RT_POINTS_GRANT_MAX) $n =  RT_POINTS_GRANT_MAX; // абсолютный предохранитель
     if ($n < -RT_POINTS_GRANT_MAX) $n = -RT_POINTS_GRANT_MAX;
     $data = ['n' => $n, 'reason' => (string)$reason, 'src' => (string)$src, 'kind' => (string)$kind];
     if ($note !== null && $note !== '') $data['note'] = mb_substr((string)$note, 0, 80);
+    if ($ref !== null) $data['ref'] = (int)$ref;
     $st = $db->prepare(
         "INSERT INTO module_data (user_id, module, collection, status, favorite, sort, data, created_at, updated_at)
          VALUES (?, 'bank', 'points', '', 0, 0, ?, NOW(), NOW())"
@@ -120,21 +122,71 @@ function rt_points_award_task($db, $uid, $pts, $note = null) {
     return ['points' => $pts, 'streak' => $streak, 'bonus' => $bonus];
 }
 
-/** Настроенная родителем награда за прогулку (walk/meta, общий пул семьи). Деф. 10, клампим 0..1000. */
-function rt_points_walk_reward($db, $uid) {
+/** Найти строку леджера walk_done/walk_reversed для прогулки $entryId в леджере $uid. Возвращает [id,n] или null. */
+function rt_points_walk_ledger_row($db, $uid, $entryId, $reason = 'walk_done') {
+    $s = $db->prepare(
+        "SELECT id, data FROM module_data
+         WHERE user_id=? AND module='bank' AND collection='points' AND deleted_at IS NULL"
+    );
+    $s->execute([(int)$uid]);
+    foreach ($s->fetchAll() as $row) {
+        $d = $row['data'] !== null ? json_decode($row['data'], true) : null;
+        if (is_array($d) && ($d['reason'] ?? '') === $reason && (int)($d['ref'] ?? 0) === (int)$entryId) {
+            return ['id' => (int)$row['id'], 'n' => (int)($d['n'] ?? 0)];
+        }
+    }
+    return null;
+}
+
+/**
+ * Начислить очки за прогулку = floor(duration/2). СЕРВЕРНО, защита от накрутки:
+ *  - платим ТОЛЬКО если роль звонящего child (родительская прогулка очков не даёт);
+ *  - сумму берём из ДЛИТЕЛЬНОСТИ сохранённой записи (клиентский n игнорируем);
+ *  - запись должна принадлежать семье звонящего и быть им же залогирована (authorUid===caller);
+ *  - идемпотентно: одну прогулку оплачиваем один раз (по ref).
+ * Возвращает ['n'=>очки].
+ */
+function rt_points_walk_claim($db, $uid, $callerId, $role, $entryId) {
     try {
-        $pool = rt_family_pool_uid($db, $uid);
+        if ($role !== 'child') return ['n' => 0, 'skipped' => 'not_child'];
+        $entryId = (int)$entryId;
+        if ($entryId <= 0) return ['n' => 0, 'skipped' => 'no_entry'];
+        $pool = rt_family_pool_uid($db, $uid); // прогулки лежат в общем пуле семьи
         $s = $db->prepare(
-            "SELECT data FROM module_data WHERE user_id=? AND module='walk' AND collection='meta' AND deleted_at IS NULL ORDER BY id DESC LIMIT 1"
+            "SELECT data FROM module_data
+             WHERE id=? AND user_id=? AND module='walk' AND collection='entries' AND deleted_at IS NULL LIMIT 1"
         );
-        $s->execute([(int)$pool]);
+        $s->execute([$entryId, (int)$pool]);
         $r = $s->fetch();
-        if (!$r) return 10;
+        if (!$r) return ['n' => 0, 'skipped' => 'not_found'];
         $d = $r['data'] !== null ? json_decode($r['data'], true) : null;
-        $rw = (is_array($d) && isset($d['reward'])) ? (int)$d['reward'] : 10;
-        if ($rw < 0) $rw = 0; if ($rw > 1000) $rw = 1000;
-        return $rw;
-    } catch (Throwable $e) { return 0; }
+        if (!is_array($d)) return ['n' => 0, 'skipped' => 'bad_entry'];
+        if ((int)($d['authorUid'] ?? 0) !== (int)$callerId) return ['n' => 0, 'skipped' => 'not_author'];
+        $existing = rt_points_walk_ledger_row($db, $uid, $entryId, 'walk_done');
+        if ($existing) return ['n' => $existing['n']]; // уже оплачено — не дублируем
+        $dur = (int)($d['duration'] ?? 0);
+        $pts = (int)floor($dur / 2);
+        if ($pts < 0) $pts = 0; if ($pts > 1000) $pts = 1000;
+        if ($pts > 0) rt_points_write($db, $uid, $pts, 'walk_done', 'walk', 'win', null, $entryId);
+        return ['n' => $pts];
+    } catch (Throwable $e) { return ['n' => 0, 'skipped' => 'error']; }
+}
+
+/**
+ * Откатить начисление за прогулку (родитель удалил запись). Пишет компенсирующую строку −n.
+ * Идемпотентно: если уже откатано или прогулка ничего не дала — n=0.
+ * Скоуп $uid уже разрешён в points.php (родитель → выбранный/первый ребёнок).
+ */
+function rt_points_walk_reverse($db, $uid, $entryId) {
+    try {
+        $entryId = (int)$entryId;
+        if ($entryId <= 0) return ['n' => 0];
+        if (rt_points_walk_ledger_row($db, $uid, $entryId, 'walk_reversed')) return ['n' => 0, 'already' => true];
+        $orig = rt_points_walk_ledger_row($db, $uid, $entryId, 'walk_done');
+        if (!$orig || $orig['n'] <= 0) return ['n' => 0];
+        rt_points_write($db, $uid, -$orig['n'], 'walk_reversed', 'walk', 'loss', null, $entryId);
+        return ['n' => -$orig['n']];
+    } catch (Throwable $e) { return ['n' => 0]; }
 }
 
 /** Цена товара из каталога Магазина (familyCollection items — общий пул семьи). 0, если нет/невалидна. */

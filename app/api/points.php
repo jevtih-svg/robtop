@@ -63,11 +63,11 @@ switch ($op) {
             rt_json(['ok' => true]);
         }
 
-        // 2) награда за прогулку — настроенная родителем (walk/meta), не от клиента
+        // 2) награда за прогулку — floor(duration/2), серверно, только ребёнку-автору, один раз
         if ($reason === 'walk_done') {
-            $rw = rt_points_walk_reward($db, $uid);
-            if ($rw > 0) rt_points_write($db, $uid, $rw, 'walk_done', 'walk', 'win', $note);
-            rt_json(['ok' => true, 'n' => $rw]);
+            $entry = isset($body['entry']) ? (int)$body['entry'] : 0;
+            $res = rt_points_walk_claim($db, $uid, (int)$me, $role, $entry);
+            rt_json(['ok' => true, 'n' => $res['n']]);
         }
 
         // 3) родительские начисления: сумма родителя (кламп), ТОЛЬКО роль parent
@@ -120,6 +120,15 @@ switch ($op) {
         $db->prepare("UPDATE module_data SET status='declined', updated_at=NOW()
                       WHERE id=? AND user_id=? AND module='shop' AND collection='orders'")->execute([$order, $uid]);
         rt_json(['ok' => true, 'price' => $price]);
+    }
+
+    case 'reverse': {
+        // родитель удалил прогулку → откат начисленных за неё очков (идемпотентно)
+        if ($role !== 'parent') rt_json(['error' => 'parent_only'], 403);
+        $entry = isset($body['entry']) ? (int)$body['entry'] : 0;
+        if ($entry <= 0) rt_json(['error' => 'entry required'], 422);
+        $res = rt_points_walk_reverse($db, $uid, $entry);
+        rt_json(['ok' => true, 'n' => $res['n']]);
     }
 
     default:

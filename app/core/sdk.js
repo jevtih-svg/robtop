@@ -155,6 +155,7 @@ window.RobTop = window.RobTop || {};
   function bankTxn(rec){
     if(RT.isDemo()) return dataOp("bank","create","points",{data:rec});
     var b={op:"add", reason:rec.reason, n:rec.n, kind:rec.kind, src:rec.src, note:rec.note||null};
+    if(rec.entry!=null) b.entry=rec.entry;
     var pc=parentChild(); if(pc) b.child=pc;
     return API.post("points.php", b);
   }
@@ -167,6 +168,7 @@ window.RobTop = window.RobTop || {};
     var kind = bankKind(n, reason, opts);
     var rec = { n:n, reason:String(reason||""), src:String(opts.src||srcMod||""), kind:kind };
     if(opts.note) rec.note = String(opts.note).slice(0,80);
+    if(opts.entry!=null) rec.entry = opts.entry;
     var out = { ok:true, n:n, kind:kind, streak:null, bonus:0 };
     return bankTxn(rec).then(function(){
       if(kind!=="task_done") return out;
@@ -418,6 +420,14 @@ window.RobTop = window.RobTop || {};
             return Promise.resolve({ ok:false, n:0, kind:"", streak:null, bonus:0, denied:true });
           }
           return bankAdd(mod,n,reason,opts);
+        },
+        /* reverse(entryId) — откат начисления за прогулку (родитель удалил запись). Серверно,
+           только роль parent, идемпотентно. Демо (file://) — no-op (баланс локальный). */
+        reverse: function(entryId){
+          if(!hasPerm("points")) return Promise.resolve({ ok:false, denied:true });
+          if(RT.isDemo()) return Promise.resolve({ ok:true, n:0 });
+          var b={op:"reverse", entry:entryId}; var pc=parentChild(); if(pc) b.child=pc;
+          return API.post("points.php", b);
         },
         /* SEC 2026-06-09: Магазин — цену решает СЕРВЕР (каталог), не клиент. spend(itemId): списать
            цену товара; refund(orderId): родитель вернул цену заказа (идемпотентно). Демо — локально. */

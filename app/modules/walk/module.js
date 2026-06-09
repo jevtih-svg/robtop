@@ -3,10 +3,13 @@
    (плохо/средне/хорошо, позитив всегда справа) либо «Позже» (сразу сохранить и выйти) →
    необязательные детали: отработанные команды (быстрые — с предыдущей прогулки), «Непослушание»
    (только в режиме «Щенок»), несколько фото. Запись «Позже» можно дооценить из истории.
-   Очки: +meta.reward (настройка родителя в шторке настроек, деф. 10, 0 = выкл) за КАЖДУЮ
-   созданную прогулку, reason walk_done, kind win (винстрик не трогает) — см. ГАЙД-очки.md.
+   Очки: floor(минут/2) за прогулку, reason walk_done, kind win (винстрик не трогает) —
+   начисляются ТОЛЬКО когда прогулку логирует ребёнок; родительская прогулка очков не даёт.
+   Сумму решает сервер из длительности сохранённой записи (api/_points.php). См. ГАЙД-очки.md.
    Данные — generic-стор: walk/entries (прогулки), walk/commands и walk/issues (свои варианты
-   семьи), walk/meta (одна строка: {puppy, reward}). Родитель пишет в общий семейный пул
+   семьи), walk/meta (одна строка: {puppy}; сервер дописывает lastCareCheck — гейт напоминаний).
+   БАЛАНС очков модуль НЕ хранит: только начисляет/откатывает через системный api/points.php.
+   Родитель пишет в общий семейный пул
    (data.php скоупит роль parent на ребёнка семьи), автор записи — в data.author. */
 (function(){
   "use strict";
@@ -44,9 +47,18 @@
       byAuthor:"Logged by {name}",
       setTitle:"Walk settings",
       puppyLbl:"Puppy mode", puppyHint:"Show the behaviour section",
-      rewardLbl:"Points per walk", rewardHint:"0 — no points",
       cmd:{ stop:"Stop", heel:"Heel", come:"Come", sit:"Sit", stand:"Stand", down:"Down", here:"Here", wait:"Wait / stay", no:"No", noPull:"Don't pull", go:"Let's go" },
       iss:{ toilet:"Had an accident at home", floor:"Ate from the floor", leash:"Pulled off the leash", ignore:"Ignored commands" },
+      delWalk:"Delete walk", delWalkTitle:"Delete this walk?", delWalkToast:"Walk deleted",
+      calTitle:"Dog calendar", statToday:"Today", statWalks:"Walks", statTime:"Time",
+      statLongest:"Longest", statStreak:"Day streak", perWeek:"Week", perMonth:"Month", perAll:"All time",
+      dayEmpty:"Nothing logged this day", minShort:"{n} min",
+      careTitle:"Care dates", careAdd:"Add care date", careType:"Type", careNext:"Next date",
+      careRepeat:"Repeat", careEvery:"every", careNote:"Note", careDone:"Mark done", careDelete:"Delete",
+      careDueSoon:"{label} due {day}", careOverdue:"{label} overdue since {day}",
+      careDoneToast:"Care logged", careNeedType:"Pick a type first",
+      care:{ vaccine:"Vaccination", deworm:"De-worming", flea:"Flea / tick", vet:"Vet checkup", groom:"Grooming" },
+      unit:{ none:"No repeat", day:"days", week:"weeks", month:"months" },
       aria:{ settings:"Walk settings", photo:"Photo", del:"Remove" }
     }, bank:{ r_walk_done:"Dog walk" }},
     ru:{ walk:{
@@ -80,9 +92,18 @@
       byAuthor:"Записал(а): {name}",
       setTitle:"Настройки прогулки",
       puppyLbl:"Режим «Щенок»", puppyHint:"Показывать раздел про поведение",
-      rewardLbl:"Очков за прогулку", rewardHint:"0 — без очков",
       cmd:{ stop:"Стоп", heel:"Рядом", come:"Ко мне", sit:"Сидеть", stand:"Стоять", down:"Лежать", here:"Сюда", wait:"Жди / стой", no:"Нельзя", noPull:"Не тяни", go:"Пошли" },
       iss:{ toilet:"Сходила дома в туалет", floor:"Кушала с пола", leash:"Вырывалась с поводка", ignore:"Не прибегала на команды" },
+      delWalk:"Удалить прогулку", delWalkTitle:"Удалить эту прогулку?", delWalkToast:"Прогулка удалена",
+      calTitle:"Календарь собаки", statToday:"Сегодня", statWalks:"Прогулок", statTime:"Время",
+      statLongest:"Дольше всего", statStreak:"Дней подряд", perWeek:"Неделя", perMonth:"Месяц", perAll:"Всё время",
+      dayEmpty:"В этот день записей нет", minShort:"{n} мин",
+      careTitle:"Уход и даты", careAdd:"Добавить дату ухода", careType:"Тип", careNext:"Следующая дата",
+      careRepeat:"Повтор", careEvery:"каждые", careNote:"Заметка", careDone:"Отметить выполнено", careDelete:"Удалить",
+      careDueSoon:"{label} — {day}", careOverdue:"{label} просрочено с {day}",
+      careDoneToast:"Уход записан", careNeedType:"Сначала выбери тип",
+      care:{ vaccine:"Прививка", deworm:"Дегельминтизация", flea:"От блох / клещей", vet:"Осмотр у ветеринара", groom:"Груминг" },
+      unit:{ none:"Без повтора", day:"дней", week:"недель", month:"месяцев" },
       aria:{ settings:"Настройки прогулки", photo:"Фото", del:"Убрать" }
     }, bank:{ r_walk_done:"Прогулка с собакой" }},
     lv:{ walk:{
@@ -116,9 +137,18 @@
       byAuthor:"Pierakstīja: {name}",
       setTitle:"Pastaigas iestatījumi",
       puppyLbl:"Kucēna režīms", puppyHint:"Rādīt uzvedības sadaļu",
-      rewardLbl:"Punkti par pastaigu", rewardHint:"0 — bez punktiem",
       cmd:{ stop:"Stop", heel:"Blakus", come:"Pie manis", sit:"Sēdi", stand:"Stāvi", down:"Guli", here:"Šeit", wait:"Gaidi", no:"Nedrīkst", noPull:"Nevelc", go:"Ejam" },
       iss:{ toilet:"Notika negadījums mājās", floor:"Ēda no grīdas", leash:"Rāvās no pavadas", ignore:"Neklausīja komandām" },
+      delWalk:"Dzēst pastaigu", delWalkTitle:"Dzēst šo pastaigu?", delWalkToast:"Pastaiga dzēsta",
+      calTitle:"Suņa kalendārs", statToday:"Šodien", statWalks:"Pastaigas", statTime:"Laiks",
+      statLongest:"Garākā", statStreak:"Dienas pēc kārtas", perWeek:"Nedēļa", perMonth:"Mēnesis", perAll:"Viss laiks",
+      dayEmpty:"Šajā dienā nav ierakstu", minShort:"{n} min",
+      careTitle:"Aprūpes datumi", careAdd:"Pievienot aprūpes datumu", careType:"Veids", careNext:"Nākamais datums",
+      careRepeat:"Atkārtot", careEvery:"katras", careNote:"Piezīme", careDone:"Atzīmēt izpildītu", careDelete:"Dzēst",
+      careDueSoon:"{label} — {day}", careOverdue:"{label} nokavēts kopš {day}",
+      careDoneToast:"Aprūpe pierakstīta", careNeedType:"Vispirms izvēlies veidu",
+      care:{ vaccine:"Vakcinācija", deworm:"Dehelmintizācija", flea:"Pret blusām / ērcēm", vet:"Veterinārā pārbaude", groom:"Kopšana" },
+      unit:{ none:"Bez atkārtošanas", day:"dienas", week:"nedēļas", month:"mēneši" },
       aria:{ settings:"Pastaigas iestatījumi", photo:"Foto", del:"Noņemt" }
     }, bank:{ r_walk_done:"Pastaiga ar suni" }}
   };
@@ -129,7 +159,9 @@
   var SYS_CMD=["stop","heel","come","sit","stand","down","here","wait","no","noPull","go"];
   var SYS_ISS=["toilet","floor","leash","ignore"];
   var SYS_EVT=["vet","birthday","vaccine","groom"]; // важные события: ветеринар, ДР, прививка, груминг
-  var PHOTO_MAX=10, REWARD_DEF=10, REWARD_STEP=5, REWARD_MAX=100;
+  var CARE_TYPES=["vaccine","deworm","flea","vet","groom"]; // расписание ухода (+ свои типы u_<id> из eventTypes)
+  var CARE_UNITS=["none","day","week","month"];
+  var PHOTO_MAX=10;
 
   var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
   var GEAR_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.2a7.6 7.6 0 0 0 0-2.4l2-1.5-2-3.5-2.4.8a7.6 7.6 0 0 0-2-1.2L14.5 3h-5l-.5 2.4a7.6 7.6 0 0 0-2 1.2l-2.4-.8-2 3.5 2 1.5a7.6 7.6 0 0 0 0 2.4l-2 1.5 2 3.5 2.4-.8a7.6 7.6 0 0 0 2 1.2l.5 2.4h5l.5-2.4a7.6 7.6 0 0 0 2-1.2l2.4.8 2-3.5z"/></svg>';
@@ -137,6 +169,7 @@
   var PAW_IC='<svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="6.4" cy="10" rx="1.7" ry="2.3"/><ellipse cx="9.9" cy="7.3" rx="1.7" ry="2.4"/><ellipse cx="14.1" cy="7.3" rx="1.7" ry="2.4"/><ellipse cx="17.6" cy="10" rx="1.7" ry="2.3"/><path d="M12 11.2c2.9 0 5.3 2.1 5.7 4.8.3 1.9-1.1 3.4-3 3.4-1.3 0-1.9-.6-2.7-.6s-1.4.6-2.7.6c-1.9 0-3.3-1.5-3-3.4.4-2.7 2.8-4.8 5.7-4.8z"/></svg>';
   var WARN_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.2L21 19.4H3z"/><path d="M12 10v4.4"/><circle cx="12" cy="16.9" r=".4" fill="currentColor" stroke="none"/></svg>';
   var STAR_IC='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.7 5.7 6.3.8-4.6 4.4 1.2 6.2L12 17.8 6.4 20.1l1.2-6.2L3 9.5l6.3-.8z"/></svg>';
+  var CAL_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3"/></svg>';
 
   /* три смайлика в стиле mood; цвет — в CSS по классу f-<key> */
   function faceSvg(mouth){
@@ -155,8 +188,10 @@
 
   /* =================== состояние =================== */
   var sdk=null, root=null, E={};
-  var entries=[], behs=[], evts=[], cmds=[], iss=[], evtTypes=[], meta={id:null,puppy:1,reward:REWARD_DEF};
+  var entries=[], behs=[], evts=[], cmds=[], iss=[], evtTypes=[], meta={id:null,puppy:1};
   var step="dur", cur=null, beh=null, ev=null, saving=false;
+  var calMonth=null, calPeriod="week"; // calMonth: Date (1-е число месяца); calPeriod: week|month|all
+  var careItems=[]; // расписание ухода (walk/care), только родитель пишет
 
   function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
@@ -185,11 +220,74 @@
   function dataOf(it){ return (it&&it.data)||{}; }
   function rateOf(it){ var r=dataOf(it).rating; return RATE_KEYS.indexOf(r)>=0?r:null; }
 
+  /* =================== дата/агрегация для календаря и статистики =================== */
+  function ymd(y,m,d){ return y+"-"+pad2(m+1)+"-"+pad2(d); } // m: 0..11
+  function parseDay(s){ var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s||"")); return m?new Date(+m[1],+m[2]-1,+m[3],12,0,0):null; }
+  function todayKey(){ return dayKey(); }
+  function dayMinus(key,n){ var d=parseDay(key); if(!d) return key; d.setDate(d.getDate()-n); return dayKey(d); }
+  /* индекс «что было с собакой» по дню: { 'YYYY-MM-DD': {walks:[], behs:[], evts:[], min:Σ} } */
+  function buildDayIndex(){
+    var ix={};
+    function bucket(k){ if(!ix[k]) ix[k]={walks:[],behs:[],evts:[],min:0}; return ix[k]; }
+    entries.forEach(function(it){ var d=dataOf(it); if(d.day){ var b=bucket(d.day); b.walks.push(it); b.min+=parseInt(d.duration,10)||0; } });
+    behs.forEach(function(it){ var d=dataOf(it); if(d.day) bucket(d.day).behs.push(it); });
+    evts.forEach(function(it){ var d=dataOf(it); if(d.day) bucket(d.day).evts.push(it); });
+    return ix;
+  }
+  /* статистика за период: fromKey=null → всё время. Возвращает {walks,min,longest,streak}. */
+  function statsFor(fromKey){
+    var walks=0,min=0,longest=0;
+    entries.forEach(function(it){ var d=dataOf(it); if(!d.day) return; if(fromKey && d.day<fromKey) return;
+      walks++; var du=parseInt(d.duration,10)||0; min+=du; if(du>longest) longest=du; });
+    return { walks:walks, min:min, longest:longest, streak:walkStreak() };
+  }
+  /* серия календарных дней подряд (до сегодня или вчера) с хотя бы одной прогулкой */
+  function walkStreak(){
+    var days={}; entries.forEach(function(it){ var d=dataOf(it); if(d.day) days[d.day]=1; });
+    var k=todayKey(), n=0;
+    if(!days[k]){ k=dayMinus(k,1); if(!days[k]) return 0; }
+    while(days[k] && n<366){ n++; k=dayMinus(k,1); }
+    return n;
+  }
+
+  /* =================== уход (care): подписи и каденс =================== */
+  function careSort(a,b){ return (dataOf(a).nextDue||"")<(dataOf(b).nextDue||"")?-1:1; }
+  function careLabel(type){
+    if(CARE_TYPES.indexOf(type)>=0) return t("care."+type);
+    if(/^u_/.test(type)) return evtLabel(type); // свои типы — из eventTypes
+    return "?";
+  }
+  /* следующая дата после key по каденсу; unit none → null (разовое) */
+  function careAdvance(key, cadence){
+    var d=parseDay(key), c=cadence||{}; if(!d||!c.unit||c.unit==="none") return null;
+    var n=Math.max(1, parseInt(c.every,10)||1);
+    if(c.unit==="day") d.setDate(d.getDate()+n);
+    else if(c.unit==="week") d.setDate(d.getDate()+7*n);
+    else if(c.unit==="month") d.setMonth(d.getMonth()+n);
+    return dayKey(d);
+  }
+  /* occurrences ухода в видимом месяце [1..конец] (для маркеров календаря) */
+  function careOccurrencesInMonth(item, y, m){
+    var d=dataOf(item), out=[], key=d.nextDue; if(!key) return out;
+    var firstKey=ymd(y,m,1), lastKey=ymd(y,m,new Date(y,m+1,0).getDate()), guard=0;
+    while(key && key<=lastKey && guard<400){
+      if(key>=firstKey) out.push(key);
+      var nx=careAdvance(key, d.cadence); if(!nx||nx===key) break; key=nx; guard++;
+    }
+    return out;
+  }
+  /* ближайший срок ухода: {item, day, overdue} или null — для бейджа */
+  function careNextDue(){
+    var best=null, today=todayKey();
+    careItems.forEach(function(it){ var k=dataOf(it).nextDue; if(!k) return; if(!best || k<best.day) best={item:it, day:k, overdue:k<today}; });
+    return best;
+  }
+
   /* =================== данные =================== */
   function load(){
     Promise.all([
       sdk.data.list("entries"), sdk.data.list("commands"), sdk.data.list("issues"), sdk.data.list("meta"),
-      sdk.data.list("behavior"), sdk.data.list("events"), sdk.data.list("eventTypes")
+      sdk.data.list("behavior"), sdk.data.list("events"), sdk.data.list("eventTypes"), sdk.data.list("care")
     ]).then(function(rr){
       if(!root) return;
       entries=(rr[0]||[]).filter(function(it){ return dataOf(it).duration>0; });
@@ -201,21 +299,17 @@
       evtTypes=(rr[6]||[]).slice().sort(function(a,b){ return (a.createdAt||0)-(b.createdAt||0); });
       cmds=(rr[1]||[]).slice().sort(function(a,b){ return (a.createdAt||0)-(b.createdAt||0); });
       iss=(rr[2]||[]).slice().sort(function(a,b){ return (a.createdAt||0)-(b.createdAt||0); });
+      careItems=(rr[7]||[]).slice().sort(careSort);
       var m=(rr[3]||[])[0];
       if(m){ meta={ id:m.id,
-        puppy: dataOf(m).puppy==null ? 1 : (dataOf(m).puppy?1:0),
-        reward: clampReward(dataOf(m).reward) }; }
+        puppy: dataOf(m).puppy==null ? 1 : (dataOf(m).puppy?1:0) }; }
       renderMain(); renderList(); hud();
     }).catch(function(){ if(!root) return; renderMain(); renderList(); hud(); });
   }
-  function clampReward(v){
-    var n=parseInt(v,10); if(isNaN(n)) n=REWARD_DEF;
-    return Math.min(Math.max(n,0), REWARD_MAX);
-  }
   function metaSave(patch){
-    var data={ puppy:meta.puppy, reward:meta.reward };
+    var data={ puppy:meta.puppy };
     Object.keys(patch||{}).forEach(function(k){ data[k]=patch[k]; });
-    meta.puppy=data.puppy; meta.reward=data.reward;
+    meta.puppy=data.puppy;
     if(meta.id!=null) return sdk.data.update("meta", meta.id, data);
     return sdk.data.create("meta", data).then(function(item){ if(item) meta.id=item.id; });
   }
@@ -239,6 +333,7 @@
   }
   function evtLabel(id){
     if(/^s_/.test(id)) return t("evt."+id.slice(2));
+    if(CARE_TYPES.indexOf(id)>=0) return t("care."+id); // события ухода (careMarkDone) пишут «голый» тип
     for(var i=0;i<evtTypes.length;i++){ if("u_"+evtTypes[i].id===id) return dataOf(evtTypes[i]).label||"?"; }
     return "?";
   }
@@ -275,6 +370,7 @@
   /* =================== главная карточка (мастер) =================== */
   function renderMain(){
     if(!root||!E.main) return;
+    if(step==="cal") return renderCal(); // календарь доступен всем, в т.ч. read-only
     if(!sdk.can("edit")){ E.main.innerHTML=""; return; }
     if(step==="dur") return renderDur();
     if(step==="rate") return renderRate();
@@ -289,7 +385,15 @@
     /* отдельные записи — НЕ часть прогулки (фидбек Джеффа): важное событие (всегда)
        и проблема с поведением (только режим «Щенок») */
     h+='<button type="button" class="wk-evtbtn" id="wkEvtBtn"><span class="ic">'+STAR_IC+'</span>'+esc(t("evtBtn"))+'</button>';
-    if(meta.puppy) h+='<button type="button" class="wk-behbtn" id="wkBehBtn"><span class="ic">'+WARN_IC+'</span>'+esc(t("behBtn"))+'</button>';
+    /* непослушание доступно обеим сторонам и независимо от режима «Щенок» (фидбек Джеффа) */
+    h+='<button type="button" class="wk-behbtn" id="wkBehBtn"><span class="ic">'+WARN_IC+'</span>'+esc(t("behBtn"))+'</button>';
+    /* бейдж ближайшего ухода: просрочено или в пределах недели вперёд */
+    var nd=careNextDue();
+    if(nd && nd.day<=dayMinus(todayKey(),-7)){
+      var lbl=careLabel(dataOf(nd.item).type), dd=fmtDay(nd.day);
+      var msg=nd.overdue ? t("careOverdue",{label:lbl, day:dd}) : t("careDueSoon",{label:lbl, day:dd});
+      h+='<div class="wk-carebadge'+(nd.overdue?" overdue":"")+'">'+WARN_IC+'<span>'+esc(msg)+'</span></div>';
+    }
     E.main.innerHTML=h;
   }
   /* экран отдельного события поведения: чипы вариантов + время (шаг 15 мин) + сохранить */
@@ -526,14 +630,20 @@
   function entryPayload(extra){
     var p={ day:dayKey(), time:cur.time||hhmm(), duration:cur.duration, rating:cur.rating,
       commands:(extra&&extra.commands)||[], issues:(extra&&extra.issues)||[],
-      photos:cur.photos.slice(), author:(sdk.user&&sdk.user.name)||"" };
+      photos:cur.photos.slice(), author:(sdk.user&&sdk.user.name)||"",
+      authorUid:(sdk.user&&sdk.user.id)||null };
     return p;
   }
   function afterCreate(item,payload,later){
     if(item) entries.unshift(item);
     sdk.events.track("walk_saved",{ duration:payload.duration, rating:payload.rating,
       commands:payload.commands.length, issues:payload.issues.length, photos:payload.photos.length, later:!!later });
-    if(meta.reward>0) sdk.points.add(meta.reward,"walk_done"); // kind win; винстрик не трогает (ГАЙД-очки.md)
+    // очки: floor(минут/2), reason walk_done, kind win — ТОЛЬКО когда прогулку логирует ребёнок;
+    // сервер пересчитывает сумму из сохранённой записи (см. api/_points.php rt_points_walk_claim).
+    if(sdk.role==="child" && item){
+      var pts=Math.floor((parseInt(payload.duration,10)||0)/2);
+      if(pts>0) sdk.points.add(pts,"walk_done",{entry:item.id});
+    }
     if(later) sdk.ui.toast(t("laterToast"));
   }
   function celebrate(rating){
@@ -578,20 +688,12 @@
 
   /* =================== настройки (щенок + очки) =================== */
   function openSettings(){
-    var isParent=sdk.role==="parent"||sdk.isDemo();
     var node=document.createElement("div");
     var h='<h2>'+esc(t("setTitle"))+'</h2>'
       +'<button type="button" class="wk-setrow" id="wkPuppy"><span class="tx">'+esc(t("puppyLbl"))
       +'<span class="hint">'+esc(t("puppyHint"))+'</span></span>'
-      +'<span class="wk-tgl'+(meta.puppy?" on":"")+'"></span></button>';
-    if(isParent){
-      h+='<div class="wk-setrow stat"><span class="tx">'+esc(t("rewardLbl"))
-        +'<span class="hint">'+esc(t("rewardHint"))+'</span></span>'
-        +'<span class="wk-step"><button type="button" class="wk-stepb" id="wkRewMinus">−</button>'
-        +'<b id="wkRewVal">'+meta.reward+'</b>'
-        +'<button type="button" class="wk-stepb" id="wkRewPlus">＋</button></span></div>';
-    }
-    h+='<div class="sheet-actions"><button class="btn btn-cancel" data-close style="flex:1">'+esc(t("common.close"))+'</button></div>';
+      +'<span class="wk-tgl'+(meta.puppy?" on":"")+'"></span></button>'
+      +'<div class="sheet-actions"><button class="btn btn-cancel" data-close style="flex:1">'+esc(t("common.close"))+'</button></div>';
     node.innerHTML=h;
     var sh=sdk.ui.sheet(node);
     node.querySelector("[data-close]").addEventListener("click",sh.close);
@@ -599,13 +701,6 @@
       var v=meta.puppy?0:1;
       metaSave({puppy:v}).then(function(){ if(!root) return; node.querySelector(".wk-tgl").classList.toggle("on",!!v); renderMain(); });
     });
-    var minus=node.querySelector("#wkRewMinus"), plus=node.querySelector("#wkRewPlus"), val=node.querySelector("#wkRewVal");
-    function bump(d){
-      var v=clampReward(meta.reward+d);
-      metaSave({reward:v}).then(function(){ if(val) val.textContent=String(v); });
-    }
-    if(minus) minus.addEventListener("click",function(){ bump(-REWARD_STEP); });
-    if(plus) plus.addEventListener("click",function(){ bump(REWARD_STEP); });
   }
 
   /* =================== история =================== */
@@ -682,6 +777,22 @@
     var sh=sdk.ui.sheet(node);
     node.querySelector("[data-close]").addEventListener("click",sh.close);
   }
+  /* родитель удаляет прогулку: откат очков (серверно, идемпотентно) + мягкое удаление записи */
+  function deleteWalk(id, sh){
+    sdk.ui.confirm({title:t("delWalkTitle"), ok:t("common.yes"), cancel:t("common.cancel")}).then(function(ok){
+      if(!ok) return;
+      sdk.points.reverse(id).catch(function(){}).then(function(){
+        return sdk.data.remove("entries", id);
+      }).then(function(){
+        if(!root) return;
+        entries=entries.filter(function(e){ return String(e.id)!==String(id); });
+        if(sh) sh.close();
+        renderMain(); renderList(); hud();
+        if(step==="cal" && typeof renderCal==="function") renderCal(); // обновить календарь, если открыт
+        sdk.ui.toast(t("delWalkToast"));
+      }).catch(function(){ sdk.ui.toast(t("saveFailed")); });
+    });
+  }
   function openDetail(id){
     var it=null; for(var i=0;i<entries.length;i++){ if(String(entries[i].id)===String(id)){ it=entries[i]; break; } }
     if(!it) return;
@@ -707,12 +818,16 @@
       h+='</div>';
     }
     if(d.author) h+='<p class="wk-author">'+esc(t("byAuthor",{name:d.author}))+'</p>';
+    var isParent=sdk.role==="parent"||sdk.isDemo();
     h+='<div class="sheet-actions" style="margin-top:14px">'
       +(!r&&sdk.can("edit")?'<button class="btn btn-primary" id="wkRateNow">'+esc(t("rateBtn"))+'</button>':'')
+      +(isParent?'<button class="btn btn-danger" id="wkDelWalk">'+esc(t("delWalk"))+'</button>':'')
       +'<button class="btn btn-cancel" data-close style="flex:1">'+esc(t("common.close"))+'</button></div>';
     node.innerHTML=h;
     var sh=sdk.ui.sheet(node);
     node.querySelector("[data-close]").addEventListener("click",sh.close);
+    var del=node.querySelector("#wkDelWalk");
+    if(del) del.addEventListener("click",function(){ deleteWalk(it.id, sh); });
     var rn=node.querySelector("#wkRateNow");
     if(rn) rn.addEventListener("click",function(){
       sh.close();
@@ -726,23 +841,211 @@
     });
   }
 
+  /* =================== календарь и статистика =================== */
+  function openCal(){
+    if(!calMonth){ var n=new Date(); calMonth=new Date(n.getFullYear(), n.getMonth(), 1, 12); }
+    step="cal"; renderMain(); window.scrollTo(0,0);
+  }
+  function renderCal(){
+    if(!root||!E.main) return;
+    E.main.innerHTML='<div class="wk-cal"><div id="wkCalStats"></div><div id="wkCalGrid"></div></div>';
+    renderCalStats(); renderCalGrid(); renderCalExtras();
+  }
+  /* кнопка управления расписанием ухода — только родителю */
+  function renderCalExtras(){
+    if(!(sdk.role==="parent"||sdk.isDemo())) return;
+    var cal=E.main&&E.main.querySelector(".wk-cal"); if(!cal) return;
+    cal.insertAdjacentHTML("beforeend",
+      '<button type="button" class="wk-evtbtn" id="wkCareBtn"><span class="ic">'+CAL_IC+'</span>'+esc(t("careTitle"))+'</button>');
+  }
+  function renderCalStats(){
+    var box=E.main&&E.main.querySelector("#wkCalStats"); if(!box) return;
+    var ix=buildDayIndex(), today=ix[todayKey()]||{walks:[],min:0};
+    var from = calPeriod==="week" ? dayMinus(todayKey(),6) : (calPeriod==="month" ? dayMinus(todayKey(),29) : null);
+    var s=statsFor(from);
+    function card(lbl,val){ return '<div class="wk-stat"><b>'+esc(val)+'</b><span>'+esc(lbl)+'</span></div>'; }
+    var h='<div class="wk-stats today">'
+      +card(t("statWalks"), String(today.walks.length))
+      +card(t("statTime"), t("minShort",{n:today.min}))
+      +'</div>'
+      +'<div class="wk-period">'
+      +'<button type="button" class="wk-perb'+(calPeriod==="week"?" on":"")+'" data-per="week">'+esc(t("perWeek"))+'</button>'
+      +'<button type="button" class="wk-perb'+(calPeriod==="month"?" on":"")+'" data-per="month">'+esc(t("perMonth"))+'</button>'
+      +'<button type="button" class="wk-perb'+(calPeriod==="all"?" on":"")+'" data-per="all">'+esc(t("perAll"))+'</button>'
+      +'</div>'
+      +'<div class="wk-stats">'
+      +card(t("statWalks"), String(s.walks))
+      +card(t("statTime"), t("minShort",{n:s.min}))
+      +card(t("statLongest"), t("minShort",{n:s.longest}))
+      +card(t("statStreak"), String(s.streak))
+      +'</div>';
+    box.innerHTML='<div class="wk-sect">'+esc(t("statToday"))+'</div>'+h;
+  }
+  function renderCalGrid(){
+    var box=E.main&&E.main.querySelector("#wkCalGrid"); if(!box) return;
+    var ix=buildDayIndex();
+    var y=calMonth.getFullYear(), m=calMonth.getMonth();
+    var first=new Date(y,m,1,12), startDow=(first.getDay()+6)%7; // понедельник=0
+    var daysIn=new Date(y,m+1,0).getDate();
+    var careDays=careDaysInMonth(y,m); // Phase 3: маркеры ухода; в Phase 2 — пусто
+    var title=sdk.formatDate(first,{month:"long", year:"numeric"});
+    var h='<div class="wk-calnav"><button type="button" class="wk-navb" data-mon="-1">‹</button>'
+      +'<b>'+esc(title)+'</b><button type="button" class="wk-navb" data-mon="1">›</button></div>'
+      +'<div class="wk-grid">';
+    var i; for(i=0;i<startDow;i++) h+='<span class="wk-cell empty"></span>';
+    for(i=1;i<=daysIn;i++){
+      var key=ymd(y,m,i), c=ix[key];
+      var dots='';
+      if(c){ if(c.walks.length) dots+='<i class="dot walk"></i>'; if(c.behs.length) dots+='<i class="dot beh"></i>'; if(c.evts.length) dots+='<i class="dot evt"></i>'; }
+      if(careDays[key]) dots+='<i class="dot care"></i>';
+      var isToday=key===todayKey();
+      h+='<button type="button" class="wk-cell'+(isToday?" today":"")+((c||careDays[key])?" has":"")+'" data-day="'+esc(key)+'"><span class="dn">'+i+'</span><span class="dots">'+dots+'</span></button>';
+    }
+    h+='</div>'
+      +'<div class="wk-legend"><span><i class="dot walk"></i>'+esc(t("statWalks"))+'</span>'
+      +'<span><i class="dot beh"></i>'+esc(t("behBtn"))+'</span>'
+      +'<span><i class="dot evt"></i>'+esc(t("evtBtn"))+'</span></div>';
+    box.innerHTML=h;
+  }
+  function careDaysInMonth(y,m){ var o={}; careItems.forEach(function(it){ careOccurrencesInMonth(it,y,m).forEach(function(k){ o[k]=1; }); }); return o; }
+  function openDayDetail(key){
+    var ix=buildDayIndex(), c=ix[key]||{walks:[],behs:[],evts:[]};
+    var careHere=careForDay(key);
+    var node=document.createElement("div"); node.className="wk-detail wk-day";
+    var h='<h2>'+esc(fmtDay(key))+'</h2>';
+    if(!c.walks.length && !c.behs.length && !c.evts.length && !careHere.length){
+      h+='<p class="wk-det-norate">'+esc(t("dayEmpty"))+'</p>';
+    } else {
+      h+='<div class="wk-list">'
+        +c.walks.map(walkRowHtml).join("")
+        +c.behs.map(behRowHtml).join("")
+        +c.evts.map(evtRowHtml).join("")
+        +'</div>';
+      if(careHere.length){
+        h+='<div class="wk-sect">'+esc(t("careTitle"))+'</div><div class="wk-chips ro">';
+        careHere.forEach(function(it){ h+='<span class="wk-chip gold on">'+esc(careLabel(dataOf(it).type))+'</span>'; });
+        h+='</div>';
+      }
+    }
+    h+='<div class="sheet-actions" style="margin-top:14px"><button class="btn btn-cancel" data-close style="flex:1">'+esc(t("common.close"))+'</button></div>';
+    node.innerHTML=h;
+    var sh=sdk.ui.sheet(node);
+    node.querySelector("[data-close]").addEventListener("click",sh.close);
+    node.addEventListener("click",function(e){
+      var row=e.target.closest(".wk-row"); if(!row) return;
+      sh.close();
+      if(row.getAttribute("data-bid")) openBehDetail(row.getAttribute("data-bid"));
+      else if(row.getAttribute("data-eid")) openEvtDetail(row.getAttribute("data-eid"));
+      else openDetail(row.getAttribute("data-id"));
+    });
+  }
+  function careForDay(key){ return careItems.filter(function(it){ return dataOf(it).nextDue===key; }); }
+
+  /* отметить уход выполненным: запись в историю событий + сдвиг следующего срока (разовое — снять с расписания) */
+  function careMarkDone(id){
+    var it=null,i; for(i=0;i<careItems.length;i++){ if(String(careItems[i].id)===String(id)){ it=careItems[i]; break; } }
+    if(!it) return;
+    var d=dataOf(it), today=todayKey();
+    sdk.data.create("events",{ day:today, time:hhmm15(), kinds:[d.type],
+      note:d.note||"", author:(sdk.user&&sdk.user.name)||"", src:"care" }).then(function(item){ if(item&&root){ evts.unshift(item); } });
+    var nx=careAdvance(d.nextDue||today, d.cadence);
+    if(nx){
+      sdk.data.update("care", it.id, {nextDue:nx, lastDoneDay:today, lastNotified:null}).then(function(){
+        if(!root) return; it.data=Object.assign({},it.data,{nextDue:nx,lastDoneDay:today,lastNotified:null}); careItems.sort(careSort); if(step==="cal") renderCal();
+      });
+    } else {
+      sdk.data.remove("care", it.id).then(function(){ if(!root) return; careItems=careItems.filter(function(x){ return String(x.id)!==String(it.id); }); if(step==="cal") renderCal(); });
+    }
+    sdk.ui.toast(t("careDoneToast"));
+  }
+
+  /* список расписания ухода (родитель): добавить / изменить / выполнить */
+  function openCare(){
+    var node=document.createElement("div"); node.className="wk-detail wk-care";
+    function rows(){
+      if(!careItems.length) return '<p class="wk-det-norate">'+esc(t("dayEmpty"))+'</p>';
+      return careItems.map(function(it){ var d=dataOf(it);
+        var rep=(d.cadence&&d.cadence.unit&&d.cadence.unit!=="none")
+          ? (t("careEvery")+" "+(d.cadence.every||1)+" "+t("unit."+d.cadence.unit)) : t("unit.none");
+        return '<div class="wk-care-row" data-care="'+esc(it.id)+'"><div class="m"><b>'+esc(careLabel(d.type))+'</b>'
+          +'<span>'+esc(fmtDay(d.nextDue))+' · '+esc(rep)+'</span></div>'
+          +'<button type="button" class="wk-care-done" data-caredone="'+esc(it.id)+'">'+esc(t("careDone"))+'</button></div>';
+      }).join("");
+    }
+    node.innerHTML='<h2>'+esc(t("careTitle"))+'</h2><div id="wkCareList">'+rows()+'</div>'
+      +'<button type="button" class="wk-chip add" id="wkCareAdd">＋ '+esc(t("careAdd"))+'</button>'
+      +'<div class="sheet-actions" style="margin-top:14px"><button class="btn btn-cancel" data-close style="flex:1">'+esc(t("common.close"))+'</button></div>';
+    var sh=sdk.ui.sheet(node);
+    node.querySelector("[data-close]").addEventListener("click",sh.close);
+    node.addEventListener("click",function(e){
+      var b;
+      if(e.target.closest("#wkCareAdd")){ sh.close(); careForm(null); return; }
+      b=e.target.closest("[data-caredone]"); if(b){ careMarkDone(b.getAttribute("data-caredone")); sh.close(); return; }
+      b=e.target.closest("[data-care]"); if(b){ sh.close(); careForm(b.getAttribute("data-care")); return; }
+    });
+  }
+
+  /* форма одного пункта ухода (создать/изменить/удалить) */
+  function careForm(id){
+    var it=null,i; if(id){ for(i=0;i<careItems.length;i++){ if(String(careItems[i].id)===String(id)){ it=careItems[i]; break; } } }
+    var d=it?dataOf(it):{ type:"vaccine", nextDue:todayKey(), cadence:{unit:"none",every:1}, note:"" };
+    var node=document.createElement("div"); node.className="wk-detail wk-care";
+    function unitOpts(sel){ return CARE_UNITS.map(function(k){ return '<option value="'+k+'"'+(k===sel?" selected":"")+'>'+esc(t("unit."+k))+'</option>'; }).join(""); }
+    var typeOpts=CARE_TYPES.map(function(k){ return '<option value="'+k+'"'+(k===d.type?" selected":"")+'>'+esc(t("care."+k))+'</option>'; }).join("")
+      + evtTypes.map(function(r){ var v="u_"+r.id; return '<option value="'+esc(v)+'"'+(v===d.type?" selected":"")+'>'+esc(dataOf(r).label||"?")+'</option>'; }).join("");
+    var cu=(d.cadence&&d.cadence.unit)||"none", ce=(d.cadence&&d.cadence.every)||1;
+    node.innerHTML='<h2>'+esc(t("careAdd"))+'</h2>'
+      +'<div class="wk-sect">'+esc(t("careType"))+'</div><select class="wk-time" id="wkCareType">'+typeOpts+'</select>'
+      +'<div class="wk-sect">'+esc(t("careNext"))+'</div><input type="date" class="wk-time" id="wkCareDate" value="'+esc(d.nextDue||todayKey())+'">'
+      +'<div class="wk-sect">'+esc(t("careRepeat"))+'</div><div class="wk-when">'
+      +'<select class="wk-time" id="wkCareUnit">'+unitOpts(cu)+'</select>'
+      +'<input type="number" class="wk-time" id="wkCareEvery" min="1" max="60" value="'+esc(String(ce))+'">'
+      +'</div>'
+      +'<div class="wk-sect">'+esc(t("careNote"))+'</div><input type="text" class="wk-note" id="wkCareNote" maxlength="120" value="'+esc(d.note||"")+'">'
+      +'<div class="sheet-actions" style="margin-top:14px">'
+      +(it?'<button class="btn btn-danger" id="wkCareDel">'+esc(t("careDelete"))+'</button>':'')
+      +'<button class="btn btn-cancel" data-close>'+esc(t("common.cancel"))+'</button>'
+      +'<button class="btn btn-primary" id="wkCareSave">'+esc(t("common.save"))+'</button></div>';
+    var sh=sdk.ui.sheet(node);
+    node.querySelector("[data-close]").addEventListener("click",sh.close);
+    node.querySelector("#wkCareSave").addEventListener("click",function(){
+      var unit=node.querySelector("#wkCareUnit").value;
+      var every=Math.max(1,Math.min(60,parseInt(node.querySelector("#wkCareEvery").value,10)||1));
+      var dateEl=node.querySelector("#wkCareDate"), nd=/^\d{4}-\d{2}-\d{2}$/.test(dateEl.value)?dateEl.value:todayKey();
+      var payload={ type:node.querySelector("#wkCareType").value, nextDue:nd, cadence:{unit:unit,every:every},
+        note:(node.querySelector("#wkCareNote").value||"").trim().slice(0,120),
+        author:(sdk.user&&sdk.user.name)||"" };
+      var p = it ? sdk.data.update("care", it.id, payload).then(function(){ it.data=Object.assign({},it.data,payload); })
+                 : sdk.data.create("care", payload).then(function(item){ if(item) careItems.push(item); });
+      p.then(function(){ if(!root) return; sh.close(); careItems.sort(careSort); renderCal(); }).catch(function(){ sdk.ui.toast(t("saveFailed")); });
+    });
+    var del=node.querySelector("#wkCareDel");
+    if(del) del.addEventListener("click",function(){
+      sdk.data.remove("care", it.id).then(function(){ careItems=careItems.filter(function(x){ return String(x.id)!==String(it.id); }); sh.close(); renderCal(); }).catch(function(){ sdk.ui.toast(t("saveFailed")); });
+    });
+  }
+
   /* =================== mount / unmount =================== */
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; E={};
-    entries=[]; behs=[]; evts=[]; cmds=[]; iss=[]; evtTypes=[]; meta={id:null,puppy:1,reward:REWARD_DEF};
-    step="dur"; cur=null; beh=null; ev=null; saving=false;
+    entries=[]; behs=[]; evts=[]; cmds=[]; iss=[]; evtTypes=[]; careItems=[]; meta={id:null,puppy:1};
+    step="dur"; cur=null; beh=null; ev=null; saving=false; calMonth=null; calPeriod="week";
     var title=sdk.i18n.t("tile.walk");
     var body=sdk.ui.frame({
       titleHtml:'<div class="wk-title"><span class="sic">'+PAW_IC+'</span> '+esc(title)+'</div><div class="wk-sub">'+esc(t("subtitle"))+'</div>',
       backLabel:t("common.back"),
       back:function(){
+        if(step==="cal"){ step="dur"; renderMain(); return; }
         if(step==="details"){ step="rate"; renderMain(); return; }
         if(step==="rate"){ step="dur"; cur=null; renderMain(); return; }
         if(step==="beh"){ step="dur"; beh=null; renderMain(); return; }
         if(step==="evt"){ step="dur"; ev=null; renderMain(); return; }
         sdk.ui.back();
       },
-      actions:[{ icon:GEAR_IC, id:"wkGear", label:t("aria.settings"), onClick:openSettings }]
+      actions:[
+        { icon:CAL_IC, id:"wkCal", label:t("calTitle"), onClick:openCal },
+        { icon:GEAR_IC, id:"wkGear", label:t("aria.settings"), onClick:openSettings }
+      ]
     }).body;
     body.innerHTML='<div class="wk">'
       +'<div id="wkMain"></div>'
@@ -753,6 +1056,11 @@
        иначе при повторных открытиях модуля обработчики накапливаются (двойные тосты/тоглы) */
     E.onRootClick=function(e){
       var b;
+      /* календарь доступен всем (в т.ч. read-only): период / навигация по месяцам / день */
+      b=e.target.closest("[data-per]"); if(b){ calPeriod=b.getAttribute("data-per"); renderCalStats(); return; }
+      b=e.target.closest("[data-mon]"); if(b){ calMonth=new Date(calMonth.getFullYear(), calMonth.getMonth()+parseInt(b.getAttribute("data-mon"),10), 1, 12); renderCalGrid(); return; }
+      b=e.target.closest("[data-day]"); if(b){ openDayDetail(b.getAttribute("data-day")); return; }
+      if(e.target.closest("#wkCareBtn")){ openCare(); return; }
       if(!sdk.can("edit")) {
         var row0=e.target.closest(".wk-row");
         if(row0){
@@ -799,8 +1107,8 @@
   }
   function unmount(){
     if(root && E.onRootClick) root.removeEventListener("click",E.onRootClick);
-    E={}; entries=[]; behs=[]; evts=[]; cmds=[]; iss=[]; evtTypes=[]; root=null;
-    step="dur"; cur=null; beh=null; ev=null; saving=false; meta={id:null,puppy:1,reward:REWARD_DEF};
+    E={}; entries=[]; behs=[]; evts=[]; cmds=[]; iss=[]; evtTypes=[]; careItems=[]; root=null;
+    step="dur"; cur=null; beh=null; ev=null; saving=false; calMonth=null; meta={id:null,puppy:1};
   }
 
   /* живое обновление (sync-поллер оболочки, v2026.06.07.47): общесемейный пул — прогулку

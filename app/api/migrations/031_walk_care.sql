@@ -1,0 +1,14 @@
+-- 031_walk_care.sql — walk v1.5.0: коллекция walk/care (generic-стор module_data, без DDL).
+-- Расписание ухода за собакой, которое ведёт РОДИТЕЛЬ (прививка, дегельминтизация, блохи/клещи,
+-- ветеринар, груминг + свои типы из walk/eventTypes). Дети видят даты на календаре (read-only;
+-- запись walk/care родителю-только — гард в app/api/data.php).
+--
+-- Строка care (data JSON):
+--   { type:"vaccine|deworm|flea|vet|groom|u_<id>", nextDue:"YYYY-MM-DD",
+--     cadence:{ unit:"none|day|week|month", every:N }, note, lastDoneDay, lastNotified, author }
+--
+-- walk/meta получает поле lastCareCheck:"YYYY-MM-DD" — дневной гейт серверной проверки
+-- rt_care_check() (app/api/_care.php, вызывается из sync.php): не чаще раза в день на семью
+-- шлёт родителям уведомление 'walk'/'care_due' (in-app + веб-пуш) по просроченным/наступившим срокам.
+--
+-- Изменений схемы нет: всё живёт в module_data. Файл — маркер версии и документация формата.

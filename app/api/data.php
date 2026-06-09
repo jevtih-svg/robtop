@@ -43,6 +43,12 @@ if ($module === 'bank' && $coll === 'points' && in_array($op, $writes, true)) {
     rt_json(['error' => 'points_readonly', 'message' => 'use api/points.php'], 403);
 }
 
+// Расписание ухода (walk/care) — пишет ТОЛЬКО родитель; дети видят на календаре (read).
+// Манифест walk допускает edit и ребёнку (для прогулок), поэтому гейтим коллекцию отдельно.
+if ($module === 'walk' && $coll === 'care' && in_array($op, $writes, true) && $role !== 'parent') {
+    rt_json(['error' => 'forbidden', 'message' => 'care is parent-write-only'], 403);
+}
+
 // Скоуп данных (2026-06-07, три уровня):
 // 1) ОБЩЕСЕМЕЙНЫЙ пул (манифест: "familyPool":true, напр. walk): ЛЮБАЯ роль — и родитель,
 //    и КАЖДЫЙ ребёнок семьи — работает с одним пулом канонического владельца (первый ребёнок
