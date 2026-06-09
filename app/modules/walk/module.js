@@ -52,6 +52,12 @@
       calTitle:"Dog calendar", statToday:"Today", statWalks:"Walks", statTime:"Time",
       statLongest:"Longest", statStreak:"Day streak", perWeek:"Week", perMonth:"Month", perAll:"All time",
       dayEmpty:"Nothing logged this day", minShort:"{n} min",
+      careTitle:"Care dates", careAdd:"Add care date", careType:"Type", careNext:"Next date",
+      careRepeat:"Repeat", careEvery:"every", careNote:"Note", careDone:"Mark done", careDelete:"Delete",
+      careDueSoon:"{label} due {day}", careOverdue:"{label} overdue since {day}",
+      careDoneToast:"Care logged", careNeedType:"Pick a type first",
+      care:{ vaccine:"Vaccination", deworm:"De-worming", flea:"Flea / tick", vet:"Vet checkup", groom:"Grooming" },
+      unit:{ none:"No repeat", day:"days", week:"weeks", month:"months" },
       aria:{ settings:"Walk settings", photo:"Photo", del:"Remove" }
     }, bank:{ r_walk_done:"Dog walk" }},
     ru:{ walk:{
@@ -92,6 +98,12 @@
       calTitle:"Календарь собаки", statToday:"Сегодня", statWalks:"Прогулок", statTime:"Время",
       statLongest:"Дольше всего", statStreak:"Дней подряд", perWeek:"Неделя", perMonth:"Месяц", perAll:"Всё время",
       dayEmpty:"В этот день записей нет", minShort:"{n} мин",
+      careTitle:"Уход и даты", careAdd:"Добавить дату ухода", careType:"Тип", careNext:"Следующая дата",
+      careRepeat:"Повтор", careEvery:"каждые", careNote:"Заметка", careDone:"Отметить выполнено", careDelete:"Удалить",
+      careDueSoon:"{label} — {day}", careOverdue:"{label} просрочено с {day}",
+      careDoneToast:"Уход записан", careNeedType:"Сначала выбери тип",
+      care:{ vaccine:"Прививка", deworm:"Дегельминтизация", flea:"От блох / клещей", vet:"Осмотр у ветеринара", groom:"Груминг" },
+      unit:{ none:"Без повтора", day:"дней", week:"недель", month:"месяцев" },
       aria:{ settings:"Настройки прогулки", photo:"Фото", del:"Убрать" }
     }, bank:{ r_walk_done:"Прогулка с собакой" }},
     lv:{ walk:{
@@ -132,6 +144,12 @@
       calTitle:"Suņa kalendārs", statToday:"Šodien", statWalks:"Pastaigas", statTime:"Laiks",
       statLongest:"Garākā", statStreak:"Dienas pēc kārtas", perWeek:"Nedēļa", perMonth:"Mēnesis", perAll:"Viss laiks",
       dayEmpty:"Šajā dienā nav ierakstu", minShort:"{n} min",
+      careTitle:"Aprūpes datumi", careAdd:"Pievienot aprūpes datumu", careType:"Veids", careNext:"Nākamais datums",
+      careRepeat:"Atkārtot", careEvery:"katras", careNote:"Piezīme", careDone:"Atzīmēt izpildītu", careDelete:"Dzēst",
+      careDueSoon:"{label} — {day}", careOverdue:"{label} nokavēts kopš {day}",
+      careDoneToast:"Aprūpe pierakstīta", careNeedType:"Vispirms izvēlies veidu",
+      care:{ vaccine:"Vakcinācija", deworm:"Dehelmintizācija", flea:"Pret blusām / ērcēm", vet:"Veterinārā pārbaude", groom:"Kopšana" },
+      unit:{ none:"Bez atkārtošanas", day:"dienas", week:"nedēļas", month:"mēneši" },
       aria:{ settings:"Pastaigas iestatījumi", photo:"Foto", del:"Noņemt" }
     }, bank:{ r_walk_done:"Pastaiga ar suni" }}
   };
@@ -142,6 +160,8 @@
   var SYS_CMD=["stop","heel","come","sit","stand","down","here","wait","no","noPull","go"];
   var SYS_ISS=["toilet","floor","leash","ignore"];
   var SYS_EVT=["vet","birthday","vaccine","groom"]; // важные события: ветеринар, ДР, прививка, груминг
+  var CARE_TYPES=["vaccine","deworm","flea","vet","groom"]; // расписание ухода (+ свои типы u_<id> из eventTypes)
+  var CARE_UNITS=["none","day","week","month"];
   var PHOTO_MAX=10, REWARD_DEF=10, REWARD_STEP=5, REWARD_MAX=100;
 
   var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
@@ -172,6 +192,7 @@
   var entries=[], behs=[], evts=[], cmds=[], iss=[], evtTypes=[], meta={id:null,puppy:1,reward:REWARD_DEF};
   var step="dur", cur=null, beh=null, ev=null, saving=false;
   var calMonth=null, calPeriod="week"; // calMonth: Date (1-е число месяца); calPeriod: week|month|all
+  var careItems=[]; // расписание ухода (walk/care), только родитель пишет
 
   function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
@@ -230,11 +251,44 @@
     return n;
   }
 
+  /* =================== уход (care): подписи и каденс =================== */
+  function careSort(a,b){ return (dataOf(a).nextDue||"")<(dataOf(b).nextDue||"")?-1:1; }
+  function careLabel(type){
+    if(CARE_TYPES.indexOf(type)>=0) return t("care."+type);
+    if(/^u_/.test(type)) return evtLabel(type); // свои типы — из eventTypes
+    return "?";
+  }
+  /* следующая дата после key по каденсу; unit none → null (разовое) */
+  function careAdvance(key, cadence){
+    var d=parseDay(key), c=cadence||{}; if(!d||!c.unit||c.unit==="none") return null;
+    var n=Math.max(1, parseInt(c.every,10)||1);
+    if(c.unit==="day") d.setDate(d.getDate()+n);
+    else if(c.unit==="week") d.setDate(d.getDate()+7*n);
+    else if(c.unit==="month") d.setMonth(d.getMonth()+n);
+    return dayKey(d);
+  }
+  /* occurrences ухода в видимом месяце [1..конец] (для маркеров календаря) */
+  function careOccurrencesInMonth(item, y, m){
+    var d=dataOf(item), out=[], key=d.nextDue; if(!key) return out;
+    var firstKey=ymd(y,m,1), lastKey=ymd(y,m,new Date(y,m+1,0).getDate()), guard=0;
+    while(key && key<=lastKey && guard<400){
+      if(key>=firstKey) out.push(key);
+      var nx=careAdvance(key, d.cadence); if(!nx||nx===key) break; key=nx; guard++;
+    }
+    return out;
+  }
+  /* ближайший срок ухода: {item, day, overdue} или null — для бейджа */
+  function careNextDue(){
+    var best=null, today=todayKey();
+    careItems.forEach(function(it){ var k=dataOf(it).nextDue; if(!k) return; if(!best || k<best.day) best={item:it, day:k, overdue:k<today}; });
+    return best;
+  }
+
   /* =================== данные =================== */
   function load(){
     Promise.all([
       sdk.data.list("entries"), sdk.data.list("commands"), sdk.data.list("issues"), sdk.data.list("meta"),
-      sdk.data.list("behavior"), sdk.data.list("events"), sdk.data.list("eventTypes")
+      sdk.data.list("behavior"), sdk.data.list("events"), sdk.data.list("eventTypes"), sdk.data.list("care")
     ]).then(function(rr){
       if(!root) return;
       entries=(rr[0]||[]).filter(function(it){ return dataOf(it).duration>0; });
@@ -246,6 +300,7 @@
       evtTypes=(rr[6]||[]).slice().sort(function(a,b){ return (a.createdAt||0)-(b.createdAt||0); });
       cmds=(rr[1]||[]).slice().sort(function(a,b){ return (a.createdAt||0)-(b.createdAt||0); });
       iss=(rr[2]||[]).slice().sort(function(a,b){ return (a.createdAt||0)-(b.createdAt||0); });
+      careItems=(rr[7]||[]).slice().sort(careSort);
       var m=(rr[3]||[])[0];
       if(m){ meta={ id:m.id,
         puppy: dataOf(m).puppy==null ? 1 : (dataOf(m).puppy?1:0),
@@ -284,6 +339,7 @@
   }
   function evtLabel(id){
     if(/^s_/.test(id)) return t("evt."+id.slice(2));
+    if(CARE_TYPES.indexOf(id)>=0) return t("care."+id); // события ухода (careMarkDone) пишут «голый» тип
     for(var i=0;i<evtTypes.length;i++){ if("u_"+evtTypes[i].id===id) return dataOf(evtTypes[i]).label||"?"; }
     return "?";
   }
@@ -337,6 +393,13 @@
     h+='<button type="button" class="wk-evtbtn" id="wkEvtBtn"><span class="ic">'+STAR_IC+'</span>'+esc(t("evtBtn"))+'</button>';
     /* непослушание доступно обеим сторонам и независимо от режима «Щенок» (фидбек Джеффа) */
     h+='<button type="button" class="wk-behbtn" id="wkBehBtn"><span class="ic">'+WARN_IC+'</span>'+esc(t("behBtn"))+'</button>';
+    /* бейдж ближайшего ухода: просрочено или в пределах недели вперёд */
+    var nd=careNextDue();
+    if(nd && nd.day<=dayMinus(todayKey(),-7)){
+      var lbl=careLabel(dataOf(nd.item).type), dd=fmtDay(nd.day);
+      var msg=nd.overdue ? t("careOverdue",{label:lbl, day:dd}) : t("careDueSoon",{label:lbl, day:dd});
+      h+='<div class="wk-carebadge'+(nd.overdue?" overdue":"")+'">'+WARN_IC+'<span>'+esc(msg)+'</span></div>';
+    }
     E.main.innerHTML=h;
   }
   /* экран отдельного события поведения: чипы вариантов + время (шаг 15 мин) + сохранить */
@@ -794,8 +857,13 @@
     E.main.innerHTML='<div class="wk-cal"><div id="wkCalStats"></div><div id="wkCalGrid"></div></div>';
     renderCalStats(); renderCalGrid(); renderCalExtras();
   }
-  /* точка расширения для Phase 3 (кнопка «Уход» родителю); в Phase 2 — пусто */
-  function renderCalExtras(){}
+  /* кнопка управления расписанием ухода — только родителю */
+  function renderCalExtras(){
+    if(!(sdk.role==="parent"||sdk.isDemo())) return;
+    var cal=E.main&&E.main.querySelector(".wk-cal"); if(!cal) return;
+    cal.insertAdjacentHTML("beforeend",
+      '<button type="button" class="wk-evtbtn" id="wkCareBtn"><span class="ic">'+CAL_IC+'</span>'+esc(t("careTitle"))+'</button>');
+  }
   function renderCalStats(){
     var box=E.main&&E.main.querySelector("#wkCalStats"); if(!box) return;
     var ix=buildDayIndex(), today=ix[todayKey()]||{walks:[],min:0};
@@ -845,8 +913,7 @@
       +'<span><i class="dot evt"></i>'+esc(t("evtBtn"))+'</span></div>';
     box.innerHTML=h;
   }
-  /* Phase 3 переопределит через careOccurrencesInMonth; в Phase 2 ухода нет → пусто */
-  function careDaysInMonth(y,m){ return {}; }
+  function careDaysInMonth(y,m){ var o={}; careItems.forEach(function(it){ careOccurrencesInMonth(it,y,m).forEach(function(k){ o[k]=1; }); }); return o; }
   function openDayDetail(key){
     var ix=buildDayIndex(), c=ix[key]||{walks:[],behs:[],evts:[]};
     var careHere=careForDay(key);
@@ -861,7 +928,7 @@
         +c.evts.map(evtRowHtml).join("")
         +'</div>';
       if(careHere.length){
-        h+='<div class="wk-sect">'+esc(t("calTitle"))+'</div><div class="wk-chips ro">';
+        h+='<div class="wk-sect">'+esc(t("careTitle"))+'</div><div class="wk-chips ro">';
         careHere.forEach(function(it){ h+='<span class="wk-chip gold on">'+esc(careLabel(dataOf(it).type))+'</span>'; });
         h+='</div>';
       }
@@ -878,14 +945,97 @@
       else openDetail(row.getAttribute("data-id"));
     });
   }
-  /* Phase 3 переопределит; в Phase 2 ухода нет → пусто */
-  function careForDay(key){ return []; }
+  function careForDay(key){ return careItems.filter(function(it){ return dataOf(it).nextDue===key; }); }
+
+  /* отметить уход выполненным: запись в историю событий + сдвиг следующего срока (разовое — снять с расписания) */
+  function careMarkDone(id){
+    var it=null,i; for(i=0;i<careItems.length;i++){ if(String(careItems[i].id)===String(id)){ it=careItems[i]; break; } }
+    if(!it) return;
+    var d=dataOf(it), today=todayKey();
+    sdk.data.create("events",{ day:today, time:hhmm15(), kinds:[d.type],
+      note:d.note||"", author:(sdk.user&&sdk.user.name)||"", src:"care" }).then(function(item){ if(item&&root){ evts.unshift(item); } });
+    var nx=careAdvance(d.nextDue||today, d.cadence);
+    if(nx){
+      sdk.data.update("care", it.id, {nextDue:nx, lastDoneDay:today, lastNotified:null}).then(function(){
+        if(!root) return; it.data=Object.assign({},it.data,{nextDue:nx,lastDoneDay:today,lastNotified:null}); careItems.sort(careSort); if(step==="cal") renderCal();
+      });
+    } else {
+      sdk.data.remove("care", it.id).then(function(){ if(!root) return; careItems=careItems.filter(function(x){ return String(x.id)!==String(it.id); }); if(step==="cal") renderCal(); });
+    }
+    sdk.ui.toast(t("careDoneToast"));
+  }
+
+  /* список расписания ухода (родитель): добавить / изменить / выполнить */
+  function openCare(){
+    var node=document.createElement("div"); node.className="wk-detail wk-care";
+    function rows(){
+      if(!careItems.length) return '<p class="wk-det-norate">'+esc(t("dayEmpty"))+'</p>';
+      return careItems.map(function(it){ var d=dataOf(it);
+        var rep=(d.cadence&&d.cadence.unit&&d.cadence.unit!=="none")
+          ? (t("careEvery")+" "+(d.cadence.every||1)+" "+t("unit."+d.cadence.unit)) : t("unit.none");
+        return '<div class="wk-care-row" data-care="'+esc(it.id)+'"><div class="m"><b>'+esc(careLabel(d.type))+'</b>'
+          +'<span>'+esc(fmtDay(d.nextDue))+' · '+esc(rep)+'</span></div>'
+          +'<button type="button" class="wk-care-done" data-caredone="'+esc(it.id)+'">'+esc(t("careDone"))+'</button></div>';
+      }).join("");
+    }
+    node.innerHTML='<h2>'+esc(t("careTitle"))+'</h2><div id="wkCareList">'+rows()+'</div>'
+      +'<button type="button" class="wk-chip add" id="wkCareAdd">＋ '+esc(t("careAdd"))+'</button>'
+      +'<div class="sheet-actions" style="margin-top:14px"><button class="btn btn-cancel" data-close style="flex:1">'+esc(t("common.close"))+'</button></div>';
+    var sh=sdk.ui.sheet(node);
+    node.querySelector("[data-close]").addEventListener("click",sh.close);
+    node.addEventListener("click",function(e){
+      var b;
+      if(e.target.closest("#wkCareAdd")){ sh.close(); careForm(null); return; }
+      b=e.target.closest("[data-caredone]"); if(b){ careMarkDone(b.getAttribute("data-caredone")); sh.close(); return; }
+      b=e.target.closest("[data-care]"); if(b){ sh.close(); careForm(b.getAttribute("data-care")); return; }
+    });
+  }
+
+  /* форма одного пункта ухода (создать/изменить/удалить) */
+  function careForm(id){
+    var it=null,i; if(id){ for(i=0;i<careItems.length;i++){ if(String(careItems[i].id)===String(id)){ it=careItems[i]; break; } } }
+    var d=it?dataOf(it):{ type:"vaccine", nextDue:todayKey(), cadence:{unit:"none",every:1}, note:"" };
+    var node=document.createElement("div"); node.className="wk-detail wk-care";
+    function unitOpts(sel){ return CARE_UNITS.map(function(k){ return '<option value="'+k+'"'+(k===sel?" selected":"")+'>'+esc(t("unit."+k))+'</option>'; }).join(""); }
+    var typeOpts=CARE_TYPES.map(function(k){ return '<option value="'+k+'"'+(k===d.type?" selected":"")+'>'+esc(t("care."+k))+'</option>'; }).join("")
+      + evtTypes.map(function(r){ var v="u_"+r.id; return '<option value="'+esc(v)+'"'+(v===d.type?" selected":"")+'>'+esc(dataOf(r).label||"?")+'</option>'; }).join("");
+    var cu=(d.cadence&&d.cadence.unit)||"none", ce=(d.cadence&&d.cadence.every)||1;
+    node.innerHTML='<h2>'+esc(t("careAdd"))+'</h2>'
+      +'<div class="wk-sect">'+esc(t("careType"))+'</div><select class="wk-time" id="wkCareType">'+typeOpts+'</select>'
+      +'<div class="wk-sect">'+esc(t("careNext"))+'</div><input type="date" class="wk-time" id="wkCareDate" value="'+esc(d.nextDue||todayKey())+'">'
+      +'<div class="wk-sect">'+esc(t("careRepeat"))+'</div><div class="wk-when">'
+      +'<select class="wk-time" id="wkCareUnit">'+unitOpts(cu)+'</select>'
+      +'<input type="number" class="wk-time" id="wkCareEvery" min="1" max="60" value="'+esc(String(ce))+'">'
+      +'</div>'
+      +'<div class="wk-sect">'+esc(t("careNote"))+'</div><input type="text" class="wk-note" id="wkCareNote" maxlength="120" value="'+esc(d.note||"")+'">'
+      +'<div class="sheet-actions" style="margin-top:14px">'
+      +(it?'<button class="btn btn-danger" id="wkCareDel">'+esc(t("careDelete"))+'</button>':'')
+      +'<button class="btn btn-cancel" data-close>'+esc(t("common.cancel"))+'</button>'
+      +'<button class="btn btn-primary" id="wkCareSave">'+esc(t("common.save"))+'</button></div>';
+    var sh=sdk.ui.sheet(node);
+    node.querySelector("[data-close]").addEventListener("click",sh.close);
+    node.querySelector("#wkCareSave").addEventListener("click",function(){
+      var unit=node.querySelector("#wkCareUnit").value;
+      var every=Math.max(1,Math.min(60,parseInt(node.querySelector("#wkCareEvery").value,10)||1));
+      var dateEl=node.querySelector("#wkCareDate"), nd=/^\d{4}-\d{2}-\d{2}$/.test(dateEl.value)?dateEl.value:todayKey();
+      var payload={ type:node.querySelector("#wkCareType").value, nextDue:nd, cadence:{unit:unit,every:every},
+        note:(node.querySelector("#wkCareNote").value||"").trim().slice(0,120),
+        author:(sdk.user&&sdk.user.name)||"" };
+      var p = it ? sdk.data.update("care", it.id, payload).then(function(){ it.data=Object.assign({},it.data,payload); })
+                 : sdk.data.create("care", payload).then(function(item){ if(item) careItems.push(item); });
+      p.then(function(){ if(!root) return; sh.close(); careItems.sort(careSort); renderCal(); }).catch(function(){ sdk.ui.toast(t("saveFailed")); });
+    });
+    var del=node.querySelector("#wkCareDel");
+    if(del) del.addEventListener("click",function(){
+      sdk.data.remove("care", it.id).then(function(){ careItems=careItems.filter(function(x){ return String(x.id)!==String(it.id); }); sh.close(); renderCal(); }).catch(function(){ sdk.ui.toast(t("saveFailed")); });
+    });
+  }
 
   /* =================== mount / unmount =================== */
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; E={};
-    entries=[]; behs=[]; evts=[]; cmds=[]; iss=[]; evtTypes=[]; meta={id:null,puppy:1,reward:REWARD_DEF};
-    step="dur"; cur=null; beh=null; ev=null; saving=false;
+    entries=[]; behs=[]; evts=[]; cmds=[]; iss=[]; evtTypes=[]; careItems=[]; meta={id:null,puppy:1,reward:REWARD_DEF};
+    step="dur"; cur=null; beh=null; ev=null; saving=false; calMonth=null; calPeriod="week";
     var title=sdk.i18n.t("tile.walk");
     var body=sdk.ui.frame({
       titleHtml:'<div class="wk-title"><span class="sic">'+PAW_IC+'</span> '+esc(title)+'</div><div class="wk-sub">'+esc(t("subtitle"))+'</div>',
@@ -963,8 +1113,8 @@
   }
   function unmount(){
     if(root && E.onRootClick) root.removeEventListener("click",E.onRootClick);
-    E={}; entries=[]; behs=[]; evts=[]; cmds=[]; iss=[]; evtTypes=[]; root=null;
-    step="dur"; cur=null; beh=null; ev=null; saving=false; meta={id:null,puppy:1,reward:REWARD_DEF};
+    E={}; entries=[]; behs=[]; evts=[]; cmds=[]; iss=[]; evtTypes=[]; careItems=[]; root=null;
+    step="dur"; cur=null; beh=null; ev=null; saving=false; calMonth=null; meta={id:null,puppy:1,reward:REWARD_DEF};
   }
 
   /* живое обновление (sync-поллер оболочки, v2026.06.07.47): общесемейный пул — прогулку

@@ -9,7 +9,7 @@
   "styles": "module.css",
   "familyPool": true,
   "roles": { "edit": ["child", "parent"], "read": ["child", "parent"] },
-  "data": { "store": "generic", "collections": ["entries", "behavior", "events", "commands", "issues", "eventTypes", "meta"] },
+  "data": { "store": "generic", "collections": ["entries", "behavior", "events", "commands", "issues", "eventTypes", "meta", "care"] },
   "server": false,
   "permissions": ["points", "camera"],
   "min_shell": "2.0.0",
