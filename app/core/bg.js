@@ -95,6 +95,10 @@
     document.body.setAttribute("data-theme",current);
     var m=document.querySelector('meta[name="theme-color"]');
     if(m) m.setAttribute("content",theme().metaColor);
+    /* <html> вне scope body[data-theme], поэтому html{background:var(--bg0)} берёт НЕтемный :root.
+       На 1-м кадре iOS-PWA layout-вьюпорт короче экрана, и снизу видна полоска html-фона — на
+       зелёной теме она не совпадала с приложением (отсюда «отступ»). Красим html в цвет темы. */
+    document.documentElement.style.backgroundColor=theme().metaColor;
     rebuild();
   }
   window.RTTheme={
@@ -115,6 +119,7 @@
   document.body.setAttribute("data-theme",current);
   var mt=document.querySelector('meta[name="theme-color"]');
   if(mt) mt.setAttribute("content",theme().metaColor);
+  document.documentElement.style.backgroundColor=theme().metaColor;
   if(!ctx) return;
   var rt=null;
   window.addEventListener("resize",function(){ clearTimeout(rt); rt=setTimeout(function(){ resize(); if(reduce) draw(0); },180); });

@@ -1661,24 +1661,15 @@ window.RobTop = window.RobTop || {};
   }
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",boot); else boot();
 
-  /* iOS standalone (PWA): на ПЕРВОМ кадре layout-вьюпорт КОРОЧЕ полного. Диагностика на устройстве:
-     innerHeight 873 → 909 (~нижняя safe-area) ПОСЛЕ первого касания. Бар стоит у низа короткого
-     вьюпорта (bottom:0 === низ вьюпорта, gap=0), а полоска ПОД ним — НИЖЕ вьюпорта, и страница её
-     не закрашивает (поэтому .rt-nav::after не помогал). Лечится только разворотом вьюпорта на полную
-     высоту сразу. Прежний scrollTo(0,0) был no-op: страница не скроллится, реального скролла нет.
-     Делаем НАСТОЯЩИЙ скролл (тот же триггер, что «клик по экрану»): временно делаем body на 2px выше,
-     скроллим на 1px и обратно — iOS пересчитывает вьюпорт. На visualViewport.resize НЕ вешаем, чтобы
-     не конфликтовать с клавиатурным лифтом шторок (#3). */
+  /* iOS standalone (PWA): на 1-м кадре layout-вьюпорт короче экрана (innerHeight 873→932 после
+     первого касания), и под коротким вьюпортом видна полоска html-фона. Развернуть вьюпорт без
+     реального касания нельзя, поэтому полоску гасим ЦВЕТОМ: html красится в цвет темы (core/bg.js),
+     и полоска сливается с приложением. Лёгкий реflow на load оставляем как подстраховку. */
   function rtViewportNudge(){
-    try{
-      var b=document.body, prev=b.style.minHeight;
-      b.style.minHeight=(window.innerHeight+2)+"px";
-      window.scrollTo(0,1); window.scrollTo(0,0);
-      b.style.minHeight=prev||"";
-    }catch(e){}
-    void document.documentElement.offsetHeight; /* форс синхронного реflow */
+    try{ window.scrollTo(0,0); }catch(e){}
+    void document.documentElement.offsetHeight;
   }
-  window.addEventListener("load", function(){ rtViewportNudge(); setTimeout(rtViewportNudge,60); setTimeout(rtViewportNudge,200); setTimeout(rtViewportNudge,500); setTimeout(rtViewportNudge,1200); });
+  window.addEventListener("load", function(){ rtViewportNudge(); setTimeout(rtViewportNudge,120); });
   window.addEventListener("pageshow", rtViewportNudge);
 
   /* ===== Клавиатура iOS перекрывала нижние шторки (.overlay/.sheet якорятся к низу).
@@ -1706,29 +1697,4 @@ window.RobTop = window.RobTop || {};
     document.addEventListener("focusout", function(){ setTimeout(applyKb,60); });
   })();
 
-  /* ===== TEMP ДИАГНОСТИКА отступа iOS-PWA на 1-м кадре (убрать в следующей версии).
-     Печатает метрики вьюпорта; виден ТОЛЬКО на родителе/локе (#rtdiag в ui.css), дети не видят.
-     Нужен скрин ПЕРВОГО открытия: сравнить 1st vs now, увидеть gap = ih - barB. ===== */
-  (function(){
-    var el=document.getElementById("rtdiag"); if(!el) return;
-    var probe=document.getElementById("rtdiagProbe");
-    function uh(id){ var e=document.getElementById(id); return e?e.offsetHeight:0; }
-    var first=null;
-    function snap(){
-      var vv=window.visualViewport||{};
-      var bar=document.getElementById("kidBar");
-      var b=bar?Math.round(bar.getBoundingClientRect().bottom):0;
-      return { ih:window.innerHeight, vh:Math.round(vv.height||0),
-               svh:uh("rtUsvh"), dvh:uh("rtUdvh"), lvh:uh("rtUlvh"),
-               sab:probe?probe.offsetHeight:0, sh:(window.screen&&screen.height)||0, barB:b };
-    }
-    function show(){
-      var s=snap(); if(!first) first=s;
-      el.textContent="1st ih"+first.ih+" barB"+first.barB+" svh"+first.svh+" dvh"+first.dvh+" lvh"+first.lvh+" sh"+first.sh
-        +" | now ih"+s.ih+" gap"+(s.ih-s.barB)+" lvh"+s.lvh;
-    }
-    window.addEventListener("load", function(){ show(); setTimeout(show,120); setTimeout(show,500); setTimeout(show,1500); });
-    if(window.visualViewport) visualViewport.addEventListener("resize", show);
-    show();
-  })();
 })(window.RobTop);

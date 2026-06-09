@@ -319,16 +319,6 @@ body.demo .demo-badge{display:block}
 .appver{position:fixed;left:calc(10px + var(--safe-left));bottom:calc(4px + var(--safe-bottom));z-index:1;
   font-family:'Rubik',sans-serif;font-size:9px;font-weight:600;letter-spacing:.3px;color:rgba(147,166,207,.26);
   pointer-events:none;user-select:none}
-/* TEMP диагностика отступа iOS-PWA: вверху, поверх всего, ТОЛЬКО на родителе/локе (дети не видят).
-   Удалить вместе с блоком в shell.js и элементами в index.html после диагностики. */
-#rtdiag{display:none;position:fixed;z-index:9999;top:calc(env(safe-area-inset-top) + 2px);left:6px;right:6px;
-  font-family:'Rubik',monospace;font-size:9.5px;font-weight:700;line-height:1.3;color:#9effd0;
-  background:rgba(0,0,0,.55);border-radius:6px;padding:3px 6px;pointer-events:none;text-align:center}
-body[data-view="parent"] #rtdiag,body[data-view="lock"] #rtdiag{display:block}
-/* TEST-линия у низа большого вьюпорта (100lvh): видна на 1-м кадре → веб-вью во весь экран. */
-#rtEdge{display:none;position:fixed;left:0;right:0;top:calc(100lvh - 4px);height:4px;z-index:9999;
-  background:#ff2bd6;pointer-events:none}
-body[data-view="parent"] #rtEdge,body[data-view="lock"] #rtEdge{display:block}
 .set-ver{margin-top:18px;text-align:center;font-size:11px;font-weight:600;letter-spacing:.4px;color:rgba(147,166,207,.55)}
 .sheet h2{font-family:var(--font-display);font-weight:400;font-size:21px;margin:0 0 14px;text-align:center;color:#fff;
   text-shadow:0 0 12px color-mix(in srgb,var(--accent) 60%, transparent)}
