@@ -218,9 +218,10 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------- Задания от родителей (миграция 024; канон — ГАЙД-задания.md) ----------
--- ОБЩИЙ сервис уровня приложения (api/tasks.php + sdk.tasks): один источник правды,
--- UI два — Копилка и модуль «Задания». Старые строки generic-стора bank/tasks
--- переносит ленивый бэкфилл api/tasks.php.
+-- ОБЩИЙ сервис уровня приложения (api/tasks.php + sdk.tasks): один источник правды.
+-- UI заданий — вкладка «Задания» модуля «Копилка» (модуль tasks удалён 2026-06-09, миграция 030).
+-- Таблица tasks и сервис остаются: сервис не гейтится плиткой. Старые строки generic-стора
+-- bank/tasks переносит ленивый бэкфилл api/tasks.php.
 CREATE TABLE IF NOT EXISTS tasks (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id INT UNSIGNED NOT NULL,                  -- ребёнок-владелец
@@ -257,7 +258,6 @@ INSERT INTO modules (id, name, version, manifest, source, trusted, server, enabl
  ('lost','Бюро находок','1.0.0','{"color":"#2bf0c0","status":"soon"}','native',1,0,1,110),
  ('walk','Прогулка','1.2.0','{"color":"#38e8a0","status":"active","wide":false,"familyPool":true,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,0,1,115),
  ('snake','Змейка','1.0.0','{"color":"#19e3ff","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,117),
- ('tasks','Задания','1.0.0','{"color":"#2bf0c0","status":"active","wide":false,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,0,1,118),
  ('bank','Копилка','1.0.0','{"color":"#ff4d6d","status":"active","wide":true,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,0,1,120),
  ('shop','Магазин','1.0.0','{"color":"#ff2bd6","status":"active","wide":false,"familyCollections":["items"],"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,0,1,130),
  ('chat','Чат','1.0.0','{"color":"#3b6bff","status":"active","wide":false,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,1,1,135)

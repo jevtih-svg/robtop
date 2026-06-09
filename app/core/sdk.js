@@ -225,7 +225,8 @@ window.RobTop = window.RobTop || {};
   }
   function tasksNotify(to,type,params){ /* fire-and-forget; в демо — no-op */
     if(RT.isDemo()) return;
-    var b={op:"send",to:to,src:"tasks",type:type,params:params||null,link:{module:"tasks"}};
+    /* src:"tasks" — шаблоны текста ntf.ev.tasks.*; deep-link ведёт в Копилку (модуль «Задания» удалён 2026-06-09, UI заданий — вкладка bank) */
+    var b={op:"send",to:to,src:"tasks",type:type,params:params||null,link:{module:"bank"}};
     var pc=parentChild(); if(pc) b.child=pc;
     API.post("notify.php",b).catch(function(){});
   }

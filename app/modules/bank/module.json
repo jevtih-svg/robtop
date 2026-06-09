@@ -1,7 +1,7 @@
 {
   "id": "bank",
   "name": "Копилка",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "color": "#ff4d6d",
   "status": "active",
   "wide": true,
