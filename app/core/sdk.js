@@ -412,7 +412,7 @@ window.RobTop = window.RobTop || {};
         /* fixViewport() — заново развернуть layout-вьюпорт на полную высоту (iOS-PWA). Модуль зовёт
            при размонтировании, если блокировал прокрутку тела / гонял клавиатуру (chat), иначе
            нижний бар застревает выше реального низа экрана — «щель» снизу. */
-        fixViewport: function(){ if(shell.fixViewport) shell.fixViewport(); }
+        fixViewport: function(cb){ if(shell.fixViewport) shell.fixViewport(cb); }
       },
       points: {
         /* add(n, reason, opts?) — opts:{kind, src, note}; kind по умолчанию: win (n≥0) / loss / manual (*_manual).

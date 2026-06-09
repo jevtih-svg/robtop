@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.09.17", d:"2026-06-09", t:{
+    en:"After you close the keyboard in a chat, the message box now drops back to the very bottom instead of leaving a gap.",
+    ru:"После закрытия клавиатуры в чате поле ввода теперь опускается к самому низу — без щели снизу.",
+    lv:"Pēc tastatūras aizvēršanas čatā ziņas lauks tagad nolaižas līdz pašai apakšai — bez atstarpes." } },
   { v:"2026.06.09.16", d:"2026-06-09", t:{
     en:"Bottom menu now truly hides inside a conversation (and during a full-screen game), so it no longer floats over the keyboard on iPhone.",
     ru:"Нижнее меню теперь по-настоящему скрывается в переписке (и в полноэкранной игре) — больше не всплывает над клавиатурой на iPhone.",
