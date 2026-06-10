@@ -1,16 +1,13 @@
 /* RobTop — модуль «Найти предмет» (find). Скоуп: [data-mod="find"] / .find-*.
-   Использует токены core/ui.css, акцент — цвет модуля #19e3ff + цвета сложности. */
+   Использует токены core/ui.css, акцент — var(--cyan) + токены цветов сложности
+   (хардкод-hex заменён токенами, иначе ломалась светлая тема «tilley»). */
 
-[data-mod="find"]{ --fd:#19e3ff; --fd-easy:#38e8a0; --fd-medium:#ffd23b; --fd-hard:#ff8a3d; --fd-impossible:#ff4d6d;
+[data-mod="find"]{ --fd:var(--cyan); --fd-easy:var(--mint); --fd-medium:var(--gold); --fd-hard:var(--orange); --fd-impossible:var(--red);
   /* guardrails: универсальный детский бар «Домой» виден и в find — резервируем низ,
      чтобы камера и кнопки «Сфоткать/Отправить» сидели ВЫШЕ бара, а не под ним */
   padding-bottom:calc(var(--kidbar-total) + 8px); }
 
-/* ----- общая шапка ----- */
-.find-head{ display:flex; align-items:center; gap:10px; padding:4px 2px 12px; }
-.find-head .hbtn{ width:40px; height:40px; flex:0 0 40px; display:flex; align-items:center; justify-content:center;
-  border-radius:12px; border:1px solid var(--line,#ffffff22); background:var(--card,#ffffff0d); color:var(--ink,#fff); cursor:pointer; }
-.find-head .hbtn svg{ width:22px; height:22px; }
+/* ----- общая шапка: каркас — стандартный .rt-hdr из core/ui.css, тут только текст ----- */
 .find-title{ font-weight:800; font-size:1.15rem; }
 .find-sub{ opacity:.7; font-size:.86rem; margin-top:2px; }
 
@@ -22,7 +19,7 @@
 .find-rules b{ color:var(--fd); }
 .find-play{ display:inline-flex; align-items:center; justify-content:center; gap:10px;
   min-width:200px; min-height:58px; padding:0 28px; border:none; border-radius:18px; cursor:pointer;
-  font-weight:800; font-size:1.2rem; color:#04121a; background:var(--fd);
+  font-weight:800; font-size:1.2rem; color:var(--on-bright); background:var(--fd);
   box-shadow:0 8px 30px -8px var(--fd); }
 .find-play:disabled{ filter:grayscale(.7) brightness(.7); cursor:default; box-shadow:none; }
 .find-cool{ margin:14px auto; padding:16px; max-width:24em; border:1px dashed var(--line,#ffffff22); border-radius:16px; }
@@ -38,7 +35,7 @@
 /* ----- экран игры ----- */
 .find-gameTop{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
 .find-lvl{ display:inline-flex; align-items:center; gap:8px; font-weight:800; }
-.find-chip{ padding:4px 12px; border-radius:999px; font-size:.82rem; font-weight:800; color:#04121a; }
+.find-chip{ padding:4px 12px; border-radius:999px; font-size:.82rem; font-weight:800; color:var(--on-bright); }
 .find-chip.easy{ background:var(--fd-easy); } .find-chip.medium{ background:var(--fd-medium); }
 .find-chip.hard{ background:var(--fd-hard); } .find-chip.impossible{ background:var(--fd-impossible); }
 .find-round{ opacity:.7; font-size:.84rem; }
@@ -49,11 +46,13 @@
 .find-task .d{ font-weight:800; font-size:1.5rem; line-height:1.25; margin-top:6px; }
 
 .find-timer{ height:12px; border-radius:999px; background:#ffffff1a; overflow:hidden; margin:14px 0 4px; }
+/* заполнение — через scaleX (transform), а не width: без перераскладки на каждом тике */
 .find-timer > i{ display:block; height:100%; background:var(--acc,var(--fd)); width:100%;
-  transition:width .25s linear; border-radius:999px; }
+  transform:scaleX(1); transform-origin:left; transition:transform .25s linear; border-radius:999px; }
 .find-timer.low > i{ background:var(--fd-impossible); }
 .find-tnum{ text-align:center; font-weight:800; font-variant-numeric:tabular-nums; opacity:.85; }
 
+/* #000 и белый текст внутри — намеренно: подложка видео/фото одинаково чёрная в обеих темах */
 .find-cam{ position:relative; margin:14px 0; border-radius:18px; overflow:hidden; background:#000;
   aspect-ratio:3/4; max-height:48vh; display:flex; align-items:center; justify-content:center; }
 .find-cam video,.find-cam img{ width:100%; height:100%; object-fit:cover; display:block; }
@@ -63,16 +62,16 @@
 .find-acts{ display:flex; gap:10px; flex-wrap:wrap; }
 .find-acts button{ flex:1 1 auto; min-height:52px; border-radius:16px; font-weight:800; font-size:1rem; cursor:pointer;
   border:1px solid var(--line,#ffffff22); background:var(--card,#ffffff0d); color:var(--ink,#fff); }
-.find-acts .pri{ border:none; color:#04121a; background:var(--fd); flex:2 1 60%; }
-.find-acts .ok{ border:none; color:#04121a; background:var(--fd-easy); }
+.find-acts .pri{ border:none; color:var(--on-bright); background:var(--fd); flex:2 1 60%; }
+.find-acts .ok{ border:none; color:var(--on-bright); background:var(--fd-easy); }
 .find-acts .ghost{ flex:0 0 auto; opacity:.85; }
 .find-hint{ text-align:center; opacity:.7; font-size:.85rem; margin-top:8px; }
 
 /* ----- родительская проверка ----- */
 .find-tabs{ display:flex; gap:6px; margin:6px 0 14px; }
-.find-tab{ flex:1; padding:10px; border-radius:12px; border:1px solid var(--line,#ffffff22);
+.find-tab{ flex:1; min-height:44px; padding:10px; border-radius:12px; border:1px solid var(--line,#ffffff22);
   background:var(--card,#ffffff0d); color:var(--ink,#fff); font-weight:700; cursor:pointer; font-size:.9rem; }
-.find-tab.active{ background:var(--fd); color:#04121a; border-color:transparent; }
+.find-tab.active{ background:var(--fd); color:var(--on-bright); border-color:transparent; }
 .find-scope{ opacity:.7; font-size:.85rem; margin:-6px 0 10px; }
 
 .find-rev{ border:1px solid var(--line,#ffffff22); border-radius:18px; overflow:hidden; margin-bottom:14px; background:var(--card,#ffffff0d); }
@@ -82,8 +81,8 @@
 .find-rev .meta{ opacity:.65; font-size:.8rem; margin-top:4px; }
 .find-rev .row{ display:flex; gap:10px; margin-top:12px; }
 .find-rev .row button{ flex:1; min-height:48px; border-radius:14px; font-weight:800; cursor:pointer; border:none; }
-.find-rev .yes{ background:var(--fd-easy); color:#04121a; }
-.find-rev .no{ background:var(--fd-impossible); color:#fff; }
+.find-rev .yes{ background:var(--fd-easy); color:var(--on-bright); }
+.find-rev .no{ background:var(--fd-impossible); color:var(--on-bright); }
 
 .find-list{ display:flex; flex-direction:column; gap:8px; }
 .find-row{ display:flex; align-items:center; gap:12px; padding:10px 12px; border:1px solid var(--line,#ffffff22);
@@ -92,14 +91,17 @@
 .find-row .d{ font-weight:700; font-size:.94rem; }
 .find-row .meta{ opacity:.6; font-size:.78rem; margin-top:2px; }
 .find-badge{ margin-left:auto; font-weight:800; font-size:.82rem; padding:3px 10px; border-radius:999px; white-space:nowrap; }
-.b-correct{ background:#38e8a033; color:var(--fd-easy); } .b-wrong{ background:#ff4d6d33; color:var(--fd-impossible); }
-.b-timeout{ background:#ffd23b33; color:var(--fd-medium); } .b-skipped{ background:#ffffff1a; opacity:.8; }
-.b-pending{ background:#19e3ff33; color:var(--fd); }
+/* подложки бейджей — 20% акцента через color-mix, чтобы цвет следовал теме */
+.b-correct{ background:color-mix(in srgb, var(--fd-easy) 20%, transparent); color:var(--fd-easy); }
+.b-wrong{ background:color-mix(in srgb, var(--fd-impossible) 20%, transparent); color:var(--fd-impossible); }
+.b-timeout{ background:color-mix(in srgb, var(--fd-medium) 20%, transparent); color:var(--fd-medium); }
+.b-skipped{ background:#ffffff1a; opacity:.8; }
+.b-pending{ background:color-mix(in srgb, var(--fd) 20%, transparent); color:var(--fd); }
 
 .find-set label{ display:block; font-weight:700; margin:14px 0 6px; }
 .find-set input{ width:100%; padding:14px; border-radius:14px; border:1px solid var(--line,#ffffff22);
   background:#0000002e; color:var(--ink,#fff); font-size:1.05rem; }
 .find-set .save{ margin-top:16px; width:100%; min-height:52px; border:none; border-radius:16px; font-weight:800;
-  color:#04121a; background:var(--fd); cursor:pointer; font-size:1rem; }
+  color:var(--on-bright); background:var(--fd); cursor:pointer; font-size:1rem; }
 
 .find-empty{ text-align:center; opacity:.65; padding:40px 16px; }

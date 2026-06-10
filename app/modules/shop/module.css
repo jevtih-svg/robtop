@@ -1,9 +1,9 @@
 /* RobTop — модуль «Магазин». Скоуп [data-mod="shop"], классы sh-*. Акцент — неон-magenta var(--magenta).
    Витрина призов: карточки-«картины» (фото в раме), цена в пунктах, кнопка «Купить».
    Корзинка-карточка покупок — фиксированно в правом нижнем углу, бейдж = ждущие заказы. */
-[data-mod="shop"] .sh{padding-bottom:150px}
-[data-mod="shop"] .sh-header{display:flex;align-items:center;gap:12px;padding:calc(20px + env(safe-area-inset-top)) 2px 8px}
-[data-mod="shop"] .sh-head-main{flex:1;min-width:0}
+/* резерв под корзину: .rt-body рамки УЖЕ даёт calc(--kidbar-total + 16px),
+   докидываем только разницу до низа корзины (бар + 84px суммарно) — без двойного зазора */
+[data-mod="shop"] .sh{padding-bottom:68px}
 [data-mod="shop"] .sh-title{font-family:var(--font-display);font-size:24px;color:#fff;
   text-shadow:0 0 12px color-mix(in srgb,var(--magenta) 80%,transparent), 0 0 26px color-mix(in srgb,var(--magenta) 35%,transparent)}
 [data-mod="shop"] .sh-sub{margin:0;color:var(--muted);font-weight:600;font-size:13px}
@@ -36,7 +36,7 @@
 [data-mod="shop"] .sh-ot{font-weight:800;font-size:14px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 [data-mod="shop"] .sh-om{font-size:12px;color:var(--muted);font-weight:600;margin-top:2px}
 [data-mod="shop"] .sh-oact{display:flex;flex-direction:column;gap:6px}
-[data-mod="shop"] .sh-obtn{min-height:38px;padding:0 12px;border-radius:11px;border:none;cursor:pointer;
+[data-mod="shop"] .sh-obtn{min-height:44px;padding:0 12px;border-radius:11px;border:none;cursor:pointer;
   font:inherit;font-weight:800;font-size:12.5px;-webkit-tap-highlight-color:transparent}
 [data-mod="shop"] .sh-obtn.ok{color:#04250f;background:var(--green);box-shadow:0 4px 14px -5px var(--green)}
 [data-mod="shop"] .sh-obtn.no{color:var(--ink);background:rgba(var(--panel-rgb),.9);border:1px solid color-mix(in srgb,var(--muted) 40%,transparent)}
@@ -85,7 +85,7 @@
 [data-mod="shop"] .sh-empty{margin:8px 0 14px;text-align:center;color:var(--muted);font-weight:600}
 
 /* корзинка-карточка покупок: правый нижний угол */
-[data-mod="shop"] .sh-cart{position:fixed;right:18px;bottom:calc(86px + env(safe-area-inset-bottom));z-index:40;
+[data-mod="shop"] .sh-cart{position:fixed;right:18px;bottom:calc(var(--kidbar-total) + 22px);z-index:40;
   width:62px;height:62px;border-radius:20px;border:1.5px solid color-mix(in srgb,var(--magenta) 60%,transparent);
   background:linear-gradient(165deg, rgba(var(--panel-rgb),.8), rgba(var(--panel-rgb),.97));
   color:var(--magenta);cursor:pointer;display:flex;align-items:center;justify-content:center;
@@ -116,7 +116,7 @@
 .sheet .sh-chip.ok{color:var(--green);border-color:color-mix(in srgb,var(--green) 50%,transparent)}
 .sheet .sh-chip.no{color:var(--muted);border-color:color-mix(in srgb,var(--muted) 40%,transparent)}
 .sheet .sh-oact{display:flex;flex-direction:column;gap:6px}
-.sheet .sh-obtn{min-height:38px;padding:0 12px;border-radius:11px;border:none;cursor:pointer;
+.sheet .sh-obtn{min-height:44px;padding:0 12px;border-radius:11px;border:none;cursor:pointer;
   font:inherit;font-weight:800;font-size:12.5px;-webkit-tap-highlight-color:transparent}
 .sheet .sh-obtn.ok{color:#04250f;background:var(--green);box-shadow:0 4px 14px -5px var(--green)}
 .sheet .sh-obtn.no{color:var(--ink);background:rgba(var(--panel-rgb),.9);border:1px solid color-mix(in srgb,var(--muted) 40%,transparent)}
@@ -146,11 +146,11 @@
   background:rgba(0,0,0,.22);border:1.5px solid color-mix(in srgb,var(--magenta) 22%,transparent)}
 .sheet .sh-avail-h{font-size:12.5px;font-weight:800;color:var(--muted);margin-bottom:9px;
   text-transform:uppercase;letter-spacing:.04em}
-.sheet .sh-kid{display:flex;align-items:center;gap:11px;min-height:42px;cursor:pointer;
+.sheet .sh-kid{display:flex;align-items:center;gap:11px;min-height:44px;cursor:pointer;
   -webkit-tap-highlight-color:transparent}
 .sheet .sh-kid input{position:absolute;opacity:0;width:0;height:0}
 .sheet .sh-kid-box{flex:none;width:26px;height:26px;border-radius:8px;background:rgba(0,0,0,.3);
-  border:2px solid color-mix(in srgb,var(--muted) 55%,transparent);position:relative;transition:.15s}
+  border:2px solid color-mix(in srgb,var(--muted) 55%,transparent);position:relative;transition:var(--dur-fast)}
 .sheet .sh-kid input:checked + .sh-kid-box{background:var(--green);border-color:var(--green)}
 .sheet .sh-kid input:checked + .sh-kid-box::after{content:"";position:absolute;left:8px;top:3px;
   width:7px;height:13px;border:solid #04250f;border-width:0 3px 3px 0;transform:rotate(45deg)}

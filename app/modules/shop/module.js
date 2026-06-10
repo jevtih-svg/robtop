@@ -89,7 +89,8 @@
     }, bank:{ r_spend_refund:"Veikals — punkti atgriezti" }}
   };
 
-  var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
+  /* стрелка «назад» рисуется каркасом sdk.ui.frame из общего реестра иконок — свой BACK_IC не нужен;
+     остальные иконки (сумка/монета/подарок/глаз) — специфичные для магазина, в реестре их нет */
   var BAG_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 8z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/></svg>';
   var COIN_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8.8 12h6.4"/></svg>';
   var GIFT_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M4 12.5h16M12 9v11"/><path d="M12 9c-4 0-5.4-2-4.6-3.6C8.2 3.8 11 4.6 12 9zM12 9c4 0 5.4-2 4.6-3.6C15.8 3.8 13 4.6 12 9z"/></svg>';
@@ -449,8 +450,9 @@
       backLabel:t("common.back"),
       rightHtml:'<div class="sh-bal">'+COIN_IC+'<b id="shBal">…</b></div>'
     }).body;
+    /* спиннер первой загрузки: каталог приходит асинхронно — не показываем пустую витрину */
     body.innerHTML='<div class="sh">'
-      +'<section class="sh-stage" id="shGrid"></section>'
+      +'<section class="sh-stage" id="shGrid"><div class="rt-loading"><div class="rt-spin"></div></div></section>'
       +bag
       +'</div>';
     var el=body.querySelector(".sh");

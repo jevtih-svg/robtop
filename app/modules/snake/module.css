@@ -1,7 +1,5 @@
 /* RobTop — модуль «Змейка». Скоуп [data-mod="snake"], классы sn-*. Акцент — cyan var(--cyan). */
-[data-mod="snake"] .sn{padding-bottom:140px}
-[data-mod="snake"] .sn-header{display:flex;align-items:center;gap:12px;padding:calc(20px + env(safe-area-inset-top)) 2px 8px}
-[data-mod="snake"] .sn-head-main{flex:1;min-width:0}
+/* нижний резерв не нужен: .rt-body оболочки уже резервирует calc(var(--kidbar-total) + 16px) */
 [data-mod="snake"] .sn-title{font-family:var(--font-display);font-size:24px;color:#fff;
   text-shadow:0 0 12px color-mix(in srgb,var(--cyan) 80%,transparent), 0 0 26px color-mix(in srgb,var(--cyan) 40%,transparent)}
 [data-mod="snake"] .sn-sub{margin:0;color:var(--muted);font-weight:600;font-size:13px}
@@ -83,7 +81,7 @@
 [data-mod="snake"] .sn-dpad{display:grid;grid-template-columns:repeat(3,72px);gap:8px;justify-content:center;margin:12px 0 2px}
 [data-mod="snake"] .sn-dbtn{height:52px;border-radius:14px;border:1.5px solid color-mix(in srgb,var(--cyan) 45%,transparent);
   background:color-mix(in srgb,var(--cyan) 10%,transparent);color:var(--cyan-soft);cursor:pointer;display:flex;align-items:center;justify-content:center;
-  -webkit-tap-highlight-color:transparent;transition:transform .08s ease, background .12s ease}
+  -webkit-tap-highlight-color:transparent;transition:transform var(--dur-fast) ease, background .12s ease}
 [data-mod="snake"] .sn-dbtn:active{transform:scale(1.08);background:color-mix(in srgb,var(--cyan) 28%,transparent)}
 [data-mod="snake"] .sn-dbtn svg{width:26px;height:26px}
 [data-mod="snake"] .sn-dbtn.down svg{transform:rotate(180deg)}
@@ -104,9 +102,10 @@
 [data-mod="snake"] .sn-bigbtn{display:block;width:100%;margin:12px 0 2px;padding:15px 18px;border:none;border-radius:16px;
   font-family:var(--font-display);font-size:19px;color:var(--on-bright);cursor:pointer;
   background:var(--cyan-grad);box-shadow:0 8px 22px color-mix(in srgb,var(--cyan) 40%,transparent);
-  -webkit-tap-highlight-color:transparent;transition:transform .1s ease}
+  -webkit-tap-highlight-color:transparent;transition:transform var(--dur-fast) ease}
 [data-mod="snake"] .sn-bigbtn:active{transform:scale(.97)}
-[data-mod="snake"] .sn-bigbtn.sm{width:auto;margin:0;padding:11px 22px;font-size:15px}
+/* паддинг 13px держит кнопку «Продолжить» на ≥44px высоты (детский тап-таргет) */
+[data-mod="snake"] .sn-bigbtn.sm{width:auto;margin:0;padding:13px 22px;font-size:15px}
 
 /* история игр */
 [data-mod="snake"] .sn-list{display:flex;flex-direction:column;gap:8px}
@@ -140,6 +139,6 @@
 /* узкие экраны */
 @media (max-width:360px){
   [data-mod="snake"] .sn-speeds{gap:4px}
-  [data-mod="snake"] .sn-spd{min-height:40px;font-size:15px}
+  [data-mod="snake"] .sn-spd{font-size:15px} /* высота остаётся 44px — тап-таргет не ужимаем */
   [data-mod="snake"] .sn-dpad{grid-template-columns:repeat(3,64px)}
 }

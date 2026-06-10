@@ -31,6 +31,7 @@
       toastFinish:"Great! Brushing complete 🎉", toastCancel:"Brushing stopped — no points",
       toastPlayHint:"Tap “Start brushing” again to turn the music on",
       toastPreviewHint:"Tap again to listen",
+      loadError:"Couldn't load data. Try again later.",
       remindMorning:"Time to brush your teeth!", remindEvening:"Don't forget your evening brushing.",
       remindUnsupported:"Notifications not supported", remindEnabled:"Reminders enabled", remindDenied:"Notifications blocked in the browser",
       parentTitle:"For parents", parentOnly:"Only for a signed-in parent.",
@@ -66,6 +67,7 @@
       toastFinish:"Отлично! Чистка завершена 🎉", toastCancel:"Чистка прервана — очки не начислены",
       toastPlayHint:"Нажми «Начать чистку» ещё раз, чтобы включить музыку",
       toastPreviewHint:"Нажми ещё раз, чтобы послушать",
+      loadError:"Не удалось загрузить данные. Попробуй позже.",
       remindMorning:"Пора почистить зубы!", remindEvening:"Не забудь вечернюю чистку зубов.",
       remindUnsupported:"Уведомления не поддерживаются", remindEnabled:"Напоминания включены", remindDenied:"Уведомления запрещены в браузере",
       parentTitle:"Родителям", parentOnly:"Доступно родителю после входа в свой аккаунт.",
@@ -101,6 +103,7 @@
       toastFinish:"Lieliski! Tīrīšana pabeigta 🎉", toastCancel:"Tīrīšana pārtraukta — punkti nav piešķirti",
       toastPlayHint:"Nospied “Sākt tīrīšanu” vēlreiz, lai ieslēgtu mūziku",
       toastPreviewHint:"Nospied vēlreiz, lai klausītos",
+      loadError:"Neizdevās ielādēt datus. Mēģini vēlāk.",
       remindMorning:"Laiks tīrīt zobus!", remindEvening:"Neaizmirsti vakara zobu tīrīšanu.",
       remindUnsupported:"Paziņojumi netiek atbalstīti", remindEnabled:"Atgādinājumi ieslēgti", remindDenied:"Paziņojumi pārlūkā bloķēti",
       parentTitle:"Vecākiem", parentOnly:"Pieejams vecākam pēc pieslēgšanās savā kontā.",
@@ -117,8 +120,7 @@
 
   var DURATION=120;               // секунд (2 минуты)
   var C=2*Math.PI*100;            // длина окружности кольца (r=100)
-  var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
-  var PARENT_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>';
+  /* иконки шапки (back/parent) берутся из общего реестра sdk.icons — frame принимает имена, локальные SVG-копии удалены */
 
   /* ----- плейлист (музыка во время чистки) -----
      Файлы лежат на сервере в media/music/ (вне Git, заливаются по FTP).
@@ -166,6 +168,7 @@
   var PV_PAUSE='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>';
 
   var sdk=null, root=null, E={}, sessions=[], meta=null, metaId=null;
+  var loaded=false;               // данные ещё не пришли: в списке истории показываем .rt-loading, а не ложное «пусто»
   var running=false, remaining=DURATION, timerId=null, audio=null, reminderTimers=[], curSheet=null;
   var lockTimer=null, lastLockSig="", startPeriod=null;   // гейт окон чистки: утро 5:00–10:00, вечер 18:00–23:59, 1 раз за период (см. periodOf/doneInPeriod)
   var player=null, playing=false, curTrack=0;
@@ -395,6 +398,8 @@
       });
     }
     if(!E.list) return;
+    /* первая загрузка: пока sdk.data не ответил, показываем спиннер вместо ложного «пусто» */
+    if(!loaded){ E.list.innerHTML='<div class="rt-loading"><div class="rt-spin"></div></div>'; return; }
     var rows=sessions.filter(function(it){ if(histFilter==="all") return true; var st=(it.data&&it.data.status)||it.status; return st===histFilter; });
     if(!rows.length){ E.list.innerHTML='<div class="tt-empty">'+esc(histEmpty())+'</div>'; return; }
     E.list.innerHTML=rows.slice(0,60).map(function(it){
@@ -552,9 +557,9 @@
     running=false; remaining=DURATION; reminderTimers=[]; curSheet=null;
     player=null; playing=false; curTrack=0;
     tab="history"; histFilter="all"; previewAudio=null; previewIdx=-1; previewPlaying=false;
-    lastLockSig=""; startPeriod=null;
+    lastLockSig=""; startPeriod=null; loaded=false;
     buildSkeleton();
-    Promise.resolve().then(loadMeta).then(reloadSessions).then(function(){ renderStageIdle(); refresh(); applyReminders(); }).catch(function(){ refresh(); });
+    Promise.resolve().then(loadMeta).then(reloadSessions).then(function(){ loaded=true; renderStageIdle(); refresh(); applyReminders(); }).catch(function(){ loaded=true; refresh(); if(E.info) sdk.ui.toast(t("loadError")); });
     if(lockTimer) clearInterval(lockTimer);
     lockTimer=setInterval(lockTick,1000);
   }

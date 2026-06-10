@@ -27,7 +27,7 @@
       activeSec:"Coming up", doneSec:"Finished",
       edit:"Edit", del:"Delete", delConfirm:"Delete this countdown?",
       deleted:"Deleted", restore:"Undo",
-      savedToast:"Countdown saved", saveFailed:"Couldn't save",
+      savedToast:"Countdown saved", saveFailed:"Couldn't save", loadFailed:"Couldn't load",
       parentNote:"Only the child sets countdowns. You're viewing."
     }},
     ru:{ days:{
@@ -47,7 +47,7 @@
       activeSec:"Скоро", doneSec:"Завершённые",
       edit:"Изменить", del:"Удалить", delConfirm:"Удалить этот отсчёт?",
       deleted:"Удалено", restore:"Вернуть",
-      savedToast:"Отсчёт сохранён", saveFailed:"Не удалось сохранить",
+      savedToast:"Отсчёт сохранён", saveFailed:"Не удалось сохранить", loadFailed:"Не удалось загрузить",
       parentNote:"Отсчёты создаёт ребёнок. Это просмотр."
     }},
     lv:{ days:{
@@ -67,18 +67,18 @@
       activeSec:"Drīzumā", doneSec:"Pabeigtie",
       edit:"Mainīt", del:"Dzēst", delConfirm:"Dzēst šo atskaiti?",
       deleted:"Izdzēsts", restore:"Atsaukt",
-      savedToast:"Atskaite saglabāta", saveFailed:"Neizdevās saglabāt",
+      savedToast:"Atskaite saglabāta", saveFailed:"Neizdevās saglabāt", loadFailed:"Neizdevās ielādēt",
       parentNote:"Atskaites veido bērns. Šis ir skats."
     }}
   };
 
-  var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
+  /* Иконки шапки (стрелка «назад» и пр.) рисует ядро из общего реестра; CAL_IC — свой календарик для заголовка */
   var CAL_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 9.2h17M8 3.2v3.6M16 3.2v3.6" stroke-linecap="round"/></svg>';
 
   var EMOJI=["🎉","✈️","🎂","🎄","🏖️","🎮","🎁","🚀","⭐","🐶","🍦","⚽"];
   var DEFAULT_EMOJI="🎉";
 
-  var sdk=null, root=null, E={}, items=[], timer=null, fabH=null, lastSig="", lastToday={};
+  var sdk=null, root=null, E={}, items=[], timer=null, fabH=null, lastSig="", lastToday={}, loaded=false, loadErr=false;
   function blankForm(){ return {open:false, id:null, title:"", date:"", emoji:DEFAULT_EMOJI, note:""}; }
   var form=blankForm();
 
@@ -106,8 +106,9 @@
     sdk.data.list("events").then(function(list){
       if(!root) return;
       items=(list||[]).filter(function(it){ return it&&it.data&&it.data.date; });
+      loaded=true; loadErr=false;
       renderAll();
-    }).catch(function(){ if(!root) return; items=[]; renderAll(); });
+    }).catch(function(){ if(!root) return; items=[]; loaded=true; loadErr=true; renderAll(); });
   }
 
   function hud(){
@@ -124,7 +125,17 @@
 
   function renderState(){
     if(!E.state) return;
-    if(!sdk.can("edit")){ E.state.innerHTML='<div class="dy-note">'+esc(t("parentNote"))+'</div>'; return; }
+    /* первая загрузка: спиннер вместо ложного «пусто», при ошибке — короткая строка */
+    if(!loaded){ E.state.innerHTML='<div class="rt-loading"><div class="rt-spin"></div></div>'; return; }
+    /* ошибка загрузки НЕ блокирует форму добавления: form.open проверяется раньше,
+       иначе после сбоя первой загрузки кнопка «+» выглядела мёртвой (ревью 2026-06-10) */
+    if(loadErr && !form.open){ E.state.innerHTML='<div class="dy-note">'+esc(t("loadFailed"))+'</div>'; return; }
+    if(!sdk.can("edit")){
+      // родителю без событий — дизайн-заглушка, иначе под запиской остаётся пустой экран
+      E.state.innerHTML='<div class="dy-note">'+esc(t("parentNote"))+'</div>'
+        +(items.length?"":'<div class="rt-empty"><span class="e">📅</span>'+esc(t("emptyTitle"))+'</div>');
+      return;
+    }
     if(form.open){ renderForm(); return; }
     if(!items.length){
       E.state.innerHTML='<div class="dy-empty"><div class="dy-empty-emo">📅</div>'
@@ -262,7 +273,8 @@
 
   /* ----- тик: смена календарного дня (00:00) → пересчёт; событие, ставшее «сегодня», — салют ----- */
   function tick(){
-    if(!root || form.open) return;
+    // защита от мёртвого DOM: корень мог отвязаться без unmount
+    if(!root || !document.body.contains(root) || form.open) return;
     if(sig()===lastSig) return;
     var prev=lastToday, now=todaySet(), fresh=false, k;
     for(k in now){ if(now.hasOwnProperty(k) && !prev[k]){ fresh=true; break; } }
@@ -272,7 +284,7 @@
 
   /* =================== mount / unmount =================== */
   function mount(rootEl, theSdk){
-    sdk=theSdk; root=rootEl; items=[]; form=blankForm(); fabH=null;
+    sdk=theSdk; root=rootEl; items=[]; form=blankForm(); fabH=null; loaded=false; loadErr=false;
     var title=sdk.i18n.t("tile.days");
     var body=sdk.ui.frame({
       titleHtml:'<div class="day-title"><span class="sic">'+CAL_IC+'</span> '+esc(title)+'</div><div class="day-sub">'+esc(t("subtitle"))+'</div>',
@@ -294,7 +306,7 @@
   function unmount(){
     if(timer){ clearInterval(timer); timer=null; }
     if(fabH){ try{ fabH.destroy(); }catch(e){} fabH=null; }
-    E={}; items=[]; root=null; form=blankForm(); lastSig=""; lastToday={};
+    E={}; items=[]; root=null; form=blankForm(); lastSig=""; lastToday={}; loaded=false; loadErr=false;
   }
 
   RobTop.register({ id:"days", mount:mount, unmount:unmount, messages:MESSAGES });

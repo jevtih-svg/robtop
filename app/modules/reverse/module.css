@@ -1,6 +1,6 @@
-/* RobTop — модуль «Слова наоборот» (клиентский, универсальное хранилище). Скоуп .rev. */
-.rev{padding-bottom:140px}
-.rev-header{display:flex;align-items:center;gap:12px;padding:calc(20px + env(safe-area-inset-top)) 2px 8px}
+/* RobTop — модуль «Слова наоборот» (клиентский, универсальное хранилище). Скоуп .rev.
+   Нижний отступ под кид-бар резервирует .rt-body каркаса — свой padding-bottom не нужен.
+   Шапку рисует sdk.ui.frame (.rt-hdr) — старого .rev-header в разметке больше нет. */
 .rev-title{font-family:var(--font-display);font-size:24px;color:#fff;
   text-shadow:0 0 12px color-mix(in srgb,var(--orange) 70%,transparent), 0 0 24px color-mix(in srgb,var(--magenta) 45%,transparent)}
 .rev-sub{margin:0;color:var(--muted);font-weight:600;font-size:13px}
@@ -14,13 +14,15 @@
   text-shadow:0 0 14px color-mix(in srgb,var(--orange) 55%,transparent)}
 .rev-out.empty{color:var(--muted-dim);font-family:'Rubik',sans-serif;font-size:15px;font-weight:600}
 .rev-list{display:flex;flex-direction:column;gap:9px;margin-top:6px}
-.rev-row{display:flex;align-items:center;gap:10px;border-radius:14px;padding:11px 13px;
+/* Вертикальный паддинг ужат с 11 до 8px: кнопки подросли до 44px, а высота строки осталась прежней. */
+.rev-row{display:flex;align-items:center;gap:10px;border-radius:14px;padding:8px 13px;
   background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)}
 .rev-row .w{flex:1;min-width:0;color:var(--ink-2);font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rev-row .w small{display:block;color:var(--muted-2);font-weight:600;font-size:12.5px;margin-top:2px}
-.rev-row .say{flex:none;width:34px;height:34px;border-radius:10px;border:1px solid color-mix(in srgb,var(--cyan) 50%,transparent);
+/* 44px — минимальная детская цель касания (было 34px, промахивались). */
+.rev-row .say{flex:none;width:44px;height:44px;border-radius:10px;border:1px solid color-mix(in srgb,var(--cyan) 50%,transparent);
   background:color-mix(in srgb,var(--cyan) 12%,transparent);color:var(--cyan-soft);cursor:pointer;display:grid;place-items:center;font-size:15px}
 .rev-row .say:active{transform:scale(.92)}
-.rev-row .del{flex:none;width:34px;height:34px;border-radius:10px;border:1px solid color-mix(in srgb,var(--red) 50%,transparent);
+.rev-row .del{flex:none;width:44px;height:44px;border-radius:10px;border:1px solid color-mix(in srgb,var(--red) 50%,transparent);
   background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red-soft);cursor:pointer;display:grid;place-items:center;font-size:16px}
 .rev-row .del:active{transform:scale(.92)}

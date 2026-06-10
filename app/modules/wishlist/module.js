@@ -149,8 +149,7 @@
     star:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.7 5.7 6.3.8-4.6 4.4 1.2 6.2L12 17.8 6.4 20.1l1.2-6.2L3 9.5l6.3-.8z"/></svg>',
     starO:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3.6l2.6 5.4 6 .8-4.4 4.2 1.1 6L12 17.4 6.7 20l1.1-6L3.4 9.8l6-.8z"/></svg>'
   };
-  var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
-  var STATS_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>';
+  /* back/stats берутся из общего реестра ядра (sdk.icons через sdk.ui.frame); локально храним только уникальные для модуля иконки */
   var SHARE_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.4 10.8l7.2-3.7M8.4 13.2l7.2 3.7"/></svg>';
   var FRIENDS_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.6" r="3.1"/><path d="M3.6 19c1.1-2.8 3-4.2 5.4-4.2s4.3 1.4 5.4 4.2"/><circle cx="17.2" cy="9.6" r="2.5"/><path d="M15.8 14.9c2.1.2 3.7 1.4 4.6 3.5"/></svg>';
   var TITLE_CHERRY='<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="7.5" cy="17" r="3.6"/><circle cx="15.7" cy="17.6" r="3.6"/><path d="M8 14.4C9 8.4 13 5 18.4 3.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16.1 14.6C16.7 9.4 15 6 12 3.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M18.4 3.8c1-1.1 2.7-1.1 3.6.3-1.5.5-2.5.4-3.6-.3z"/></svg>';
@@ -438,7 +437,7 @@
     var grants=st.grants||[];
     var rows=grants.length?grants.map(function(g){
       return '<div class="acct-row"><span class="nm">'+esc(g.nickname)+'</span>'
-        +'<button class="hbtn" data-rm="'+g.id+'" aria-label="'+esc(t("share.revoke"))+'" title="'+esc(t("share.revoke"))+'" style="width:34px;height:34px;color:var(--red-soft)">✕</button></div>';
+        +'<button class="hbtn" data-rm="'+g.id+'" aria-label="'+esc(t("share.revoke"))+'" title="'+esc(t("share.revoke"))+'" style="width:44px;height:44px;color:var(--red-soft)">✕</button></div>';
     }).join(""):'<p class="set-note">'+esc(t("share.grantEmpty"))+'</p>';
     body.innerHTML='<p class="set-note">'+esc(t("share.linkHint"))+'</p>'
       +'<div class="invlink">'+esc(st.url||"")+'</div>'
@@ -488,7 +487,7 @@
     E.photoPick.classList.add("uploading");
     sdk.media.upload(dataUrl,"wishlist").then(function(res){ E.photoPick.classList.remove("uploading"); if(res&&res.path){ formPhoto=res.path; } else { formPhoto=null; sdk.ui.toast(t("toast.photoFailed")); } }).catch(function(){ E.photoPick.classList.remove("uploading"); formPhoto=null; sdk.ui.toast(t("toast.photoFailedOffline")); });
   }
-  function openAdd(){ editingId=null; E.sheetTitle.textContent=t("form.newWish"); E.title.value=""; E.link.value=""; E.note.value=""; setFormPhoto(null); E.overlay.classList.add("show"); setTimeout(function(){ E.title.focus(); },250); }
+  function openAdd(){ editingId=null; E.sheetTitle.textContent=t("form.newWish"); E.title.value=""; E.link.value=""; E.note.value=""; setFormPhoto(null); E.overlay.classList.add("show"); setTimeout(function(){ if(E.title) E.title.focus(); },250); } /* guard: модуль могли размонтировать до фокуса */
   function openEdit(id){ var it=findItem(id); if(!it) return; closeDetail(); editingId=id; E.sheetTitle.textContent=t("form.editWish"); E.title.value=it.title||""; E.link.value=it.link||""; E.note.value=it.note||""; setFormPhoto(it.photo||null); E.overlay.classList.add("show"); }
   function closeSheet(){ E.overlay.classList.remove("show"); }
   function saveSheet(){
@@ -599,6 +598,8 @@
   function demoBoot(msg){ demo=true; var s=normalize(load()||seed()); state.items=s.items; state.events=s.events||[]; save(); render(); if(msg) sdk.ui.toast(msg); }
   function boot(){
     if(sdk.isDemo()){ demoBoot(); return; }
+    /* спиннер первой загрузки: пока ждём сервер, список не должен быть пустым экраном */
+    E.list.innerHTML='<div class="rt-loading"><div class="rt-spin"></div></div>';
     sdk.api.get("state.php").then(function(res){ demo=false; state.items=(res&&res.items)||[]; state.events=[]; render(); track("opened_app",null,null); })
       .catch(function(){ if(window.RobTop&&window.RobTop._shell&&window.RobTop._shell.setDemo) window.RobTop._shell.setDemo(true); demoBoot(t("toast.demoMode")); });
   }

@@ -42,7 +42,7 @@
       saveWalk:"Save walk",
       savedToast:"Walk saved!", laterToast:"Walk saved — rate it later!",
       saveFailed:"Couldn't save",
-      historyTitle:"My walks", historyEmpty:"No walks yet. Tap the minutes above!",
+      historyTitle:"My walks", historyEmpty:"No walks yet. Tap the minutes above!", loadFailed:"Couldn't load walks",
       noRate:"Not rated yet", rateBtn:"Rate it",
       byAuthor:"Logged by {name}",
       setTitle:"Walk settings",
@@ -87,7 +87,7 @@
       saveWalk:"Сохранить прогулку",
       savedToast:"Прогулка сохранена!", laterToast:"Прогулка сохранена — оценишь позже!",
       saveFailed:"Не удалось сохранить",
-      historyTitle:"Мои прогулки", historyEmpty:"Прогулок пока нет. Нажми на минуты сверху!",
+      historyTitle:"Мои прогулки", historyEmpty:"Прогулок пока нет. Нажми на минуты сверху!", loadFailed:"Не удалось загрузить прогулки",
       noRate:"Пока без оценки", rateBtn:"Оценить",
       byAuthor:"Записал(а): {name}",
       setTitle:"Настройки прогулки",
@@ -132,7 +132,7 @@
       saveWalk:"Saglabāt pastaigu",
       savedToast:"Pastaiga saglabāta!", laterToast:"Pastaiga saglabāta — novērtēsi vēlāk!",
       saveFailed:"Neizdevās saglabāt",
-      historyTitle:"Manas pastaigas", historyEmpty:"Pastaigu vēl nav. Pieskaries minūtēm augšā!",
+      historyTitle:"Manas pastaigas", historyEmpty:"Pastaigu vēl nav. Pieskaries minūtēm augšā!", loadFailed:"Neizdevās ielādēt pastaigas",
       noRate:"Vēl nav novērtēta", rateBtn:"Novērtēt",
       byAuthor:"Pierakstīja: {name}",
       setTitle:"Pastaigas iestatījumi",
@@ -163,7 +163,8 @@
   var CARE_UNITS=["none","day","week","month"];
   var PHOTO_MAX=10;
 
-  var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
+  /* иконку «назад» рисует sdk.ui.frame из общего реестра (sdk.icons) — локальная копия не нужна;
+     gear/календарь/камера/лапа и пр. в реестре отсутствуют, поэтому остаются локальными */
   var GEAR_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.2a7.6 7.6 0 0 0 0-2.4l2-1.5-2-3.5-2.4.8a7.6 7.6 0 0 0-2-1.2L14.5 3h-5l-.5 2.4a7.6 7.6 0 0 0-2 1.2l-2.4-.8-2 3.5 2 1.5a7.6 7.6 0 0 0 0 2.4l-2 1.5 2 3.5 2.4-.8a7.6 7.6 0 0 0 2 1.2l.5 2.4h5l.5-2.4a7.6 7.6 0 0 0 2-1.2l2.4.8 2-3.5z"/></svg>';
   var CAM_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2L9 4.8h6L16.5 7h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="13" r="3.4"/></svg>';
   var PAW_IC='<svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="6.4" cy="10" rx="1.7" ry="2.3"/><ellipse cx="9.9" cy="7.3" rx="1.7" ry="2.4"/><ellipse cx="14.1" cy="7.3" rx="1.7" ry="2.4"/><ellipse cx="17.6" cy="10" rx="1.7" ry="2.3"/><path d="M12 11.2c2.9 0 5.3 2.1 5.7 4.8.3 1.9-1.1 3.4-3 3.4-1.3 0-1.9-.6-2.7-.6s-1.4.6-2.7.6c-1.9 0-3.3-1.5-3-3.4.4-2.7 2.8-4.8 5.7-4.8z"/></svg>';
@@ -190,6 +191,7 @@
   var sdk=null, root=null, E={};
   var entries=[], behs=[], evts=[], cmds=[], iss=[], evtTypes=[], meta={id:null,puppy:1};
   var step="dur", cur=null, beh=null, ev=null, saving=false;
+  var loaded=false, loadErr=false; // первая загрузка истории: до прихода данных — спиннер, не ложное «прогулок нет»
   var calMonth=null, calPeriod="week"; // calMonth: Date (1-е число месяца); calPeriod: week|month|all
   var careItems=[]; // расписание ухода (walk/care), только родитель пишет
 
@@ -302,6 +304,7 @@
       sdk.data.list("behavior"), sdk.data.list("events"), sdk.data.list("eventTypes"), sdk.data.list("care")
     ]).then(function(rr){
       if(!root) return;
+      loaded=true; loadErr=false;
       entries=(rr[0]||[]).filter(function(it){ return dataOf(it).duration>0; });
       entries.sort(function(a,b){ return (b.createdAt||0)-(a.createdAt||0); });
       behs=(rr[4]||[]).filter(function(it){ return (dataOf(it).issues||[]).length>0; });
@@ -316,7 +319,7 @@
       if(m){ meta={ id:m.id,
         puppy: dataOf(m).puppy==null ? 1 : (dataOf(m).puppy?1:0) }; }
       renderMain(); renderList(); hud();
-    }).catch(function(){ if(!root) return; renderMain(); renderList(); hud(); });
+    }).catch(function(){ if(!root) return; loaded=true; loadErr=true; renderMain(); renderList(); hud(); });
   }
   function metaSave(patch){
     var data={ puppy:meta.puppy };
@@ -756,10 +759,12 @@
   /* единая лента: прогулки + события поведения + важные события, свежие сверху */
   function renderList(){
     if(!root||!E.list) return;
+    /* fetch ещё в полёте: спиннер вместо преждевременного «прогулок нет» */
+    if(!loaded){ E.list.innerHTML='<div class="rt-loading"><div class="rt-spin"></div></div>'; return; }
     var rows=entries.map(function(it){ return {at:it.createdAt||0, h:walkRowHtml(it)}; })
       .concat(behs.map(function(it){ return {at:it.createdAt||0, h:behRowHtml(it)}; }))
       .concat(evts.map(function(it){ return {at:it.createdAt||0, h:evtRowHtml(it)}; }));
-    if(!rows.length){ E.list.innerHTML='<div class="wk-empty">'+esc(t("historyEmpty"))+'</div>'; return; }
+    if(!rows.length){ E.list.innerHTML='<div class="wk-empty">'+esc(t(loadErr?"loadFailed":"historyEmpty"))+'</div>'; return; }
     rows.sort(function(a,b){ return b.at-a.at; });
     E.list.innerHTML=rows.map(function(r){ return r.h; }).join("");
   }
@@ -1045,7 +1050,7 @@
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; E={};
     entries=[]; behs=[]; evts=[]; cmds=[]; iss=[]; evtTypes=[]; careItems=[]; meta={id:null,puppy:1};
-    step="dur"; cur=null; beh=null; ev=null; saving=false; calMonth=null; calPeriod="week";
+    step="dur"; cur=null; beh=null; ev=null; saving=false; calMonth=null; calPeriod="week"; loaded=false; loadErr=false;
     var title=sdk.i18n.t("tile.walk");
     var body=sdk.ui.frame({
       titleHtml:'<div class="wk-title"><span class="sic">'+PAW_IC+'</span> '+esc(title)+'</div><div class="wk-sub">'+esc(t("subtitle"))+'</div>',
@@ -1124,7 +1129,7 @@
   function unmount(){
     if(root && E.onRootClick) root.removeEventListener("click",E.onRootClick);
     E={}; entries=[]; behs=[]; evts=[]; cmds=[]; iss=[]; evtTypes=[]; careItems=[]; root=null;
-    step="dur"; cur=null; beh=null; ev=null; saving=false; calMonth=null; meta={id:null,puppy:1};
+    step="dur"; cur=null; beh=null; ev=null; saving=false; calMonth=null; meta={id:null,puppy:1}; loaded=false; loadErr=false;
   }
 
   /* живое обновление (sync-поллер оболочки, v2026.06.07.47): общесемейный пул — прогулку

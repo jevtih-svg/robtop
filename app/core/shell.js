@@ -96,7 +96,9 @@ window.RobTop = window.RobTop || {};
       storeOverlay, storeBody, gearBtn, kidBarEl, notifView, homeJgl=null;
 
   /* ================= общие UI-сервисы ================= */
-  function buzz(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
+  /* prefers-reduced-motion гасит и вибрацию (аудит 2026-06-10): меньше движения = меньше сенсорики */
+  var REDUCE_MOTION=!!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  function buzz(p){ if(REDUCE_MOTION) return; try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
   var actx=null;
   function chime(){
     try{
@@ -591,9 +593,10 @@ window.RobTop = window.RobTop || {};
     return '<span class="jgl-eye" role="button" aria-label="'+esc(t(hidden?"reorder.show":"reorder.hide"))+'">'
       +(hidden?EYE_ON:EYE_OFF)+'</span>';
   }
-  function tileHtml(m){
+  function tileHtml(m,i){
     var soon=m.status!=="active";
-    return '<button class="tile'+(soon?' soon':' active')+(m.wide?' wide':'')+(!soon&&m.hidden?' hid':'')+'" style="--c:'+esc(m.color||"#19e3ff")+'" data-mod="'+esc(m.id)+'">'
+    /* --ti — индекс для каскадного входа (.apps.intro .tile, ui.css); map() передаёт его сам */
+    return '<button class="tile'+(soon?' soon':' active')+(m.wide?' wide':'')+(!soon&&m.hidden?' hid':'')+'" style="--c:'+esc(m.color||"#19e3ff")+';--ti:'+(i>0?i:0)+'" data-mod="'+esc(m.id)+'">'
       +(soon?'<span class="lock">'+ICONS.lock+'</span>':'<span class="ring"></span>')
       +'<span class="ic">'+iconHtml(m)+'</span>'
       +'<span class="txt"><span class="nm">'+esc(modName(m))+'</span><span class="st">'+(soon?esc(t("tile.status.soon")):esc(t("tile.status.open")))+'</span></span>'
@@ -604,7 +607,13 @@ window.RobTop = window.RobTop || {};
      режиме перестановки); группа «скоро» — ниже, за своим разделителем.
      keepJgl=true (скрытие/показ плитки): режим перестановки НЕ сбрасывается —
      после innerHTML заново навешиваем классы (homeJgl.refresh). */
+  var homeIntroDone=false, homeIntroT=null; // каскадный вход плиток — один раз за загрузку приложения
   function renderHome(keepJgl){
+    /* перерисовка внутри окна каскада (sync/язык) не должна переигрывать вход:
+       снимаем .intro ДО замены innerHTML (ревью 2026-06-10) */
+    if(homeIntroDone && appsEl.classList.contains("intro")){
+      clearTimeout(homeIntroT); appsEl.classList.remove("intro");
+    }
     var keep=keepJgl && homeJgl && homeJgl.active();
     if(homeJgl && !keep) homeJgl.exit(); // обычная перерисовка сбрасывает режим перестановки
     var act=[], soon=[], hid=[];
@@ -613,11 +622,17 @@ window.RobTop = window.RobTop || {};
       if(m.status!=="active"){ soon.push(m); return; }
       (m.hidden?hid:act).push(m);
     });
+    /* индекс каскада сквозной через группы: «скоро»-плитки продолжают волну, а не стартуют с нуля */
     appsEl.innerHTML=act.map(tileHtml).join("")
-      +(hid.length?'<div class="apps-sep hidsep">'+esc(t("reorder.hidden"))+'</div>'+hid.map(tileHtml).join(""):"")
-      +(soon.length?'<div class="apps-sep">'+esc(t("home.soonSep"))+'</div>'+soon.map(tileHtml).join(""):"");
+      +(hid.length?'<div class="apps-sep hidsep">'+esc(t("reorder.hidden"))+'</div>'+hid.map(function(m,i){ return tileHtml(m,act.length+i); }).join(""):"")
+      +(soon.length?'<div class="apps-sep">'+esc(t("home.soonSep"))+'</div>'+soon.map(function(m,i){ return tileHtml(m,act.length+hid.length+i); }).join(""):"");
     homeHud();
     if(keep) homeJgl.refresh();
+    /* .intro живёт только на первом рендере: перерисовки (sync/язык/реордер) сетку не переигрывают */
+    if(!homeIntroDone && !keep){
+      homeIntroDone=true; appsEl.classList.add("intro");
+      homeIntroT=setTimeout(function(){ appsEl.classList.remove("intro"); },1200);
+    }
   }
 
   /* ================= РЕЕСТР ================= */
@@ -1622,7 +1637,7 @@ window.RobTop = window.RobTop || {};
     /* для родительского дашборда (core/parent.js): настройки, иконки плиток, роль,
        скрытый реордер (makeJiggle) + сохранение личного порядка (applyTileOrder) +
        личное скрытие плиток (applyTileHidden) и бейдж-глаз (jglEye) */
-    openSettings:openSettings, iconHtml:iconHtml, isParent:isParent,
+    openSettings:openSettings, iconHtml:iconHtml, isParent:isParent, icons:HDR_ICONS,
     makeJiggle:makeJiggle, applyTileOrder:applyTileOrder,
     applyTileHidden:applyTileHidden, jglEye:jglEye,
     /* для оповещений (core/notify.js): открыть переписку тикета из ссылки {view:"ticket",id} */

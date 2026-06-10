@@ -516,6 +516,9 @@ window.RobTop = window.RobTop || {};
       },
       /* sdk.admin.verify (PIN) упразднён 2026-06-07: роль даёт сессия аккаунта — модулям достаточно sdk.role / sdk.isDemo() */
       theme: { tokens: shell.tokens || {} },
+      /* ---- icons — общий реестр SVG-иконок шапки (back/stats/statsBars/parent/plus).
+         Источник — HDR_ICONS ядра (shell.js); раньше каждый модуль держал свои копии (аудит 2026-06-10). */
+      icons: shell.icons || {},
       storage: { local:function(key){ var k="robtop_"+mod+"_"+key; return {
         get:function(){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },
         set:function(v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
