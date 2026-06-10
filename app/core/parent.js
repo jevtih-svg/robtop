@@ -203,6 +203,7 @@ window.RobTop = window.RobTop || {};
 
   function t(k,p){ return I.t(k,p); }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
+  function mediaUrl(s){ return window.RobTop&&RobTop.util&&RobTop.util.mediaUrl?RobTop.util.mediaUrl(s):s; }
   function tIf(k,p){ var o={}; if(p) for(var x in p) o[x]=p[x]; o.fallback=""; return I.t(k,o); }
   function el(){ return document.getElementById("parent"); }
   function tabsEl(){ return document.getElementById("pdTabs"); }
@@ -577,7 +578,7 @@ window.RobTop = window.RobTop || {};
     if(!list.length) h+='<div class="pd-empty">'+esc(t("parent.wl.empty"))+'</div>';
     list.forEach(function(w){
       var ph=w.photo
-        ? '<span class="ph" style="background-image:url(\''+esc(w.photo)+'\')"></span>'
+        ? '<span class="ph" style="background-image:url(\''+esc(mediaUrl(w.photo))+'\')"></span>'
         : '<span class="ph emo">'+esc(w.icon||"🍒")+'</span>';
       h+='<button class="pd-wcard" data-w="'+esc(w.id)+'" style="--sc:'+SECTC[w.status]+'">'+ph
         +'<span class="tx"><span class="t1">'+(w.favorite?'<span class="fav">★</span>':'')+esc(w.title||"")+'</span>'
@@ -601,7 +602,7 @@ window.RobTop = window.RobTop || {};
     }
     var node=document.createElement("div");
     var ph=w.photo
-      ? '<span class="ph" data-full="'+esc(w.photo)+'" role="button" tabindex="0" aria-label="'+esc(t("parent.wl.fullPhoto"))+'" style="background-image:url(\''+esc(w.photo)+'\')"></span>'
+      ? '<span class="ph" data-full="'+esc(mediaUrl(w.photo))+'" role="button" tabindex="0" aria-label="'+esc(t("parent.wl.fullPhoto"))+'" style="background-image:url(\''+esc(mediaUrl(w.photo))+'\')"></span>'
       : '<span class="ph emo">'+esc(w.icon||"🍒")+'</span>';
     var h='<div class="pd-dhead" style="--sc:'+SECTC[w.status]+'">'+ph
       +'<div><h2 style="text-align:left;margin:0 0 6px">'+(w.favorite?'<span style="color:var(--gold)">★</span> ':'')+esc(w.title||"")+'</h2>'
@@ -648,7 +649,7 @@ window.RobTop = window.RobTop || {};
         +'<div style="text-align:center;color:#fff;font-weight:800">'+esc(t("parent.mood."+mk,{fallback:mk}))+'</div>'
         +'<div style="text-align:center;color:var(--muted);font-weight:700;margin:3px 0 12px">'+esc(fmtDayStr(d.day))+'</div>';
     } else { return; }
-    if(d.photo) h+='<div class="pd-dnote" style="padding:0;overflow:hidden"><div style="height:170px;background:#0b0a1e center/cover no-repeat;background-image:url(\''+esc(d.photo)+'\')"></div></div>';
+    if(d.photo) h+='<div class="pd-dnote" style="padding:0;overflow:hidden"><div style="height:170px;background:#0b0a1e center/cover no-repeat;background-image:url(\''+esc(mediaUrl(d.photo))+'\')"></div></div>';
     h+='<div class="pd-dnote"><b>'+esc(t("parent.wl.note"))+'</b>'+(d.why?esc(d.why):'<i style="color:#6f80a6">'+esc(t("parent.m.noText"))+'</i>')+'</div>';
     h+='<div class="sheet-actions"><button class="btn btn-cancel" data-close style="flex:1">'+esc(t("parent.close"))+'</button></div>';
     node.innerHTML=h;

@@ -6,13 +6,13 @@ rt_guard();
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') rt_json(['error' => 'method'], 405);
 
 $b = rt_body();
-if (!rt_admin_gate()) rt_json(['error' => 'unauthorized'], 401); // только родительская сессия (PIN упразднён 2026-06-07)
+$db = rt_db();
+rt_require_admin($db);
 
 $id  = isset($b['id']) ? (string)$b['id'] : '';
 $dir = (isset($b['dir']) && (int)$b['dir'] < 0) ? -1 : 1;
 if (!preg_match('/^[a-z0-9_-]{2,40}$/', $id)) rt_json(['error' => 'bad id'], 422);
 
-$db   = rt_db();
 $rows = rt_modules_all($db); // отсортированы по sort_order, id
 $i = -1;
 for ($k = 0; $k < count($rows); $k++) { if ($rows[$k]['id'] === $id) { $i = $k; break; } }

@@ -238,7 +238,7 @@ foreach ($cq->fetchAll() as $r) {
     if (count($content[$m]) >= $perModCap) continue;
     $d = json_decode($r['data'], true);
     if (!is_array($d)) $d = [];
-    if (!$canImages) { unset($d['photo'], $d['image'], $d['dataUrl']); }
+    if (!$canImages) { $d = rt_scrub_media_refs($d); }
     $content[$m][] = [
         'id'        => (string)$r['id'],
         'collection'=> $r['collection'],

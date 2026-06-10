@@ -7,12 +7,12 @@ rt_guard();
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') rt_json(['error' => 'method'], 405);
 
 $b = rt_body();
-if (!rt_admin_gate()) rt_json(['error' => 'unauthorized'], 401); // только родительская сессия (PIN упразднён 2026-06-07)
+$db = rt_db();
+rt_require_admin($db);
 
 $id = isset($b['id']) ? (string)$b['id'] : '';
 if (!preg_match('/^[a-z0-9_-]{2,40}$/', $id)) rt_json(['error' => 'bad id'], 422);
 
-$db  = rt_db();
 $row = rt_module_row($db, $id);
 if (!$row) rt_json(['ok' => true]);
 if ($row['source'] !== 'installed') rt_json(['error' => 'cant_uninstall_native', 'message' => 'Cannot remove a built-in module'], 400);

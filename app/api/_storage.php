@@ -25,6 +25,36 @@ function rt_storage() {
     return $s;
 }
 
+function rt_media_owner_from_path($path) {
+    $path = ltrim((string)$path, '/');
+    if (!preg_match('#^uploads/users/(\d+)/[A-Za-z0-9_/-]+/[A-Za-z0-9._-]+$#', $path, $m)) return null;
+    if (strpos($path, '..') !== false) return null;
+    return (int)$m[1];
+}
+
+function rt_media_path_allowed($db, $path, $allowedUids) {
+    $owner = rt_media_owner_from_path($path);
+    if (!$owner) return false;
+    $allowed = array_flip(array_map('intval', (array)$allowedUids));
+    if (!isset($allowed[$owner])) return false;
+    try {
+        $s = $db->prepare("SELECT user_id, deleted_at FROM uploaded_files WHERE path = ? LIMIT 1");
+        $s->execute([(string)$path]);
+        $r = $s->fetch();
+        if ($r && ((int)$r['user_id'] !== $owner || $r['deleted_at'] !== null)) return false;
+    } catch (Throwable $e) { /* legacy installs may not have uploaded_files yet */ }
+    return true;
+}
+
+function rt_media_validate_value($db, $value, $allowedUids) {
+    if (is_string($value) && strpos($value, 'uploads/') === 0 && !rt_media_path_allowed($db, $value, $allowedUids)) {
+        rt_json(['error' => 'bad photo'], 422);
+    }
+    if (is_array($value)) {
+        foreach ($value as $v) rt_media_validate_value($db, $v, $allowedUids);
+    }
+}
+
 class RtLocalStorage {
     private $base; // абсолютный путь к корню загрузок на диске
     private $url;  // относительный URL-префикс для <img src>

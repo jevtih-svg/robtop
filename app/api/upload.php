@@ -34,6 +34,14 @@ $info = @getimagesizefromstring($bytes);
 if ($info === false) rt_json(['error' => 'not_image', 'message' => 'This is not an image'], 422);
 
 $uid = rt_user_id();
+$actorUid = $uid;
+if (rt_user_role() === 'parent') {
+    $cid = isset($body['child']) ? (int)$body['child'] : 0;
+    if ($cid > 0) {
+        if (!rt_can_manage_child(rt_db(), $actorUid, $cid)) rt_json(['error' => 'forbidden child'], 403);
+        $uid = $cid;
+    }
+}
 // SEC 2026-06-09: кап загрузок — не больше 120 файлов в час на пользователя (анти-абуз диска).
 try {
     $cu = rt_db()->prepare("SELECT COUNT(*) FROM uploaded_files WHERE user_id=? AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)");

@@ -9,6 +9,7 @@
  */
 
 require __DIR__ . '/_bootstrap.php';
+require __DIR__ . '/_storage.php';
 rt_guard();
 rt_require_login(rt_db()); // SEC 2026-06-09: вход обязателен (single_user-фолбэк убран)
 
@@ -24,6 +25,7 @@ $coll   = isset($body['collection']) && $body['collection'] !== '' ? (string)$bo
 $id     = isset($body['id']) && $body['id'] !== null ? (int)$body['id'] : null;
 
 if (!preg_match('/^[a-z0-9_-]{2,40}$/', $module)) rt_json(['error' => 'bad module'], 422);
+if (!preg_match('/^[a-z0-9_-]{1,60}$/', $coll)) rt_json(['error' => 'bad collection'], 422);
 
 // Модуль должен быть установлен и включён.
 $mod = rt_module_row($db, $module);
@@ -84,6 +86,17 @@ if (is_array($man) && !empty($man['familyPool'])) {
     }
 }
 
+$actorUid = rt_user_id();
+function rt_md_json($data) {
+    $json = json_encode($data, JSON_UNESCAPED_UNICODE);
+    if ($json === false) rt_json(['error' => 'bad data'], 422);
+    if (strlen($json) > 65535) rt_json(['error' => 'data too big'], 413);
+    return $json;
+}
+function rt_md_validate_payload($db, $data, $allowedUids) {
+    rt_media_validate_value($db, $data, $allowedUids);
+}
+
 function rt_md_row($db, $uid, $module, $coll, $id) {
     $s = $db->prepare("SELECT * FROM module_data WHERE id=? AND user_id=? AND module=? AND collection=?");
     $s->execute([$id, $uid, $module, $coll]);
@@ -103,6 +116,12 @@ function rt_md_out($r) {
 switch ($op) {
 
     case 'list': {
+        $limit = isset($body['limit']) ? (int)$body['limit'] : 300;
+        if ($limit < 1) $limit = 1;
+        if ($limit > 300) $limit = 300;
+        $offset = isset($body['offset']) ? (int)$body['offset'] : 0;
+        if ($offset < 0) $offset = 0;
+        $fetchLimit = $limit + 1;
         $q = $db->prepare(
             "SELECT id, status, favorite, data,
                     UNIX_TIMESTAMP(created_at)*1000 AS createdAt,
@@ -110,10 +129,13 @@ switch ($op) {
              FROM module_data
              WHERE user_id=? AND module=? AND collection=? AND deleted_at IS NULL
              ORDER BY sort ASC, id DESC"
+             . " LIMIT " . (int)$fetchLimit . " OFFSET " . (int)$offset
         );
         $q->execute([$uid, $module, $coll]);
         $items = array_map('rt_md_out', $q->fetchAll());
-        rt_json(['ok' => true, 'items' => $items]);
+        $hasMore = count($items) > $limit;
+        if ($hasMore) array_pop($items);
+        rt_json(['ok' => true, 'items' => $items, 'limit' => $limit, 'offset' => $offset, 'hasMore' => $hasMore]);
     }
 
     case 'get': {
@@ -126,12 +148,13 @@ switch ($op) {
 
     case 'create': {
         $data   = isset($body['data']) && is_array($body['data']) ? $body['data'] : [];
+        rt_md_validate_payload($db, $data, [$uid, $actorUid]);
         $status = isset($data['status']) ? (string)$data['status'] : '';
         $st = $db->prepare(
             "INSERT INTO module_data (user_id, module, collection, status, favorite, sort, data, created_at, updated_at)
              VALUES (?, ?, ?, ?, 0, 0, ?, NOW(), NOW())"
         );
-        $st->execute([$uid, $module, $coll, $status, json_encode($data, JSON_UNESCAPED_UNICODE)]);
+        $st->execute([$uid, $module, $coll, $status, rt_md_json($data)]);
         $newId = (int)$db->lastInsertId();
         rt_log($module, 'created', $newId, null, null, $status ?: null, ['collection' => $coll], $uid);
         $now = round(microtime(true) * 1000);
@@ -147,9 +170,11 @@ switch ($op) {
         $cur = $r['data'] !== null ? json_decode($r['data'], true) : [];
         if (!is_array($cur)) $cur = [];
         $patch = isset($body['patch']) && is_array($body['patch']) ? $body['patch'] : [];
+        rt_md_validate_payload($db, $patch, [$uid, $actorUid]);
         $merged = array_merge($cur, $patch);
+        $json = rt_md_json($merged);
         $db->prepare("UPDATE module_data SET data=?, updated_at=NOW() WHERE id=? AND user_id=?")
-           ->execute([json_encode($merged, JSON_UNESCAPED_UNICODE), $id, $uid]);
+           ->execute([$json, $id, $uid]);
         rt_log($module, 'edited', $id, null, null, null, ['collection' => $coll], $uid);
         rt_json(['ok' => true]);
     }
@@ -193,6 +218,7 @@ switch ($op) {
     case 'track': {
         $type = isset($body['type']) ? (string)$body['type'] : 'event';
         $meta = isset($body['data']) ? $body['data'] : null;
+        if ($meta !== null && strlen(json_encode($meta, JSON_UNESCAPED_UNICODE)) > 4096) rt_json(['error' => 'data too big'], 413);
         rt_log($module, $type, null, null, null, null, $meta, $uid);
         rt_json(['ok' => true]);
     }

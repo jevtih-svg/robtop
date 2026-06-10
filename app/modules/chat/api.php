@@ -238,6 +238,7 @@ function rt_chat_action($db, $uid, $type, $itemId, $data) {
             if (mb_strlen($body) > 1000) $body = mb_substr($body, 0, 1000);
             $photo = isset($data['photo']) && is_string($data['photo']) && $data['photo'] !== '' ? $data['photo'] : null;
             if ($photo !== null && (strlen($photo) > 255 || strpos($photo, 'uploads/') !== 0)) rt_json(['error' => 'bad photo'], 422);
+            if ($photo !== null && !rt_media_path_allowed($db, $photo, [$uid])) rt_json(['error' => 'bad photo'], 422);
             if ($body === '' && $photo === null) rt_json(['error' => 'empty'], 422);
 
             $db->prepare("INSERT INTO chat_messages (thread_id, user_id, body, photo, created_at) VALUES (?, ?, ?, ?, NOW())")

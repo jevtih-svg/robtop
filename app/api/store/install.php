@@ -15,7 +15,7 @@ rt_guard();
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') rt_json(['error' => 'method'], 405);
 
 $b = rt_body();
-if (!rt_admin_gate()) rt_json(['error' => 'unauthorized'], 401); // только родительская сессия (PIN упразднён 2026-06-07)
+$admin = rt_require_admin($db = rt_db());
 
 $man   = isset($b['manifest']) && is_array($b['manifest']) ? $b['manifest'] : null;
 $files = isset($b['files']) && is_array($b['files']) ? $b['files'] : null;
@@ -27,7 +27,6 @@ if (!preg_match('/^[a-z0-9_-]{2,40}$/', $id)) rt_json(['error' => 'bad_id', 'mes
 $reserved = ['api','core','apps','modules','media','uploads','config','store'];
 if (in_array($id, $reserved, true)) rt_json(['error' => 'reserved_id', 'message' => 'Reserved id'], 422);
 
-$db = rt_db();
 $existing = rt_module_row($db, $id);
 if ($existing && $existing['source'] === 'native') rt_json(['error' => 'cant_replace_native', 'message' => 'Cannot replace a built-in module'], 409);
 

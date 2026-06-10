@@ -140,7 +140,7 @@
         +starsHtml(d.stars||0,false)
         +(d.why?'<p class="rd-text"><b>'+esc(t("why"))+'</b> '+esc(d.why)+'</p>':"")
         +(d.liked?'<p class="rd-text"><b>'+esc(t("liked"))+'</b> '+esc(d.liked)+'</p>':"")
-        +(d.photo?'<div class="rd-bigphoto" style="background-image:url(\''+esc(d.photo)+'\')"></div>':"")
+        +(d.photo?'<div class="rd-bigphoto" style="background-image:url(\''+esc(sdk.media.url(d.photo))+'\')"></div>':"")
         +'<div class="rd-form-actions"><button class="btn" id="rdEdit">'+esc(t("editBtn"))+'</button></div>'
         +'<p class="rd-note">'+esc(t("editUntil"))+'</p></div>';
       return;
@@ -161,7 +161,7 @@
       +'<label class="rd-lbl" for="rdLiked">'+esc(t("liked"))+'</label>'
       +'<textarea class="rd-ta" id="rdLiked" maxlength="400" placeholder="'+esc(t("likedPh"))+'">'+esc(form.liked||"")+'</textarea>'
       +'<div class="rd-photo'+(form.photo?" has":"")+'" id="rdPhotoPick" role="button" aria-label="'+esc(t("aria.photo"))+'"'
-        +(form.photo?' style="background-image:url(\''+esc(form.photo)+'\')"':"")+'>'
+        +(form.photo?' style="background-image:url(\''+esc(sdk.media.url(form.photo))+'\')"':"")+'>'
         +(form.photo?'<span>'+esc(t("replacePhoto"))+'</span>':'<span class="pic">'+CAM_IC+'</span><span>'+esc(t("addPhoto"))+'</span>')
       +'</div>'
       +'<div class="rd-form-actions"><button class="btn btn-cancel" id="rdCancel">'+esc(t("common.cancel"))+'</button>'
@@ -236,7 +236,7 @@
     if(!list.length){ E.list.innerHTML='<div class="rd-empty">'+esc(t(loadFailed?"loadFailed":"historyEmpty"))+'</div>'; return; }
     E.list.innerHTML=list.map(function(it){
       var d=dataOf(it), snippet=d.why||d.liked||t("noText");
-      var thumb=d.photo?'<div class="rd-thumb" style="background-image:url(\''+esc(d.photo)+'\')"></div>':'<div class="rd-thumb">'+STAR_F+'</div>';
+      var thumb=d.photo?'<div class="rd-thumb" style="background-image:url(\''+esc(sdk.media.url(d.photo))+'\')"></div>':'<div class="rd-thumb">'+STAR_F+'</div>';
       return '<div class="rd-row" data-id="'+esc(it.id)+'">'+thumb
         +'<div class="m"><div class="d">'+esc(fmtDay(d.day))+'</div>'+starsHtml(d.stars||0,false,"mini")
         +'<div class="s">'+esc(snippet)+'</div></div></div>';
@@ -253,7 +253,7 @@
     if(!it) return;
     var d=dataOf(it), node=document.createElement("div"); node.className="rd-detail";
     node.innerHTML='<h2>'+esc(fmtDay(d.day))+'</h2>'+starsHtml(d.stars||0,false)
-      +(d.photo?'<div class="rd-bigphoto" style="background-image:url(\''+esc(d.photo)+'\')"></div>':"")
+      +(d.photo?'<div class="rd-bigphoto" style="background-image:url(\''+esc(sdk.media.url(d.photo))+'\')"></div>':"")
       +(d.why?'<span class="rd-lbl">'+esc(t("why"))+'</span><div class="rd-text">'+esc(d.why)+'</div>':"")
       +(d.liked?'<span class="rd-lbl">'+esc(t("liked"))+'</span><div class="rd-text">'+esc(d.liked)+'</div>':"")
       +((!d.why&&!d.liked)?'<div class="rd-text" style="text-align:center">'+esc(t("noText"))+'</div>':"")

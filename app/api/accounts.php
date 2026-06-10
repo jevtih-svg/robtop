@@ -31,10 +31,21 @@
 
 require __DIR__ . '/_bootstrap.php';
 rt_guard();
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') rt_json(['error' => 'method'], 405);
 
 $b  = rt_body();
-$op = isset($b['op']) ? (string)$b['op'] : (isset($_GET['op']) ? (string)$_GET['op'] : '');
+$op = isset($b['op']) ? (string)$b['op'] : '';
 $db = rt_db();
+
+function rt_invitation_claim($db, $id) {
+    $s = $db->prepare(
+        "UPDATE invitations
+         SET status = 'accepted', accepted_at = NOW()
+         WHERE id = ? AND status = 'pending'"
+    );
+    $s->execute([(int)$id]);
+    if ($s->rowCount() !== 1) rt_json(['error' => 'already accepted'], 409);
+}
 
 switch ($op) {
 
@@ -401,6 +412,7 @@ switch ($op) {
                 }
             }
             if (!$guardian) rt_json(['error' => 'no guardian'], 409);
+            rt_invitation_claim($db, (int)$inv['id']);
             $cid = rt_create_user($db, $nick, 'child', [
                 'password_hash' => password_hash(rt_temp_password(), PASSWORD_DEFAULT), // авто-вход ниже; пароль сменят при первом входе
                 'must_change' => 1, 'invited_by' => $inviter,
@@ -408,7 +420,7 @@ switch ($op) {
             $fid = rt_create_family($db, $guardian, 'Гость');
             rt_add_member($db, $fid, $cid, 'child');
             $gid = rt_add_guardianship($db, $cid, $guardian, $fid, 'provisional', 'child_invite', (int)$inv['id']);
-            $db->prepare("UPDATE invitations SET status = 'accepted', invited_user_id = ?, accepted_at = NOW() WHERE id = ?")->execute([$cid, (int)$inv['id']]);
+            $db->prepare("UPDATE invitations SET invited_user_id = ? WHERE id = ?")->execute([$cid, (int)$inv['id']]);
             rt_start_session($db, $cid);
             rt_log('accounts', 'account_created', $cid, 'child', null, null, ['via' => 'child_invite', 'inviter' => $inviter]);
             rt_log('accounts', 'guardianship_created', $gid, 'provisional', null, null, ['child' => $cid, 'guardian' => $guardian]);
@@ -429,6 +441,10 @@ switch ($op) {
             $db->prepare("UPDATE invitations SET status = 'expired' WHERE id = ?")->execute([(int)$inv['id']]);
             rt_json(['error' => 'has_parent'], 409);
         }
+        if (($type === 'transfer_child' || $type === 'child_invite_parent') && !(int)$inv['target_child_id']) {
+            rt_json(['error' => 'no target child'], 422);
+        }
+        rt_invitation_claim($db, (int)$inv['id']);
         $pid = rt_create_user($db, $nick, 'parent', [
             'email' => $email, 'password_hash' => password_hash($pass, PASSWORD_DEFAULT),
             'must_change' => 0, 'invited_by' => (int)$inv['inviter_id'],
@@ -437,7 +453,7 @@ switch ($op) {
         if ($type === 'co_parent') {
             $fid = $inv['family_id'] ? (int)$inv['family_id'] : rt_user_family_id($db, (int)$inv['inviter_id']);
             if ($fid) rt_add_member($db, $fid, $pid, 'parent');
-            $db->prepare("UPDATE invitations SET status = 'accepted', invited_user_id = ?, accepted_at = NOW() WHERE id = ?")->execute([$pid, (int)$inv['id']]);
+            $db->prepare("UPDATE invitations SET invited_user_id = ? WHERE id = ?")->execute([$pid, (int)$inv['id']]);
             rt_start_session($db, $pid);
             rt_log('accounts', 'account_created', $pid, 'parent', null, null, ['via' => 'co_parent']);
             rt_log('accounts', 'invite_accepted', (int)$inv['id'], $type);
@@ -447,7 +463,6 @@ switch ($op) {
 
         // transfer_child / child_invite_parent: формируем нормальную семью ребёнка и рвём провизорную связь (с логом)
         $child = (int)$inv['target_child_id'];
-        if (!$child) rt_json(['error' => 'no target child'], 422);
         $fid = rt_create_family($db, $pid, 'Семья');
         rt_add_member($db, $fid, $pid, 'owner');
         $db->prepare("UPDATE family_members SET family_id = ?, status = 'active' WHERE user_id = ? AND role = 'child'")->execute([$fid, $child]);
@@ -457,7 +472,7 @@ switch ($op) {
         // source='transfer' и для child_invite_parent: enum узкий, конкретный тип хранит source_invitation_id → invitations.type
         $gid = rt_add_guardianship($db, $child, $pid, $fid, 'primary', 'transfer', (int)$inv['id']);
         rt_sever_provisional($db, $child, 'real_parent_attached');
-        $db->prepare("UPDATE invitations SET status = 'accepted', invited_user_id = ?, accepted_at = NOW() WHERE id = ?")->execute([$pid, (int)$inv['id']]);
+        $db->prepare("UPDATE invitations SET invited_user_id = ? WHERE id = ?")->execute([$pid, (int)$inv['id']]);
         rt_start_session($db, $pid);
         rt_log('accounts', 'account_created', $pid, 'parent', null, null, ['via' => $type]);
         rt_log('accounts', 'family_created', $fid, null, null, null, ['owner' => $pid, 'for_child' => $child]);

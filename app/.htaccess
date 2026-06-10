@@ -18,7 +18,10 @@ AddDefaultCharset UTF-8
   # Если приложение снова окажется прямо в /robtop/ (deploy-ветка), поменяй здесь.
   RewriteBase /robtop/app/
 
-  # Существующие файлы и папки — напрямую (API, ассеты, загрузки)
+  # Пользовательские загрузки отдаются только через api/image.php с проверкой прав.
+  RewriteRule ^uploads/ - [F,L]
+
+  # Существующие файлы и папки — напрямую (API, ассеты)
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]

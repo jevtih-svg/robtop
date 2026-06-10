@@ -588,7 +588,7 @@ switch ($op) {
             $s = $db->prepare($sql); $s->execute($args);
             foreach ($s->fetchAll() as $r) {
                 $d = json_decode((string)$r['data'], true);
-                if (is_array($d)) { unset($d['photo'], $d['image'], $d['dataUrl']); } // путей к картинкам админу не отдаём
+                if (is_array($d)) { $d = rt_scrub_media_refs($d); } // путей к картинкам админу не отдаём
                 $rows[] = ['id' => (int)$r['id'], 'userId' => (int)$r['user_id'], 'owner' => $r['owner'],
                            'collection' => $r['collection'], 'status' => $r['status'],
                            'data' => $d, 'created' => $r['created_at']];
@@ -603,7 +603,7 @@ switch ($op) {
         $uid = (int)($b['user_id'] ?? 0);
         $data = isset($b['data']) && is_array($b['data']) ? $b['data'] : null;
         if (!preg_match('/^[a-z0-9_-]{2,40}$/', $module) || !$uid || $data === null) rt_json(['error' => 'bad input'], 422);
-        unset($data['photo'], $data['image'], $data['dataUrl']); // картинки через админку не вкладываются
+        $data = rt_scrub_media_refs($data); // картинки через админку не вкладываются
         $db->prepare("INSERT INTO module_data (user_id, module, collection, status, data) VALUES (?, ?, ?, '', ?)")
            ->execute([$uid, $module, $col, json_encode($data, JSON_UNESCAPED_UNICODE)]);
         $id = (int)$db->lastInsertId();
@@ -616,7 +616,7 @@ switch ($op) {
         if (!$id) rt_json(['error' => 'bad input'], 422);
         if (isset($b['data']) && is_array($b['data'])) {
             $data = $b['data'];
-            unset($data['photo'], $data['image'], $data['dataUrl']);
+            $data = rt_scrub_media_refs($data);
             $db->prepare("UPDATE module_data SET data = ?, updated_at = NOW() WHERE id = ?")
                ->execute([json_encode($data, JSON_UNESCAPED_UNICODE), $id]);
         }

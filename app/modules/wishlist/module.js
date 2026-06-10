@@ -229,7 +229,7 @@
 
   /* ----- cards ----- */
   function cardImage(item){
-    if(item.photo) return '<div class="card-img" style="background-image:url(\''+item.photo+'\')"></div>';
+    if(item.photo) return '<div class="card-img" style="background-image:url(\''+esc(sdk.media.url(item.photo))+'\')"></div>';
     var inner=item.icon?'<span class="ph-emoji">'+item.icon+'</span>':'<span class="ph-cherry">'+IC.cherry+'</span>';
     return '<div class="card-img placeholder">'+inner+'</div>';
   }
@@ -307,7 +307,7 @@
   function confirmPurchase(id){
     var item=findItem(id); if(!item) return; pendingPurchaseId=id;
     var pb=E.purchaseBody;
-    var media=item.photo?'<div style="width:64px;height:64px;border-radius:16px;background-size:cover;background-position:center;margin:0 auto 6px;background-image:url(\''+item.photo+'\')"></div>':'<div class="pc-emoji">'+(item.icon||"🎉")+'</div>';
+    var media=item.photo?'<div style="width:64px;height:64px;border-radius:16px;background-size:cover;background-position:center;margin:0 auto 6px;background-image:url(\''+esc(sdk.media.url(item.photo))+'\')"></div>':'<div class="pc-emoji">'+(item.icon||"🎉")+'</div>';
     pb.innerHTML=media
       +'<div class="pc-q">'+esc(t("purchase.q"))+'</div>'
       +'<div class="pc-name">'+esc(item.title)+'</div>'
@@ -481,7 +481,7 @@
   }
 
   /* ----- add/edit sheet ----- */
-  function showPreview(src){ if(src){ E.photoPick.classList.add("has-photo"); E.ppreview.style.backgroundImage="url('"+src+"')"; } else { E.photoPick.classList.remove("has-photo"); E.ppreview.style.backgroundImage=""; } }
+  function showPreview(src){ if(src){ E.photoPick.classList.add("has-photo"); E.ppreview.style.backgroundImage="url('"+sdk.media.url(src)+"')"; } else { E.photoPick.classList.remove("has-photo"); E.ppreview.style.backgroundImage=""; } }
   function setFormPhoto(d){ formPhoto=d||null; showPreview(formPhoto); }
   function uploadPhoto(dataUrl){
     E.photoPick.classList.add("uploading");

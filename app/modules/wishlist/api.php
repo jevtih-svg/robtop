@@ -28,6 +28,7 @@ function rt_wishlist_action($db, $uid, $type, $itemId, $data) {
             $link  = trim((string)(isset($data['link']) ? $data['link'] : ''));
             $photo = isset($data['photo']) && $data['photo'] !== '' ? (string)$data['photo'] : null;
             $icon  = isset($data['icon']) && $data['icon'] !== '' ? (string)$data['icon'] : null;
+            if ($photo !== null && !rt_media_path_allowed($db, $photo, [$uid])) rt_json(['error' => 'bad photo'], 422);
 
             $st = $db->prepare(
                 "INSERT INTO wishlist_items (user_id, title, note, link, photo, icon, favorite, status, created_at, updated_at)
@@ -54,6 +55,7 @@ function rt_wishlist_action($db, $uid, $type, $itemId, $data) {
             $link  = trim((string)(isset($data['link']) ? $data['link'] : $it['link']));
             $photo = array_key_exists('photo', $data) ? ($data['photo'] !== '' ? $data['photo'] : null) : $it['photo'];
             $icon  = array_key_exists('icon', $data) ? ($data['icon'] !== '' ? $data['icon'] : null) : $it['icon'];
+            if ($photo !== null && !rt_media_path_allowed($db, $photo, [$uid])) rt_json(['error' => 'bad photo'], 422);
 
             $st = $db->prepare("UPDATE wishlist_items SET title=?, note=?, link=?, photo=?, icon=?, updated_at=NOW() WHERE id=? AND user_id=?");
             $st->execute([$title, $note, $link, $photo, $icon, $itemId, $uid]);

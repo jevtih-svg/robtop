@@ -419,7 +419,7 @@
     var list=subs.filter(function(s){ return s.d.st==="pending"; }).sort(function(a,b){ return (a.d.ts||0)-(b.d.ts||0); });
     if(!list.length) return '<div class="find-empty">'+esc(t("reviewEmpty"))+'</div>';
     return list.map(function(s){
-      var d=s.d, photo=d.photo?esc(d.photo):"";
+      var d=s.d, photo=d.photo?esc(sdk.media.url(d.photo)):"";
       return '<div class="find-rev" data-id="'+esc(s.id)+'">'
         +(photo?'<img class="ph" alt="" src="'+photo+'">':'')
         +'<div class="body"><div class="d">'+esc(renderDesc(d.adj||[]))+'</div>'

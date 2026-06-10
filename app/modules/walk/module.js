@@ -470,7 +470,7 @@
   function photosHtml(){
     var h='<div class="wk-photos">';
     cur.photos.forEach(function(src,ix){
-      h+='<button type="button" class="wk-ph" data-ph="'+ix+'" aria-label="'+esc(t("aria.del"))+'" style="background-image:url(\''+esc(src)+'\')"><span>✕</span></button>';
+      h+='<button type="button" class="wk-ph" data-ph="'+ix+'" aria-label="'+esc(t("aria.del"))+'" style="background-image:url(\''+esc(sdk.media.url(src))+'\')"><span>✕</span></button>';
     });
     if(cur.photos.length<PHOTO_MAX)
       h+='<button type="button" class="wk-ph addp" id="wkAddPhoto" aria-label="'+esc(t("addPhoto"))+'"><span class="pic">'+CAM_IC+'</span><span>'+esc(t("addPhoto"))+'</span></button>';
@@ -731,7 +731,7 @@
   function walkRowHtml(it){
     var d=dataOf(it), r=rateOf(it), ph=(d.photos&&d.photos[0])||null;
     var face=r?('<span class="wk-mini f-'+r+'">'+FACE[r]+'</span>'):('<span class="wk-mini f-none">'+FACE.none+'</span>');
-    var thumb=ph?'<div class="wk-thumb" style="background-image:url(\''+esc(ph)+'\')"></div>'
+    var thumb=ph?'<div class="wk-thumb" style="background-image:url(\''+esc(sdk.media.url(ph))+'\')"></div>'
       :'<div class="wk-thumb f-'+(r||"none")+'">'+(r?FACE[r]:FACE.none)+'</div>';
     var bits=[esc(fmtDur(d.duration))];
     if(r) bits.push(esc(t("rnames."+r))); else bits.push('<i>'+esc(t("noRate"))+'</i>');
@@ -834,7 +834,7 @@
     }
     if(d.photos&&d.photos.length){
       h+='<div class="wk-det-photos">';
-      d.photos.forEach(function(src){ h+='<div class="wk-bigphoto" style="background-image:url(\''+esc(src)+'\')"></div>'; });
+      d.photos.forEach(function(src){ h+='<div class="wk-bigphoto" style="background-image:url(\''+esc(sdk.media.url(src))+'\')"></div>'; });
       h+='</div>';
     }
     if(d.author) h+='<p class="wk-author">'+esc(t("byAuthor",{name:d.author}))+'</p>';

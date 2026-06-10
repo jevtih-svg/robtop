@@ -23,6 +23,17 @@ function rt_split_sql($sql) {
     return $out;
 }
 
+function rt_migrate_ignorable_error($e) {
+    if (!($e instanceof PDOException)) return false;
+    $code = isset($e->errorInfo[1]) ? (int)$e->errorInfo[1] : 0;
+    return in_array($code, [
+        1050, // table already exists
+        1060, // duplicate column
+        1061, // duplicate key name
+        1062, // duplicate entry in seed/metadata rows
+    ], true);
+}
+
 function rt_migrate($db) {
     static $done = false;
     if ($done) return;
@@ -60,7 +71,11 @@ function rt_migrate($db) {
             $sql = file_get_contents($file);
             if ($sql === false) continue;
             foreach (rt_split_sql($sql) as $stmt) {
-                $db->exec($stmt);
+                try {
+                    $db->exec($stmt);
+                } catch (Throwable $e) {
+                    if (!rt_migrate_ignorable_error($e)) throw $e;
+                }
             }
             $record->execute([$name]);
         }

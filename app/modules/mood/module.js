@@ -171,7 +171,7 @@
         +soloFace(moodOf(entry)||"mid")
         +(d.why?'<p class="md-text"><b>'+esc(t("why"))+'</b> '+esc(d.why)+'</p>':"")
         +(d.liked?'<p class="md-text"><b>'+esc(t("liked"))+'</b> '+esc(d.liked)+'</p>':"")
-        +(d.photo?'<div class="md-bigphoto" style="background-image:url(\''+esc(d.photo)+'\')"></div>':"")
+        +(d.photo?'<div class="md-bigphoto" style="background-image:url(\''+esc(sdk.media.url(d.photo))+'\')"></div>':"")
         +'<div class="md-form-actions"><button class="btn" id="mdEdit">'+esc(t("editBtn"))+'</button></div>'
         +'<p class="md-note">'+esc(t("editUntil"))+'</p></div>';
       return;
@@ -192,7 +192,7 @@
       +'<label class="md-lbl" for="mdLiked">'+esc(t("liked"))+'</label>'
       +'<textarea class="md-ta" id="mdLiked" maxlength="400" placeholder="'+esc(t("likedPh"))+'">'+esc(form.liked||"")+'</textarea>'
       +'<div class="md-photo'+(form.photo?" has":"")+'" id="mdPhotoPick" role="button" aria-label="'+esc(t("aria.photo"))+'"'
-        +(form.photo?' style="background-image:url(\''+esc(form.photo)+'\')"':"")+'>'
+        +(form.photo?' style="background-image:url(\''+esc(sdk.media.url(form.photo))+'\')"':"")+'>'
         +(form.photo?'<span>'+esc(t("replacePhoto"))+'</span>':'<span class="pic">'+CAM_IC+'</span><span>'+esc(t("addPhoto"))+'</span>')
       +'</div>'
       +'<div class="md-form-actions"><button class="btn btn-cancel" id="mdCancel">'+esc(t("common.cancel"))+'</button>'
@@ -268,7 +268,7 @@
     if(!list.length){ E.list.innerHTML='<div class="md-empty">'+esc(t("historyEmpty"))+'</div>'; return; }
     E.list.innerHTML=list.map(function(it){
       var d=dataOf(it), m=moodOf(it)||"mid", snippet=d.why||d.liked||t("noText");
-      var thumb=d.photo?'<div class="md-thumb" style="background-image:url(\''+esc(d.photo)+'\')"></div>'
+      var thumb=d.photo?'<div class="md-thumb" style="background-image:url(\''+esc(sdk.media.url(d.photo))+'\')"></div>'
         :'<div class="md-thumb f-'+m+'">'+FACE[m]+'</div>';
       return '<div class="md-row" data-id="'+esc(it.id)+'">'+thumb
         +'<div class="m"><div class="d">'+esc(fmtDay(d.day))+'</div>'
@@ -288,7 +288,7 @@
     node.innerHTML='<h2>'+esc(fmtDay(d.day))+'</h2>'
       +'<div class="md-faces solo"><span class="md-face f-'+m+' on">'+FACE[m]+'</span></div>'
       +'<div class="md-mood-name">'+esc(t("names."+m))+'</div>'
-      +(d.photo?'<div class="md-bigphoto" style="background-image:url(\''+esc(d.photo)+'\')"></div>':"")
+      +(d.photo?'<div class="md-bigphoto" style="background-image:url(\''+esc(sdk.media.url(d.photo))+'\')"></div>':"")
       +(d.why?'<span class="md-lbl">'+esc(t("why"))+'</span><div class="md-text">'+esc(d.why)+'</div>':"")
       +(d.liked?'<span class="md-lbl">'+esc(t("liked"))+'</span><div class="md-text">'+esc(d.liked)+'</div>':"")
       +((!d.why&&!d.liked)?'<div class="md-text" style="text-align:center">'+esc(t("noText"))+'</div>':"")

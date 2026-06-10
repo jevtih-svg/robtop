@@ -19,13 +19,14 @@ $rel = ltrim($rel, '/');
 if (strpos($rel, 'uploads/') === 0) $rel = substr($rel, 8);
 // строго users/<id>/<kind>/<file>; никаких обходов каталога
 if ($rel === '' || strpos($rel, '..') !== false ||
-    !preg_match('#^users/(\d+)/[A-Za-z0-9_]+/[A-Za-z0-9._-]+$#', $rel, $m)) {
+    !preg_match('#^users/(\d+)/([A-Za-z0-9_]+)/[A-Za-z0-9._-]+$#', $rel, $m)) {
     http_response_code(400); exit;
 }
 $ownerId = (int)$m[1];
+$kind    = (string)$m[2];
 $viewer  = (int)rt_user_id();
 
-/** Может ли $viewer видеть фото владельца $ownerId: сам владелец ИЛИ его primary-опекун. */
+/** Может ли $viewer видеть фото владельца $ownerId: сам владелец, primary-опекун или родитель семьи. */
 function rt_img_can_view($db, $viewer, $ownerId) {
     if ($viewer > 0 && $viewer === $ownerId) return true;
     try {
@@ -35,11 +36,31 @@ function rt_img_can_view($db, $viewer, $ownerId) {
              LIMIT 1"
         );
         $s->execute([$ownerId, $viewer]);
+        if ($s->fetchColumn()) return true;
+        $s = $db->prepare(
+            "SELECT 1 FROM family_members fm1 JOIN family_members fm2 ON fm1.family_id = fm2.family_id
+             WHERE fm1.user_id = ? AND fm1.role IN ('owner','parent') AND fm1.status='active'
+               AND fm2.user_id = ? AND fm2.role = 'child' AND fm2.status='active' LIMIT 1"
+        );
+        $s->execute([$viewer, $ownerId]);
         return (bool)$s->fetchColumn();
     } catch (Throwable $e) { return false; }
 }
 
-if ($viewer <= 0 || !rt_img_can_view(rt_db(), $viewer, $ownerId)) { http_response_code(403); exit; }
+function rt_img_public_ok($db, $ownerId, $kind) {
+    if ($kind !== 'wishlist') return false;
+    try {
+        $s = $db->prepare("SELECT enabled FROM wishlist_share_settings WHERE child_user_id = ? LIMIT 1");
+        $s->execute([$ownerId]);
+        $r = $s->fetch();
+        return $r && (int)$r['enabled'] === 1;
+    } catch (Throwable $e) { return false; }
+}
+
+$db = rt_db();
+if (!rt_img_can_view($db, $viewer, $ownerId) && !rt_img_public_ok($db, $ownerId, $kind)) {
+    http_response_code(403); exit;
+}
 
 $base = realpath(__DIR__ . '/../uploads');
 $full = $base ? realpath($base . '/' . $rel) : false;

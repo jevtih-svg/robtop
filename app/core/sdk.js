@@ -362,10 +362,12 @@ window.RobTop = window.RobTop || {};
       on: function(target,ev,fn,opts){ if(target&&target.addEventListener){ target.addEventListener(ev,fn,opts); _cleanups.push(function(){ try{ target.removeEventListener(ev,fn,opts); }catch(e){} }); } return fn; },
       cleanup: function(fn){ if(typeof fn==="function") _cleanups.push(fn); },
       media:  {
+        url:function(src){ return RT.util && RT.util.mediaUrl ? RT.util.mediaUrl(src) : src; },
         /* upload(dataUrl,kind) — загрузка готового dataUrl. Ф4: требует permission "camera". */
         upload:function(dataUrl,kind){
           if(!hasPerm("camera")){ if(window.console&&console.warn) console.warn("RobTop: модуль '"+mod+"' без разрешения 'camera' — upload проигнорирован"); return Promise.resolve({ ok:false, denied:true }); }
-          return API.post("upload.php",{dataUrl:dataUrl, kind:kind||mod});
+          var b={dataUrl:dataUrl, kind:kind||mod}, pc=parentChild(); if(pc) b.child=pc;
+          return API.post("upload.php",b);
         },
         /* pick(opts) — ЕДИНЫЙ выбор фото (Ф4): открыть выбор → ресайз → (демо: dataUrl /
            сервер: upload) → {path, dataUrl} либо null (отмена/ошибка). Заменяет 7 копий пайплайна.
@@ -374,6 +376,7 @@ window.RobTop = window.RobTop || {};
         pick:function(opts){
           opts=opts||{};
           if(!hasPerm("camera")){ if(window.console&&console.warn) console.warn("RobTop: модуль '"+mod+"' без разрешения 'camera' — media.pick проигнорирован"); return Promise.resolve(null); }
+          var media=this;
           return new Promise(function(resolve){
             var input=document.createElement("input"); input.type="file"; input.accept="image/*";
             if(opts.source==="camera") input.setAttribute("capture","environment");
@@ -385,7 +388,7 @@ window.RobTop = window.RobTop || {};
               mediaResize(file, opts.max||900, opts.quality||0.82, function(dataUrl){
                 if(opts.onLocal){ try{ opts.onLocal(dataUrl); }catch(e){} }
                 if(RT.isDemo()){ resolve({ path:dataUrl, dataUrl:dataUrl, demo:true }); return; }
-                API.post("upload.php",{dataUrl:dataUrl, kind:opts.kind||mod}).then(function(res){
+                media.upload(dataUrl, opts.kind||mod).then(function(res){
                   resolve(res && res.path ? { path:res.path, dataUrl:dataUrl } : null);
                 }).catch(function(){ resolve(null); });
               });

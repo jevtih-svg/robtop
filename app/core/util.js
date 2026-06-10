@@ -17,5 +17,9 @@ window.RobTop = window.RobTop || {};
   function pad2(n){ return (n<10?"0":"")+n; }
   /* dayKey(d?) — локальная дата устройства YYYY-MM-DD с ведущими нулями (ключ «одна запись на день»). */
   function dayKey(d){ d=d||new Date(); return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
-  RT.util = { esc:esc, escAttr:escAttr, uid:uid, pad2:pad2, dayKey:dayKey };
+  function mediaUrl(s){
+    s=String(s==null?"":s);
+    return s.indexOf("uploads/")===0 ? ("api/image.php?p="+encodeURIComponent(s)) : s;
+  }
+  RT.util = { esc:esc, escAttr:escAttr, uid:uid, pad2:pad2, dayKey:dayKey, mediaUrl:mediaUrl };
 })(window.RobTop);

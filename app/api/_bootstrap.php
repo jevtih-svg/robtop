@@ -23,6 +23,19 @@ function rt_body() {
     return is_array($j) ? $j : [];
 }
 
+/** Рекурсивно убрать ссылки/вложения пользовательских картинок из JSON-структур. */
+function rt_scrub_media_refs($v) {
+    if (!is_array($v)) return $v;
+    foreach (array_keys($v) as $k) {
+        if (in_array($k, ['photo', 'photos', 'image', 'images', 'dataUrl'], true)) {
+            unset($v[$k]);
+            continue;
+        }
+        $v[$k] = rt_scrub_media_refs($v[$k]);
+    }
+    return $v;
+}
+
 /** Необязательная проверка токена (если задан в config) + CSRF-проверка Origin. */
 function rt_guard() {
     rt_check_origin(); // SEC 2026-06-09: CSRF defense-in-depth поверх SameSite=Lax

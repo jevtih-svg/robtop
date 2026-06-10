@@ -40,9 +40,15 @@ self.addEventListener("push", function (e) {
 self.addEventListener("notificationclick", function (e) {
   e.notification.close();
   var url = (e.notification.data && e.notification.data.url) || "./";
+  try { url = new URL(url, self.location.href).href; } catch (err) { url = "./"; }
   e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
     for (var i = 0; i < list.length; i++) {
-      if ("focus" in list[i]) return list[i].focus();
+      if ("focus" in list[i]) {
+        if ("navigate" in list[i]) {
+          return list[i].navigate(url).then(function (c) { return c ? c.focus() : list[i].focus(); });
+        }
+        return list[i].focus();
+      }
     }
     if (self.clients.openWindow) return self.clients.openWindow(url);
   }));

@@ -31,6 +31,7 @@ rt_guard();
 $db = rt_db();
 $b  = rt_body();
 $op = isset($b['op']) ? (string)$b['op'] : (isset($_GET['op']) ? (string)$_GET['op'] : '');
+if ($op !== 'view' && $_SERVER['REQUEST_METHOD'] !== 'POST') rt_json(['error' => 'method'], 405);
 
 /* ---------- помощники (локальные для шаринга) ---------- */
 

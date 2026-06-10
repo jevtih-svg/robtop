@@ -102,6 +102,7 @@ var CHERRY='<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="7.5" cy="17
 var SECTC={ want:'#ff3db0', thinking:'#a64bff', bought:'#2bf0c0' };
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 function normUrl(u){ u=(u||"").trim(); if(!u) return ""; if(!/^https?:\/\//i.test(u)) u="https://"+u; return u; }
+function mediaUrl(s){ s=String(s==null?"":s); return s.indexOf("uploads/")===0 ? ("api/image.php?p="+encodeURIComponent(s)) : s; }
 
 document.title='RobTop — '+t('title');
 SUB.innerHTML='<span class="cic">'+CHERRY+'</span>'+esc(t('title'));
@@ -113,8 +114,9 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ LB.classL
 function openLb(src){ LBI.src=src; LB.classList.add('show'); }
 
 function cardHtml(w){
+  var photo=w.photo?mediaUrl(w.photo):"";
   var ph=w.photo
-    ? '<span class="ph" data-full="'+esc(w.photo)+'" style="background-image:url(\''+esc(w.photo)+'\')"></span>'
+    ? '<span class="ph" data-full="'+esc(photo)+'" style="background-image:url(\''+esc(photo)+'\')"></span>'
     : '<span class="ph emo">'+esc(w.icon||'🍒')+'</span>';
   var link=normUrl(w.link);
   return '<div class="wcard" style="--sc:'+SECTC[w.status]+'">'+ph

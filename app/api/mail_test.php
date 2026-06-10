@@ -14,10 +14,13 @@
  */
 require __DIR__ . '/_bootstrap.php';
 
+rt_guard();
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') rt_json(['error' => 'method'], 405);
 rt_require_admin(rt_db()); // активная родительская сессия + флаг в admins; иначе 401/403
 
-$to   = isset($_GET['to']) ? trim((string)$_GET['to']) : '';
-$lang = isset($_GET['lang']) ? strtolower(trim((string)$_GET['lang'])) : null;
+$b = rt_body();
+$to   = isset($b['to']) ? trim((string)$b['to']) : '';
+$lang = isset($b['lang']) ? strtolower(trim((string)$b['lang'])) : null;
 if (!filter_var($to, FILTER_VALIDATE_EMAIL)) rt_json(['error' => 'нужен параметр to с валидным email'], 422);
 
 $c = rt_config();

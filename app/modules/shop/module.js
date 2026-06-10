@@ -173,7 +173,7 @@
     if(busy || p<=0 || S.balance<p) return;
     var box=document.createElement("div");
     box.innerHTML='<h2>'+esc(t("confirmBuy",{t:d.title||"",n:p}))+'</h2>'
-      +(d.photo?'<div class="sh-confirm-ph" style="background-image:url(\''+esc(d.photo)+'\')"></div>':"")
+      +(d.photo?'<div class="sh-confirm-ph" style="background-image:url(\''+esc(sdk.media.url(d.photo))+'\')"></div>':"")
       +'<div class="sheet-actions"><button class="btn btn-cancel" data-close>'+esc(t("common.cancel"))+'</button>'
       +'<button class="btn btn-primary" id="shBuyGo">'+esc(t("btnConfirm"))+'</button></div>';
     var ctl=sdk.ui.sheet(box); curSheet=ctl;
@@ -237,7 +237,7 @@
                : st==="declined" ? '<span class="sh-chip no">'+esc(t("stDeclined"))+'</span>'
                : '<span class="sh-chip">'+esc(t("stPending"))+'</span>';
       h+='<div class="sh-order st-'+esc(st)+'">'
-        +(d.photo?'<div class="sh-oph" style="background-image:url(\''+esc(d.photo)+'\')"></div>'
+        +(d.photo?'<div class="sh-oph" style="background-image:url(\''+esc(sdk.media.url(d.photo))+'\')"></div>'
                  :'<div class="sh-oph none">'+GIFT_IC+'</div>')
         +'<div class="sh-omain"><div class="sh-ot">'+esc(d.title||"")+'</div>'
         +'<div class="sh-om">−'+price(d)+' · '+esc(fmtWhen(o.createdAt))+'</div>'+chip+'</div></div>';
@@ -268,7 +268,7 @@
     box.innerHTML='<h2>'+esc(t(it?"editItem":"newItem"))+'</h2>'
       +'<div class="sh-form">'
         +'<div class="sh-photo'+(photo?" has":"")+'" id="shPhotoPick" role="button" tabindex="0"'
-          +(photo?' style="background-image:url(\''+esc(photo)+'\')"':'')+'>'
+          +(photo?' style="background-image:url(\''+esc(sdk.media.url(photo))+'\')"':'')+'>'
           +'<span class="sh-photo-l">'+esc(t(photo?"replacePhoto":"addPhoto"))+'</span></div>'
         +'<input type="file" id="shFile" accept="image/*" hidden>'
         +'<input type="text" id="shTitle" maxlength="60" placeholder="'+esc(t("itemTitlePh"))+'" value="'+esc(d.title||"")+'">'
@@ -376,7 +376,7 @@
     for(var i=0;i<pend.length;i++){
       var o=pend[i], d=o.data||{};
       h+='<div class="sh-order st-pending">'
-        +(d.photo?'<div class="sh-oph" style="background-image:url(\''+esc(d.photo)+'\')"></div>'
+        +(d.photo?'<div class="sh-oph" style="background-image:url(\''+esc(sdk.media.url(d.photo))+'\')"></div>'
                  :'<div class="sh-oph none">'+GIFT_IC+'</div>')
         +'<div class="sh-omain"><div class="sh-ot">'+esc(d.title||"")+'</div>'
         +'<div class="sh-om">−'+price(d)+' · '+esc(fmtWhen(o.createdAt))+'</div></div>'
@@ -392,7 +392,7 @@
     var can=S.balance>=p && p>0, disN=disabledOf(d).length;
     var h='<div class="sh-card'+(manage?' editable" role="button" tabindex="0" data-act="edit" data-iid="'+esc(it.id)+'"':'"')+'>'
       +'<div class="sh-frame">'
-        +(d.photo?'<div class="sh-pic" style="background-image:url(\''+esc(d.photo)+'\')"></div>'
+        +(d.photo?'<div class="sh-pic" style="background-image:url(\''+esc(sdk.media.url(d.photo))+'\')"></div>'
                  :'<div class="sh-pic none">'+GIFT_IC+'</div>')+'</div>'
       +'<div class="sh-name">'+esc(d.title||"")+'</div>'
       +'<div class="sh-price">'+COIN_IC+'<b>'+p+'</b>'

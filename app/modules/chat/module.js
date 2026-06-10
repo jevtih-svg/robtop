@@ -281,7 +281,7 @@
     if(m.del) return '<div class="msg sys'+(mine?" me":"")+'">🚫 '+esc(t("deleted"))+'</div>';
     var h='<div class="msg'+(mine?" me":"")+(m.photo?" ph":"")+'" data-mid="'+m.id+'"'+(mine?' data-mine="1"':'')+'>';
     if(!mine && group) h+='<div class="nm" style="color:'+nameVar(m.uid)+'">'+esc(m.name)+'</div>';
-    if(m.photo) h+='<img src="'+esc(m.photo)+'" alt="'+esc(t("photoWord"))+'" loading="lazy" data-full="'+esc(m.photo)+'">';
+    if(m.photo){ var ph=sdk.media.url(m.photo); h+='<img src="'+esc(ph)+'" alt="'+esc(t("photoWord"))+'" loading="lazy" data-full="'+esc(ph)+'">'; }
     if(m.body) h+='<div class="bd">'+esc(m.body)+'</div>';
     h+='<div class="mt">'+esc(hhmm(m.at))+(mine?msgTick(m):"")+'</div></div>';
     return h;
