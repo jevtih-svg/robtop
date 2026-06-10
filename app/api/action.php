@@ -50,6 +50,12 @@ if ($module === 'wishlist') {
         rt_json(['error' => 'unknown type'], 400);
     }
 }
+if ($module === 'find') {
+    require __DIR__ . '/../modules/find/api.php';
+    if (rt_find_action($db, $uid, $type, $itemId, $data) === false) {
+        rt_json(['error' => 'unknown type'], 400);
+    }
+}
 
 // Другие серверные модули можно подключать здесь по образцу выше.
 // Универсальные (generic) модули используют api/data.php напрямую.

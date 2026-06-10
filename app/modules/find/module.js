@@ -446,23 +446,32 @@
     var prev=s.d.st, next=ok?"correct":"wrong", rev=Date.now();
     s.d.st=next; s.d.rev=rev;
     var desc=renderDesc(s.d.adj||[]);
-    sdk.data.update("subs", id, { st:next, rev:rev }).then(function(r){
-      if(!r || r.ok===false) throw new Error("save");
-      var points = ok
-        ? sdk.points.add(PTS_FIND,"find_correct",{kind:"win", note:desc})
-        : sdk.points.add(PTS_MISS,"find_wrong",{kind:"loss", note:desc});
-      return points.then(function(pr){
+    if(sdk.isDemo()){
+      sdk.data.update("subs", id, { st:next, rev:rev }).then(function(r){
+        if(!r || r.ok===false) throw new Error("save");
+        return ok
+          ? sdk.points.add(PTS_FIND,"find_correct",{kind:"win", note:desc})
+          : sdk.points.add(PTS_MISS,"find_wrong",{kind:"loss", note:desc});
+      }).then(function(pr){
         if(!pr || pr.ok===false) throw new Error("points");
-        if(ok){
-          sdk.notify.send("child","correct",{ params:{ n:PTS_FIND }, link:{ module:"find" } });
-          maybeBonus(s.d.runId, s.d.diff);
-          sdk.ui.toast(t("approved"));
-        } else {
-          sdk.notify.send("child","wrong",{ params:{ n:Math.abs(PTS_MISS) }, link:{ module:"find" } });
-          sdk.ui.toast(t("rejected"));
-        }
+        if(ok){ maybeBonus(s.d.runId, s.d.diff); sdk.ui.toast(t("approved")); }
+        else sdk.ui.toast(t("rejected"));
         renderParent();
-      });
+      }).catch(function(){ s.d.st=prev; delete s.d.rev; sdk.ui.toast(t("saveFailed")); renderParent(); });
+      return;
+    }
+    var child=sdk.scopeChild&&sdk.scopeChild();
+    sdk.api.post("action.php", {
+      module:"find",
+      type:"review",
+      itemId:id,
+      data:{ ok:ok?1:0, rev:rev, note:desc, child:child&&child.id?child.id:0 }
+    }).then(function(r){
+      if(!r || r.ok===false) throw new Error("save");
+      if(r.status) s.d.st=r.status;
+      if(r.rev) s.d.rev=r.rev;
+      sdk.ui.toast(r.bonus?t("bonus"):(ok?t("approved"):t("rejected")));
+      renderParent();
     }).catch(function(){
       s.d.st=prev; delete s.d.rev;
       sdk.ui.toast(t("saveFailed"));
