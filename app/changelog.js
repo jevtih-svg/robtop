@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.10.2", d:"2026-06-10", t:{
+    en:"Chat keyboard is steady now: the message box follows the keyboard smoothly, without stutters, floating gaps or a leftover gap at the bottom.",
+    ru:"Клавиатура в чате стала стабильной: поле ввода плавно следует за клавиатурой — без подёргиваний, висящих зазоров и остаточной щели снизу.",
+    lv:"Tastatūra čatā tagad ir stabila: ziņas lauks plūstoši seko tastatūrai — bez raustīšanās, peldošām atstarpēm un atlikušas spraugas apakšā." } },
   { v:"2026.06.10.1", d:"2026-06-10", t:{
     en:"Big polish update: app tiles now cascade in, screens glide smoother, loading spinners replace blank screens, and the app drains much less battery.",
     ru:"Большое обновление полировки: плитки приложений появляются каскадом, экраны переключаются мягче, вместо пустых экранов — спиннеры загрузки, и приложение заметно меньше ест батарею.",
