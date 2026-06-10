@@ -448,17 +448,21 @@
     var desc=renderDesc(s.d.adj||[]);
     sdk.data.update("subs", id, { st:next, rev:rev }).then(function(r){
       if(!r || r.ok===false) throw new Error("save");
-      if(ok){
-        sdk.points.add(PTS_FIND,"find_correct",{kind:"win", note:desc});
-        sdk.notify.send("child","correct",{ params:{ n:PTS_FIND }, link:{ module:"find" } });
-        maybeBonus(s.d.runId, s.d.diff);
-        sdk.ui.toast(t("approved"));
-      } else {
-        sdk.points.add(PTS_MISS,"find_wrong",{kind:"loss", note:desc});
-        sdk.notify.send("child","wrong",{ params:{ n:Math.abs(PTS_MISS) }, link:{ module:"find" } });
-        sdk.ui.toast(t("rejected"));
-      }
-      renderParent();
+      var points = ok
+        ? sdk.points.add(PTS_FIND,"find_correct",{kind:"win", note:desc})
+        : sdk.points.add(PTS_MISS,"find_wrong",{kind:"loss", note:desc});
+      return points.then(function(pr){
+        if(!pr || pr.ok===false) throw new Error("points");
+        if(ok){
+          sdk.notify.send("child","correct",{ params:{ n:PTS_FIND }, link:{ module:"find" } });
+          maybeBonus(s.d.runId, s.d.diff);
+          sdk.ui.toast(t("approved"));
+        } else {
+          sdk.notify.send("child","wrong",{ params:{ n:Math.abs(PTS_MISS) }, link:{ module:"find" } });
+          sdk.ui.toast(t("rejected"));
+        }
+        renderParent();
+      });
     }).catch(function(){
       s.d.st=prev; delete s.d.rev;
       sdk.ui.toast(t("saveFailed"));
