@@ -16,7 +16,7 @@
       addPhoto:"Add photo", replacePhoto:"Replace photo",
       editBtn:"Edit", needStars:"Pick the stars first",
       savedToast:"Day rated: {stars}★", saveFailed:"Couldn't save",
-      photoFailed:"Couldn't upload photo",
+      photoFailed:"Couldn't upload photo", loadFailed:"Couldn't load",
       todayDone:"Today is rated!", editUntil:"You can change it until 00:00",
       waitTitle:"Come back tonight!", waitText:"You can rate your day from 20:00 to 00:00.",
       waitIn:"Opens in {time}", unitH:"h", unitM:"min",
@@ -36,7 +36,7 @@
       addPhoto:"Добавить фото", replacePhoto:"Заменить фото",
       editBtn:"Изменить", needStars:"Сначала выбери звёзды",
       savedToast:"День оценён: {stars}★", saveFailed:"Не удалось сохранить",
-      photoFailed:"Не удалось загрузить фото",
+      photoFailed:"Не удалось загрузить фото", loadFailed:"Не удалось загрузить",
       todayDone:"Сегодня оценено!", editUntil:"Можно изменить до 00:00",
       waitTitle:"Возвращайся вечером!", waitText:"Оценить день можно с 20:00 до 00:00.",
       waitIn:"Откроется через {time}", unitH:"ч", unitM:"мин",
@@ -56,7 +56,7 @@
       addPhoto:"Pievienot foto", replacePhoto:"Nomainīt foto",
       editBtn:"Mainīt", needStars:"Vispirms izvēlies zvaigznes",
       savedToast:"Diena novērtēta: {stars}★", saveFailed:"Neizdevās saglabāt",
-      photoFailed:"Neizdevās augšupielādēt foto",
+      photoFailed:"Neizdevās augšupielādēt foto", loadFailed:"Neizdevās ielādēt",
       todayDone:"Šodiena ir novērtēta!", editUntil:"Var mainīt līdz 00:00",
       waitTitle:"Atgriezies vakarā!", waitText:"Dienu var novērtēt no 20:00 līdz 00:00.",
       waitIn:"Atvērsies pēc {time}", unitH:"st.", unitM:"min",
@@ -69,14 +69,13 @@
     }}
   };
 
-  var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
-  var STATS_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20v-6M12 20V8M19 20V4"/></svg>';
+  /* Общие иконки шапки (назад/статистика) идут из реестра оболочки (sdk.icons) — здесь только свои. */
   var STAR_PATH='M12 3l2.7 5.7 6.3.8-4.6 4.4 1.2 6.2L12 17.8 6.4 20.1l1.2-6.2L3 9.5l6.3-.8z';
   var STAR_F='<svg viewBox="0 0 24 24" fill="currentColor"><path d="'+STAR_PATH+'"/></svg>';
   var STAR_O='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="'+STAR_PATH+'"/></svg>';
   var CAM_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2L9 4.8h6L16.5 7h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="13" r="3.4"/></svg>';
 
-  var sdk=null, root=null, E={}, items=[], timer=null, lastSig="", form=blankForm();
+  var sdk=null, root=null, E={}, items=[], timer=null, lastSig="", loaded=false, loadFailed=false, form=blankForm();
   function blankForm(){ return {open:false, stars:0, photo:null, editingId:null, why:"", liked:""}; }
 
   function esc(s){ return RobTop.util.esc(s); }
@@ -102,8 +101,9 @@
     sdk.data.list("entries").then(function(list){
       if(!root) return; // размонтирован, пока грузилось
       items=(list||[]).filter(function(it){ return dataOf(it).day; });
+      loaded=true; loadFailed=false;
       sortItems(); renderState(); renderHistory(); hud();
-    }).catch(function(){ if(!root) return; items=[]; renderState(); renderHistory(); hud(); });
+    }).catch(function(){ if(!root) return; items=[]; loaded=true; loadFailed=true; renderState(); renderHistory(); hud(); });
   }
 
   function hud(){ var c=counts(); sdk.ui.hud({ left:t("hudLeft"), cNum:items.length, cLbl:t("hudCLbl"), rNum:c[5], rLbl:t("hudRLbl") }); }
@@ -230,8 +230,10 @@
   }
   function renderHistory(){
     if(!root||!E.list) return;
+    /* первая загрузка ещё идёт — спиннер вместо ложного «пусто» */
+    if(!loaded){ E.list.innerHTML='<div class="rt-loading"><div class="rt-spin"></div></div>'; return; }
     var list=visibleHistory();
-    if(!list.length){ E.list.innerHTML='<div class="rd-empty">'+esc(t("historyEmpty"))+'</div>'; return; }
+    if(!list.length){ E.list.innerHTML='<div class="rd-empty">'+esc(t(loadFailed?"loadFailed":"historyEmpty"))+'</div>'; return; }
     E.list.innerHTML=list.map(function(it){
       var d=dataOf(it), snippet=d.why||d.liked||t("noText");
       var thumb=d.photo?'<div class="rd-thumb" style="background-image:url(\''+esc(d.photo)+'\')"></div>':'<div class="rd-thumb">'+STAR_F+'</div>';
@@ -276,7 +278,7 @@
 
   /* ----- тик: обратный отсчёт + смена состояния на границах 20:00 и 00:00 ----- */
   function tick(){
-    if(!root) return;
+    if(!root||!document.body.contains(root)) return; // корень мог исчезнуть из DOM без unmount — не трогать мёртвые узлы
     if(form.open) return; // не сносить ввод; граница окна проверяется при сохранении
     if(sig()!==lastSig){ renderState(); renderHistory(); return; }
     var cd=E.state&&E.state.querySelector("#rdCount");
@@ -285,7 +287,7 @@
 
   /* =================== mount / unmount =================== */
   function mount(rootEl, theSdk){
-    sdk=theSdk; root=rootEl; items=[]; form=blankForm();
+    sdk=theSdk; root=rootEl; items=[]; loaded=false; loadFailed=false; form=blankForm();
     var title=sdk.i18n.t("tile.rating");
     var body=sdk.ui.frame({
       titleHtml:'<div class="rd-title"><span class="sic">'+STAR_F+'</span> '+esc(title)+'</div><div class="rd-sub">'+esc(t("subtitle"))+'</div>',
@@ -318,7 +320,7 @@
   }
   function unmount(){
     if(timer){ clearInterval(timer); timer=null; }
-    E={}; items=[]; root=null; lastSig="";
+    E={}; items=[]; root=null; lastSig=""; loaded=false; loadFailed=false;
     form=blankForm();
   }
 

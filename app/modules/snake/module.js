@@ -27,7 +27,7 @@
       statsTitle:"Snake stats", statTotal:"games total", statBest:"record",
       statRecords:"records beaten", statLen:"longest snake",
       parentNote:"The child plays. You're viewing.",
-      saveFailed:"Couldn't save",
+      saveFailed:"Couldn't save", loadFailed:"Couldn't load",
       aria:{ stats:"Stats", pause:"Pause", up:"Up", down:"Down", left:"Left", right:"Right" }
     }, bank:{ r_snake_record:"Snake — new record" }},
     ru:{ snake:{
@@ -45,7 +45,7 @@
       statsTitle:"Статистика змейки", statTotal:"всего игр", statBest:"рекорд",
       statRecords:"рекордов побито", statLen:"самая длинная змейка",
       parentNote:"Играет ребёнок. Это просмотр.",
-      saveFailed:"Не удалось сохранить",
+      saveFailed:"Не удалось сохранить", loadFailed:"Не удалось загрузить",
       aria:{ stats:"Статистика", pause:"Пауза", up:"Вверх", down:"Вниз", left:"Влево", right:"Вправо" }
     }, bank:{ r_snake_record:"Змейка — новый рекорд" }},
     lv:{ snake:{
@@ -63,7 +63,7 @@
       statsTitle:"Čūskas statistika", statTotal:"spēles kopā", statBest:"rekords",
       statRecords:"pārspēti rekordi", statLen:"garākā čūska",
       parentNote:"Spēlē bērns. Šis ir skats.",
-      saveFailed:"Neizdevās saglabāt",
+      saveFailed:"Neizdevās saglabāt", loadFailed:"Neizdevās ielādēt",
       aria:{ stats:"Statistika", pause:"Pauze", up:"Uz augšu", down:"Uz leju", left:"Pa kreisi", right:"Pa labi" }
     }, bank:{ r_snake_record:"Čūska — jauns rekords" }}
   };
@@ -74,8 +74,8 @@
   var SPEED_MS=[0,600,540,480,420,360,300,250,200,155];
   var BONUS_EVERY=5, BONUS_TICKS=30, BONUS_MULT=3;
   var DIRS={ up:{x:0,y:-1}, down:{x:0,y:1}, left:{x:-1,y:0}, right:{x:1,y:0} };
-  var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
-  var STATS_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20v-6M12 20V8M19 20V4"/></svg>';
+  /* иконки back/stats берёт оболочка из общего реестра (sdk.icons) — локальных копий нет;
+     стрелка d-pad — своя, в реестре её нет */
   var ARROW_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>';
 
   /* =================== СОСТОЯНИЕ =================== */
@@ -180,6 +180,9 @@
   function setPaused(p){
     if(mode!=="play"||!g) return;
     g.paused=!!p;
+    /* на паузе глушим интервал совсем — холостые тики жгут батарею; продолжение перезапускает */
+    if(g.paused) stopLoop();
+    else if(!timerId) timerId=setInterval(step, SPEED_MS[g.level]||300);
     if(E.pauseOv) E.pauseOv.classList.toggle("on",g.paused);
     if(E.pauseBtn) E.pauseBtn.textContent=g.paused?"▶":"⏸";
   }
@@ -355,6 +358,8 @@
   /* =================== ИСТОРИЯ =================== */
   function renderHistory(){
     if(!root||!E.list) return;
+    /* первая загрузка ещё идёт — спиннер вместо ложного «игр пока нет» */
+    if(!metaLoaded&&!games.length){ E.list.innerHTML='<div class="rt-loading"><div class="rt-spin"></div></div>'; return; }
     if(!games.length){ E.list.innerHTML='<div class="sn-empty">'+esc(t("historyEmpty"))+'</div>'; return; }
     E.list.innerHTML=games.slice(0,60).map(function(it){
       var d=dataOf(it);
@@ -429,7 +434,7 @@
     renderStage(); renderHistory(); hud();
     Promise.resolve().then(loadMeta).then(reloadGames).then(function(){
       if(!root) return; metaLoaded=true; renderStage(); renderHistory(); hud();
-    }).catch(function(){ if(!root) return; metaLoaded=true; renderStage(); renderHistory(); hud(); });
+    }).catch(function(){ if(!root) return; metaLoaded=true; renderStage(); renderHistory(); hud(); sdk.ui.toast(t("loadFailed")); });
   }
   function unmount(){
     stopLoop();

@@ -24,7 +24,7 @@
       histPicked:"tapped {n}",
       statsTitle:"Guessing stats", statTotal:"rounds total", statWin:"guessed", statWrong:"wrong", statTimeout:"too late",
       parentNote:"The child solves the examples. You're viewing.",
-      saveFailed:"Couldn't save", unit:"sec",
+      saveFailed:"Couldn't save", loadFailed:"Couldn't load", unit:"sec",
       aria:{ stats:"Stats", answer:"Answer {n}", timeLeft:"{n} seconds left" }
     }},
     ru:{ guess:{
@@ -41,7 +41,7 @@
       histPicked:"нажал {n}",
       statsTitle:"Статистика угадайки", statTotal:"всего примеров", statWin:"отгадал", statWrong:"не отгадал", statTimeout:"не успел",
       parentNote:"Примеры решает ребёнок. Это просмотр.",
-      saveFailed:"Не удалось сохранить", unit:"сек",
+      saveFailed:"Не удалось сохранить", loadFailed:"Не удалось загрузить", unit:"сек",
       aria:{ stats:"Статистика", answer:"Ответ {n}", timeLeft:"Осталось {n} сек" }
     }},
     lv:{ guess:{
@@ -58,15 +58,13 @@
       histPicked:"nospieda {n}",
       statsTitle:"Minēšanas statistika", statTotal:"piemēri kopā", statWin:"uzminēts", statWrong:"nepareizi", statTimeout:"nepaspēja",
       parentNote:"Piemērus risina bērns. Šis ir skats.",
-      saveFailed:"Neizdevās saglabāt", unit:"sek",
+      saveFailed:"Neizdevās saglabāt", loadFailed:"Neizdevās ielādēt", unit:"sek",
       aria:{ stats:"Statistika", answer:"Atbilde {n}", timeLeft:"Atlikušas {n} sekundes" }
     }}
   };
 
   var ROUND_SECONDS=20;
   var RING_C=2*Math.PI*20; // длина окружности таймера (r=20)
-  var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
-  var STATS_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20v-6M12 20V8M19 20V4"/></svg>';
 
   /* =================== ПУЛ ПРИМЕРОВ ===================
      1000 предгенерированных примеров [выражение, ответ 1..10], сложность 4-го класса,
@@ -474,6 +472,8 @@ var POOL=[
       });
     }
     if(!E.list) return;
+    /* пока первая загрузка не завершена — спиннер, иначе мелькает ложное «примеров пока нет» */
+    if(!metaLoaded){ E.list.innerHTML='<div class="rt-loading"><div class="rt-spin"></div></div>'; return; }
     var list=rounds.filter(function(it){ var r=dataOf(it).result; if(!isResult(r)) return false; return histFilter==="all"||r===histFilter; });
     if(!list.length){ E.list.innerHTML='<div class="gn-empty">'+esc(t("historyEmpty"))+'</div>'; return; }
     E.list.innerHTML=list.slice(0,60).map(function(it){
@@ -509,7 +509,7 @@ var POOL=[
     var body=sdk.ui.frame({
       titleHtml:'<div class="gn-title">'+esc(title)+'</div><div class="gn-sub">'+esc(t("subtitle"))+'</div>',
       backLabel:t("common.back"),
-      actions:[{ icon:"stats", id:"gnStats", label:t("aria.stats"), onClick:openStats }]
+      actions:[{ icon:"stats", id:"gnStats", label:t("aria.stats"), onClick:openStats }] /* иконка по имени — из общего реестра sdk.icons */
     }).body;
     body.innerHTML='<div class="gn">'
       +'<div id="gnStage"></div>'
@@ -539,7 +539,7 @@ var POOL=[
     renderStage(); renderHistory(); hud();
     Promise.resolve().then(loadMeta).then(reloadRounds).then(function(){
       if(!root) return; metaLoaded=true; renderHistory(); hud();
-    }).catch(function(){ if(!root) return; metaLoaded=true; renderHistory(); hud(); });
+    }).catch(function(){ if(!root) return; metaLoaded=true; renderHistory(); hud(); sdk.ui.toast(t("loadFailed")); });
   }
   function unmount(){
     stopTimer();

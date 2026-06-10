@@ -3,6 +3,9 @@
    экран магазина приложений. Модуль-специфичные стили — в modules/<id>/module.css. */
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* видимый фокус ТОЛЬКО с клавиатуры (a11y, аудит 2026-06-10): мышь/тап кольца не оставляют */
+:focus:not(:focus-visible){outline:none}
+:focus-visible{outline:2.5px solid var(--cyan);outline-offset:2px}
 :root{
   /* ===== GUARDRAILS: единые токены раскладки (канон — ГАЙД-UI-guardrails.md).
      ФАЗА 0: значения = текущие, БЕЗ визуальных изменений; дальше всё смещение
@@ -18,10 +21,17 @@
   --hdr-total:calc(var(--chrome-top) + var(--hdr-h) + var(--safe-top));
   --kidbar-total:calc(var(--kidbar-h) + var(--safe-bottom));
   --tabbar-total:calc(var(--tabbar-h) + var(--safe-bottom));
-  /* нижние «полки» плавающих элементов — централизованы (бывшие 70/120 по месту);
-     фаза 3 переведёт их на бар-относительные значения в ОДНОМ месте. */
-  --fab-bottom:calc(70px + var(--safe-bottom));
-  --toast-bottom:calc(120px + var(--safe-bottom));
+  /* нижние «полки» плавающих элементов — БАР-ОТНОСИТЕЛЬНЫЕ (фаза 3 завершена 2026-06-10):
+     меняется высота нижнего меню → все плавающие элементы съезжают сами.
+     FAB: 64+12=76px (+6px против старых 70 — теперь гарантированно НАД меню);
+     toast: 64+56=120px (ровно как раньше). */
+  --fab-bottom:calc(var(--kidbar-total) + 12px);
+  --toast-bottom:calc(var(--kidbar-total) + 56px);
+  /* единый язык движения: быстрые отклики (нажатия, цвет) / переходы элементов / вход экрана.
+     Модули и ядро ссылаются на токены, а не на числа по месту (аудит 2026-06-10). */
+  --dur-fast:.15s;
+  --dur-med:.22s;
+  --dur-slow:.32s;
 
   --cyan:#19e3ff; --magenta:#ff2bd6; --pink:#ff3db0; --purple:#a64bff;
   --blue:#3b6bff; --green:#2bf0c0; --mint:#38e8a0; --gold:#ffd23b; --red:#ff4d6d;
@@ -138,6 +148,8 @@ body{
   font-family:var(--font-body);
   color:var(--ink); background:var(--bg0); min-height:100vh; min-height:100dvh; overflow-x:hidden;
   background-image:var(--bg-img);
+  /* тонкий тематический скроллбар на десктопе; на body (НЕ html) — html вне scope body[data-theme] */
+  scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent;
 }
 #bg{position:fixed;inset:0;z-index:0;display:block}
 /* guardrails: dvh — стабильная высота на мобильных (низ не «дышит» при адресной строке);
@@ -145,8 +157,15 @@ body{
 #root{position:relative;z-index:1;max-width:480px;margin:0 auto;min-height:100vh;min-height:100dvh}
 
 .view{display:none;padding:0 16px}
-.view.active{display:block;animation:viewin .32s ease both}
-@keyframes viewin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* Вход экрана — ТОЛЬКО opacity (фикс 2026-06-10): transform в этой анимации делал .view
+   containing block для position:fixed (ловушка ГАЙД-UI-guardrails.md §1.3) — из-за неё Чат
+   и таббары пришлось выселять в <body>. Лёгкое движение оставлено шапке рамки (.rt-hdr):
+   у неё fixed-потомков нет, ловушка не возникает. */
+.view.active{display:block;animation:viewin var(--dur-slow) ease both}
+@keyframes viewin{from{opacity:0}to{opacity:1}}
+.view.active .rt-hdr{animation:hdrin var(--dur-slow) ease both}
+@keyframes hdrin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){ .view.active,.view.active .rt-hdr{animation:none} }
 
 /* ===== УНИВЕРСАЛЬНАЯ РАМКА (guardrails) — КАНОН: ГАЙД-UI-guardrails.md.
    ФАЗА 0: классы добавлены, но ещё НИЧЕМ не используются (нулевой эффект). Модули
@@ -188,7 +207,7 @@ body[data-view="home"] .rt-nav,body[data-view="module"] .rt-nav,body[data-view="
 body[data-view] .rt-nav.rt-bar-hide{display:none}
 .rt-nav-b{flex:1;min-width:0;position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;
   border:none;background:none;cursor:pointer;font-family:inherit;font-size:10px;font-weight:800;letter-spacing:.2px;
-  color:var(--muted);padding:6px 2px;border-radius:12px;transition:color .15s, transform .1s}
+  color:var(--muted);padding:6px 2px;border-radius:12px;transition:color var(--dur-fast), transform .1s}
 .rt-nav-b svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .rt-nav-b>span:not(.rt-nav-badge){max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rt-nav-b:active{transform:scale(.94)}
@@ -235,6 +254,13 @@ body[data-view="module"] .hud{display:none}
 .gear:active{transform:scale(.93)}
 
 .apps{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:18px}
+/* каскадный вход плиток ТОЛЬКО при первом рендере за загрузку (.intro ставит и снимает shell):
+   без .intro перерисовки (sync, смена языка, реордер) сетку не «переигрывают».
+   fill backwards (НЕ both): после конца анимации transform возвращается :active-скейлу. */
+@keyframes tilein{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+/* :not(.jgl) — long-press в окно каскада: дрожание .jgl-on не должно проигрывать по специфичности */
+.apps.intro:not(.jgl) .tile{animation:tilein var(--dur-slow) ease backwards;animation-delay:calc(var(--ti,0)*30ms)}
+@media (prefers-reduced-motion:reduce){ .apps.intro .tile{animation:none} }
 /* РОДИТЕЛЬСКАЯ сетка (#pdApps): плитка всегда по высоте своего контента, НЕ растягивается
    на высоту строки. Фикс «плитки ломаются при кликах» (фидбек Джеффа): при ре-рендере
    дашборда/артефакте реордера одиночная плитка в неполной строке переставала вытягиваться
@@ -250,7 +276,7 @@ body[data-view="module"] .hud{display:none}
   background:var(--tile-bg);
   border:1.5px solid color-mix(in srgb, var(--c) 50%, transparent);
   box-shadow:0 8px 26px rgba(0,0,0,.46), 0 0 26px -10px var(--c), inset 0 1px 0 rgba(255,255,255,.04);
-  transition:transform .14s ease, box-shadow .22s ease}
+  transition:transform var(--dur-fast) ease, box-shadow var(--dur-med) ease}
 .tile:active{transform:scale(.965)}
 .tile .ic{width:52px;height:52px;border-radius:15px;display:grid;place-items:center;color:var(--c);
   background:radial-gradient(circle at 50% 38%, color-mix(in srgb,var(--c) 32%, transparent), transparent 72%);
@@ -308,11 +334,11 @@ body[data-view="settings"] .fab{display:none}
 /* ===================== SHEETS (базовые) ===================== */
 .overlay{position:fixed;inset:0;z-index:30;background:rgba(4,3,14,.62);backdrop-filter:blur(3px);
   display:none;align-items:flex-end;justify-content:center}
-.overlay.show{display:flex;animation:fade .2s both;
+.overlay.show{display:flex;animation:fade var(--dur-med) both;
   /* шторки якорятся к низу (align-items:flex-end). При открытой клавиатуре iOS она
      перекрывала нижние поля — поднимаем шторку над ней на высоту --kb (её выставляет
      core/shell.js по VisualViewport; 0 когда клавиатуры нет). */
-  padding-bottom:var(--kb,0px);transition:padding-bottom .2s ease}
+  padding-bottom:var(--kb,0px);transition:padding-bottom var(--dur-med) ease}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 .sheet{width:100%;max-width:480px;border-radius:26px 26px 0 0;padding:10px 18px calc(22px + var(--safe-bottom));
   background:var(--sheet-bg);
@@ -341,7 +367,7 @@ body.demo .demo-badge{display:block}
 .field label{display:block;font-weight:800;font-size:14px;color:#c3d2f2;margin-bottom:6px;padding-left:4px}
 .field .opt{color:#8aa0c8;font-weight:700;font-size:12.5px}
 .field input,.field textarea{width:100%;border:1.6px solid rgba(255,255,255,.14);border-radius:14px;padding:13px 14px;
-  font-family:inherit;font-size:16px;font-weight:600;color:var(--ink);background:rgba(255,255,255,.04);outline:none;transition:border-color .15s, box-shadow .15s}
+  font-family:inherit;font-size:16px;font-weight:600;color:var(--ink);background:rgba(255,255,255,.04);outline:none;transition:border-color var(--dur-fast), box-shadow var(--dur-fast)}
 .field textarea{resize:none;min-height:70px;line-height:1.4}
 .field input::placeholder,.field textarea::placeholder{color:#6f80a6}
 .field input:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%, transparent)}
@@ -358,6 +384,19 @@ body.demo .demo-badge{display:block}
 .btn-cancel{background:rgba(255,255,255,.06);color:#aab8d6;flex:0 0 38%}
 .btn-danger{background:rgba(255,77,109,.14);color:#ffb3c0;border-color:rgba(255,77,109,.5)}
 
+/* ===================== ЗАГРУЗКА / ПУСТО (общие для модулей, аудит 2026-06-10) =====================
+   .rt-loading > .rt-spin — спиннер первой загрузки вместо пустого экрана;
+   .rt-empty — единое оформление «здесь пока пусто» (модуль даёт свой текст через i18n). */
+.rt-loading{display:flex;align-items:center;justify-content:center;padding:38px 0}
+.rt-spin{width:28px;height:28px;border-radius:50%;flex:none;
+  border:3px solid color-mix(in srgb,var(--ink) 16%, transparent);border-top-color:var(--cyan);
+  animation:rtspin .8s linear infinite}
+@keyframes rtspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){ .rt-spin{animation-duration:1.6s} }
+.rt-empty{text-align:center;color:var(--muted);font-weight:600;font-size:13px;
+  padding:30px 16px;line-height:1.55}
+.rt-empty .e{display:block;font-size:36px;margin-bottom:8px;line-height:1}
+
 /* ===================== TOAST ===================== */
 /* радиус 22px, НЕ 999px: на однострочном тосте (высота ~44px) выглядит той же капсулой,
    а длинные сообщения переносятся на 2-3 строки и больше не вылезают из «облачка» углами */
@@ -366,7 +405,7 @@ body.demo .demo-badge{display:block}
   display:flex;align-items:center;gap:12px;
   background:rgba(10,10,28,.95);color:#eaf6ff;padding:11px 16px 11px 18px;border-radius:22px;font-weight:700;font-size:14.5px;
   line-height:1.35;border:1.5px solid rgba(25,227,255,.5);box-shadow:0 0 24px -6px var(--cyan), 0 10px 30px rgba(0,0,0,.5);
-  opacity:0;pointer-events:none;transition:opacity .25s, transform .25s}
+  opacity:0;pointer-events:none;transition:opacity var(--dur-med), transform var(--dur-med)}
 .toast span{min-width:0;overflow-wrap:break-word}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 /* верхняя позиция: пока активен режим перестановки, низ занят пилюлей «✓ Готово» —
@@ -420,7 +459,7 @@ body[data-view="settings"]{background-image:var(--settings-bg)}
 .lang-seg{display:flex;gap:6px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.12);
   border-radius:16px;padding:5px;margin-top:6px}
 .lang-seg button{flex:1;min-width:0;border:none;background:none;cursor:pointer;border-radius:12px;
-  font-family:inherit;font-weight:700;font-size:13.5px;color:#cfe0ff;padding:11px 4px;transition:.15s}
+  font-family:inherit;font-weight:700;font-size:13.5px;color:#cfe0ff;padding:11px 4px;transition:var(--dur-fast)}
 .lang-seg button:active{transform:scale(.97)}
 .lang-seg button.on{color:#fff;background:rgba(25,227,255,.13);
   box-shadow:inset 0 0 0 1.5px var(--cyan), 0 0 16px -6px var(--cyan)}
@@ -488,12 +527,12 @@ body[data-view="parent"] #bg{opacity:.15;filter:saturate(.65)}
 .pd-empty{text-align:center;color:var(--muted);font-size:12.5px;font-weight:600;padding:26px 14px;line-height:1.55}
 /* сегменты периода */
 .pd-seg{display:flex;gap:5px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:4px}
-.pd-seg button{flex:1;border:none;background:none;color:#cfe0ff;font-family:inherit;font-weight:800;font-size:12px;padding:7px 8px;border-radius:999px;cursor:pointer;transition:.15s}
+.pd-seg button{flex:1;border:none;background:none;color:#cfe0ff;font-family:inherit;font-weight:800;font-size:12px;padding:7px 8px;border-radius:999px;cursor:pointer;transition:var(--dur-fast)}
 .pd-seg button.on{color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0);box-shadow:0 0 14px -4px var(--cyan)}
 /* начисление очков родителем: быстрые суммы в шторке */
 .pd-gamts{display:flex;gap:7px;margin-top:2px}
 .pd-gamts button{flex:1;border:1.6px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#cfe0ff;
-  font-family:var(--font-display);font-size:16px;padding:13px 0;border-radius:14px;cursor:pointer;transition:.15s}
+  font-family:var(--font-display);font-size:16px;padding:13px 0;border-radius:14px;cursor:pointer;transition:var(--dur-fast)}
 .pd-gamts button.on{color:#2b1605;background:linear-gradient(180deg,#ffe57a,#ffb02e);border-color:transparent;
   box-shadow:0 0 14px -4px var(--gold)}
 /* HUD-карточки обзора */
@@ -529,7 +568,7 @@ body[data-view="parent"] #bg{opacity:.15;filter:saturate(.65)}
 .pd-mrow .ct{flex:0 0 26px;text-align:right;font-family:var(--font-display);font-size:13px;color:#fff}
 /* сводные карточки модулей */
 .pd-mcard{display:flex;align-items:center;gap:11px;width:100%;text-align:left;font-family:inherit;cursor:pointer;
-  background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:11px 12px;margin-bottom:8px;color:var(--ink);transition:border-color .15s, transform .1s}
+  background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:11px 12px;margin-bottom:8px;color:var(--ink);transition:border-color var(--dur-fast), transform .1s}
 .pd-mcard:active{transform:scale(.985)}
 .pd-mcard .ic{width:42px;height:42px;border-radius:13px;flex:0 0 42px;display:grid;place-items:center;color:var(--mc,#19e3ff);
   background:rgba(255,255,255,.05);border:1px solid var(--mc);box-shadow:0 0 14px -5px var(--mc)}
@@ -548,12 +587,12 @@ body[data-view="parent"] #bg{opacity:.15;filter:saturate(.65)}
   border-radius:13px;padding:9px 12px;margin:4px 0 11px;font-size:11.5px;font-weight:700;color:#bdeeff;line-height:1.4}
 .pd-wseg{display:flex;gap:6px;margin-bottom:12px}
 .pd-wseg button{flex:1;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.04);color:#cfe0ff;font-family:inherit;
-  font-weight:800;font-size:12px;padding:8px 6px;border-radius:12px;cursor:pointer;transition:.15s}
+  font-weight:800;font-size:12px;padding:8px 6px;border-radius:12px;cursor:pointer;transition:var(--dur-fast)}
 .pd-wseg button .c{display:inline-block;margin-left:5px;font-family:var(--font-display);font-weight:400}
 .pd-wseg button.on{color:#fff;border-color:var(--sc);background:rgba(255,255,255,.07);box-shadow:0 0 16px -7px var(--sc);text-shadow:0 0 10px var(--sc)}
 .pd-wcard{display:flex;gap:11px;width:100%;text-align:left;font-family:inherit;cursor:pointer;color:var(--ink);
   background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-left:3px solid var(--sc);
-  border-radius:16px;padding:11px;margin-bottom:9px;transition:border-color .15s, transform .1s}
+  border-radius:16px;padding:11px;margin-bottom:9px;transition:border-color var(--dur-fast), transform .1s}
 .pd-wcard:active{transform:scale(.985)}
 .pd-wcard .ph,.pd-dhead .ph{width:58px;height:58px;border-radius:13px;flex:0 0 58px;display:grid;place-items:center;
   background:linear-gradient(150deg,rgba(255,255,255,.1),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.14);
@@ -573,7 +612,7 @@ body[data-view="parent"] #bg{opacity:.15;filter:saturate(.65)}
 .pd-fchips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
 .pd-fchips::-webkit-scrollbar{display:none}
 .pd-fchips button{flex:0 0 auto;display:flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.04);
-  color:#cfe0ff;font-family:inherit;font-weight:800;font-size:11.5px;padding:6px 11px;border-radius:999px;cursor:pointer;transition:.15s}
+  color:#cfe0ff;font-family:inherit;font-weight:800;font-size:11.5px;padding:6px 11px;border-radius:999px;cursor:pointer;transition:var(--dur-fast)}
 .pd-fchips button .dot{width:8px;height:8px;border-radius:50%;background:var(--mc);box-shadow:0 0 6px var(--mc)}
 .pd-fchips button.on{color:#fff;border-color:var(--mc,#3df0c0);background:rgba(255,255,255,.08)}
 .pd-jcount{font-size:11.5px;color:var(--muted);font-weight:700;margin:2px 4px 10px}
@@ -582,7 +621,7 @@ body[data-view="parent"] #bg{opacity:.15;filter:saturate(.65)}
 .pd-dayhdr::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.08)}
 .pd-ev{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;font-family:inherit;color:var(--ink);
   background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:13px;padding:9px 11px;margin-bottom:6px}
-button.pd-ev{cursor:pointer;transition:border-color .15s} button.pd-ev:active{border-color:var(--mc)}
+button.pd-ev{cursor:pointer;transition:border-color var(--dur-fast)} button.pd-ev:active{border-color:var(--mc)}
 .pd-ev .ic{width:30px;height:30px;border-radius:9px;flex:0 0 30px;display:grid;place-items:center;color:var(--mc,#19e3ff);
   background:rgba(255,255,255,.05);border:1px solid var(--mc);box-shadow:0 0 9px -4px var(--mc)}
 .pd-ev .ic svg{width:16px;height:16px}.pd-ev .ic img{width:18px;height:18px;border-radius:5px}
@@ -622,7 +661,7 @@ button.pd-ev{cursor:pointer;transition:border-color .15s} button.pd-ev:active{bo
   padding:8px 14px calc(10px + var(--safe-bottom));
   background:var(--tabbar-grad);border-top:1px solid rgba(255,255,255,.09);backdrop-filter:blur(8px)}
 .pd-tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;
-  font-family:inherit;font-size:10px;font-weight:800;letter-spacing:.3px;color:var(--muted);padding:6px 4px;border-radius:12px;transition:.15s}
+  font-family:inherit;font-size:10px;font-weight:800;letter-spacing:.3px;color:var(--muted);padding:6px 4px;border-radius:12px;transition:var(--dur-fast)}
 .pd-tabbar button svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .pd-tabbar button.on{color:var(--cyan);text-shadow:0 0 10px rgba(25,227,255,.7)}
 .pd-tabbar button.on svg{filter:drop-shadow(0 0 5px rgba(25,227,255,.8))}
@@ -734,7 +773,7 @@ button.pd-ev{cursor:pointer;transition:border-color .15s} button.pd-ev:active{bo
 .theme-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
 .theme-card{position:relative;border-radius:16px;padding:11px;cursor:pointer;text-align:left;font-family:inherit;
   border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:var(--ink);
-  transition:transform .12s, border-color .15s, box-shadow .15s}
+  transition:transform var(--dur-fast), border-color var(--dur-fast), box-shadow var(--dur-fast)}
 .theme-card:active{transform:scale(.97)}
 .theme-card .prev{height:54px;border-radius:11px;margin-bottom:8px;border:1px solid rgba(255,255,255,.14);
   position:relative;overflow:hidden}

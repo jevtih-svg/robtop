@@ -1,8 +1,6 @@
 /* RobTop — модуль «Виш-лист». Стили модуля (скоуп .wl). Базовые компоненты — в core/ui.css. */
 
-.wl{padding-bottom:150px}
-.wl-header{display:flex;align-items:center;gap:12px;padding:calc(20px + env(safe-area-inset-top)) 2px 8px}
-.wl-head-main{flex:1;min-width:0}
+/* нижний отступ под кид-бар резервирует .rt-body каркаса; своя шапка заменена на sdk.ui.frame (.rt-hdr) */
 .wl-title{font-family:var(--font-display);font-size:26px;color:#fff;display:flex;align-items:center;gap:10px;
   text-shadow:0 0 12px color-mix(in srgb,var(--pink) 75%,transparent), 0 0 24px color-mix(in srgb,var(--purple) 55%,transparent)}
 .wl-title .cic{color:var(--pink);filter:drop-shadow(0 0 8px var(--pink));display:grid;place-items:center}
@@ -13,7 +11,7 @@
 .wl[data-tab="thinking"]{--accent:var(--purple);--accent-2:color-mix(in srgb,var(--purple) 75%,black)}
 .wl[data-tab="bought"]{--accent:var(--green);--accent-2:var(--cyan)}
 
-.tabs{display:flex;gap:9px;position:sticky;top:env(safe-area-inset-top);z-index:6;margin:10px -16px 0;padding:12px 16px 10px;
+.tabs{display:flex;gap:9px;position:sticky;top:var(--safe-top);z-index:6;margin:10px -16px 0;padding:12px 16px 10px;
   background:linear-gradient(180deg, rgba(var(--panel-rgb),.86) 62%, rgba(var(--panel-rgb),0))}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-family:inherit;
   border-radius:15px;padding:10px 6px;color:var(--ink-3);
@@ -44,7 +42,7 @@
 .ph-emoji{font-size:58px;filter:drop-shadow(0 4px 12px rgba(0,0,0,.55))}
 .ph-cherry{color:var(--accent);filter:drop-shadow(0 0 12px var(--accent))}
 .ph-cherry svg{width:74px;height:74px}
-.fav-btn{position:absolute;top:11px;right:11px;width:40px;height:40px;border-radius:50%;cursor:pointer;
+.fav-btn{position:absolute;top:9px;right:9px;width:44px;height:44px;border-radius:50%;cursor:pointer;
   border:1px solid rgba(255,255,255,.16);background:rgba(var(--panel-rgb),.6);backdrop-filter:blur(4px);
   display:grid;place-items:center;color:var(--ink-3)}
 .fav-btn:active{transform:scale(.9)}
@@ -100,7 +98,7 @@
 .d-media .card-img{height:100%}
 .d-title{font-family:var(--font-display);font-weight:400;font-size:23px;margin:0 0 4px;color:#fff;line-height:1.2}
 .d-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
-.d-fav{display:inline-flex;align-items:center;gap:8px;cursor:pointer;border-radius:14px;padding:10px 14px;font-weight:800;font-size:14px;
+.d-fav{display:inline-flex;align-items:center;gap:8px;cursor:pointer;border-radius:14px;padding:10px 14px;min-height:44px;font-weight:800;font-size:14px;
   background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14);color:var(--ink-3)}
 .d-fav svg{width:18px;height:18px}
 .d-fav.on{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 55%,transparent);box-shadow:0 0 16px -4px var(--gold)}
@@ -147,9 +145,7 @@
   color:var(--ink-3);font-size:14.5px;font-weight:600}
 .sline b{color:#fff}
 
-/* ----- шаринг (2026-06-07): в шапке 4 кнопки — на узких экранах ужимаем ----- */
+/* ----- в шапке 4 кнопки (сжатие самих кнопок — в core .rt-hdr) — на узких экранах ужимаем заголовок ----- */
 @media (max-width:390px){
-  .wl-header{gap:8px}
-  .wl-header .back,.wl-header .hbtn{width:42px;height:42px;border-radius:13px}
   .wl-title{font-size:22px}
 }

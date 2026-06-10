@@ -1,13 +1,15 @@
 {
   "name": "RobTop",
   "short_name": "RobTop",
-  "description": "A kids app: wishlist and mini-games",
-  "lang": "en",
+  "id": "./",
+  "description": "RobTop is a family app for kids: mini-apps and games, parent tasks with points, a wishlist and family chat",
   "dir": "ltr",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
+  "categories": ["kids", "games", "education"],
   "background_color": "#07061a",
   "theme_color": "#07061a",
   "icons": [

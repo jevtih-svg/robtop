@@ -20,7 +20,7 @@
       addPhoto:"Add photo", replacePhoto:"Replace photo",
       editBtn:"Edit",
       savedToast:"Mood saved: {name}", saveFailed:"Couldn't save",
-      photoFailed:"Couldn't upload photo",
+      photoFailed:"Couldn't upload photo", loadFailed:"Couldn't load entries",
       todayDone:"Mood is marked!", editUntil:"You can change it until 22:00",
       waitTitle:"See you in the morning!", waitText:"You can mark your mood from 6:00 to 22:00.",
       waitIn:"Opens in {time}", unitH:"h", unitM:"min",
@@ -41,7 +41,7 @@
       addPhoto:"Добавить фото", replacePhoto:"Заменить фото",
       editBtn:"Изменить",
       savedToast:"Настроение отмечено: {name}", saveFailed:"Не удалось сохранить",
-      photoFailed:"Не удалось загрузить фото",
+      photoFailed:"Не удалось загрузить фото", loadFailed:"Не удалось загрузить записи",
       todayDone:"Настроение отмечено!", editUntil:"Можно изменить до 22:00",
       waitTitle:"Возвращайся утром!", waitText:"Отметить настроение можно с 6:00 до 22:00.",
       waitIn:"Откроется через {time}", unitH:"ч", unitM:"мин",
@@ -62,7 +62,7 @@
       addPhoto:"Pievienot foto", replacePhoto:"Nomainīt foto",
       editBtn:"Mainīt",
       savedToast:"Garastāvoklis atzīmēts: {name}", saveFailed:"Neizdevās saglabāt",
-      photoFailed:"Neizdevās augšupielādēt foto",
+      photoFailed:"Neizdevās augšupielādēt foto", loadFailed:"Neizdevās ielādēt ierakstus",
       todayDone:"Garastāvoklis ir atzīmēts!", editUntil:"Var mainīt līdz 22:00",
       waitTitle:"Atnāc no rīta!", waitText:"Garastāvokli var atzīmēt no 6:00 līdz 22:00.",
       waitIn:"Atvērsies pēc {time}", unitH:"st.", unitM:"min",
@@ -74,8 +74,7 @@
     }}
   };
 
-  var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
-  var STATS_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20v-6M12 20V8M19 20V4"/></svg>';
+  /* шапочные иконки (назад/статистика) даёт общий реестр sdk.icons — локально только камера */
   var CAM_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2L9 4.8h6L16.5 7h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="13" r="3.4"/></svg>';
 
   /* три смайлика: весёлый (зелёный), средний (жёлтый), грустный (красный); цвет — в CSS по классу f-<key> */
@@ -93,7 +92,7 @@
   };
   var MOOD_KEYS=["happy","mid","sad"];
 
-  var sdk=null, root=null, E={}, items=[], timer=null, lastSig="", sel=null, form=blankForm();
+  var sdk=null, root=null, E={}, items=[], timer=null, lastSig="", sel=null, form=blankForm(), loaded=false;
   function blankForm(){ return {open:false, mood:null, photo:null, why:"", liked:""}; }
 
   function esc(s){ return RobTop.util.esc(s); }
@@ -124,8 +123,9 @@
     sdk.data.list("entries").then(function(list){
       if(!root) return; // размонтирован, пока грузилось
       items=(list||[]).filter(function(it){ return dataOf(it).day && moodOf(it); });
+      loaded=true;
       sortItems(); renderState(); renderHistory(); hud();
-    }).catch(function(){ if(!root) return; items=[]; renderState(); renderHistory(); hud(); });
+    }).catch(function(){ if(!root) return; items=[]; loaded=true; sdk.ui.toast(t("loadFailed")); renderState(); renderHistory(); hud(); });
   }
 
   function hud(){ var c=counts(); sdk.ui.hud({ left:t("hudLeft"), cNum:items.length, cLbl:t("hudCLbl"), rNum:c.happy, rLbl:t("hudRLbl") }); }
@@ -150,6 +150,8 @@
   function renderState(){
     if(!root||!E.state) return;
     lastSig=sig();
+    /* первая загрузка: не угадываем состояние дня (выбор/уже отмечено), пока записи не пришли */
+    if(!loaded){ E.state.innerHTML='<div class="rt-loading"><div class="rt-spin"></div></div>'; return; }
     var today=dayKey(), entry=entryFor(today), canEdit=sdk.can("edit");
     if(!canEdit){
       E.state.innerHTML='<div class="md-card"><p class="md-note" style="margin:0">'+esc(t("parentNote"))+'</p></div>';
@@ -260,6 +262,8 @@
   }
   function renderHistory(){
     if(!root||!E.list) return;
+    /* спиннер вместо ложного «записей пока нет», пока идёт первая загрузка */
+    if(!loaded){ E.list.innerHTML='<div class="rt-loading"><div class="rt-spin"></div></div>'; return; }
     var list=visibleHistory();
     if(!list.length){ E.list.innerHTML='<div class="md-empty">'+esc(t("historyEmpty"))+'</div>'; return; }
     E.list.innerHTML=list.map(function(it){
@@ -308,7 +312,7 @@
 
   /* ----- тик: обратный отсчёт + смена состояния на границах 6:00 и 22:00 ----- */
   function tick(){
-    if(!root) return;
+    if(!root||!document.body.contains(root)) return; // страховка к clearInterval: не трогаем мёртвый DOM
     if(form.open) return; // не сносить ввод; граница окна проверяется при сохранении
     if(sig()!==lastSig){ sel=null; renderState(); renderHistory(); return; }
     var cd=E.state&&E.state.querySelector("#mdCount");
@@ -317,7 +321,7 @@
 
   /* =================== mount / unmount =================== */
   function mount(rootEl, theSdk){
-    sdk=theSdk; root=rootEl; items=[]; sel=null; form=blankForm();
+    sdk=theSdk; root=rootEl; items=[]; sel=null; form=blankForm(); loaded=false;
     var title=sdk.i18n.t("tile.mood");
     /* guardrails: шапку строит общая рамка (sdk.ui.frame); модуль наполняет только body */
     var body=sdk.ui.frame({
@@ -359,7 +363,7 @@
   }
   function unmount(){
     if(timer){ clearInterval(timer); timer=null; }
-    E={}; items=[]; root=null; lastSig=""; sel=null;
+    E={}; items=[]; root=null; lastSig=""; sel=null; loaded=false;
     form=blankForm();
   }
 

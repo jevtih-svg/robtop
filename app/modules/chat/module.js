@@ -86,8 +86,10 @@
       infoTitle:"Ziņa", infoClose:"Aizvērt"
     }}
   };
-  var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
-  var PLUS_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+  /* back/plus — из общего реестра иконок оболочки (RobTop._shell.icons), SVG не дублируем */
+  var HI=(window.RobTop&&RobTop._shell&&RobTop._shell.icons)||{};
+  var BACK_IC=HI.back||"";
+  var PLUS_IC=HI.plus||"";
   var CAM_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5a2 2 0 0 1 2-2h2l1.4-2h5.2L16 6.5h2a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.4"/></svg>';
   var SEND_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-7-5 16-3.4-6.2z"/><path d="M20 5L11.6 14.8"/></svg>';
   var BUBBLE_E='💬';
@@ -746,6 +748,7 @@
   }
   function unmount(){
     if(S) S.alive=false;
+    if(S && S.lpTimer){ clearTimeout(S.lpTimer); S.lpTimer=null; } /* long-press мог быть в полёте — иначе колбэк тронет S=null */
     kbTeardown(); /* visualViewport — глобальные слушатели, снять обязательно */
     if(S && S.sheet){ try{ S.sheet.close(); }catch(e){} S.sheet=null; }
     /* переписка прячет нижнее меню — вернуть его при выходе (на случай выхода прямо из треда) */

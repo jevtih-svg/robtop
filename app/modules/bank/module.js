@@ -249,8 +249,8 @@
     }}
   };
 
-  var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
-  var PARENT_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>';
+  /* иконки шапки (стрелка «назад» и т.п.) живут в общем реестре sdk.icons — локальных копий нет;
+     ниже только уникальные SVG модуля (огонёк, молния, свинка, чеклист) */
   var FLAME_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c4.4 0 7.5-2.9 7.5-6.8 0-2.9-1.7-5.2-3.4-7C14.3 6.3 13.2 4.4 13.4 2c-3.2 1.9-4.6 4.5-4.4 7 .1 1.3-1 1.6-1.7.7-.4-.5-.7-1.1-.8-1.9C4.7 9.4 4 11.6 4 13.6 4 18 7.6 22 12 22z"/><path d="M12 22c-1.9 0-3.4-1.5-3.4-3.4 0-1.6 1-2.7 2-3.9.6-.7 1-1.4 1.2-2.2 1.4 1.2 3.6 3.1 3.6 5.8 0 2-1.5 3.7-3.4 3.7z"/></svg>';
   var BOLT_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.6 13.4h6L9.8 22l8.6-11.4h-6L13 2z"/></svg>';
   /* свинка-копилка (вид сбоку, по эскизу Артёма): тело, голова с пятачком, ушко,

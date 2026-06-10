@@ -1,7 +1,5 @@
-/* RobTop — модуль «Таймер чистки зубов». Скоуп .teeth. Клиентский, универсальное хранилище. */
-.teeth{padding-bottom:140px}
-.tt-header{display:flex;align-items:center;gap:12px;padding:calc(20px + env(safe-area-inset-top)) 2px 8px}
-.tt-head-main{flex:1;min-width:0}
+/* RobTop — модуль «Таймер чистки зубов». Скоуп .teeth. Клиентский, универсальное хранилище.
+   Нижний отступ и шапку даёт каркас sdk.ui.frame (.rt-body/.rt-hdr) — свои .teeth{padding-bottom} и .tt-header убраны. */
 .tt-title{font-family:var(--font-display);font-size:23px;color:#fff;line-height:1.05;
   text-shadow:0 0 12px color-mix(in srgb,var(--cyan) 70%,transparent), 0 0 24px color-mix(in srgb,var(--purple) 45%,transparent)}
 .tt-sub{margin:0;color:var(--muted);font-weight:600;font-size:13px}
@@ -36,7 +34,7 @@
 .tt-np-label{flex:0 0 auto;font-size:18px;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--cyan) 60%,transparent))}
 .tt-np-name{flex:1;min-width:0;font-weight:700;font-size:14px;color:var(--ink-2);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tt-np-skip{flex:0 0 auto;width:42px;height:42px;border:none;border-radius:50%;cursor:pointer;color:var(--on-bright);
+.tt-np-skip{flex:0 0 auto;width:44px;height:44px;border:none;border-radius:50%;cursor:pointer;color:var(--on-bright);
   display:flex;align-items:center;justify-content:center;
   background:var(--ok-grad);box-shadow:0 0 16px -4px var(--cyan)}
 .tt-np-skip svg{width:20px;height:20px}
@@ -89,7 +87,7 @@
 /* ===== вкладки: История | Музыка ===== */
 .tt-tabs{display:flex;gap:9px;margin-top:20px}
 .tt-tab{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;font-family:inherit;
-  border-radius:15px;padding:11px 6px;color:var(--ink-3);font-weight:800;font-size:14.5px;
+  border-radius:15px;padding:11px 6px;min-height:44px;color:var(--ink-3);font-weight:800;font-size:14.5px;
   background:rgba(255,255,255,.045);border:1.5px solid rgba(255,255,255,.1);
   transition:transform .12s, box-shadow .2s, background .2s}
 .tt-tab svg{width:18px;height:18px;flex:0 0 auto}
@@ -121,7 +119,7 @@
   background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);transition:border-color .2s, box-shadow .2s, background .2s}
 .tt-mrow.sel{border-color:transparent;box-shadow:0 0 18px -7px var(--cyan);
   background:linear-gradient(180deg, color-mix(in srgb,var(--cyan) 16%,transparent), color-mix(in srgb,var(--cyan) 5%,transparent))}
-.tt-mplay{flex:0 0 auto;width:42px;height:42px;border:none;border-radius:50%;cursor:pointer;color:var(--on-bright);
+.tt-mplay{flex:0 0 auto;width:44px;height:44px;border:none;border-radius:50%;cursor:pointer;color:var(--on-bright);
   display:flex;align-items:center;justify-content:center;
   background:var(--ok-grad);box-shadow:0 0 16px -5px var(--cyan)}
 .tt-mplay svg{width:20px;height:20px}
@@ -131,7 +129,7 @@
 .tt-mnum{font-weight:800;font-size:11.5px;color:var(--green-soft);letter-spacing:.2px}
 .tt-mname{font-weight:700;font-size:14.5px;color:var(--ink-2);margin-top:2px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tt-mpick{flex:0 0 auto;width:40px;height:40px;border-radius:12px;cursor:pointer;
+.tt-mpick{flex:0 0 auto;width:44px;height:44px;border-radius:12px;cursor:pointer;
   display:flex;align-items:center;justify-content:center;color:var(--muted-2);
   border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05)}
 .tt-mpick svg{width:20px;height:20px}

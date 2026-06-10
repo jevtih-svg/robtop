@@ -17,7 +17,7 @@
 
 /* смайлики: цвета по настроению, выкл — приглушённый */
 .md-face{border:none;background:none;padding:6px;cursor:pointer;color:var(--line-strong);
-  transition:transform .12s ease, color .15s ease}
+  transition:transform var(--dur-fast) ease, color var(--dur-fast) ease}
 .md-face svg{width:100%;height:100%;display:block}
 .md-face.f-happy.on{color:var(--mint);filter:drop-shadow(0 0 10px color-mix(in srgb,var(--mint) 85%,transparent))}
 .md-face.f-mid.on{color:var(--gold);filter:drop-shadow(0 0 10px color-mix(in srgb,var(--gold) 85%,transparent))}

@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.10.1", d:"2026-06-10", t:{
+    en:"Big polish update: app tiles now cascade in, screens glide smoother, loading spinners replace blank screens, and the app drains much less battery.",
+    ru:"Большое обновление полировки: плитки приложений появляются каскадом, экраны переключаются мягче, вместо пустых экранов — спиннеры загрузки, и приложение заметно меньше ест батарею.",
+    lv:"Liels pulēšanas atjauninājums: lietotņu flīzes parādās kaskādē, ekrāni pārslēdzas maigāk, tukšo ekrānu vietā ir ielādes indikatori, un lietotne tērē daudz mazāk baterijas." } },
   { v:"2026.06.09.18", d:"2026-06-09", t:{
     en:"Settings now sit on a calm background that matches your theme, so everything is much easier to read.",
     ru:"Настройки теперь на спокойном фоне в цвет твоей темы — всё читается гораздо легче.",

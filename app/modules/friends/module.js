@@ -25,6 +25,7 @@
       secretToggle:"Secret friend",
       needName:"Type a name first", needCat:"Pick what they're like",
       savedNew:"Friend added: {name}", savedEdit:"Friend saved: {name}", saveFailed:"Couldn't save",
+      loadFailed:"Couldn't load friends",
       edit:"Edit", del:"Delete", toSecret:"Make secret", toOpen:"Make open",
       deleted:"Friend deleted", movedSecret:"Moved to Secret", movedOpen:"Moved to Open",
       noText:"(nothing yet)",
@@ -48,6 +49,7 @@
       secretToggle:"Секретный друг",
       needName:"Сначала введи имя", needCat:"Выбери, какой он",
       savedNew:"Друг добавлен: {name}", savedEdit:"Друг сохранён: {name}", saveFailed:"Не удалось сохранить",
+      loadFailed:"Не удалось загрузить друзей",
       edit:"Изменить", del:"Удалить", toSecret:"В секретные", toOpen:"В открытые",
       deleted:"Друг удалён", movedSecret:"Перенесён в «Секретные»", movedOpen:"Перенесён в «Открытые»",
       noText:"(пока пусто)",
@@ -71,6 +73,7 @@
       secretToggle:"Slepens draugs",
       needName:"Vispirms ievadi vārdu", needCat:"Izvēlies, kāds viņš ir",
       savedNew:"Draugs pievienots: {name}", savedEdit:"Draugs saglabāts: {name}", saveFailed:"Neizdevās saglabāt",
+      loadFailed:"Neizdevās ielādēt draugus",
       edit:"Mainīt", del:"Dzēst", toSecret:"Uz slepeniem", toOpen:"Uz atvērtiem",
       deleted:"Draugs izdzēsts", movedSecret:"Pārvietots uz “Slepenie”", movedOpen:"Pārvietots uz “Atvērtie”",
       noText:"(pagaidām tukšs)",
@@ -81,8 +84,7 @@
   };
 
   /* =================== ИКОНКИ =================== */
-  var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
-  var STATS_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20v-6M12 20V8M19 20V4"/></svg>';
+  /* назад/статистика — из общего реестра оболочки (sdk.ui.frame принимает имя иконки), SVG не дублируем */
   var FR_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.1"/><path d="M3.6 19.2a5.4 5.4 0 0 1 10.8 0"/><path d="M15.5 5.6a3 3 0 0 1 .2 5.6"/><path d="M16.3 13.3a5.4 5.4 0 0 1 4.1 5.9"/></svg>';
   var LOCK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   var STAR_F='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.7 5.7 6.3.8-4.6 4.4 1.2 6.2L12 17.8 6.4 20.1l1.2-6.2L3 9.5l6.3-.8z"/></svg>';
@@ -104,7 +106,7 @@
   var CATS=["kind","soso","angry"];
 
   /* =================== СОСТОЯНИЕ =================== */
-  var sdk=null, root=null, E={}, items=[], currentTab="open";
+  var sdk=null, root=null, E={}, items=[], currentTab="open", loaded=false, failed=false;
 
   function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
@@ -121,9 +123,9 @@
   function load(){
     sdk.data.list("friends").then(function(list){
       if(!root) return; // размонтирован, пока грузилось
-      items=(list||[]);
+      items=(list||[]); loaded=true; failed=false;
       sortItems(); render(); hud();
-    }).catch(function(){ if(!root) return; items=[]; render(); hud(); });
+    }).catch(function(){ if(!root) return; items=[]; loaded=true; failed=true; render(); hud(); });
   }
 
   function counts(){ var c={kind:0,soso:0,angry:0,best:0}; items.forEach(function(it){ c[catOf(it)]++; if(starsOf(it)===5) c.best++; }); return c; }
@@ -148,7 +150,9 @@
     });
     var list=byTab(currentTab);
     if(!list.length){
-      E.list.innerHTML='<div class="fr-empty">'+esc(currentTab==="secret"?t("emptySecret"):t("emptyOpen"))+'</div>';
+      /* пока первый запрос в пути — спиннер, а не ложное «здесь пусто» */
+      if(!loaded){ E.list.innerHTML='<div class="rt-loading"><div class="rt-spin"></div></div>'; return; }
+      E.list.innerHTML='<div class="fr-empty">'+esc(failed?t("loadFailed"):(currentTab==="secret"?t("emptySecret"):t("emptyOpen")))+'</div>';
       return;
     }
     E.list.innerHTML=list.map(function(it){
@@ -327,7 +331,7 @@
 
   /* =================== mount / unmount =================== */
   function mount(rootEl, theSdk){
-    sdk=theSdk; root=rootEl; items=[]; currentTab="open";
+    sdk=theSdk; root=rootEl; items=[]; currentTab="open"; loaded=false; failed=false;
     var title=sdk.i18n.t("tile.friends"), canEdit=sdk.can("edit");
     var body=sdk.ui.frame({
       titleHtml:'<div class="fr-title"><span class="sic">'+FR_IC+'</span> '+esc(title)+'</div><div class="fr-sub">'+esc(t("subtitle"))+'</div>',
@@ -352,7 +356,7 @@
     if(canEdit) sdk.ui.fab(t("addFriend"), function(){ openForm(null); });
     render(); hud(); load();
   }
-  function unmount(){ E={}; items=[]; root=null; currentTab="open"; }
+  function unmount(){ E={}; items=[]; root=null; currentTab="open"; loaded=false; failed=false; }
 
   /* живое обновление (sync v.52): подтянуть чужие/другие правки без выхода из модуля */
   function refresh(){ if(!root) return false; load(); return true; }

@@ -40,7 +40,7 @@
 [data-mod="days"] .day-list{display:flex;flex-direction:column;gap:10px;margin-top:6px}
 [data-mod="days"] .dy-card{width:100%;display:flex;align-items:center;gap:13px;text-align:left;cursor:pointer;
   border-radius:18px;padding:12px;font-family:inherit;color:var(--ink);
-  background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);transition:transform .1s ease}
+  background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);transition:transform var(--dur-fast) ease}
 [data-mod="days"] .dy-card:active{transform:scale(.985)}
 [data-mod="days"] .dy-card.is-today{border-color:color-mix(in srgb,var(--dy) 70%,transparent);
   background:color-mix(in srgb,var(--dy) 12%,transparent);box-shadow:0 0 24px -8px var(--dy)}

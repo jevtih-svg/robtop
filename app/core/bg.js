@@ -35,7 +35,7 @@
 
   var cv=document.getElementById("bg");
   var ctx=cv && cv.getContext && cv.getContext("2d");
-  var W=0,H=0,DPR=1,circuit=null,orbs=[],sprites={},raf=null;
+  var W=0,H=0,DPR=1,circuit=null,orbs=[],sprites={},raf=null,idleT=null;
   var reduce=window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   function theme(){ return THEMES[current]||THEMES[DEFAULT_THEME]; }
   function rgba(c,a){ return "rgba("+c[0]+","+c[1]+","+c[2]+","+a+")"; }
@@ -74,7 +74,9 @@
         al:a.alpha[0]+Math.random()*a.alpha[1],ph:Math.random()*6.28});
     }
   }
-  function rebuild(){ if(!ctx) return; buildCircuit(); buildOrbs(); if(reduce) draw(0); }
+  /* rebuild всегда рисует кадр сразу: цикл может стоять (настройки/скрытая вкладка),
+     а смена темы происходит именно в настройках — без draw(0) при возврате мелькал старый кадр */
+  function rebuild(){ if(!ctx) return; buildCircuit(); buildOrbs(); draw(0); }
   function resize(){ if(!ctx) return; DPR=Math.min(window.devicePixelRatio||1,2); W=window.innerWidth; H=window.innerHeight; cv.width=W*DPR; cv.height=H*DPR; cv.style.width=W+"px"; cv.style.height=H+"px"; ctx.setTransform(DPR,0,0,DPR,0,0); buildCircuit(); buildOrbs(); }
   function draw(t){
     ctx.clearRect(0,0,W,H); if(circuit) ctx.drawImage(circuit,0,0,W,H);
@@ -87,8 +89,25 @@
       ctx.globalAlpha=Math.min(1,o.al*pulse+.15); ctx.fillStyle=rgba(o.col,1); ctx.beginPath(); ctx.arc(o.x,o.y,o.r*.5,0,7); ctx.fill();
     }
     ctx.globalAlpha=1; ctx.globalCompositeOperation="source-over";
-    if(!reduce) raf=requestAnimationFrame(draw);
   }
+  /* Планировщик кадров (аудит 2026-06-10, батарея): rAF-цикл больше не крутится вхолостую.
+     Скрытая вкладка — цикл останавливается полностью (возврат перезапускает visibilitychange;
+     сам rAF браузер при скрытой вкладке тоже морозит — это явная страховка). Вид «Настройки»
+     прячет канвас CSS (body[data-view="settings"] #bg{display:none}) — вместо рисования
+     редкий setTimeout-пинг, чтобы проснуться при возврате на другой экран. */
+  function loop(t){
+    raf=null;
+    if(reduce || document.hidden) return;
+    if(document.body.getAttribute("data-view")==="settings"){
+      clearTimeout(idleT);
+      idleT=setTimeout(function(){ if(!raf) raf=requestAnimationFrame(loop); },400);
+      return;
+    }
+    draw(t);
+    raf=requestAnimationFrame(loop);
+  }
+  function wake(){ if(ctx && !reduce && !raf && !document.hidden){ clearTimeout(idleT); raf=requestAnimationFrame(loop); } }
+  document.addEventListener("visibilitychange",wake);
 
   /* ---- применить тему к документу (body-атрибут + цвет шапки браузера + канвас) ---- */
   function applyDom(){
@@ -122,8 +141,8 @@
   document.documentElement.style.backgroundColor=theme().metaColor;
   if(!ctx) return;
   var rt=null;
-  window.addEventListener("resize",function(){ clearTimeout(rt); rt=setTimeout(function(){ resize(); if(reduce) draw(0); },180); });
-  resize(); if(reduce) draw(0); else raf=requestAnimationFrame(draw);
+  window.addEventListener("resize",function(){ clearTimeout(rt); rt=setTimeout(function(){ resize(); draw(0); },180); });
+  resize(); if(reduce) draw(0); else raf=requestAnimationFrame(loop);
 })();
 
 /* ================= CONFETTI ================= */

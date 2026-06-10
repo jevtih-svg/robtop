@@ -52,7 +52,7 @@
       diff:"Difficulty",
       sCorrect:"correct", sWrong:"wrong", sTimeout:"too slow", sSkipped:"skipped",
       setCooldown:"Break between games (minutes)", save:"Save", saved:"Saved",
-      loading:"…", saveFailed:"Couldn't save"
+      saveFailed:"Couldn't save", loadFailed:"Couldn't load — try again"
     }},
     ru:{ find:{
       subtitle:"Найди настоящий предмет и сфоткай!",
@@ -83,7 +83,7 @@
       diff:"Сложность",
       sCorrect:"верно", sWrong:"неверно", sTimeout:"не успел", sSkipped:"пропущено",
       setCooldown:"Перерыв между играми (минут)", save:"Сохранить", saved:"Сохранено",
-      loading:"…", saveFailed:"Не удалось сохранить"
+      saveFailed:"Не удалось сохранить", loadFailed:"Не удалось загрузить — попробуй ещё раз"
     }},
     lv:{ find:{
       subtitle:"Atrodi īstu priekšmetu un nofotografē!",
@@ -114,7 +114,7 @@
       diff:"Grūtība",
       sCorrect:"pareizi", sWrong:"nepareizi", sTimeout:"par lēnu", sSkipped:"izlaists",
       setCooldown:"Pārtraukums starp spēlēm (minūtes)", save:"Saglabāt", saved:"Saglabāts",
-      loading:"…", saveFailed:"Neizdevās saglabāt"
+      saveFailed:"Neizdevās saglabāt", loadFailed:"Neizdevās ielādēt — mēģini vēlreiz"
     }}
   };
 
@@ -128,7 +128,10 @@
   var PTS_FIND=10, PTS_MISS=-5, PTS_BONUS=10;
   var DEFAULT_COOLDOWN=60;                                     // секунд (родитель меняет)
 
-  var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
+  /* иконка «назад» — из общего реестра оболочки (RobTop._shell.icons), чтобы не дублировать SVG по модулям */
+  var HI=(window.RobTop&&RobTop._shell&&RobTop._shell.icons)||{};
+  var BACK_IC=HI.back||"";
+  /* камеры в общем реестре нет — локальная иконка */
   var CAM_IC='<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5A2 2 0 0 1 5 6.5h2l1.2-2h7.6L17 6.5h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.6"/></svg>';
 
   /* =================== СОСТОЯНИЕ =================== */
@@ -270,7 +273,8 @@
       if(!run) return;
       var left=run.deadline-Date.now();
       var pct=Math.max(0, Math.min(100, left/total*100));
-      if(E.fill) E.fill.style.width=pct+"%";
+      /* scaleX вместо width — анимация без перераскладки (layout) на каждом тике */
+      if(E.fill) E.fill.style.transform="scaleX("+(pct/100)+")";
       if(E.num) E.num.textContent=fmtClock(left/1000);
       if(E.bar) E.bar.classList.toggle("low", left<=10000);
       if(left<=0){ clearInterval(run.timer); onTimeout(); }
@@ -307,7 +311,7 @@
   }
   function camFallback(){
     E.cam.innerHTML='<div class="ph">'+CAM_IC+'<div>'+esc(t("camDenied"))+'</div>'
-      +'<button class="pri" id="fdFileBtn" style="padding:12px 20px;border:none;border-radius:14px;font-weight:800;color:#04121a;background:var(--fd);cursor:pointer">'+esc(t("camBtn"))+'</button>'
+      +'<button class="pri" id="fdFileBtn" style="min-height:44px;padding:12px 20px;border:none;border-radius:14px;font-weight:800;color:var(--on-bright);background:var(--fd);cursor:pointer">'+esc(t("camBtn"))+'</button>'
       +'<input type="file" id="fdFile" accept="image/*" capture="environment" style="display:none"></div>';
     var btn=root.querySelector("#fdFileBtn"), inp=root.querySelector("#fdFile");
     if(btn&&inp){ btn.onclick=function(){ inp.click(); }; inp.onchange=function(){ if(inp.files&&inp.files[0]) handleFile(inp.files[0]); }; }
@@ -381,8 +385,9 @@
       +'<div class="find-rules">'+esc(t("finishText"))+'</div></div>';
     bindBack();
     run=null;
-    // вернуться на стартовый экран (с кулдауном) через паузу
-    setTimeout(function(){ if(!destroyed) { loadSubs().then(function(){ if(!destroyed) renderEntry(); }); } }, 1400);
+    // вернуться на стартовый экран (с кулдауном) через паузу; таймер храним, чтобы погасить в unmount
+    clearTimeout(E.finT);
+    E.finT=setTimeout(function(){ if(!destroyed) { loadSubs().then(function(){ if(!destroyed) renderEntry(); }); } }, 1400);
   }
   function endCooldown(){ if(metaRec){ metaRec.lastRunEnd=Date.now(); saveMeta(); } }
   function stopAndExit(){ // «Стоп» во время игры → завершить круг → стартовый экран с кулдауном
@@ -515,16 +520,18 @@
     sdk=theSdk; root=rootEl; E={}; destroyed=false; run=null; ptab="pending"; subs=[];
     /* guardrails: детский бар «Домой» виден и здесь (универсально); кнопки камеры сидят ВЫШЕ него
        за счёт нижнего резерва find-acts/find-entry (module.css) — отдельный hud-hide не нужен. */
-    root.innerHTML='<div class="find-empty">'+esc(t("loading"))+'</div>';
+    /* единый спиннер ядра на время первой загрузки — вместо пустого экрана */
+    root.innerHTML='<div class="rt-loading"><div class="rt-spin"></div></div>';
     Promise.all([loadMeta(), loadSubs()]).then(function(){
       if(destroyed) return;
       if(isParentView()) renderParent(); else renderEntry();
-    }).catch(function(){ if(!destroyed){ if(isParentView()) renderParent(); else renderEntry(); } });
+    }).catch(function(){ if(!destroyed){ sdk.ui.toast(t("loadFailed")); if(isParentView()) renderParent(); else renderEntry(); } });
   }
   function unmount(){
     destroyed=true;
     if(run){ clearInterval(run.timer); stopCamera(); run=null; }
     clearInterval(E.coolT);
+    clearTimeout(E.finT);
     E={};
   }
   /* живое обновление (sync): подтянуть отправки и перерисовать текущий экран, не выбивая из игры */

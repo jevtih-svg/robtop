@@ -12,6 +12,7 @@
       hudLeft:"Words <b>backwards</b>", hudCLbl:"in history", hudRLbl:"words",
       outEmpty:"Type a word — I'll show it backwards",
       listEmpty:"Empty so far. Flip a word and tap “Save”.",
+      listError:"Couldn't load history",
       inPh:"e.g. hello", speak:"🔊 Speak", sectionHistory:"History", ariaSpeak:"Speak",
       toast:{ needWord:"Type a word first", ttsUnsupported:"Speech isn't supported on this device",
         ttsFailed:"Couldn't speak", saved:"Saved: {word}", saveFailed:"Couldn't save", deleteFailed:"Couldn't delete" }
@@ -21,6 +22,7 @@
       hudLeft:"Слова <b>наоборот</b>", hudCLbl:"в истории", hudRLbl:"слов",
       outEmpty:"Напиши слово — покажу его задом наперёд",
       listEmpty:"Пока пусто. Переверни слово и нажми «Сохранить».",
+      listError:"Не удалось загрузить историю",
       inPh:"Например: привет", speak:"🔊 Озвучить", sectionHistory:"История", ariaSpeak:"Озвучить",
       toast:{ needWord:"Сначала введи слово", ttsUnsupported:"Озвучка не поддерживается на этом устройстве",
         ttsFailed:"Не удалось озвучить", saved:"Сохранено: {word}", saveFailed:"Не удалось сохранить", deleteFailed:"Не удалось удалить" }
@@ -30,13 +32,14 @@
       hudLeft:"Vārdi <b>otrādi</b>", hudCLbl:"vēsturē", hudRLbl:"vārdi",
       outEmpty:"Ieraksti vārdu — parādīšu to otrādi",
       listEmpty:"Pagaidām tukšs. Apgriez vārdu un nospied “Saglabāt”.",
+      listError:"Neizdevās ielādēt vēsturi",
       inPh:"Piem.: sveiki", speak:"🔊 Nolasīt", sectionHistory:"Vēsture", ariaSpeak:"Nolasīt",
       toast:{ needWord:"Vispirms ieraksti vārdu", ttsUnsupported:"Runa šajā ierīcē netiek atbalstīta",
         ttsFailed:"Neizdevās nolasīt", saved:"Saglabāts: {word}", saveFailed:"Neizdevās saglabāt", deleteFailed:"Neizdevās dzēst" }
     }}
   };
 
-  var BACK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
+  /* Иконка «назад» рисуется самим sdk.ui.frame — своя копия SVG модулю не нужна. */
   var sdk=null, root=null, items=[], E={};
 
   function esc(s){ return RobTop.util.esc(s); }
@@ -66,7 +69,8 @@
   }
   function renderList(){
     if(!E.list) return; // модуль мог быть размонтирован, пока грузилась история
-    if(!items.length){ E.list.innerHTML='<div style="color:var(--muted-dim);font-weight:600;font-size:14px;text-align:center;padding:14px">'+esc(t("listEmpty"))+'</div>'; hud(); return; }
+    /* Пустая история — единое оформление .rt-empty из ядра вместо самодельного серого текста. */
+    if(!items.length){ E.list.innerHTML='<div class="rt-empty"><span class="e">🔁</span>'+esc(t("listEmpty"))+'</div>'; hud(); return; }
     E.list.innerHTML=items.map(function(it){
       var d=it.data||{};
       return '<div class="rev-row" data-id="'+esc(it.id)+'"><div class="w">'+esc(d.reversed||"")+'<small>'+esc(d.text||"")+'</small></div>'
@@ -79,7 +83,12 @@
     sdk.data.list("history").then(function(list){
       items=(list||[]).slice().sort(function(a,b){ return (b.createdAt||0)-(a.createdAt||0); });
       renderList();
-    }).catch(function(){ items=[]; renderList(); });
+    }).catch(function(){
+      /* Ошибка загрузки — честно сообщаем, а не притворяемся пустой историей.
+         hud() под тем же гардом E.list: модуль мог размонтироваться, пока ответ летел, —
+         иначе записали бы свой HUD поверх чужого экрана. */
+      items=[]; if(E.list){ E.list.innerHTML='<div class="rt-empty"><span class="e">⚠️</span>'+esc(t("listError"))+'</div>'; hud(); }
+    });
   }
   function saveCurrent(){
     var v=(E.in.value||"").trim(); if(!v){ E.in.focus(); return; }
@@ -105,7 +114,9 @@
     body.innerHTML='<div class="rev">'
       +'<div class="rev-card"><input class="rev-in" id="revIn" type="text" maxlength="60" placeholder="'+esc(t("inPh"))+'" autocomplete="off"><div class="rev-out empty" id="revOut">'+esc(t("outEmpty"))+'</div></div>'
       +'<div class="sheet-actions" style="margin-top:14px"><button class="btn" id="revSpeak" style="flex:0 0 46%">'+esc(t("speak"))+'</button><button class="btn btn-primary" id="revSave">'+esc(t("common.save"))+'</button></div>'
-      +'<div class="store-section">'+esc(t("sectionHistory"))+'</div><div class="rev-list" id="revList"></div>'
+      +'<div class="store-section">'+esc(t("sectionHistory"))+'</div>'
+      /* Пока история едет из хранилища — спиннер, чтобы под заголовком не зияла пустота. */
+      +'<div class="rev-list" id="revList"><div class="rt-loading"><div class="rt-spin"></div></div></div>'
     +'</div>';
     E.in=root.querySelector("#revIn"); E.out=root.querySelector("#revOut"); E.list=root.querySelector("#revList");
     E.in.addEventListener("input",renderOut);

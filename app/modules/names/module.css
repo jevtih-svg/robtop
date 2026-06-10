@@ -23,7 +23,8 @@
 [data-mod="names"] .fn-emoji{width:104px;min-height:96px;border-radius:20px;border:2px solid transparent;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
   background:rgba(var(--panel-rgb),.85);font-size:44px;line-height:1;-webkit-tap-highlight-color:transparent;
-  transition:transform .12s ease, box-shadow .15s ease, border-color .15s ease}
+  /* .15s == var(--dur-fast): тот же тайминг, но через общий токен длительности */
+  transition:transform .12s ease, box-shadow var(--dur-fast) ease, border-color var(--dur-fast) ease}
 [data-mod="names"] .fn-emoji:active{transform:scale(.92)}
 [data-mod="names"] .fn-emoji .cap{font-family:var(--font-body);font-size:12.5px;font-weight:800}
 [data-mod="names"] .fn-emoji.funny{border-color:color-mix(in srgb,var(--mint) 60%,transparent);
