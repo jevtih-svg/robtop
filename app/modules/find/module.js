@@ -52,7 +52,7 @@
       diff:"Difficulty",
       sCorrect:"correct", sWrong:"wrong", sTimeout:"too slow", sSkipped:"skipped",
       setCooldown:"Break between games (minutes)", save:"Save", saved:"Saved",
-      saveFailed:"Couldn't save", loadFailed:"Couldn't load — try again"
+      saveFailed:"Couldn't save", loadFailed:"Couldn't load — try again", alreadyDecided:"Already reviewed — refreshing the list"
     }},
     ru:{ find:{
       subtitle:"Найди настоящий предмет и сфоткай!",
@@ -83,7 +83,7 @@
       diff:"Сложность",
       sCorrect:"верно", sWrong:"неверно", sTimeout:"не успел", sSkipped:"пропущено",
       setCooldown:"Перерыв между играми (минут)", save:"Сохранить", saved:"Сохранено",
-      saveFailed:"Не удалось сохранить", loadFailed:"Не удалось загрузить — попробуй ещё раз"
+      saveFailed:"Не удалось сохранить", loadFailed:"Не удалось загрузить — попробуй ещё раз", alreadyDecided:"Уже проверено — обновляю список"
     }},
     lv:{ find:{
       subtitle:"Atrodi īstu priekšmetu un nofotografē!",
@@ -114,7 +114,7 @@
       diff:"Grūtība",
       sCorrect:"pareizi", sWrong:"nepareizi", sTimeout:"par lēnu", sSkipped:"izlaists",
       setCooldown:"Pārtraukums starp spēlēm (minūtes)", save:"Saglabāt", saved:"Saglabāts",
-      saveFailed:"Neizdevās saglabāt", loadFailed:"Neizdevās ielādēt — mēģini vēlreiz"
+      saveFailed:"Neizdevās saglabāt", loadFailed:"Neizdevās ielādēt — mēģini vēlreiz", alreadyDecided:"Jau pārbaudīts — atjaunoju sarakstu"
     }}
   };
 
@@ -472,9 +472,17 @@
       if(r.rev) s.d.rev=r.rev;
       sdk.ui.toast(r.bonus?t("bonus"):(ok?t("approved"):t("rejected")));
       renderParent();
-    }).catch(function(){
+    }).catch(function(e){
       s.d.st=prev; delete s.d.rev;
-      sdk.ui.toast(t("saveFailed"));
+      /* 409 not_pending: решение УЖЕ записано на сервере (хвост сломанных сборок .4–.7,
+         где st сохранялся, а очки падали) — не ошибка, а устаревший список: перечитываем. */
+      if(e&&/http 409/.test(e.message||"")){
+        sdk.ui.toast(t("alreadyDecided"));
+        loadSubs().then(function(){ if(!destroyed) renderParent(); }).catch(function(){ if(!destroyed) renderParent(); });
+        return;
+      }
+      /* показываем код сервера (напр. «http 403 forbidden child») — диагностика без доступа к логам */
+      sdk.ui.toast(t("saveFailed")+(e&&e.message&&e.message!=="save"?" · "+e.message:""));
       renderParent();
     });
   }

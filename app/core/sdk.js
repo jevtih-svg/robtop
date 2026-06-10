@@ -12,7 +12,14 @@ window.RobTop = window.RobTop || {};
     // а не молча падает в кэш/DEFAULTS.
     _h: function(r,p){
       if(r.status===401 && String(p).indexOf("accounts.php")!==0 && typeof RT._on401==="function"){ try{ RT._on401(); }catch(e){} }
-      if(!r.ok) throw new Error("http "+r.status);
+      if(!r.ok){
+        /* 2026-06-10: к статусу добавляем КОД ошибки сервера ({error:"..."} из rt_json) —
+           иначе с устройства невозможно понять, какая ветка отказала (диагностика find-approve).
+           Префикс "http <статус>" сохранён — существующие проверки /http 409|429/ работают. */
+        return r.json().catch(function(){ return null; }).then(function(b){
+          throw new Error("http "+r.status+(b&&b.error?(" "+b.error):""));
+        });
+      }
       return r.json();
     },
     get: function(p){ return fetch(API.base+p,{headers:{"Accept":"application/json"},cache:"no-store"}).then(function(r){ return API._h(r,p); }); },

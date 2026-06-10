@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.10.10", d:"2026-06-10", t:{
+    en:"Find the Object review: items already reviewed earlier no longer error — the list refreshes itself; save errors now show the exact reason.",
+    ru:"Проверка «Найти предмет»: уже проверенные ранее находки больше не дают ошибку — список обновляется сам; ошибки сохранения теперь показывают точную причину.",
+    lv:"«Atrodi priekšmetu» pārbaude: jau agrāk pārbaudītie vairs nerāda kļūdu — saraksts atjaunojas pats; saglabāšanas kļūdas tagad rāda precīzu iemeslu." } },
   { v:"2026.06.10.9", d:"2026-06-10", t:{
     en:"Fixed the app tiles ballooning on the home screen and parent dashboard after opening Find the Object.",
     ru:"Починили раздувание плиток на главном экране и родительском дашборде после захода в «Найти предмет».",
