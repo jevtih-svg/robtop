@@ -94,7 +94,6 @@ window.RobTop = window.RobTop || {};
   var body, appsEl, homeView, moduleView, lockView, parentView, settingsView, fabEl, toastEl, demoBadge,
       hudEl,hudL,hudCnum,hudClbl,hudRnum,hudRlbl, settingsBody,
       storeOverlay, storeBody, gearBtn, kidBarEl, notifView, homeJgl=null;
-  var STANDALONE=!!(navigator.standalone || (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches));
 
   /* ================= общие UI-сервисы ================= */
   /* prefers-reduced-motion гасит и вибрацию (аудит 2026-06-10): меньше движения = меньше сенсорики */
@@ -374,9 +373,8 @@ window.RobTop = window.RobTop || {};
       var r=document.getElementById("root"); if(r) r.style.minHeight="";
     }catch(e){}
     requestAnimationFrame(function(){
-      rtUpdatePwaGap();
       rtForceFullViewport();
-      setTimeout(function(){ rtUpdatePwaGap(); rtForceFullViewport(); },260);
+      setTimeout(rtForceFullViewport,260);
     });
   }
 
@@ -414,8 +412,9 @@ window.RobTop = window.RobTop || {};
     if(lockView) lockView.classList.remove("active");
     homeView.classList.remove("active"); moduleView.classList.remove("active"); hideSettings(); hideNotif();
     if(parentView) parentView.classList.add("active");
-    window.scrollTo(0,0); fabDestroy();
+    window.scrollTo(0,0); if(parentView) parentView.scrollTop=0; fabDestroy();
     if(RT.Parent) RT.Parent.show();
+    if(parentView) parentView.scrollTop=0;
     setNavActive(); /* подсветить активную вкладку (apps/bank/chat) единого меню */
   }
 
@@ -1730,36 +1729,19 @@ window.RobTop = window.RobTop || {};
   function rtForceFullViewport(onDone){
     function fin(){ if(typeof onDone==="function") try{ onDone(); }catch(e){} }
     var root=document.getElementById("root"); if(!root){ fin(); return; }
-    rtUpdatePwaGap();
     if(window.innerHeight>=screen.height-2){ root.style.minHeight=""; fin(); return; } // уже полный
     var vv=window.visualViewport, done=false;
-    function reset(){ if(done) return; done=true; root.style.minHeight=""; rtUpdatePwaGap(); if(vv) vv.removeEventListener("resize",settle); fin(); }
-    function settle(){ rtUpdatePwaGap(); if(window.innerHeight>=screen.height-2) reset(); }
+    function reset(){ if(done) return; done=true; root.style.minHeight=""; if(vv) vv.removeEventListener("resize",settle); fin(); }
+    function settle(){ if(window.innerHeight>=screen.height-2) reset(); }
     root.style.minHeight=(screen.height+120)+"px"; // подпорка: страница выше экрана → прокручиваемая
     try{ window.scrollTo(0,2); }catch(e){}
     requestAnimationFrame(function(){ try{ window.scrollTo(0,0); }catch(e){} });
     if(vv) vv.addEventListener("resize",settle);
     setTimeout(reset,4000); // страховка: снять подпорку даже если вьюпорт так и не дорос
   }
-  function rtUpdatePwaGap(){
-    var gap=0, vv=window.visualViewport;
-    try{
-      var kb=vv ? Math.max(0, window.innerHeight - vv.height - vv.offsetTop) : 0;
-      if(STANDALONE && kb<80){
-        gap=Math.max(0, Math.round(screen.height - window.innerHeight));
-        if(gap<3 || gap>180) gap=0;
-      }
-      document.documentElement.style.setProperty("--rt-pwa-gap", gap+"px");
-    }catch(e){}
-  }
   window.addEventListener("load", rtForceFullViewport);
   window.addEventListener("pageshow", rtForceFullViewport);
-  window.addEventListener("resize", rtUpdatePwaGap);
-  window.addEventListener("orientationchange", function(){ setTimeout(function(){ rtUpdatePwaGap(); rtForceFullViewport(); },350); });
-  if(window.visualViewport){
-    window.visualViewport.addEventListener("resize", rtUpdatePwaGap);
-    window.visualViewport.addEventListener("scroll", rtUpdatePwaGap);
-  }
+  window.addEventListener("orientationchange", function(){ setTimeout(rtForceFullViewport,350); });
 
   /* ===== Клавиатура iOS перекрывала нижние шторки (.overlay/.sheet якорятся к низу).
      Поднимаем их над клавиатурой через VisualViewport: --kb = высота клавиатуры (CSS

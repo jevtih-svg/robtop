@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.10.8", d:"2026-06-10", t:{
+    en:"Parent dashboard now keeps its own stable scroll frame after leaving review screens.",
+    ru:"Родительский экран теперь держит собственную стабильную прокрутку после выхода из экранов проверки.",
+    lv:"Vecāku panelim tagad ir sava stabila ritināšana pēc iziešanas no pārbaudes ekrāniem." } },
   { v:"2026.06.10.7", d:"2026-06-10", t:{
     en:"The bottom menu now compensates for the iOS PWA viewport gap after camera and review screens.",
     ru:"Нижнее меню теперь компенсирует зазор iOS PWA после экранов камеры и проверки.",

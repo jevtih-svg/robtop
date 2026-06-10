@@ -208,6 +208,7 @@ window.RobTop = window.RobTop || {};
   function el(){ return document.getElementById("parent"); }
   function tabsEl(){ return document.getElementById("pdTabs"); }
   function active(){ return document.body.getAttribute("data-view")==="parent"; }
+  function jumpTop(){ var r=el(); if(r) r.scrollTop=0; try{ window.scrollTo(0,0); }catch(e){} }
 
   /* ---- дни/время ---- */
   function startOfDay(ts){ var d=new Date(ts); d.setHours(0,0,0,0); return d.getTime(); }
@@ -393,7 +394,7 @@ window.RobTop = window.RobTop || {};
       /* верх контента не должен лезть под статус-бар и кластер [🔔][⚙] (как у .pd-top) */
       "body[data-view=\"parent\"] .pdv-top{padding-top:calc(30px + env(safe-area-inset-top));padding-right:100px}"+
       /* контент должен прокручиваться полностью над фиксированным таббаром (.pd-tabbar) */
-      "body[data-view=\"parent\"] .pd-wrap{padding-bottom:calc(104px + env(safe-area-inset-bottom))}"+
+      "body[data-view=\"parent\"] .pd-wrap{padding-bottom:calc(var(--kidbar-total) + 40px)}"+
       ".pdv-secttl{font-family:var(--font-display);font-size:20px;color:#fff;margin:0;line-height:1.1}"+
       ".pdv-launch{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:26px 18px;margin-top:6px;"+
         "background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:18px}"+
@@ -830,7 +831,7 @@ window.RobTop = window.RobTop || {};
 
   function wire(root){
     var back=root.querySelector("#pdBack");
-    if(back) back.onclick=function(){ S.mod=null; render(); window.scrollTo(0,0); };
+    if(back) back.onclick=function(){ S.mod=null; render(); jumpTop(); };
     var wa=root.querySelector("#pdWalkAdd");
     if(wa) wa.onclick=function(){ if(RT.open) RT.open("walk"); };
     var gv=root.querySelector("#pdGive"); if(gv) gv.onclick=openGive;
@@ -845,7 +846,7 @@ window.RobTop = window.RobTop || {};
       b.onclick=function(e){
         var id=b.getAttribute("data-mod");
         if(e && e.target && e.target.closest(".jgl-eye")){ toggleCardHidden(id); return; }
-        if(AREA_MODS[id]){ S.mod=id; S.wseg="want"; render(); window.scrollTo(0,0); return; }
+        if(AREA_MODS[id]){ S.mod=id; S.wseg="want"; render(); jumpTop(); return; }
         if(RT.open) RT.open(id); /* tasks/shop/игры — открыть сам модуль */
       };
     });
@@ -871,7 +872,7 @@ window.RobTop = window.RobTop || {};
       var b=e.target.closest("[data-ptab]"); if(!b) return;
       /* Копилка/Чат теперь ВНУТРИ родителя (таббар остаётся): не уводим в модуль,
          меняем вкладку на месте. Сам модуль (полноэкранный) открывается по кнопке внутри. */
-      S.tab=b.getAttribute("data-ptab"); S.mod=null; render(); window.scrollTo(0,0);
+      S.tab=b.getAttribute("data-ptab"); S.mod=null; render(); jumpTop();
     });
   }
 
@@ -908,7 +909,7 @@ window.RobTop = window.RobTop || {};
     children: function(){ return (S.data && S.data.children) || []; },
     /* ЕДИНОЕ НИЖНЕЕ МЕНЮ (shell.navTo, ПЛАН-нижнее-меню.md Ф3): дашборд переключает
        вкладки apps/bank/chat из общего бара (свой #pdTabs скрыт CSS). */
-    setTab: function(tb){ if(tb && tb!==S.tab){ S.tab=tb; S.mod=null; render(); window.scrollTo(0,0); } },
+    setTab: function(tb){ if(tb && tb!==S.tab){ S.tab=tb; S.mod=null; render(); jumpTop(); } },
     tab: function(){ return S.tab; }
   };
 })(window.RobTop);
