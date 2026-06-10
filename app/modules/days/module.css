@@ -1,7 +1,8 @@
 /* RobTop — модуль «Счётчик дней». Скоуп [data-mod="days"], классы day-/dy-. Акцент — синий var(--blue).
    Карточка-«календарик»: слева отрывной листок с числом оставшихся дней, справа название и дата.
    Шторка детали (.dy-detail) рендерится в body — её селекторы НЕ скоупим. */
-[data-mod="days"]{ --dy:var(--blue); --dy-soft:#bcd0ff; }
+/* скоуп #module-view: голый [data-mod] матчит и плитку на главном (см. find) — там вары безвредны, но не рискуем */
+#module-view[data-mod="days"]{ --dy:var(--blue); --dy-soft:#bcd0ff; }
 /* guardrails: нижний резерв даёт .rt-body, раскладку шапки — .rt-hdr; здесь — только заголовок */
 [data-mod="days"] .day-title{font-family:var(--font-display);font-size:24px;color:#fff;display:flex;align-items:center;gap:8px;
   text-shadow:0 0 12px color-mix(in srgb,var(--dy) 75%,transparent)}
