@@ -432,26 +432,38 @@
     root.querySelectorAll(".find-rev").forEach(function(card){
       var id=card.getAttribute("data-id");
       card.querySelectorAll("[data-act]").forEach(function(btn){
-        btn.onclick=function(){ review(id, btn.getAttribute("data-act")==="ok"); };
+        btn.onclick=function(){
+          if(card.getAttribute("data-saving")==="1") return;
+          card.setAttribute("data-saving","1");
+          card.querySelectorAll("button").forEach(function(b){ b.disabled=true; });
+          review(id, btn.getAttribute("data-act")==="ok");
+        };
       });
     });
   }
   function review(id, ok){
     var s=findSub(id); if(!s||s.d.st!=="pending") return;
-    s.d.st=ok?"correct":"wrong"; s.d.rev=Date.now();
-    sdk.data.update("subs", id, { st:s.d.st, rev:s.d.rev });
+    var prev=s.d.st, next=ok?"correct":"wrong", rev=Date.now();
+    s.d.st=next; s.d.rev=rev;
     var desc=renderDesc(s.d.adj||[]);
-    if(ok){
-      sdk.points.add(PTS_FIND,"find_correct",{kind:"win", note:desc});
-      sdk.notify.send("child","correct",{ params:{ n:PTS_FIND }, link:{ module:"find" } });
-      maybeBonus(s.d.runId, s.d.diff);
-      sdk.ui.toast(t("approved"));
-    } else {
-      sdk.points.add(PTS_MISS,"find_wrong",{kind:"loss", note:desc});
-      sdk.notify.send("child","wrong",{ params:{ n:Math.abs(PTS_MISS) }, link:{ module:"find" } });
-      sdk.ui.toast(t("rejected"));
-    }
-    renderParent();
+    sdk.data.update("subs", id, { st:next, rev:rev }).then(function(r){
+      if(!r || r.ok===false) throw new Error("save");
+      if(ok){
+        sdk.points.add(PTS_FIND,"find_correct",{kind:"win", note:desc});
+        sdk.notify.send("child","correct",{ params:{ n:PTS_FIND }, link:{ module:"find" } });
+        maybeBonus(s.d.runId, s.d.diff);
+        sdk.ui.toast(t("approved"));
+      } else {
+        sdk.points.add(PTS_MISS,"find_wrong",{kind:"loss", note:desc});
+        sdk.notify.send("child","wrong",{ params:{ n:Math.abs(PTS_MISS) }, link:{ module:"find" } });
+        sdk.ui.toast(t("rejected"));
+      }
+      renderParent();
+    }).catch(function(){
+      s.d.st=prev; delete s.d.rev;
+      sdk.ui.toast(t("saveFailed"));
+      renderParent();
+    });
   }
   /* бонус +10, когда ОБА раунда сложности в этом круге засчитаны верно (один раз на круг+сложность) */
   function maybeBonus(runId, diff){
