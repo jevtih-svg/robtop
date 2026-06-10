@@ -21,6 +21,7 @@
   --hdr-total:calc(var(--chrome-top) + var(--hdr-h) + var(--safe-top));
   --kidbar-total:calc(var(--kidbar-h) + var(--safe-bottom));
   --tabbar-total:calc(var(--tabbar-h) + var(--safe-bottom));
+  --rt-pwa-gap:0px;
   /* нижние «полки» плавающих элементов — БАР-ОТНОСИТЕЛЬНЫЕ (фаза 3 завершена 2026-06-10):
      меняется высота нижнего меню → все плавающие элементы съезжают сами.
      FAB: 64+12=76px (+6px против старых 70 — теперь гарантированно НАД меню);
@@ -189,15 +190,15 @@ body{
    действий (напр. Виш-лист: назад + заголовок + 3 кнопки) без обрезки на узких экранах */
 .rt-hdr .back,.rt-hdr .hbtn{width:42px;height:42px;border-radius:13px}
 .rt-hdr .back svg,.rt-hdr .hbtn svg{width:20px;height:20px}
-.rt-body{padding-bottom:calc(var(--kidbar-total) + 16px)}
+.rt-body{padding-bottom:calc(var(--kidbar-total) + var(--rt-pwa-gap) + 16px)}
 /* декоративный «экшен» в шапке (не кнопка): напр. иконка-клипборд в «Заданиях» */
 .rt-actions .rt-deco{background:none;border:none;box-shadow:none;color:var(--muted);pointer-events:none}
 
 /* ---- ЕДИНОЕ НИЖНЕЕ МЕНЮ (#kidBar, .rt-nav): 5 вкладок APPS/BANK/CHAT/NOTIFICATIONS/SETTINGS
    (ПЛАН-нижнее-меню.md). Живёт в <body>; видно на детских экранах (home/модуль/настройки/
    оповещения); в полноэкранных сценах прячется (.rt-bar-hide через hud({hidden})). ---- */
-.rt-nav{display:none;position:fixed;left:0;right:0;bottom:0;z-index:14;max-width:480px;margin:0 auto;gap:2px;
-  min-height:var(--kidbar-total);padding:6px 8px calc(6px + var(--safe-bottom));
+.rt-nav{display:none;position:fixed;left:0;right:0;bottom:calc(0px - var(--rt-pwa-gap));z-index:14;max-width:480px;margin:0 auto;gap:2px;
+  min-height:calc(var(--kidbar-total) + var(--rt-pwa-gap));padding:6px 8px calc(6px + var(--safe-bottom) + var(--rt-pwa-gap));
   background:var(--tabbar-grad);border-top:1px solid rgba(255,255,255,.09);backdrop-filter:blur(8px)}
 body[data-view="home"] .rt-nav,body[data-view="module"] .rt-nav,body[data-view="settings"] .rt-nav,body[data-view="notifications"] .rt-nav,body[data-view="parent"] .rt-nav{display:flex}
 /* ВАЖНО — специфичность: префикс body[data-view] обязателен. Без него `.rt-nav.rt-bar-hide`
@@ -232,7 +233,7 @@ body[data-view="module"] .hud{display:none}
 /* полный фикс переполнения родительской шапки (меньше элементов) — за parent.js (чужая зона) */
 
 /* ===================== HOME ===================== */
-#home{padding-bottom:calc(var(--kidbar-total) + 16px)} /* нижнее меню под сеткой — резерв, чтобы плитки не уходили под него */
+#home{padding-bottom:calc(var(--kidbar-total) + var(--rt-pwa-gap) + 16px)} /* нижнее меню под сеткой — резерв, чтобы плитки не уходили под него */
 .hometop{padding:calc(30px + var(--safe-top)) 6px 14px;position:relative}
 .brand{font-family:var(--font-display);font-size:40px;letter-spacing:1px;line-height:1;margin:0;color:#fff;
   text-shadow:var(--brand-glow)}
@@ -438,7 +439,7 @@ body.demo .demo-badge{display:block}
 .store-install:active{transform:scale(.99)}
 
 /* ===================== ЭКРАН НАСТРОЕК (#settings) ===================== */
-#settings{padding-bottom:calc(var(--kidbar-total) + 16px)} /* нижнее меню всегда видно на настройках — резерв снизу */
+#settings{padding-bottom:calc(var(--kidbar-total) + var(--rt-pwa-gap) + 16px)} /* нижнее меню всегда видно на настройках — резерв снизу */
 /* ФОН НАСТРОЕК: прячем анимированный неоновый канвас (#bg) и кладём спокойный градиент темы на body
    (покрывает весь экран, в т.ч. когда контент короче вьюпорта). Контент читается заметно
    контрастнее в ОБЕИХ ролях/темах. Только в этом виде — на остальных экранах канвас как был. */
@@ -450,7 +451,7 @@ body[data-view="settings"]{background-image:var(--settings-bg)}
    .store-install (пунктирная CTA «добавить») намеренно НЕ включена. */
 #settings :is(.acct-row,.set-in,.lang-seg,.theme-card,.invlink,.store-row){background:var(--settings-panel)}
 /* экран оповещений (вкладка нижнего меню): тот же резерв снизу под меню; шапка .set-top, список .ntf-list, секция «Настройки» .store-section+.ntf-push */
-#notifications{padding-bottom:calc(var(--kidbar-total) + 16px)}
+#notifications{padding-bottom:calc(var(--kidbar-total) + var(--rt-pwa-gap) + 16px)}
 #notifications .ntf-list{max-height:none}  /* на экране (не в шторке) список во всю высоту, скролл страницы */
 .set-top{display:flex;align-items:center;gap:12px;padding:calc(26px + var(--safe-top)) 0 8px}
 .set-top h1{font-family:var(--font-display);font-weight:400;font-size:23px;margin:0;color:#fff;

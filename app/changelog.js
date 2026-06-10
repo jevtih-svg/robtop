@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.10.7", d:"2026-06-10", t:{
+    en:"The bottom menu now compensates for the iOS PWA viewport gap after camera and review screens.",
+    ru:"Нижнее меню теперь компенсирует зазор iOS PWA после экранов камеры и проверки.",
+    lv:"Apakšējā izvēlne tagad kompensē iOS PWA skata atstarpi pēc kameras un pārbaudes ekrāniem." } },
   { v:"2026.06.10.6", d:"2026-06-10", t:{
     en:"Leaving camera and review screens now restores the PWA viewport so the bottom menu stays pinned.",
     ru:"После выхода из экранов камеры и проверки PWA восстанавливает экран, а нижнее меню остаётся внизу.",
