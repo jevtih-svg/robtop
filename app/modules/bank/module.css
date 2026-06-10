@@ -76,6 +76,11 @@
 @media (min-width:390px){
   [data-mod="bank"] .bk-mgr-btns{grid-template-columns:1fr 1fr}
 }
+[data-mod="bank"] .bk-assign{width:100%;min-height:44px;margin:12px 0 12px;justify-content:flex-start}
+[data-mod="bank"] .bk-assign.attention{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 48%,transparent);
+  background:color-mix(in srgb,var(--gold) 9%,rgba(var(--panel-rgb),.72))}
+[data-mod="bank"] .bk-asgn-top{display:flex;margin-bottom:10px}
+[data-mod="bank"] .bk-asgn-top .btn{min-height:42px;padding:0 14px}
 
 /* вкладки Задания / История */
 [data-mod="bank"] .bk-tabs{display:flex;gap:8px;margin:16px 0 10px}

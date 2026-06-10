@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.10.5", d:"2026-06-10", t:{
+    en:"Piggy Bank now opens as a transaction history for parents; assignments live on a separate screen when you need them.",
+    ru:"Копилка у родителя теперь открывается как история операций; назначения живут на отдельном экране, когда они нужны.",
+    lv:"Vecākiem Krājkase tagad atveras kā darījumu vēsture; uzdevumi dzīvo atsevišķā ekrānā, kad tie ir vajadzīgi." } },
   { v:"2026.06.10.4", d:"2026-06-10", t:{
     en:"Parent fixes: Bank actions are simpler, task approvals can be handled from notifications, photos save more reliably, and history has filters.",
     ru:"Исправления для родителя: в Копилке меньше лишних кнопок, задания можно одобрять из оповещений, фото сохраняются надёжнее, а история получила фильтры.",

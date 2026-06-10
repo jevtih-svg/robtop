@@ -38,6 +38,7 @@
       emptyLog:"No points yet — play games and do tasks!",
       subParent:"Manage points and tasks",
       mgrAdd:"+ Add points", mgrFine:"⚠️ Fine",
+      assignments:"Assignments", assignmentsN:"Assignments · {n} waiting", backHistory:"History",
       giveTitle:"Add points", penTitle:"Fine",
       txCount:{one:"{n} entry",other:"{n} entries"},
       fltAll:"All", fltTasks:"Tasks", fltGames:"Games", fltApps:"Apps", fltParents:"Parents", fltShop:"Shop", moreLog:"Show more",
@@ -111,6 +112,7 @@
       emptyLog:"Пунктов пока нет — играй и выполняй задания!",
       subParent:"Управляй очками и заданиями",
       mgrAdd:"+ Начислить", mgrFine:"⚠️ Штраф",
+      assignments:"Назначения", assignmentsN:"Назначения · {n} ждут", backHistory:"История",
       giveTitle:"Начислить пункты", penTitle:"Штраф",
       txCount:{one:"{n} запись",few:"{n} записи",many:"{n} записей"},
       fltAll:"Все", fltTasks:"Задания", fltGames:"Игры", fltApps:"Приложения", fltParents:"Родители", fltShop:"Магазин", moreLog:"Показать ещё",
@@ -184,6 +186,7 @@
       emptyLog:"Punktu vēl nav — spēlē un pildi uzdevumus!",
       subParent:"Pārvaldi punktus un uzdevumus",
       mgrAdd:"+ Pieskaitīt", mgrFine:"⚠️ Sods",
+      assignments:"Uzdevumi", assignmentsN:"Uzdevumi · {n} gaida", backHistory:"Vēsture",
       giveTitle:"Pieskaitīt punktus", penTitle:"Sods",
       txCount:{zero:"{n} ierakstu",one:"{n} ieraksts",other:"{n} ieraksti"},
       fltAll:"Visi", fltTasks:"Uzdevumi", fltGames:"Spēles", fltApps:"Lietotnes", fltParents:"Vecāki", fltShop:"Veikals", moreLog:"Rādīt vairāk",
@@ -276,7 +279,7 @@
 
   var sdk=null, root=null, alive=false, busy=false, curSheet=null;
   var E={};
-  var S={ balance:0, streak:0, items:[], tasks:[], tab:"tasks", logType:"all", logShown:60, loaded:false, err:false };
+  var S={ balance:0, streak:0, items:[], tasks:[], tab:"tasks", assign:false, logType:"all", logShown:60, loaded:false, err:false };
   var KNOWN_R={ teeth:1, teeth_manual:1, guess_win:1, guess_wrong:1, guess_timeout:1, streak_bonus:1,
                 parent_give:1, parent_take:1, parent_penalty:1, task_done:1, task_fail:1, daily_bonus:1, spend:1, spend_refund:1 };
   var LIST_STEP=60;
@@ -564,6 +567,7 @@
   function renderTasks(){ /* вкладка «Задания»: родитель/ребёнок (в демо — родительский вид) */
     var box=E.list, b=bucket(), h="";
     if(parentCtl()){
+      h+='<div class="bk-asgn-top"><button class="btn btn-cancel" data-act="backlog">'+esc(t("backHistory"))+'</button></div>';
       h+='<button class="btn btn-cancel bk-addtask" data-act="add">'+esc(t("btnAddTask"))+'</button>';
       h+=section("secReview", b.review, "review");
       h+=section("secActive", b.active, "active");
@@ -586,6 +590,7 @@
     var act=b.getAttribute("data-act");
     if(act==="add"){ openTaskSheet(null); return; }
     if(act==="propose"){ openProposeSheet(); return; }
+    if(act==="backlog"){ S.assign=false; render(); return; }
     if(act==="morelog"){ S.logShown+=LIST_STEP; renderList(); return; }
     var tk=taskOf(b.getAttribute("data-tid")); if(!tk) return;
     if(act==="edit"){ openTaskSheet(tk); }
@@ -612,6 +617,10 @@
     }
     var an=S.err?0:actionable();
     if(E.tabN){ E.tabN.textContent=an; E.tabN.hidden=!(an>0); }
+    if(E.assignBtn){
+      E.assignBtn.textContent=an>0?t("assignmentsN",{n:an}):t("assignments");
+      E.assignBtn.classList.toggle("attention", an>0);
+    }
     renderList();
   }
   function renderList(){
@@ -621,7 +630,8 @@
       var rb=box.querySelector("#bkRetry"); if(rb) rb.onclick=function(){ S.err=false; load(); };
       return;
     }
-    if(S.tab==="tasks"){ renderTasks(); return; }   /* вкладка заданий — своё секционное управление */
+    if(parentCtl() && S.assign){ renderTasks(); return; } /* родительские назначения живут отдельно от лога */
+    if(!parentCtl() && S.tab==="tasks"){ renderTasks(); return; }   /* детская вкладка заданий */
     /* вкладка «История»: ЕДИНЫЙ лог ВСЕХ транзакций, фильтры по типу, догрузка порциями */
     var rows=filteredItems(), html="", i, it, d, n, types=["all","tasks","games","apps","parents","shop"];
     if(!rows.length){
@@ -749,8 +759,8 @@
   /* ---------- каркас ---------- */
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; alive=true; busy=false; curSheet=null;
-    S={ balance:0, streak:0, plus:0, items:[], tasks:[], tab:"tasks", logType:"all", logShown:LIST_STEP, loaded:false, err:false };
     var mgr=parentCtl();
+    S={ balance:0, streak:0, plus:0, items:[], tasks:[], tab:(mgr?"log":"tasks"), assign:false, logType:"all", logShown:LIST_STEP, loaded:false, err:false };
     /* guardrails: шапку строит общая рамка (sdk.ui.frame); модуль наполняет только body. Иконки-действия в шапке нет. */
     var body=sdk.ui.frame({
       titleHtml:'<div class="bk-title">'+esc(t("title"))+'</div><div class="bk-sub">'+esc(t(mgr?"subParent":"subtitle"))+'</div>',
@@ -775,19 +785,21 @@
             +'<div class="bk-pig-label">'+esc(t("ptsWord"))+': <b id="bkPts">…</b></div></div>'
           +'<div class="bk-earned" id="bkEarned" hidden></div>';
     body.innerHTML='<div class="bk">'+stage
-      +'<nav class="bk-tabs" id="bkTabs">'
-        +'<button class="bk-tab active" data-tab="tasks">'+esc(t("tabTasks"))
-          +'<span class="bk-tab-n" id="bkTabN" hidden>0</span></button>'
-        +'<button class="bk-tab" data-tab="log">'+esc(t("tabLog"))+'</button></nav>'
+      +(mgr?'<button class="btn btn-cancel bk-assign" id="bkAssign">'+esc(t("assignments"))+'</button>'
+        :'<nav class="bk-tabs" id="bkTabs">'
+          +'<button class="bk-tab active" data-tab="tasks">'+esc(t("tabTasks"))
+            +'<span class="bk-tab-n" id="bkTabN" hidden>0</span></button>'
+          +'<button class="bk-tab" data-tab="log">'+esc(t("tabLog"))+'</button></nav>')
       +'<section class="bk-list" id="bkList"></section>'
       +'</div>';
     var el=body.querySelector(".bk");
-    E={ tabs:el.querySelector("#bkTabs"), list:el.querySelector("#bkList"), tabN:el.querySelector("#bkTabN") };
+    E={ tabs:el.querySelector("#bkTabs"), list:el.querySelector("#bkList"), tabN:el.querySelector("#bkTabN"), assignBtn:el.querySelector("#bkAssign") };
     if(mgr){
       E.mgrBal=el.querySelector("#bkMgrBal");
       el.querySelectorAll(".bk-mgr-btns [data-op]").forEach(function(b){
         b.onclick=function(){ openPointsSheet(b.getAttribute("data-op")); };
       });
+      if(E.assignBtn) E.assignBtn.onclick=function(){ S.assign=true; render(); };
     } else {
       E.pts=el.querySelector("#bkPts"); E.flame=el.querySelector("#bkFlame"); E.flameN=el.querySelector("#bkFlameN");
       E.plus=el.querySelector("#bkPlus"); E.plusN=el.querySelector("#bkPlusN");
@@ -800,7 +812,7 @@
         sdk.ui.haptics("light"); sdk.ui.chime();
       });
     }
-    E.tabs.addEventListener("click",function(e){
+    if(E.tabs) E.tabs.addEventListener("click",function(e){
       var b=e.target.closest(".bk-tab"); if(!b || !alive) return;
       S.tab=b.getAttribute("data-tab");
       if(S.tab==="log") S.logShown=LIST_STEP;
@@ -831,6 +843,12 @@
     if(busy || curSheet) return false;  // занят — повторить позже
     load(); return true;
   }
+  function link(){
+    if(parentCtl()){
+      S.assign=true;
+      render();
+    }
+  }
 
-  RobTop.register({ id:"bank", mount:mount, unmount:unmount, refresh:refresh, messages:MESSAGES });
+  RobTop.register({ id:"bank", mount:mount, unmount:unmount, refresh:refresh, link:link, messages:MESSAGES });
 })();
