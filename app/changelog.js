@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.10.9", d:"2026-06-10", t:{
+    en:"Fixed the app tiles ballooning on the home screen and parent dashboard after opening Find the Object.",
+    ru:"Починили раздувание плиток на главном экране и родительском дашборде после захода в «Найти предмет».",
+    lv:"Salabots flīžu izplešanās sākuma ekrānā un vecāku panelī pēc «Atrodi priekšmetu» atvēršanas." } },
   { v:"2026.06.10.8", d:"2026-06-10", t:{
     en:"Parent dashboard now keeps its own stable scroll frame after leaving review screens.",
     ru:"Родительский экран теперь держит собственную стабильную прокрутку после выхода из экранов проверки.",

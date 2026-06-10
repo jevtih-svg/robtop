@@ -2,7 +2,10 @@
    Использует токены core/ui.css, акцент — var(--cyan) + токены цветов сложности
    (хардкод-hex заменён токенами, иначе ломалась светлая тема «tilley»). */
 
-[data-mod="find"]{ --fd:var(--cyan); --fd-easy:var(--mint); --fd-medium:var(--gold); --fd-hard:var(--orange); --fd-impossible:var(--red);
+/* ВАЖНО — скоуп #module-view: атрибут data-mod="find" носит И ПЛИТКА на главном/дашборде
+   (tileHtml/карточки родителя). Голый [data-mod="find"] навешивал этот padding на плитку —
+   после первого захода в модуль плитка «Найти предмет» раздувалась (баг Джеффа 2026-06-10). */
+#module-view[data-mod="find"]{ --fd:var(--cyan); --fd-easy:var(--mint); --fd-medium:var(--gold); --fd-hard:var(--orange); --fd-impossible:var(--red);
   /* guardrails: универсальный детский бар «Домой» виден и в find — резервируем низ,
      чтобы камера и кнопки «Сфоткать/Отправить» сидели ВЫШЕ бара, а не под ним */
   padding-bottom:calc(var(--kidbar-total) + 8px); }
