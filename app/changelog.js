@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.10.11", d:"2026-06-10", t:{
+    en:"Find the Object is fully fixed: stuck photo reviews are cleared automatically (points were already given), and new photos always upload properly.",
+    ru:"«Найти предмет» починен полностью: застрявшие проверки фото расчищены автоматически (очки за них уже начислены), а новые фото всегда загружаются правильно.",
+    lv:"«Atrodi priekšmetu» pilnībā salabots: iestrēgušās foto pārbaudes iztīrītas automātiski (punkti jau bija piešķirti), un jaunie foto vienmēr augšupielādējas pareizi." } },
   { v:"2026.06.10.10", d:"2026-06-10", t:{
     en:"Find the Object review: items already reviewed earlier no longer error — the list refreshes itself; save errors now show the exact reason.",
     ru:"Проверка «Найти предмет»: уже проверенные ранее находки больше не дают ошибку — список обновляется сам; ошибки сохранения теперь показывают точную причину.",

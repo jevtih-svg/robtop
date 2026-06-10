@@ -52,7 +52,7 @@
       diff:"Difficulty",
       sCorrect:"correct", sWrong:"wrong", sTimeout:"too slow", sSkipped:"skipped",
       setCooldown:"Break between games (minutes)", save:"Save", saved:"Saved",
-      saveFailed:"Couldn't save", loadFailed:"Couldn't load — try again", alreadyDecided:"Already reviewed — refreshing the list"
+      saveFailed:"Couldn't save", loadFailed:"Couldn't load — try again", alreadyDecided:"Already reviewed — refreshing the list", uploadFail:"Photo didn't upload — tap Send again"
     }},
     ru:{ find:{
       subtitle:"Найди настоящий предмет и сфоткай!",
@@ -83,7 +83,7 @@
       diff:"Сложность",
       sCorrect:"верно", sWrong:"неверно", sTimeout:"не успел", sSkipped:"пропущено",
       setCooldown:"Перерыв между играми (минут)", save:"Сохранить", saved:"Сохранено",
-      saveFailed:"Не удалось сохранить", loadFailed:"Не удалось загрузить — попробуй ещё раз", alreadyDecided:"Уже проверено — обновляю список"
+      saveFailed:"Не удалось сохранить", loadFailed:"Не удалось загрузить — попробуй ещё раз", alreadyDecided:"Уже проверено — обновляю список", uploadFail:"Фото не загрузилось — нажми «Отправить» ещё раз"
     }},
     lv:{ find:{
       subtitle:"Atrodi īstu priekšmetu un nofotografē!",
@@ -114,7 +114,7 @@
       diff:"Grūtība",
       sCorrect:"pareizi", sWrong:"nepareizi", sTimeout:"par lēnu", sSkipped:"izlaists",
       setCooldown:"Pārtraukums starp spēlēm (minūtes)", save:"Saglabāt", saved:"Saglabāts",
-      saveFailed:"Neizdevās saglabāt", loadFailed:"Neizdevās ielādēt — mēģini vēlreiz", alreadyDecided:"Jau pārbaudīts — atjaunoju sarakstu"
+      saveFailed:"Neizdevās saglabāt", loadFailed:"Neizdevās ielādēt — mēģini vēlreiz", alreadyDecided:"Jau pārbaudīts — atjaunoju sarakstu", uploadFail:"Foto neielādējās — nospied «Sūtīt» vēlreiz"
     }}
   };
 
@@ -358,8 +358,20 @@
       nextRound();
     }
     if(sdk.isDemo()){ finish(run.photo); return; }
-    sdk.media.upload(run.photo,"find").then(function(res){ finish(res&&res.path?res.path:run.photo); })
-      .catch(function(){ finish(run.photo); });
+    /* Фото — ТОЛЬКО ПУТЁМ с сервера (правило архитектуры: в БД путь, не бинарь).
+       Старый фолбэк «не загрузилось — кладём dataUrl в сам саб» раздувал строку >64КБ:
+       такие сабы не проходили НИ ОДИН путь сохранения проверки (413/422 bad_data,
+       баг Джеффа 2026-06-10) и навсегда зависали в «На проверке». Теперь при сбое
+       загрузки просто просим повторить — таймер раунда уже остановлен, спешки нет. */
+    sdk.media.upload(run.photo,"find").then(function(res){
+      if(res&&res.path){ finish(res.path); return; }
+      uploadFailed();
+    }).catch(uploadFailed);
+  }
+  function uploadFailed(){
+    if(!run) return;
+    run.sent=false; /* вернуть кнопку «Отправить» — можно повторить тем же фото */
+    sdk.ui.toast(t("uploadFail"));
   }
   function skipRound(){
     if(!run) return; clearInterval(run.timer);
