@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.10.4", d:"2026-06-10", t:{
+    en:"Parent fixes: Bank actions are simpler, task approvals can be handled from notifications, photos save more reliably, and history has filters.",
+    ru:"Исправления для родителя: в Копилке меньше лишних кнопок, задания можно одобрять из оповещений, фото сохраняются надёжнее, а история получила фильтры.",
+    lv:"Vecāku labojumi: Krājkasē ir mazāk lieku pogu, uzdevumus var apstiprināt no paziņojumiem, foto saglabājas uzticamāk, un vēsturei ir filtri." } },
   { v:"2026.06.10.3", d:"2026-06-10", t:{
     en:"Tilley Live is easier to read now, with stronger contrast and the same app typography as the rest of RobTop.",
     ru:"Tilley Live теперь читается лучше: контраст сильнее, а шрифт такой же, как в остальном RobTop.",
