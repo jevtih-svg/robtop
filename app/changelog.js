@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.10.15", d:"2026-06-10", t:{
+    en:"Find the Object: the camera preview now shows live right away (no black screen), photo sending can't get stuck on a weak connection, and the game fits the screen without scrolling.",
+    ru:"«Найти предмет»: превью камеры теперь сразу показывает живую картинку (без чёрного экрана), отправка фото не зависает на слабой связи, а игра помещается на экране без прокрутки.",
+    lv:"«Atrodi priekšmetu»: kameras priekšskatījums tagad uzreiz rāda dzīvu attēlu (bez melna ekrāna), foto sūtīšana neiestrēgst ar vāju savienojumu, un spēle ietilpst ekrānā bez ritināšanas." } },
   { v:"2026.06.10.14", d:"2026-06-10", t:{
     en:"Find the Object: one game now gives 3 tries (skips are free) and the break can't be dodged by leaving the game; sending a photo shows progress and never gets lost silently; the Alerts screen header no longer overflows.",
     ru:"«Найти предмет»: за игру теперь 3 попытки (пропуски не в счёт), перерыв нельзя обойти выходом из игры; отправка фото показывает прогресс и больше не теряется молча; шапка экрана оповещений не вылезает за край.",

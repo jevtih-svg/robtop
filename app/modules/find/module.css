@@ -70,6 +70,12 @@
 .find-acts .ghost{ flex:0 0 auto; opacity:.85; }
 .find-hint{ text-align:center; opacity:.7; font-size:.85rem; margin-top:8px; }
 
+/* индикатор отправки фото (просьба Джеффа 2026-06-10: «грузится/готово/сбой»): спиннер ядра
+   (.rt-spin) оверлеем поверх снимка, пока идёт отправка; в паре с кнопкой «Отправляю…» (renderActs). */
+.find-cam .find-up{ position:absolute; inset:0; z-index:2; display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.55); backdrop-filter:blur(2px); }
+.find-acts button:disabled{ opacity:.6; cursor:default; }
+
 /* ----- родительская проверка ----- */
 .find-tabs{ display:flex; gap:6px; margin:6px 0 14px; }
 .find-tab{ flex:1; min-height:44px; padding:10px; border-radius:12px; border:1px solid var(--line,#ffffff22);
@@ -108,3 +114,18 @@
   color:var(--on-bright); background:var(--fd); cursor:pointer; font-size:1rem; }
 
 .find-empty{ text-align:center; opacity:.65; padding:40px 16px; }
+
+/* ===== ИГРОВОЙ ЭКРАН ВО ВЕСЬ ВЬЮПОРТ (fd-play) — баг Джеффа 2026-06-10 «приложение больше
+   экрана»: камера (max-height:48vh) + шапка + задание + таймер + кнопки + резерв бара не влезали
+   на экран телефона → страница прокручивалась, кнопки «Сфоткать/Отправить» уезжали под фолд.
+   Решение (благословлено ГАЙД-UI-guardrails: height:100dvh + flexbox, без transform, без fixed
+   внутри модуля): на ИГРОВОМ экране фиксируем модуль во весь вьюпорт, камера тянется flex:1 —
+   шапка, камера и кнопки ВСЕГДА видны без прокрутки. Класс fd-play живёт только на игре
+   (стартовый/родительский экраны скроллятся как раньше). #module-view (id) бьёт .view.active. */
+#module-view.fd-play{ display:flex; flex-direction:column; box-sizing:border-box;
+  height:100vh; height:100dvh; overflow:hidden; }
+#module-view.fd-play .rt-hdr{ flex:0 0 auto; }
+#module-view.fd-play .find-game{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
+/* камера забирает остаток высоты; прочие строки игры — естественная высота */
+#module-view.fd-play .find-cam{ flex:1 1 auto; min-height:120px; max-height:none; aspect-ratio:auto; margin:10px 0; }
+#module-view.fd-play .find-acts{ flex:0 0 auto; }

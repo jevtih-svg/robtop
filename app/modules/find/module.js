@@ -192,7 +192,7 @@
   }
 
   function renderEntry(){
-    stopRun(false);
+    stopRun(false); root.classList.remove("fd-play");
     var found=0, played=0, pending=0;
     subs.forEach(function(s){ var st=s.d.st; if(st==="correct") found++; if(st==="correct"||st==="wrong"||st==="timeout"||st==="skipped") played++; if(st==="pending") pending++; });
     var cl=cooldownLeft();
@@ -246,8 +246,13 @@
     enterRound();
   }
   function buildPlayShell(){
+    /* fd-play: игровой экран фиксируем во весь вьюпорт (height:100dvh, flex-колонка), камера
+       тянется flex:1 — шапка/камера/кнопки всегда видны без прокрутки (module.css). Класс
+       снимаем на выходе (renderEntry/renderParent/finishRun/unmount), иначе протечёт в др. модуль. */
+    root.classList.add("fd-play");
     root.innerHTML=
       head(t("hero"), "", true)
+      +'<div class="find-game">'
       +'<div class="find-gameTop">'
         +'<span class="find-lvl"><span class="find-chip" id="fdChip"></span></span>'
         +'<span class="find-round" id="fdRound"></span>'
@@ -257,7 +262,8 @@
       +'<div class="find-tnum" id="fdNum">0:00</div>'
       +'<div class="find-cam" id="fdCam"></div>'
       +'<div class="find-acts" id="fdActs"></div>'
-      +'<div class="find-hint">'+esc(t("pendingNote"))+'</div>';
+      +'<div class="find-hint">'+esc(t("pendingNote"))+'</div>'
+      +'</div>';
     bindBack(stopAndExit);
     E.chip=root.querySelector("#fdChip"); E.round=root.querySelector("#fdRound");
     E.task=root.querySelector("#fdTask"); E.desc=root.querySelector("#fdDesc");
@@ -326,7 +332,14 @@
       navigator.mediaDevices.getUserMedia({ video:{ facingMode:{ ideal:"environment" } }, audio:false })
         .then(function(stream){
           if(!run||destroyed){ stream.getTracks().forEach(function(tr){tr.stop();}); return; }
-          run.stream=stream; var v=root.querySelector("#fdVid"); if(v){ v.srcObject=stream; }
+          run.stream=stream; var v=root.querySelector("#fdVid");
+          if(v){
+            v.srcObject=stream; v.muted=true; v.setAttribute("playsinline","");
+            /* iOS Safari/PWA: srcObject САМ не запускает воспроизведение даже с autoplay —
+               превью застывает на чёрном кадре до съёмки. Стартуем play() явно (+ на metadata). */
+            var play=function(){ try{ var p=v.play(); if(p&&p.catch) p.catch(function(){}); }catch(e){} };
+            v.onloadedmetadata=play; play();
+          }
         })
         .catch(function(){ camFallback(); });
     } else camFallback();
@@ -384,7 +397,7 @@
   function sendPhoto(){
     if(!run||!run.photo||run.sent) return; run.sent=true;
     clearInterval(run.timer);
-    renderActs("sending");
+    renderActs("sending"); sendingOverlay(true);  /* спиннер ядра поверх снимка, пока идёт загрузка */
     var rec={ st:"pending", runId:run.id, step:run.step, diff:run.diff, adj:run.combo, photo:null, ts:Date.now() };
     var desc=renderDesc(run.combo);
     /* Надёжность (баг «фото не всегда отправляется», 2026-06-10): успех объявляем ТОЛЬКО когда
@@ -409,7 +422,9 @@
        загрузки просто просим повторить — таймер раунда уже остановлен, спешки нет.
        Удачно загруженный путь запоминаем: повтор после сбоя create не гоняет фото заново. */
     if(run.uploadedPath){ finish(run.uploadedPath); return; }
-    sdk.media.upload(run.photo,"find").then(function(res){
+    /* API.post — голый fetch без таймаута: на слабом интернете загрузка могла висеть бесконечно
+       (спиннер/«Отправляю…» навсегда). 25с — потолок для лёгкого (~25-70КБ) фото; не успели → сбой. */
+    withTimeout(sdk.media.upload(run.photo,"find"), 25000).then(function(res){
       if(res&&res.path){ if(run) run.uploadedPath=res.path; finish(res.path); return; }
       uploadFailed();
     }).catch(uploadFailed);
@@ -417,8 +432,24 @@
   function uploadFailed(){
     if(!run) return;
     run.sent=false;
-    renderActs("captured"); /* вернуть кнопку «Отправить» — можно повторить тем же фото */
+    sendingOverlay(false); renderActs("captured"); /* убрать спиннер, вернуть кнопку «Отправить» */
     sdk.ui.toast(t("uploadFail"));
+  }
+  /* единый таймаут для промиса (API.post без таймаута, иначе индикатор отправки висит вечно) */
+  function withTimeout(p, ms){
+    return new Promise(function(resolve, reject){
+      var to=setTimeout(function(){ reject(new Error("timeout")); }, ms);
+      Promise.resolve(p).then(function(v){ clearTimeout(to); resolve(v); },
+                              function(e){ clearTimeout(to); reject(e); });
+    });
+  }
+  /* спиннер ядра (.rt-spin) оверлеем поверх снимка на время отправки — наглядный «грузится» в
+     дополнение к кнопке «Отправляю…» (просьба Джеффа: явный индикатор загрузки/готово/сбой) */
+  function sendingOverlay(b){
+    if(!E.cam) return;
+    var ov=E.cam.querySelector(".find-up");
+    if(b){ if(!ov){ ov=document.createElement("div"); ov.className="find-up"; ov.innerHTML='<div class="rt-spin"></div>'; E.cam.appendChild(ov); } }
+    else if(ov&&ov.parentNode){ ov.parentNode.removeChild(ov); }
   }
   function skipRound(){
     if(!run) return; clearInterval(run.timer);
@@ -444,7 +475,7 @@
   }
 
   function finishRun(){
-    endCooldown();
+    endCooldown(); root.classList.remove("fd-play");
     root.innerHTML=head(t("hero"),"",true)
       +'<div class="find-entry"><div class="find-hero">🎉</div>'
       +'<div class="find-lead">'+esc(t("finishTitle"))+'</div>'
@@ -464,6 +495,7 @@
 
   /* =================== РОДИТЕЛЬ: ПРОВЕРКА =================== */
   function renderParent(){
+    root.classList.remove("fd-play");
     var sc=sdk.scopeChild&&sdk.scopeChild();
     root.innerHTML=head(t("parentTitle"), "", false)
       +(sc&&sc.name?'<div class="find-scope">'+esc(t("scope",{name:sc.name}))+'</div>':'')
@@ -627,7 +659,7 @@
     }).catch(function(){ if(!destroyed){ sdk.ui.toast(t("loadFailed")); if(isParentView()) renderParent(); else renderEntry(); } });
   }
   function unmount(){
-    destroyed=true;
+    destroyed=true; if(root) root.classList.remove("fd-play");
     if(run){ clearInterval(run.timer); stopCamera(); run=null; }
     clearInterval(E.coolT);
     clearTimeout(E.finT);
