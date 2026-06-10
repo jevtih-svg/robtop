@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.10.6", d:"2026-06-10", t:{
+    en:"Leaving camera and review screens now restores the PWA viewport so the bottom menu stays pinned.",
+    ru:"После выхода из экранов камеры и проверки PWA восстанавливает экран, а нижнее меню остаётся внизу.",
+    lv:"Izejot no kameras un pārbaudes ekrāniem, PWA atjauno skatu, un apakšējā izvēlne paliek apakšā." } },
   { v:"2026.06.10.5", d:"2026-06-10", t:{
     en:"Piggy Bank now opens as a transaction history for parents; assignments live on a separate screen when you need them.",
     ru:"Копилка у родителя теперь открывается как история операций; назначения живут на отдельном экране, когда они нужны.",

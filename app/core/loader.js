@@ -87,6 +87,7 @@ window.RobTop = window.RobTop || {};
     if(RT._shell.fabDestroy) RT._shell.fabDestroy();
     var view=RT._shell.moduleView(); if(view){ view.innerHTML=""; view.removeAttribute("data-mod"); }
     RT._current=null;
+    if(RT._shell.restoreViewportAfterModule) RT._shell.restoreViewportAfterModule();
   }
   RT.closeCurrent = closeCurrent;
   RT.close = function(){ closeCurrent(); RT._shell.showHome(); };

@@ -362,6 +362,21 @@ window.RobTop = window.RobTop || {};
     ov.addEventListener("click",function(e){ if(e.target===ov) close(); });
     return { close:close, overlay:ov, sheet:sh };
   }
+  function restoreViewportAfterModule(){
+    try{
+      var ae=document.activeElement;
+      if(ae && /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(ae.tagName)) ae.blur();
+    }catch(e){}
+    try{
+      document.documentElement.style.setProperty("--kb","0px");
+      document.documentElement.classList.remove("kb-open");
+      var r=document.getElementById("root"); if(r) r.style.minHeight="";
+    }catch(e){}
+    requestAnimationFrame(function(){
+      rtForceFullViewport();
+      setTimeout(rtForceFullViewport,260);
+    });
+  }
 
   function setDemo(b){ demo=b; RT._shell.demo=b; body.classList.toggle("demo",b); }
 
@@ -1654,7 +1669,8 @@ window.RobTop = window.RobTop || {};
        iOS-PWA после такого оставляет layout-вьюпорт КОРОЧЕ экрана → fixed-бар застревает выше
        реального низа, под ним native-полоса = «щель». Зовётся при размонтировании, чтобы
        заново развернуть вьюпорт на полную высоту (та же механика, что на load/pageshow). */
-    fixViewport:rtForceFullViewport
+    fixViewport:rtForceFullViewport,
+    restoreViewportAfterModule:restoreViewportAfterModule
   };
 
   /* Восстановить экран после обновления страницы (память rt_screen).
