@@ -34,6 +34,7 @@ window.RobTop = window.RobTop || {};
   function mediaResize(file, max, quality, cb){
     var reader=new FileReader();
     reader.onload=function(ev){
+      if(!ev.target || !ev.target.result){ cb(null); return; }
       var img=new Image();
       img.onload=function(){
         var w=img.width, h=img.height;
@@ -46,6 +47,8 @@ window.RobTop = window.RobTop || {};
       img.onerror=function(){ cb(ev.target.result); };
       img.src=ev.target.result;
     };
+    reader.onerror=function(){ cb(null); };
+    reader.onabort=function(){ cb(null); };
     reader.readAsDataURL(file);
   }
   /* i18n-ключ: "common.*" и "err.*" — общий словарь; остальное — в неймспейсе модуля */
@@ -398,6 +401,7 @@ window.RobTop = window.RobTop || {};
               if(input.parentNode) input.parentNode.removeChild(input);
               if(!file){ resolve(null); return; }
               mediaResize(file, opts.max||900, opts.quality||0.82, function(dataUrl){
+                if(!dataUrl){ resolve(null); return; }
                 if(opts.onLocal){ try{ opts.onLocal(dataUrl); }catch(e){} }
                 if(RT.isDemo()){ resolve({ path:dataUrl, dataUrl:dataUrl, demo:true }); return; }
                 media.upload(dataUrl, opts.kind||mod).then(function(res){

@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.10.13", d:"2026-06-10", t:{
+    en:"Mood of the Day photo upload now shows progress and waits for the real uploaded photo before saving.",
+    ru:"В «Настроении дня» фото теперь показывает загрузку и сохраняется только после настоящей загрузки на сервер.",
+    lv:"«Dienas garastāvoklī» foto tagad rāda augšupielādi un saglabājas tikai pēc īstas ielādes serverī." } },
   { v:"2026.06.10.12", d:"2026-06-10", t:{
     en:"Find the Object photos are now tiny (but still clear), so they upload reliably even on weak internet.",
     ru:"Фото в «Найти предмет» теперь совсем лёгкие (но разборчивые) — загружаются надёжно даже на слабом интернете.",

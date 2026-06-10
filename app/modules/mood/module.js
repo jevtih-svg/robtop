@@ -17,7 +17,7 @@
       names:{ happy:"Happy", mid:"So-so", sad:"Sad" },
       why:"Because…", whyPh:"e.g. I was kind today",
       liked:"What I liked most today…", likedPh:"e.g. watching a movie",
-      addPhoto:"Add photo", replacePhoto:"Replace photo",
+      addPhoto:"Add photo", replacePhoto:"Replace photo", uploadingPhoto:"Uploading photo…", photoWait:"Wait for the photo to finish uploading",
       editBtn:"Edit",
       savedToast:"Mood saved: {name}", saveFailed:"Couldn't save",
       photoFailed:"Couldn't upload photo", loadFailed:"Couldn't load entries",
@@ -38,7 +38,7 @@
       names:{ happy:"Весёлое", mid:"Среднее", sad:"Грустное" },
       why:"Потому что…", whyPh:"например: я сегодня добрый",
       liked:"Мне сегодня понравилось…", likedPh:"например: смотреть кино",
-      addPhoto:"Добавить фото", replacePhoto:"Заменить фото",
+      addPhoto:"Добавить фото", replacePhoto:"Заменить фото", uploadingPhoto:"Фото загружается…", photoWait:"Подожди, пока фото загрузится",
       editBtn:"Изменить",
       savedToast:"Настроение отмечено: {name}", saveFailed:"Не удалось сохранить",
       photoFailed:"Не удалось загрузить фото", loadFailed:"Не удалось загрузить записи",
@@ -59,7 +59,7 @@
       names:{ happy:"Priecīgs", mid:"Vidējs", sad:"Skumjš" },
       why:"Tāpēc ka…", whyPh:"piemēram: es šodien biju labs",
       liked:"Šodien man visvairāk patika…", likedPh:"piemēram: skatīties filmu",
-      addPhoto:"Pievienot foto", replacePhoto:"Nomainīt foto",
+      addPhoto:"Pievienot foto", replacePhoto:"Nomainīt foto", uploadingPhoto:"Foto augšupielādējas…", photoWait:"Pagaidi, līdz foto augšupielādējas",
       editBtn:"Mainīt",
       savedToast:"Garastāvoklis atzīmēts: {name}", saveFailed:"Neizdevās saglabāt",
       photoFailed:"Neizdevās augšupielādēt foto", loadFailed:"Neizdevās ielādēt ierakstus",
@@ -92,8 +92,8 @@
   };
   var MOOD_KEYS=["happy","mid","sad"];
 
-  var sdk=null, root=null, E={}, items=[], timer=null, lastSig="", sel=null, form=blankForm(), loaded=false;
-  function blankForm(){ return {open:false, mood:null, photo:null, why:"", liked:""}; }
+  var sdk=null, root=null, E={}, items=[], timer=null, lastSig="", sel=null, form=blankForm(), loaded=false, uploadSeq=0;
+  function blankForm(){ return {open:false, mood:null, photo:null, photoPreview:null, uploading:false, why:"", liked:""}; }
 
   function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
@@ -185,18 +185,19 @@
      чтобы не стирать набранный текст. */
   function renderForm(){
     if(!root||!E.state) return;
+    var photoSrc=form.photoPreview||form.photo||"", photoUrl=photoSrc?sdk.media.url(photoSrc):"";
     E.state.innerHTML='<div class="md-card"><h3 class="md-card-title">'+esc(t("pickTitle"))+'</h3>'
       +facesHtml(form.mood,true,"form")
       +'<label class="md-lbl" for="mdWhy">'+esc(t("why"))+'</label>'
       +'<textarea class="md-ta" id="mdWhy" maxlength="400" placeholder="'+esc(t("whyPh"))+'">'+esc(form.why||"")+'</textarea>'
       +'<label class="md-lbl" for="mdLiked">'+esc(t("liked"))+'</label>'
       +'<textarea class="md-ta" id="mdLiked" maxlength="400" placeholder="'+esc(t("likedPh"))+'">'+esc(form.liked||"")+'</textarea>'
-      +'<div class="md-photo'+(form.photo?" has":"")+'" id="mdPhotoPick" role="button" aria-label="'+esc(t("aria.photo"))+'"'
-        +(form.photo?' style="background-image:url(\''+esc(sdk.media.url(form.photo))+'\')"':"")+'>'
-        +(form.photo?'<span>'+esc(t("replacePhoto"))+'</span>':'<span class="pic">'+CAM_IC+'</span><span>'+esc(t("addPhoto"))+'</span>')
+      +'<div class="md-photo'+(photoSrc?" has":"")+(form.uploading?" uploading":"")+'" id="mdPhotoPick" role="button" aria-label="'+esc(t("aria.photo"))+'"'
+        +(photoSrc?' style="background-image:url(\''+esc(photoUrl)+'\')"':"")+'>'
+        +(form.uploading?'<span>'+esc(t("uploadingPhoto"))+'</span>':(photoSrc?'<span>'+esc(t("replacePhoto"))+'</span>':'<span class="pic">'+CAM_IC+'</span><span>'+esc(t("addPhoto"))+'</span>'))
       +'</div>'
       +'<div class="md-form-actions"><button class="btn btn-cancel" id="mdCancel">'+esc(t("common.cancel"))+'</button>'
-      +'<button class="btn btn-primary" id="mdSave">'+esc(t("common.save"))+'</button></div></div>';
+      +'<button class="btn btn-primary" id="mdSave"'+(form.uploading?" disabled":"")+'>'+esc(t("common.save"))+'</button></div></div>';
   }
   function updateFormFaces(){
     if(!E.state) return;
@@ -206,22 +207,49 @@
   }
 
   /* ----- фото: уменьшение + (демо: dataUrl) / (сервер: upload → путь) ----- */
-  function setPhoto(src){
-    form.photo=src||null;
+  function updatePhotoPick(){
     var pick=E.state&&E.state.querySelector("#mdPhotoPick");
-    if(pick){ pick.classList.toggle("has",!!src); pick.style.backgroundImage=src?"url('"+src+"')":"";
-      pick.innerHTML=src?'<span>'+esc(t("replacePhoto"))+'</span>':'<span class="pic">'+CAM_IC+'</span><span>'+esc(t("addPhoto"))+'</span>'; }
+    if(!pick) return;
+    var src=form.photoPreview||form.photo||"", url=src?sdk.media.url(src):"";
+    pick.classList.toggle("has",!!src);
+    pick.classList.toggle("uploading",!!form.uploading);
+    pick.style.backgroundImage=src?"url('"+esc(url)+"')":"";
+    pick.innerHTML=form.uploading?'<span>'+esc(t("uploadingPhoto"))+'</span>':(src?'<span>'+esc(t("replacePhoto"))+'</span>':'<span class="pic">'+CAM_IC+'</span><span>'+esc(t("addPhoto"))+'</span>');
+    var save=E.state&&E.state.querySelector("#mdSave");
+    if(save) save.disabled=!!form.uploading;
   }
   /* Ф4: единый sdk.media.pick (выбор → ресайз → демо:dataUrl/сервер:путь). onLocal даёт
      мгновенное превью; .then(null) при ОТМЕНЕ (превью не показывали) или при сбое загрузки
      (превью показали — флаг picked отличает их). Заменяет прежние handleFile/uploadPhoto. */
   function pickPhoto(){
-    var pick=E.state&&E.state.querySelector("#mdPhotoPick"), picked=false;
-    sdk.media.pick({ kind:"mood", onLocal:function(dataUrl){ picked=true; setPhoto(dataUrl); if(pick) pick.classList.add("uploading"); } })
+    if(form.uploading) return;
+    var picked=false, token=++uploadSeq;
+    sdk.media.pick({ kind:"mood", onLocal:function(dataUrl){
+        if(token!==uploadSeq) return;
+        if(!dataUrl) return;
+        picked=true;
+        form.uploading=true;
+        form.photoPreview=dataUrl;
+        updatePhotoPick();
+      } })
       .then(function(r){
-        if(pick) pick.classList.remove("uploading");
-        if(r && r.path){ form.photo=r.path; }
-        else if(picked){ setPhoto(null); sdk.ui.toast(t("photoFailed")); }
+        if(token!==uploadSeq) return;
+        form.uploading=false;
+        if(r && r.path){
+          form.photo=r.path;
+          form.photoPreview=null;
+          updatePhotoPick();
+        }else{
+          form.photoPreview=null;
+          updatePhotoPick();
+          if(picked) sdk.ui.toast(t("photoFailed"));
+        }
+      }).catch(function(){
+        if(token!==uploadSeq) return;
+        form.uploading=false;
+        form.photoPreview=null;
+        updatePhotoPick();
+        if(picked) sdk.ui.toast(t("photoFailed"));
       });
   }
 
@@ -231,6 +259,7 @@
     if(!inWindow()){ form=blankForm(); sel=null; sdk.ui.toast(t("waitText")); renderState(); return; }
     var mood=form.mood;
     if(MOOD_KEYS.indexOf(mood)<0){ sdk.ui.toast(t("pickHint")); return; }
+    if(form.uploading){ sdk.ui.toast(t("photoWait")); return; }
     var whyEl=E.state.querySelector("#mdWhy"), likedEl=E.state.querySelector("#mdLiked");
     var day=dayKey();
     var payload={ day:day, mood:mood, why:(whyEl?whyEl.value:"").trim().slice(0,400),
@@ -321,7 +350,7 @@
 
   /* =================== mount / unmount =================== */
   function mount(rootEl, theSdk){
-    sdk=theSdk; root=rootEl; items=[]; sel=null; form=blankForm(); loaded=false;
+    sdk=theSdk; root=rootEl; items=[]; sel=null; form=blankForm(); loaded=false; uploadSeq=0;
     var title=sdk.i18n.t("tile.mood");
     /* guardrails: шапку строит общая рамка (sdk.ui.frame); модуль наполняет только body */
     var body=sdk.ui.frame({
@@ -343,17 +372,19 @@
         if(form.open){ form.mood=key; updateFormFaces(); sdk.ui.haptics(6); return; }
         if(!inWindow() || entryFor(dayKey())) return;
         if(sel===key){ // второй тап по тому же смайлику — подтверждение
-          form={open:true, mood:key, photo:null, why:"", liked:""}; sel=null;
+          uploadSeq++;
+          form=Object.assign(blankForm(), {open:true, mood:key}); sel=null;
           sdk.ui.haptics(10); renderForm();
         } else { sel=key; sdk.ui.haptics(6); renderState(); }
         return;
       }
       if(e.target.closest("#mdSave")){ save(); return; }
-      if(e.target.closest("#mdCancel")){ form=blankForm(); sel=null; renderState(); return; }
+      if(e.target.closest("#mdCancel")){ uploadSeq++; form=blankForm(); sel=null; renderState(); return; }
       if(e.target.closest("#mdEdit")){
         var entry=entryFor(dayKey()); if(!entry) return;
         var d=dataOf(entry);
-        form={open:true, mood:moodOf(entry), photo:d.photo||null, why:d.why||"", liked:d.liked||""};
+        uploadSeq++;
+        form=Object.assign(blankForm(), {open:true, mood:moodOf(entry), photo:d.photo||null, why:d.why||"", liked:d.liked||""});
         renderForm(); return; }
       if(e.target.closest("#mdPhotoPick")){ pickPhoto(); return; }
       var row=e.target.closest(".md-row"); if(row) openDetail(row.getAttribute("data-id"));
@@ -364,6 +395,7 @@
   function unmount(){
     if(timer){ clearInterval(timer); timer=null; }
     E={}; items=[]; root=null; lastSig=""; sel=null; loaded=false;
+    uploadSeq++;
     form=blankForm();
   }
 
