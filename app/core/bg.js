@@ -22,10 +22,10 @@
       preview:{bg:"linear-gradient(150deg,#1a1738 0%,#13102e 55%,#070617 100%)",dots:["#19e3ff","#ff2bd6","#a64bff"]}
     },
     tilley:{
-      metaColor:"#192E28",
-      pal:[[232,68,10],[222,213,190],[95,191,158],[217,164,65]],
-      art:{traces:false,density:24000,size:[[1.5,2.5],[3.5,3.5],[7,6]],speed:.11,alpha:[.32,.38],glow:3.1},
-      preview:{bg:"linear-gradient(150deg,#2E5248 0%,#213D36 55%,#14261F 100%)",dots:["#E8440A","#DED5BE","#5FBF9E"]}
+      metaColor:"#07150F",
+      pal:[[255,101,48],[255,243,214],[134,224,189],[240,196,91]],
+      art:{traces:false,density:22000,size:[[1.5,2.5],[3.5,3.5],[7,6]],speed:.11,alpha:[.36,.42],glow:3.2},
+      preview:{bg:"linear-gradient(150deg,#1F4A37 0%,#163528 55%,#07150F 100%)",dots:["#FF6530","#FFF3D6","#86E0BD"]}
     }
   };
   var DEFAULT_THEME="neon";

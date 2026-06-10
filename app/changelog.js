@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.10.3", d:"2026-06-10", t:{
+    en:"Tilley Live is easier to read now, with stronger contrast and the same app typography as the rest of RobTop.",
+    ru:"Tilley Live теперь читается лучше: контраст сильнее, а шрифт такой же, как в остальном RobTop.",
+    lv:"Tilley Live tagad ir vieglāk lasāms: kontrasts ir spēcīgāks, un fonts ir tāds pats kā pārējā RobTop lietotnē." } },
   { v:"2026.06.10.2", d:"2026-06-10", t:{
     en:"Chat keyboard is steady now: the message box follows the keyboard smoothly, without stutters, floating gaps or a leftover gap at the bottom.",
     ru:"Клавиатура в чате стала стабильной: поле ввода плавно следует за клавиатурой — без подёргиваний, висящих зазоров и остаточной щели снизу.",

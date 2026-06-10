@@ -89,41 +89,41 @@
    Новая тема = блок токенов здесь + THEMES в core/bg.js + allowlist в accounts.php (set_theme)
    + карточка появится в Настройках автоматически (shell строит список из RTTheme.list()). */
 body[data-theme="tilley"]{
-  /* Tilley Live: глубокий лес, лён, оранжевый акцент; Playfair Display + DM Sans */
-  --cyan:#5FBF9E; --magenta:#E8440A; --pink:#E8440A; --purple:#C9A86A;
-  --blue:#5B8FA8; --green:#5FBF9E; --mint:#7FD0AE; --gold:#D9A441; --red:#E05B3A;
-  --ink:#DED5BE; --muted:#A89F87;
-  --accent:#E8440A; --accent-2:#C93A08;
-  --font-display:'Playfair Display',Georgia,serif;
-  --font-body:'DM Sans','Rubik',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  --chrome-ink:#DED5BE;
-  --bg0:#14261F;
+  /* Tilley Live: глубокий лес, лён, оранжевый акцент; контрастнее, без serif-шрифтов. */
+  --cyan:#86E0BD; --magenta:#FF6530; --pink:#FF6530; --purple:#E0BF72;
+  --blue:#86BBD0; --green:#86E0BD; --mint:#98E8C4; --gold:#F0C45B; --red:#FF7658;
+  --ink:#FFF3D6; --muted:#D2C4A3;
+  --accent:#FF6530; --accent-2:#E34D18;
+  --font-display:'Russo One',sans-serif;
+  --font-body:'Rubik',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --chrome-ink:#FFF3D6;
+  --bg0:#07150F;
   --bg-img:
-    radial-gradient(720px 720px at 50% -14%, rgba(232,68,10,.10), transparent 70%),
-    radial-gradient(640px 640px at 50% 114%, rgba(222,213,190,.05), transparent 70%),
-    linear-gradient(180deg,#1B332B 0%, #192E28 55%, #14261F 100%);
+    radial-gradient(720px 720px at 50% -14%, rgba(255,101,48,.18), transparent 70%),
+    radial-gradient(640px 640px at 50% 114%, rgba(255,243,214,.08), transparent 70%),
+    linear-gradient(180deg,#123326 0%, #0D241B 55%, #07150F 100%);
   --tile-bg:
-    linear-gradient(170deg, rgba(222,213,190,.08) 0%, rgba(222,213,190,.03) 30%, transparent 55%),
-    linear-gradient(145deg, rgba(47,90,72,.92) 0%, rgba(36,62,53,.88) 55%, rgba(28,51,41,.85) 100%);
-  --sheet-bg:linear-gradient(180deg, rgba(42,74,68,.97), rgba(20,38,31,.99));
-  --brand-glow:0 0 40px rgba(222,213,190,.16), 0 0 80px rgba(222,213,190,.08);
-  --accent-grad:linear-gradient(180deg,#F25420,#C93A08);
-  --hud-grad:linear-gradient(0deg, rgba(17,31,25,.88), transparent);
-  --tabbar-grad:linear-gradient(0deg, rgba(17,31,25,.95) 60%, transparent);
+    linear-gradient(170deg, rgba(255,243,214,.12) 0%, rgba(255,243,214,.04) 30%, transparent 55%),
+    linear-gradient(145deg, rgba(31,74,55,.96) 0%, rgba(22,53,40,.94) 55%, rgba(12,32,23,.94) 100%);
+  --sheet-bg:linear-gradient(180deg, rgba(23,58,45,.98), rgba(7,21,15,.99));
+  --brand-glow:0 0 34px rgba(255,243,214,.22), 0 0 70px rgba(255,101,48,.13);
+  --accent-grad:linear-gradient(180deg,#FF7441,#D94310);
+  --hud-grad:linear-gradient(0deg, rgba(7,21,15,.92), transparent);
+  --tabbar-grad:linear-gradient(0deg, rgba(7,21,15,.97) 60%, transparent);
   /* расширенная палитра модулей — лес/лён/янтарь, спокойные тона */
-  --orange:#CE8A4A;
-  --ink-2:#D9D0B8; --ink-3:#CCC3A8;
-  --muted-2:#9C9480; --muted-dim:#7E7763;
-  --cyan-soft:#C2DCCD; --green-soft:#BCD8C6; --purple-soft:#D6C49A;
-  --pink-soft:#E8B49A; --red-soft:#E2A691; --gold-soft:#E4D6AC;
-  --on-bright:#1C1710;
-  --panel-rgb:18,33,27;
-  --panel-2:#16291F;
-  --line-strong:#43604F;
-  --ok-grad:linear-gradient(180deg,#6FB592,#49836A);
-  --gold-grad:linear-gradient(180deg,#E0C277,#C09A47);
-  --purple-grad:linear-gradient(135deg,#B89A5E,#8E7440);
-  --cyan-grad:linear-gradient(135deg,#74B49B,#4F8A72);
+  --orange:#EFA25D;
+  --ink-2:#FFF0CF; --ink-3:#EADDBD;
+  --muted-2:#C9BC9B; --muted-dim:#A69A7E;
+  --cyan-soft:#D8F6E8; --green-soft:#D1F2E0; --purple-soft:#F1DDA3;
+  --pink-soft:#FFC0A8; --red-soft:#FFC1B2; --gold-soft:#F7E2AA;
+  --on-bright:#17130C;
+  --panel-rgb:8,24,17;
+  --panel-2:#0A1D14;
+  --line-strong:#6B806D;
+  --ok-grad:linear-gradient(180deg,#95E2BE,#5CA77F);
+  --gold-grad:linear-gradient(180deg,#F3D27C,#D4A84A);
+  --purple-grad:linear-gradient(135deg,#D3B362,#A8863F);
+  --cyan-grad:linear-gradient(135deg,#9BE0C1,#5BAA83);
 }
 /* Tilley: плитки и витрина — льняное «стекло» как в бренде (apps-tilley-menu), а НЕ оранжевый
    неон: сплошной оранжевый --c делал плитки кричащими и слабочитаемыми (фидбек Джеффа).
