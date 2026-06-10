@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.10.14", d:"2026-06-10", t:{
+    en:"Find the Object: one game now gives 3 tries (skips are free) and the break can't be dodged by leaving the game; sending a photo shows progress and never gets lost silently; the Alerts screen header no longer overflows.",
+    ru:"«Найти предмет»: за игру теперь 3 попытки (пропуски не в счёт), перерыв нельзя обойти выходом из игры; отправка фото показывает прогресс и больше не теряется молча; шапка экрана оповещений не вылезает за край.",
+    lv:"«Atrodi priekšmetu»: spēlē tagad 3 mēģinājumi (izlaišanas neskaitās), pauzi nevar apiet izejot no spēles; foto sūtīšana rāda progresu un vairs nepazūd klusi; paziņojumu ekrāna galvene vairs neiziet aiz malas." } },
   { v:"2026.06.10.13", d:"2026-06-10", t:{
     en:"Mood of the Day photo upload now shows progress and waits for the real uploaded photo before saving.",
     ru:"В «Настроении дня» фото теперь показывает загрузку и сохраняется только после настоящей загрузки на сервер.",

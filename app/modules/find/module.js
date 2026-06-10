@@ -4,6 +4,9 @@
    запрещены). Лестница из 4 сложностей по 2 раунда: лёгкий, средний, сложный, невозможный
    (чем сложнее — тем больше прилагательных и больше времени). Прошёл круг — начинается заново.
    Между играми перерыв (кулдаун, настройка родителя), чтобы нельзя было фармить очки.
+   ЛИМИТ (2026-06-10, требование Джеффа): за одну игру 3 РЕАЛЬНЫЕ попытки (отправка фото или
+   таймаут; пропуск попытку не тратит) — затем перерыв. Попытки считаются по сохранённым сабам
+   (playsUsed), поэтому уход из модуля/перезагрузка посреди игры перерыв НЕ обходит.
 
    ПРОВЕРКА (v1, решение Джеффа): ИИ-проверка фото пока не реализована, поэтому «верно/неверно»
    ставит РОДИТЕЛЬ. Ребёнок отправляет фото → оно уходит родителю в очередь (роль parent
@@ -26,14 +29,14 @@
     en:{ find:{
       subtitle:"Find a real object and snap it!",
       hero:"Find the Object",
-      rules:"I name an object. Find it nearby and <b>photograph it</b> before time runs out. A grown-up checks the photo: correct <b>+10</b>, wrong <b>−5</b>, too slow <b>−5</b>. You can skip with no penalty. 4 levels, 2 rounds each — harder levels give more time and a <b>+10</b> bonus.",
+      rules:"I name an object. Find it nearby and <b>photograph it</b> before time runs out. A grown-up checks the photo: correct <b>+10</b>, wrong <b>−5</b>, too slow <b>−5</b>. One game gives <b>3 tries</b>, then a break. Skipping is free and doesn't use a try. Harder levels give more time and a <b>+10</b> bonus.",
       play:"Play", playAgain:"Play again",
       coolLbl:"Next game in", coolHint:"A short break after each game so you don't replay forever.",
       statFound:"found", statTried:"played", statPending:"checking",
       lvEasy:"Easy", lvMedium:"Medium", lvHard:"Hard", lvImpossible:"Impossible",
-      roundOf:"round {i} of {n}",
+      roundOf:"try {i} of {n}",
       qLabel:"FIND",
-      snap:"Snap", retake:"Retake", send:"Send", skip:"Skip", stop:"Stop",
+      snap:"Snap", retake:"Retake", send:"Send", sending:"Sending…", skip:"Skip", stop:"Stop",
       submitted:"Sent for a grown-up to check",
       missed:"Too slow −5",
       camDenied:"Camera is off — allow it, or take a photo with the button",
@@ -57,14 +60,14 @@
     ru:{ find:{
       subtitle:"Найди настоящий предмет и сфоткай!",
       hero:"Найти предмет",
-      rules:"Я называю предмет. Найди его рядом и <b>сфоткай</b>, пока не вышло время. Взрослый проверит фото: верно <b>+10</b>, неверно <b>−5</b>, не успел <b>−5</b>. Можно пропустить без штрафа. 4 уровня по 2 раунда — на сложных больше времени и бонус <b>+10</b>.",
+      rules:"Я называю предмет. Найди его рядом и <b>сфоткай</b>, пока не вышло время. Взрослый проверит фото: верно <b>+10</b>, неверно <b>−5</b>, не успел <b>−5</b>. За игру даётся <b>3 попытки</b>, потом перерыв. Пропуск не тратит попытку. На сложных уровнях больше времени и бонус <b>+10</b>.",
       play:"Играть", playAgain:"Играть снова",
       coolLbl:"Следующая игра через", coolHint:"После игры небольшой перерыв, чтобы не переигрывать без конца.",
       statFound:"найдено", statTried:"сыграно", statPending:"на проверке",
       lvEasy:"Лёгкий", lvMedium:"Средний", lvHard:"Сложный", lvImpossible:"Невозможный",
-      roundOf:"раунд {i} из {n}",
+      roundOf:"попытка {i} из {n}",
       qLabel:"НАЙДИ",
-      snap:"Сфоткать", retake:"Переснять", send:"Отправить", skip:"Пропустить", stop:"Стоп",
+      snap:"Сфоткать", retake:"Переснять", send:"Отправить", sending:"Отправляю…", skip:"Пропустить", stop:"Стоп",
       submitted:"Отправлено взрослому на проверку",
       missed:"Не успел −5",
       camDenied:"Камера выключена — разреши доступ или сфоткай кнопкой",
@@ -88,14 +91,14 @@
     lv:{ find:{
       subtitle:"Atrodi īstu priekšmetu un nofotografē!",
       hero:"Atrodi priekšmetu",
-      rules:"Es nosaucu priekšmetu. Atrodi to tuvumā un <b>nofotografē</b>, kamēr nav beidzies laiks. Pieaugušais pārbauda foto: pareizi <b>+10</b>, nepareizi <b>−5</b>, par lēnu <b>−5</b>. Var izlaist bez soda. 4 līmeņi pa 2 kārtām — grūtākajos vairāk laika un bonuss <b>+10</b>.",
+      rules:"Es nosaucu priekšmetu. Atrodi to tuvumā un <b>nofotografē</b>, kamēr nav beidzies laiks. Pieaugušais pārbauda foto: pareizi <b>+10</b>, nepareizi <b>−5</b>, par lēnu <b>−5</b>. Spēlē ir <b>3 mēģinājumi</b>, tad pauze. Izlaišana netērē mēģinājumu. Grūtākajos līmeņos vairāk laika un bonuss <b>+10</b>.",
       play:"Spēlēt", playAgain:"Spēlēt vēlreiz",
       coolLbl:"Nākamā spēle pēc", coolHint:"Pēc spēles neliels pārtraukums, lai nespēlētu bezgalīgi.",
       statFound:"atrasts", statTried:"spēlēts", statPending:"pārbaudē",
       lvEasy:"Viegls", lvMedium:"Vidējs", lvHard:"Grūts", lvImpossible:"Neiespējams",
-      roundOf:"kārta {i} no {n}",
+      roundOf:"mēģinājums {i} no {n}",
       qLabel:"ATRODI",
-      snap:"Fotografēt", retake:"Pārfotografēt", send:"Sūtīt", skip:"Izlaist", stop:"Stop",
+      snap:"Fotografēt", retake:"Pārfotografēt", send:"Sūtīt", sending:"Sūtu…", skip:"Izlaist", stop:"Stop",
       submitted:"Nosūtīts pieaugušajam pārbaudei",
       missed:"Par lēnu −5",
       camDenied:"Kamera izslēgta — atļauj to vai uzņem foto ar pogu",
@@ -127,6 +130,8 @@
   var TIME={ easy:60, medium:75, hard:90, impossible:120 };   // секунд на раунд
   var PTS_FIND=10, PTS_MISS=-5, PTS_BONUS=10;
   var DEFAULT_COOLDOWN=60;                                     // секунд (родитель меняет)
+  var PLAYS_PER_GAME=3;                                        // реальных попыток за игру; пропуск попытку не тратит
+  var PLAY_STS=["pending","correct","wrong","timeout"];        // статусы-«попытки» (skipped/bonus не считаются)
 
   /* иконка «назад» — из общего реестра оболочки (RobTop._shell.icons), чтобы не дублировать SVG по модулям */
   var HI=(window.RobTop&&RobTop._shell&&RobTop._shell.icons)||{};
@@ -138,7 +143,7 @@
   var sdk=null, root=null, E={};
   var metaRec=null;                 // {id, ptr, cooldownSec, lastRunEnd}
   var subs=[];                      // загруженные отправки (этого ребёнка)
-  var run=null;                     // {id, step, diff, combo, deadline, photo, sent, timer, stream, captured}
+  var run=null;                     // {id, step, diff, combo, deadline, photo, sent, timer, stream, captured, playsBase, plays, uploadedPath}
   var ptab="pending";              // активная вкладка родителя
   var destroyed=false;
 
@@ -176,12 +181,24 @@
 
   /* =================== СТАРТОВЫЙ ЭКРАН РЕБЁНКА =================== */
   function cooldownLeft(){ if(!metaRec) return 0; var ms=metaRec.cooldownSec*1000-(Date.now()-metaRec.lastRunEnd); return Math.max(0, Math.ceil(ms/1000)); }
+  /* потрачено попыток в ТЕКУЩЕМ окне игры (окно открывается, когда кончился последний перерыв).
+     Считаем по СОХРАНЁННЫМ сабам, а не по памяти раунда: выход из модуля или перезагрузка
+     посреди игры счётчик не сбрасывают (раньше так можно было играть без конца, минуя перерыв). */
+  function playsUsed(){
+    if(!metaRec) return 0;
+    var winStart=metaRec.lastRunEnd?metaRec.lastRunEnd+metaRec.cooldownSec*1000:0, n=0;
+    subs.forEach(function(s){ var d=s.d; if(PLAY_STS.indexOf(d.st)>=0 && (d.ts||0)>winStart) n++; });
+    return n;
+  }
 
   function renderEntry(){
     stopRun(false);
     var found=0, played=0, pending=0;
     subs.forEach(function(s){ var st=s.d.st; if(st==="correct") found++; if(st==="correct"||st==="wrong"||st==="timeout"||st==="skipped") played++; if(st==="pending") pending++; });
     var cl=cooldownLeft();
+    /* лимит попыток исчерпан, а перерыв ещё не запущен (игру бросили через нижнее меню
+       или перезагрузку) — перерыв стартует прямо сейчас */
+    if(cl<=0 && playsUsed()>=PLAYS_PER_GAME){ endCooldown(); cl=cooldownLeft(); }
     root.innerHTML=
       head(t("hero"), t("subtitle"), false)
       +'<div class="find-entry">'
@@ -221,7 +238,10 @@
 
   /* =================== ИГРА =================== */
   function startRun(){
-    run={ id:sdk.uid(), step:0, diff:null, combo:null, deadline:0, photo:null, sent:false, timer:null, stream:null, captured:false };
+    /* защита от устаревшей кнопки Play (другая вкладка/гонка): попытки кончились — на перерыв */
+    if(cooldownLeft()>0 || playsUsed()>=PLAYS_PER_GAME){ renderEntry(); return; }
+    run={ id:sdk.uid(), step:0, diff:null, combo:null, deadline:0, photo:null, sent:false, timer:null, stream:null, captured:false,
+          playsBase:playsUsed(), plays:0, uploadedPath:null };
     buildPlayShell();
     enterRound();
   }
@@ -249,11 +269,11 @@
     if(run.step>=LADDER.length){ finishRun(); return; }
     run.diff=LADDER[run.step];
     run.combo=pickCombo(run.diff);
-    run.photo=null; run.captured=false; run.sent=false;
+    run.photo=null; run.captured=false; run.sent=false; run.uploadedPath=null;
     var acc='var(--fd-'+run.diff+')';
     E.task.style.setProperty("--acc", acc);
     E.chip.className="find-chip "+run.diff; E.chip.textContent=diffLabel(run.diff);
-    E.round.textContent=t("roundOf",{i:run.step+1, n:LADDER.length});
+    E.round.textContent=t("roundOf",{i:Math.min(run.playsBase+run.plays+1,PLAYS_PER_GAME), n:PLAYS_PER_GAME});
     E.desc.textContent=renderDesc(run.combo);
     E.fill.style.setProperty("--acc", acc);
     startCamera();
@@ -287,6 +307,8 @@
         +'<button class="ghost" id="fdSkip">'+esc(t("skip"))+'</button>'
         +'<button class="ghost" id="fdStop">'+esc(t("stop"))+'</button>';
       bind("#fdSnap", capture); bind("#fdSkip", skipRound); bind("#fdStop", stopAndExit);
+    } else if(mode==="sending"){ // идёт отправка: кнопка занята, повторные тапы не плодят отправок
+      E.acts.innerHTML='<button class="ok" id="fdSend" disabled>⏳ '+esc(t("sending"))+'</button>';
     } else { // captured
       E.acts.innerHTML='<button class="ok" id="fdSend">✓ '+esc(t("send"))+'</button>'
         +'<button class="ghost" id="fdRetake">'+esc(t("retake"))+'</button>'
@@ -357,52 +379,69 @@
     E.cam.innerHTML='<img alt="" src="'+dataUrl+'">';
     renderActs("captured");
   }
-  function retake(){ if(!run) return; run.photo=null; run.captured=false; startCamera(); renderActs("live"); }
+  function retake(){ if(!run) return; run.photo=null; run.captured=false; run.uploadedPath=null; startCamera(); renderActs("live"); }
 
   function sendPhoto(){
     if(!run||!run.photo||run.sent) return; run.sent=true;
     clearInterval(run.timer);
+    renderActs("sending");
     var rec={ st:"pending", runId:run.id, step:run.step, diff:run.diff, adj:run.combo, photo:null, ts:Date.now() };
     var desc=renderDesc(run.combo);
+    /* Надёжность (баг «фото не всегда отправляется», 2026-06-10): успех объявляем ТОЛЬКО когда
+       саб реально создан на сервере. Раньше create шёл фоном без catch: при сбое тост «Отправлено»
+       уже показан и раунд ушёл дальше, а родитель находку так и не получал. */
     function finish(path){
-      rec.photo=path||run.photo;
-      sdk.data.create("subs", rec).then(function(it){ if(it) subs.push({id:it.id,d:rec}); });
-      sdk.notify.send("parents","pending",{ params:{ name:(sdk.user&&sdk.user.name)||"", desc:desc }, link:{ module:"find" } });
-      sdk.events.track("find_submit",{ diff:run.diff });
-      sdk.ui.haptics(10); sdk.ui.toast(t("submitted"));
-      nextRound();
+      rec.photo=path;
+      sdk.data.create("subs", rec).catch(function(){ return null; }).then(function(it){
+        if(!it){ uploadFailed(); return; } /* саб НЕ создан — честно просим повторить */
+        subs.push({id:it.id,d:rec});
+        sdk.notify.send("parents","pending",{ params:{ name:(sdk.user&&sdk.user.name)||"", desc:desc }, link:{ module:"find" } });
+        sdk.events.track("find_submit",{ diff:rec.diff });
+        sdk.ui.haptics(10); sdk.ui.toast(t("submitted"));
+        afterPlay();
+      });
     }
     if(sdk.isDemo()){ finish(run.photo); return; }
     /* Фото — ТОЛЬКО ПУТЁМ с сервера (правило архитектуры: в БД путь, не бинарь).
        Старый фолбэк «не загрузилось — кладём dataUrl в сам саб» раздувал строку >64КБ:
        такие сабы не проходили НИ ОДИН путь сохранения проверки (413/422 bad_data,
        баг Джеффа 2026-06-10) и навсегда зависали в «На проверке». Теперь при сбое
-       загрузки просто просим повторить — таймер раунда уже остановлен, спешки нет. */
+       загрузки просто просим повторить — таймер раунда уже остановлен, спешки нет.
+       Удачно загруженный путь запоминаем: повтор после сбоя create не гоняет фото заново. */
+    if(run.uploadedPath){ finish(run.uploadedPath); return; }
     sdk.media.upload(run.photo,"find").then(function(res){
-      if(res&&res.path){ finish(res.path); return; }
+      if(res&&res.path){ if(run) run.uploadedPath=res.path; finish(res.path); return; }
       uploadFailed();
     }).catch(uploadFailed);
   }
   function uploadFailed(){
     if(!run) return;
-    run.sent=false; /* вернуть кнопку «Отправить» — можно повторить тем же фото */
+    run.sent=false;
+    renderActs("captured"); /* вернуть кнопку «Отправить» — можно повторить тем же фото */
     sdk.ui.toast(t("uploadFail"));
   }
   function skipRound(){
     if(!run) return; clearInterval(run.timer);
     var rec={ st:"skipped", runId:run.id, step:run.step, diff:run.diff, adj:run.combo, photo:null, ts:Date.now() };
-    sdk.data.create("subs", rec).then(function(it){ if(it) subs.push({id:it.id,d:rec}); });
+    sdk.data.create("subs", rec).then(function(it){ if(it) subs.push({id:it.id,d:rec}); }).catch(function(){});
     nextRound();
   }
   function onTimeout(){
     if(!run||run.sent) return;
     var rec={ st:"timeout", runId:run.id, step:run.step, diff:run.diff, adj:run.combo, photo:null, ts:Date.now() };
-    sdk.data.create("subs", rec).then(function(it){ if(it) subs.push({id:it.id,d:rec}); });
+    sdk.data.create("subs", rec).then(function(it){ if(it) subs.push({id:it.id,d:rec}); }).catch(function(){});
     sdk.points.add(PTS_MISS,"find_timeout",{kind:"loss"});
     sdk.ui.haptics(30); sdk.ui.toast(t("missed"));
-    nextRound();
+    afterPlay();
   }
   function nextRound(){ if(!run) return; stopCamera(); run.step++; enterRound(); }
+  /* реальная попытка израсходована (отправка или таймаут; пропуск сюда не попадает):
+     3 попытки за игру — и круг завершается с перерывом */
+  function afterPlay(){
+    if(!run) return;
+    run.plays++;
+    if(run.playsBase+run.plays>=PLAYS_PER_GAME) finishRun(); else nextRound();
+  }
 
   function finishRun(){
     endCooldown();

@@ -808,9 +808,10 @@ button.pd-ev{cursor:pointer;transition:border-color var(--dur-fast)} button.pd-e
 /* там, где видна ⚙ (главный + дашборд), колокольчик встаёт слева от неё */
 body[data-view="home"] .ntf-bell,body[data-view="parent"] .ntf-bell{right:56px}
 body[data-view="lock"] .ntf-bell,body.demo .ntf-bell,.ntf-bell.ntf-hide{display:none}
-/* 🔔 сверху — ТОЛЬКО на родительском дашборде (Ф1; уйдёт в нижнее меню в Ф3). У ребёнка
-   оповещения — вкладка нижнего меню; верх приложения чистый. */
-body[data-view="home"] .ntf-bell,body[data-view="module"] .ntf-bell,body[data-view="settings"] .ntf-bell,body[data-view="parent"] .ntf-bell{display:none}
+/* 🔔 сверху больше не показываем: оповещения — вкладка нижнего меню (бейдж там же), верх чистый.
+   v.14: добавлен notifications — раньше колокольчик оставался виден ИМЕННО на вкладке оповещений
+   и висел обрезанным поверх «Прочитать все» (баг шапки экрана оповещений). */
+body[data-view="home"] .ntf-bell,body[data-view="module"] .ntf-bell,body[data-view="settings"] .ntf-bell,body[data-view="notifications"] .ntf-bell,body[data-view="parent"] .ntf-bell{display:none}
 body[data-view="parent"] .pd-top{padding-right:var(--gutter);padding-top:calc(30px + var(--safe-top))} /* 🔔/⚙ ушли в нижнее меню — правый резерв под кластер больше не нужен (Ф3) */
 /* то же для дашбордной шапки .pdv-top (её padding-right:100 инжектит parent.js): выше специфичность (#parent) перебивает инлайн */
 #parent .pdv-top{padding-right:var(--gutter)}
@@ -845,7 +846,10 @@ body[data-view="settings"] .set-top{padding-right:48px}
   border-color:color-mix(in srgb, var(--c,var(--cyan)) 30%, transparent)}
 .ntf-dot{flex:none;width:9px;height:9px;border-radius:50%;background:var(--c,var(--cyan));box-shadow:0 0 8px var(--c,var(--cyan))}
 .ntf-empty{text-align:center;color:var(--muted);font-weight:700;padding:18px 0}
-.ntf-readall{width:100%;margin:2px 0 6px}
+/* «Прочитать все»: во всю ширину ТОЛЬКО в шторке-центре (.sheet). На вкладке оповещений та же
+   кнопка живёт в шапке .set-top рядом с заголовком: width:100% при flex:none распирала страницу
+   за правый край экрана (баг шапки, v.14) — там она сжимается по содержимому. */
+.sheet .ntf-readall{width:100%;margin:2px 0 6px}
 /* строка Web Push в центре: текст + системный тумблер (.toggle из магазина) */
 .ntf-push{display:flex;align-items:center;gap:10px;padding:10px 11px;margin-top:8px;border-radius:14px;
   background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09)}
