@@ -16,7 +16,7 @@ rt_require_login(rt_db()); // SEC 2026-06-09: вход обязателен (sin
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') rt_json(['error' => 'method'], 405);
 
 $body = rt_body();
-$kindAllowed = ['wishlist', 'avatars', 'documents', 'events', 'rating', 'mood', 'chat', 'find'];
+$kindAllowed = ['wishlist', 'avatars', 'documents', 'events', 'rating', 'mood', 'chat', 'find', 'walk', 'shop'];
 $kind = (isset($body['kind']) && in_array($body['kind'], $kindAllowed, true)) ? $body['kind'] : 'wishlist';
 $dataUrl = isset($body['dataUrl']) ? (string)$body['dataUrl'] : '';
 

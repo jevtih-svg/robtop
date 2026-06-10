@@ -350,7 +350,14 @@ window.RobTop = window.RobTop || {};
     var sh=document.createElement("div"); sh.className="sheet"; sh.setAttribute("role","dialog");
     var grip=document.createElement("div"); grip.className="grip"; sh.appendChild(grip);
     sh.appendChild(node); ov.appendChild(sh); document.body.appendChild(ov);
-    function close(){ ov.classList.remove("show"); setTimeout(function(){ if(ov.parentNode) ov.parentNode.removeChild(ov); },200); }
+    function close(){
+      ov.classList.remove("show");
+      setTimeout(function(){
+        if(ov.parentNode) ov.parentNode.removeChild(ov);
+        if(document.documentElement.classList.contains("kb-open")) return;
+        rtForceFullViewport();
+      },220);
+    }
     grip.addEventListener("click",close); enableDrag(sh,close);
     ov.addEventListener("click",function(e){ if(e.target===ov) close(); });
     return { close:close, overlay:ov, sheet:sh };

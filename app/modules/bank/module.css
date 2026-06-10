@@ -71,8 +71,11 @@
 [data-mod="bank"] .bk-mgr-bal .l{color:var(--muted);font-weight:700;font-size:13px}
 [data-mod="bank"] .bk-mgr-bal b{font-family:var(--font-display);font-size:30px;line-height:1;color:#fff;
   text-shadow:0 0 12px color-mix(in srgb,var(--red) 70%,transparent)}
-[data-mod="bank"] .bk-mgr-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+[data-mod="bank"] .bk-mgr-btns{display:grid;grid-template-columns:1fr;gap:8px}
 [data-mod="bank"] .bk-mgr-btns .btn{min-height:48px;font-size:14px;padding:0 8px}
+@media (min-width:390px){
+  [data-mod="bank"] .bk-mgr-btns{grid-template-columns:1fr 1fr}
+}
 
 /* вкладки Задания / История */
 [data-mod="bank"] .bk-tabs{display:flex;gap:8px;margin:16px 0 10px}
@@ -84,6 +87,13 @@
 
 /* история транзакций */
 [data-mod="bank"] .bk-count{color:var(--muted);font-size:12px;font-weight:700;margin:2px 2px 8px}
+[data-mod="bank"] .bk-filters{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin:0 0 10px;padding:2px 0 4px}
+[data-mod="bank"] .bk-filters::-webkit-scrollbar{display:none}
+[data-mod="bank"] .bk-filters button{flex:none;min-height:36px;border-radius:999px;border:1px solid color-mix(in srgb,var(--muted) 28%,transparent);
+  background:rgba(var(--panel-rgb),.66);color:var(--muted);font:inherit;font-size:12px;font-weight:800;padding:0 12px;cursor:pointer}
+[data-mod="bank"] .bk-filters button.on{color:#fff;border-color:color-mix(in srgb,var(--red) 55%,transparent);
+  background:color-mix(in srgb,var(--red) 15%,rgba(var(--panel-rgb),.78));box-shadow:0 0 12px -6px var(--red)}
+[data-mod="bank"] .bk-morelog{width:100%;min-height:44px;margin-top:4px}
 [data-mod="bank"] .bk-row{display:flex;align-items:center;gap:12px;padding:10px 12px;margin-bottom:8px;
   border-radius:16px;background:rgba(var(--panel-rgb),.72);border:1px solid color-mix(in srgb,var(--muted) 22%,transparent)}
 [data-mod="bank"] .bk-badge{flex:none;min-width:54px;text-align:center;padding:7px 8px;border-radius:12px;
@@ -204,12 +214,11 @@
 .bk-pbtns{display:flex;flex-direction:column;gap:8px}
 .bk-pbtns .btn{width:100%;min-height:48px}
 .bk-pbtns .bk-hint{display:block;font-size:10px;font-weight:700;color:var(--muted);margin-top:1px}
-/* три кнопки панели в один ряд (Штраф/Снять/Начислить, v1.6.0); штраф — красный акцент */
+/* родительские действия: Начислить / Штраф; штраф — красный акцент */
 .bk-pact .btn{flex:1;padding:14px 6px}
 .bk-pen{color:var(--red-soft);border-color:color-mix(in srgb,var(--red) 45%,transparent)}
-.bk-custom{display:flex;gap:8px;margin-bottom:4px}
+.bk-custom{display:flex;flex-direction:column;gap:10px;margin-bottom:4px}
 .bk-custom input{min-height:46px;border-radius:12px;border:1.5px solid color-mix(in srgb,var(--muted) 35%,transparent);
-  background:rgba(var(--panel-rgb),.8);color:var(--ink);font-weight:700;padding:0 12px;font-size:15px}
+  width:100%;background:rgba(var(--panel-rgb),.8);color:var(--ink);font-weight:700;padding:0 12px;font-size:15px}
 .bk-custom input:focus{outline:none;border-color:color-mix(in srgb,var(--red) 70%,transparent)}
-.bk-custom #bkAmt{flex:0 0 34%}
-.bk-custom #bkNote{flex:1;min-width:0}
+.bk-custom #bkAmt,.bk-custom #bkNote{flex:auto;min-width:0}

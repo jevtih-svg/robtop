@@ -16,6 +16,7 @@ rt_require_login(rt_db()); // SEC 2026-06-09: вход обязателен (sin
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') rt_json(['error' => 'method'], 405);
 
 $uid  = rt_user_id();
+$actorUid = $uid;
 $db   = rt_db();
 $body = rt_body();
 
@@ -71,7 +72,7 @@ if ($module === 'walk' && $coll === 'care' && in_array($op, $writes, true) && $r
 $man = (!empty($mod['manifest'])) ? json_decode($mod['manifest'], true) : [];
 $familyColls = (is_array($man) && !empty($man['familyCollections']) && is_array($man['familyCollections']))
     ? $man['familyCollections'] : [];
-if (is_array($man) && !empty($man['familyPool'])) {
+if ((is_array($man) && !empty($man['familyPool'])) || in_array($coll, $familyColls, true)) {
     $uid = rt_family_pool_uid($db, $uid);
 } elseif (in_array($coll, $familyColls, true)) {
     $uid = rt_family_pool_uid($db, $uid);   // эта коллекция — общесемейная (каталог), остальные скоупятся ниже
@@ -85,8 +86,15 @@ if (is_array($man) && !empty($man['familyPool'])) {
         if ($cid) $uid = $cid;
     }
 }
+$mediaAllowedUids = [$uid, $actorUid];
+if ((is_array($man) && !empty($man['familyPool'])) || in_array($coll, $familyColls, true)) {
+    $mediaAllowedUids = array_values(array_unique(array_merge(
+        $mediaAllowedUids,
+        rt_family_children_uids($db, $actorUid),
+        rt_child_parents($db, $actorUid)
+    )));
+}
 
-$actorUid = rt_user_id();
 function rt_md_json($data) {
     $json = json_encode($data, JSON_UNESCAPED_UNICODE);
     if ($json === false) rt_json(['error' => 'bad data'], 422);
@@ -148,7 +156,7 @@ switch ($op) {
 
     case 'create': {
         $data   = isset($body['data']) && is_array($body['data']) ? $body['data'] : [];
-        rt_md_validate_payload($db, $data, [$uid, $actorUid]);
+        rt_md_validate_payload($db, $data, $mediaAllowedUids);
         $status = isset($data['status']) ? (string)$data['status'] : '';
         $st = $db->prepare(
             "INSERT INTO module_data (user_id, module, collection, status, favorite, sort, data, created_at, updated_at)
@@ -170,7 +178,7 @@ switch ($op) {
         $cur = $r['data'] !== null ? json_decode($r['data'], true) : [];
         if (!is_array($cur)) $cur = [];
         $patch = isset($body['patch']) && is_array($body['patch']) ? $body['patch'] : [];
-        rt_md_validate_payload($db, $patch, [$uid, $actorUid]);
+        rt_md_validate_payload($db, $patch, $mediaAllowedUids);
         $merged = array_merge($cur, $patch);
         $json = rt_md_json($merged);
         $db->prepare("UPDATE module_data SET data=?, updated_at=NOW() WHERE id=? AND user_id=?")

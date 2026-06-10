@@ -1,6 +1,6 @@
 /* RobTop — модуль «Копилка». ДВА ВИДА по роли (v1.10.0, 2026-06-09): РЕБЁНОК — свинка с
    пунктами, огонёк-винстрик и чип-пунктстрик (геймификация); РОДИТЕЛЬ — экран управления
-   БЕЗ свинки/стриков: баланс + кнопки (Начислить/Снять/Штраф/★+5) прямо на экране (иконка-
+   БЕЗ свинки/стриков: баланс + кнопки (Начислить/Штраф) прямо на экране (иконка-
    человек и шторка-панель убраны), плюс создание заданий и очередь проверок во вкладке.
    ДВЕ ВКЛАДКИ у обеих ролей: «Задания» (управление) и «История» (ЕДИНЫЙ лог ВСЕХ транзакций,
    без разделения игры/родители). Вид выбирается parentCtl() = роль parent или демо.
@@ -37,9 +37,10 @@
       tabTasks:"Tasks", tabLog:"History",
       emptyLog:"No points yet — play games and do tasks!",
       subParent:"Manage points and tasks",
-      mgrAdd:"+ Add points", mgrTake:"− Take", mgrFine:"⚠️ Fine", mgrDaily:"★ +5",
-      giveTitle:"Add points", takeTitle:"Take points", penTitle:"Fine",
+      mgrAdd:"+ Add points", mgrFine:"⚠️ Fine",
+      giveTitle:"Add points", penTitle:"Fine",
       txCount:{one:"{n} entry",other:"{n} entries"},
+      fltAll:"All", fltTasks:"Tasks", fltGames:"Games", fltApps:"Apps", fltParents:"Parents", fltShop:"Shop", moreLog:"Show more",
       hudPts:"points", hudStreak:"streak",
       loadFail:"Could not load the piggy bank", retry:"Try again",
       r_teeth:"Teeth brushing", r_teeth_manual:"Parent adjustment",
@@ -81,7 +82,7 @@
       pinfoNote:"No limit — see how long you can keep it!",
       pinfoVs:"The fire 🔥 counts days with tasks. The points streak ⚡ counts pluses in a row. They live separately.",
       secCustom:"Custom amount", amountPh:"How many", notePh:"What for (child will see it)",
-      btnGive:"Give", btnTake:"Take", btnPen:"⚠️ Penalty", needAmount:"Enter a number first",
+      btnGive:"Give", btnPen:"⚠️ Penalty", needAmount:"Enter a number first",
       needNote:"Write what the penalty is for", doneToast:"Done!",
       streakToast:"Win streak: {n} 🔥", bonusToast:"Streak bonus +{n}!",
       btnAddTask:"+ New task", btnPropose:"+ Log a task", btnIDid:"I did it!", btnReview:"Review",
@@ -109,9 +110,10 @@
       tabTasks:"Задания", tabLog:"История",
       emptyLog:"Пунктов пока нет — играй и выполняй задания!",
       subParent:"Управляй очками и заданиями",
-      mgrAdd:"+ Начислить", mgrTake:"− Снять", mgrFine:"⚠️ Штраф", mgrDaily:"★ +5",
-      giveTitle:"Начислить пункты", takeTitle:"Снять пункты", penTitle:"Штраф",
+      mgrAdd:"+ Начислить", mgrFine:"⚠️ Штраф",
+      giveTitle:"Начислить пункты", penTitle:"Штраф",
       txCount:{one:"{n} запись",few:"{n} записи",many:"{n} записей"},
+      fltAll:"Все", fltTasks:"Задания", fltGames:"Игры", fltApps:"Приложения", fltParents:"Родители", fltShop:"Магазин", moreLog:"Показать ещё",
       hudPts:"пунктов", hudStreak:"винстрик",
       loadFail:"Не получилось загрузить копилку", retry:"Попробовать ещё",
       r_teeth:"Чистка зубов", r_teeth_manual:"Поправка родителя",
@@ -153,7 +155,7 @@
       pinfoNote:"Предела нет — проверь, сколько продержишься!",
       pinfoVs:"Огонёк 🔥 считает дни с заданиями. Пунктстрик ⚡ считает плюсы подряд. Они живут отдельно.",
       secCustom:"Произвольная сумма", amountPh:"Сколько", notePh:"За что (увидит ребёнок)",
-      btnGive:"Начислить", btnTake:"Снять", btnPen:"⚠️ Штраф", needAmount:"Сначала введи число",
+      btnGive:"Начислить", btnPen:"⚠️ Штраф", needAmount:"Сначала введи число",
       needNote:"Сначала напиши, за что штраф", doneToast:"Готово!",
       streakToast:"Винстрик: {n} 🔥", bonusToast:"Бонус серии +{n}!",
       btnAddTask:"+ Новое задание", btnPropose:"+ Предложить задание", btnIDid:"Сделал!", btnReview:"Проверить",
@@ -181,9 +183,10 @@
       tabTasks:"Uzdevumi", tabLog:"Vēsture",
       emptyLog:"Punktu vēl nav — spēlē un pildi uzdevumus!",
       subParent:"Pārvaldi punktus un uzdevumus",
-      mgrAdd:"+ Pieskaitīt", mgrTake:"− Noņemt", mgrFine:"⚠️ Sods", mgrDaily:"★ +5",
-      giveTitle:"Pieskaitīt punktus", takeTitle:"Noņemt punktus", penTitle:"Sods",
+      mgrAdd:"+ Pieskaitīt", mgrFine:"⚠️ Sods",
+      giveTitle:"Pieskaitīt punktus", penTitle:"Sods",
       txCount:{zero:"{n} ierakstu",one:"{n} ieraksts",other:"{n} ieraksti"},
+      fltAll:"Visi", fltTasks:"Uzdevumi", fltGames:"Spēles", fltApps:"Lietotnes", fltParents:"Vecāki", fltShop:"Veikals", moreLog:"Rādīt vairāk",
       hudPts:"punkti", hudStreak:"sērija",
       loadFail:"Neizdevās ielādēt krājkasi", retry:"Mēģināt vēlreiz",
       r_teeth:"Zobu tīrīšana", r_teeth_manual:"Vecāku korekcija",
@@ -225,7 +228,7 @@
       pinfoNote:"Limita nav — pārbaudi, cik ilgi noturēsies!",
       pinfoVs:"Uguntiņa 🔥 skaita dienas ar uzdevumiem. Punktu sērija ⚡ skaita plusus pēc kārtas. Tās dzīvo atsevišķi.",
       secCustom:"Brīva summa", amountPh:"Cik daudz", notePh:"Par ko (bērns redzēs)",
-      btnGive:"Pieskaitīt", btnTake:"Noņemt", btnPen:"⚠️ Sods", needAmount:"Vispirms ievadi skaitli",
+      btnGive:"Pieskaitīt", btnPen:"⚠️ Sods", needAmount:"Vispirms ievadi skaitli",
       needNote:"Vispirms uzraksti, par ko sods", doneToast:"Gatavs!",
       streakToast:"Uzvaru sērija: {n} 🔥", bonusToast:"Sērijas bonuss +{n}!",
       btnAddTask:"+ Jauns uzdevums", btnPropose:"+ Piedāvāt uzdevumu", btnIDid:"Izdarīju!", btnReview:"Pārbaudīt",
@@ -273,10 +276,10 @@
 
   var sdk=null, root=null, alive=false, busy=false, curSheet=null;
   var E={};
-  var S={ balance:0, streak:0, items:[], tasks:[], tab:"tasks", loaded:false, err:false };
+  var S={ balance:0, streak:0, items:[], tasks:[], tab:"tasks", logType:"all", logShown:60, loaded:false, err:false };
   var KNOWN_R={ teeth:1, teeth_manual:1, guess_win:1, guess_wrong:1, guess_timeout:1, streak_bonus:1,
                 parent_give:1, parent_take:1, parent_penalty:1, task_done:1, task_fail:1, daily_bonus:1, spend:1, spend_refund:1 };
-  var LIST_CAP=60;
+  var LIST_STEP=60;
   var DONE_CAP=50;          /* лог «Выполнено» во вкладке «Задания» */
 
   function esc(s){ return RobTop.util.esc(s); }
@@ -583,6 +586,7 @@
     var act=b.getAttribute("data-act");
     if(act==="add"){ openTaskSheet(null); return; }
     if(act==="propose"){ openProposeSheet(); return; }
+    if(act==="morelog"){ S.logShown+=LIST_STEP; renderList(); return; }
     var tk=taskOf(b.getAttribute("data-tid")); if(!tk) return;
     if(act==="edit"){ openTaskSheet(tk); }
     else if(act==="claim"){ claimTask(tk); }
@@ -618,20 +622,39 @@
       return;
     }
     if(S.tab==="tasks"){ renderTasks(); return; }   /* вкладка заданий — своё секционное управление */
-    /* вкладка «История»: ЕДИНЫЙ лог ВСЕХ транзакций (без разделения игры/родители), свежие сверху */
-    var rows=S.items||[], html="", i, it, d, n;
+    /* вкладка «История»: ЕДИНЫЙ лог ВСЕХ транзакций, фильтры по типу, догрузка порциями */
+    var rows=filteredItems(), html="", i, it, d, n, types=["all","tasks","games","apps","parents","shop"];
     if(!rows.length){
-      box.innerHTML='<div class="bk-empty"><p>'+esc(t("emptyLog"))+'</p></div>';
+      box.innerHTML=logFilters(types)+'<div class="bk-empty"><p>'+esc(t("emptyLog"))+'</p></div>';
       return;
     }
-    html+='<div class="bk-count">'+esc(plural(rows.length,"txCount",{n:rows.length}))+'</div>';
-    for(i=0;i<rows.length && i<LIST_CAP;i++){
+    html+=logFilters(types)+'<div class="bk-count">'+esc(plural(rows.length,"txCount",{n:rows.length}))+'</div>';
+    for(i=0;i<rows.length && i<S.logShown;i++){
       it=rows[i]; d=it.data||{}; n=parseInt(d.n,10)||0;
       html+='<div class="bk-row"><div class="bk-badge '+(n>=0?"plus":"minus")+'">'+(n>=0?"+":"−")+Math.abs(n)+'</div>'
         +'<div class="bk-row-main"><div class="bk-row-t">'+esc(labelOf(d))+'</div>'
         +'<div class="bk-row-d">'+esc(fmtWhen(it.createdAt))+'</div></div></div>';
     }
+    if(rows.length>S.logShown) html+='<button class="btn btn-cancel bk-morelog" data-act="morelog">'+esc(t("moreLog"))+'</button>';
     box.innerHTML=html;
+  }
+  function logKind(d){
+    d=d||{};
+    if(d.kind==="task_done"||d.kind==="bonus"||d.kind==="daily_bonus"||d.reason==="task_fail") return "tasks";
+    if(d.kind==="parent"||d.kind==="manual") return "parents";
+    if(d.kind==="spend") return "shop";
+    if(d.src==="guess"||d.src==="snake"||/^guess_/.test(d.reason||"")||/^snake_/.test(d.reason||"")) return "games";
+    return "apps";
+  }
+  function filteredItems(){
+    var all=S.items||[], typ=S.logType||"all";
+    if(typ==="all") return all;
+    return all.filter(function(it){ return logKind((it&&it.data)||{})===typ; });
+  }
+  function logFilters(types){
+    return '<div class="bk-filters">'+types.map(function(x){
+      return '<button type="button" class="'+(S.logType===x?"on":"")+'" data-filter="'+x+'">'+esc(t("flt"+x.charAt(0).toUpperCase()+x.slice(1)))+'</button>';
+    }).join("")+'</div>';
   }
 
   /* ---------- «что такое огонёк?» — объяснение для ребёнка (кнопка-огонёк с «i») ---------- */
@@ -683,7 +706,7 @@
   }
 
   /* ---------- действия родителя (прямо на экране управления; шторка-панель и иконка-человек убраны 2026-06-09) ----------
-     op: give (+N) | take (−N) | pen (штраф −N, причина обязательна). «★ +5» (daily) — без шторки. */
+     op: give (+N) | pen (штраф −N, причина обязательна). */
   function pointsResult(out, op, amt, note){
     if(!out || !out.ok){ sdk.ui.toast(t("loadFail")); return false; }
     if(out.bonus) sdk.ui.toast(t("bonusToast",{n:out.bonus}));
@@ -691,21 +714,14 @@
     else sdk.ui.toast(t("doneToast"));
     sdk.ui.haptics("light");
     if(sdk.notify){
-      if(op==="daily") sdk.notify.send("child","daily_bonus",{link:{module:"bank"}});
-      else sdk.notify.send("child", op==="pen"?"penalty":(op==="give"?"points_given":"points_taken"),
+      sdk.notify.send("child", op==="pen"?"penalty":(op==="give"?"points_given":"points_taken"),
             {params:{n:Math.abs(amt),note:note||""},link:{module:"bank"}});
     }
     return true;
   }
-  function doDaily(){ /* «★ +5» — бонус «все задания дня», без шторки */
-    if(busy) return; busy=true;
-    sdk.points.add(5,"daily_bonus",{kind:"daily_bonus",src:"parent"}).then(function(out){
-      busy=false; if(pointsResult(out,"daily",5,"")) load();
-    });
-  }
-  function openPointsSheet(op){ /* give|take|pen — сумма (+ причина для штрафа) */
-    var titleKey = op==="pen"?"penTitle":(op==="take"?"takeTitle":"giveTitle");
-    var doLbl = op==="pen"?"mgrFine":(op==="take"?"mgrTake":"mgrAdd");
+  function openPointsSheet(op){ /* give|pen — сумма (+ причина для штрафа) */
+    var titleKey = op==="pen"?"penTitle":"giveTitle";
+    var doLbl = op==="pen"?"mgrFine":"mgrAdd";
     var box=document.createElement("div");
     box.innerHTML='<h2>'+esc(t(titleKey))+'</h2>'
       +'<div class="bk-custom"><input type="number" id="bkAmt" inputmode="numeric" placeholder="'+esc(t("amountPh"))+'">'
@@ -721,7 +737,6 @@
       if(!v){ sdk.ui.toast(t("needAmount")); return; }
       if(op==="pen" && !note){ sdk.ui.toast(t("needNote")); return; }
       var n = op==="pen" ? [ -Math.abs(v), "parent_penalty", {kind:"parent",src:"parent",note:note} ]
-            : op==="take"? [ -Math.abs(v), "parent_take",    {kind:"parent",src:"parent",note:note} ]
             :              [  Math.abs(v), "parent_give",    {kind:"parent",src:"parent",note:note} ];
       busy=true;
       sdk.points.add(n[0],n[1],n[2]).then(function(out){
@@ -734,7 +749,7 @@
   /* ---------- каркас ---------- */
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; alive=true; busy=false; curSheet=null;
-    S={ balance:0, streak:0, plus:0, items:[], tasks:[], tab:"tasks", loaded:false, err:false };
+    S={ balance:0, streak:0, plus:0, items:[], tasks:[], tab:"tasks", logType:"all", logShown:LIST_STEP, loaded:false, err:false };
     var mgr=parentCtl();
     /* guardrails: шапку строит общая рамка (sdk.ui.frame); модуль наполняет только body. Иконки-действия в шапке нет. */
     var body=sdk.ui.frame({
@@ -747,9 +762,7 @@
           +'<div class="bk-mgr-bal"><span class="l">'+esc(t("balanceNow"))+'</span><b id="bkMgrBal">…</b></div>'
           +'<div class="bk-mgr-btns">'
             +'<button class="btn btn-primary" data-op="give">'+esc(t("mgrAdd"))+'</button>'
-            +'<button class="btn btn-cancel" data-op="take">'+esc(t("mgrTake"))+'</button>'
             +'<button class="btn btn-cancel bk-pen" data-op="pen">'+esc(t("mgrFine"))+'</button>'
-            +'<button class="btn btn-cancel" data-op="daily">'+esc(t("mgrDaily"))+'</button>'
           +'</div></div>'
       : '<div class="bk-stage">'
           +'<button class="bk-flame off" id="bkFlame" aria-label="'+esc(t("infoTitle"))+'">'+FLAME_IC
@@ -773,7 +786,7 @@
     if(mgr){
       E.mgrBal=el.querySelector("#bkMgrBal");
       el.querySelectorAll(".bk-mgr-btns [data-op]").forEach(function(b){
-        b.onclick=function(){ var op=b.getAttribute("data-op"); if(op==="daily") doDaily(); else openPointsSheet(op); };
+        b.onclick=function(){ openPointsSheet(b.getAttribute("data-op")); };
       });
     } else {
       E.pts=el.querySelector("#bkPts"); E.flame=el.querySelector("#bkFlame"); E.flameN=el.querySelector("#bkFlameN");
@@ -790,8 +803,13 @@
     E.tabs.addEventListener("click",function(e){
       var b=e.target.closest(".bk-tab"); if(!b || !alive) return;
       S.tab=b.getAttribute("data-tab");
+      if(S.tab==="log") S.logShown=LIST_STEP;
       E.tabs.querySelectorAll(".bk-tab").forEach(function(x){ x.classList.toggle("active",x===b); });
       renderList();
+    });
+    E.list.addEventListener("click",function(e){
+      var f=e.target.closest("[data-filter]"); if(!f || !E.list.contains(f)) return;
+      S.logType=f.getAttribute("data-filter")||"all"; S.logShown=LIST_STEP; renderList();
     });
     /* делегат кликов по заданиям: узел #bkList пересоздаётся при каждом mount — листенер не копится */
     E.list.addEventListener("click", onListClick);

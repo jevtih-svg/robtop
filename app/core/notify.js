@@ -29,6 +29,7 @@ window.RobTop = window.RobTop || {};
   en:{ ntf:{
     title:"Notifications", empty:"Nothing here yet", readAll:"Mark all as read", settings:"Settings",
     allRead:"All caught up!", open:"Notifications", app:"RobTop",
+    approve:"Approve", approved:"Approved", approveFail:"Could not approve",
     generic:"News from {app}", gone:"This app is not available now",
     push:{ row:"Notifications on this device",
       ios:"To get notifications, add RobTop to your Home Screen (Share → Add to Home Screen)",
@@ -73,6 +74,7 @@ window.RobTop = window.RobTop || {};
   ru:{ ntf:{
     title:"Оповещения", empty:"Пока пусто", readAll:"Прочитать все", settings:"Настройки",
     allRead:"Все прочитаны!", open:"Оповещения", app:"RobTop",
+    approve:"Одобрить", approved:"Одобрено", approveFail:"Не удалось одобрить",
     generic:"Новость из «{app}»", gone:"Это приложение сейчас недоступно",
     push:{ row:"Уведомления на этом устройстве",
       ios:"Чтобы получать уведомления, добавь RobTop на экран «Домой» (Поделиться → На экран «Домой»)",
@@ -115,6 +117,7 @@ window.RobTop = window.RobTop || {};
   lv:{ ntf:{
     title:"Paziņojumi", empty:"Pagaidām tukšs", readAll:"Atzīmēt visus kā izlasītus", settings:"Iestatījumi",
     allRead:"Viss izlasīts!", open:"Paziņojumi", app:"RobTop",
+    approve:"Apstiprināt", approved:"Apstiprināts", approveFail:"Neizdevās apstiprināt",
     generic:"Jaunums no “{app}”", gone:"Šī lietotne šobrīd nav pieejama",
     push:{ row:"Paziņojumi šajā ierīcē",
       ios:"Lai saņemtu paziņojumus, pievieno RobTop sākuma ekrānam (Kopīgot → Pievienot sākuma ekrānam)",
@@ -227,6 +230,15 @@ window.RobTop = window.RobTop || {};
     api({op:"read",id:id}).catch(function(){});
     badge(unreadN-1);
   }
+  function canApprove(it){
+    var p=(it&&it.params)||{};
+    return it && it.src==="tasks" && (it.type==="task_claim" || it.type==="task_proposed") && p.taskId;
+  }
+  function approveTaskFromNtf(it){
+    var p=(it&&it.params)||{}, b={op:"approve",id:p.taskId};
+    if(p.child) b.child=p.child;
+    return RT.API.post("tasks.php",b).then(function(r){ return !!(r&&r.ok); }).catch(function(){ return false; });
+  }
 
   /* =================== БАННЕРЫ (iOS-стиль) =================== */
   function banner(item){
@@ -283,13 +295,14 @@ window.RobTop = window.RobTop || {};
   /* =================== ЦЕНТР (шторка) =================== */
   function rowHtml(it){
     var c=srcColor(it.src);
-    return '<button type="button" class="ntf-row'+(it.read?'':' unread')+'"'
+    return '<div class="ntf-row'+(it.read?'':' unread')+'" role="button" tabindex="0"'
       +(c?' style="--c:'+esc(c)+'"':'')+' data-ntf="'+it.id+'">'
       +(it.read?'':'<span class="ntf-dot"></span>')
       +'<span class="ntf-ic">'+iconHtml(it.src)+'</span>'
       +'<span class="ntf-tx"><span class="msg">'+esc(text(it))+'</span>'
       +'<span class="when">'+esc(appName(it.src))+' · '+esc(when(it.createdAt))+'</span></span>'
-      +'</button>';
+      +(canApprove(it)?'<button type="button" class="btn btn-primary ntf-act" data-approve="'+it.id+'">'+esc(I.t("ntf.approve"))+'</button>':'')
+      +'</div>';
   }
   function openCenter(){
     if(!ready||!shell().sheet) return;
@@ -316,6 +329,20 @@ window.RobTop = window.RobTop || {};
       paint();
     }).catch(function(){ listEl.innerHTML='<p class="ntf-empty">'+esc(I.t("common.failed"))+'</p>'; });
     listEl.addEventListener("click",function(e){
+      var ab=e.target.closest("[data-approve]");
+      if(ab){
+        var aid=parseInt(ab.getAttribute("data-approve"),10), ai=null;
+        items.forEach(function(x){ if(x.id===aid) ai=x; });
+        if(!ai) return;
+        ab.disabled=true;
+        approveTaskFromNtf(ai).then(function(ok){
+          if(!ok){ ab.disabled=false; if(shell().toast) shell().toast(I.t("ntf.approveFail")); return; }
+          ai.read=true; markRead(aid); ab.textContent=I.t("ntf.approved");
+          if(shell().toast) shell().toast(I.t("ntf.approved"));
+          paint();
+        });
+        return;
+      }
       var b=e.target.closest("[data-ntf]"); if(!b) return;
       var id=parseInt(b.getAttribute("data-ntf"),10), it=null;
       items.forEach(function(x){ if(x.id===id) it=x; });
@@ -352,6 +379,20 @@ window.RobTop = window.RobTop || {};
     api({op:"list"}).then(function(r){ items=(r&&r.items)||[]; if(items.length) seenMax=Math.max(seenMax, items[0].id); paint(); })
       .catch(function(){ listEl.innerHTML='<p class="ntf-empty">'+esc(I.t("common.failed"))+'</p>'; });
     listEl.addEventListener("click",function(e){
+      var ab=e.target.closest("[data-approve]");
+      if(ab){
+        var aid=parseInt(ab.getAttribute("data-approve"),10), ai=null;
+        items.forEach(function(x){ if(x.id===aid) ai=x; });
+        if(!ai) return;
+        ab.disabled=true;
+        approveTaskFromNtf(ai).then(function(ok){
+          if(!ok){ ab.disabled=false; if(shell().toast) shell().toast(I.t("ntf.approveFail")); return; }
+          ai.read=true; markRead(aid); ab.textContent=I.t("ntf.approved");
+          if(shell().toast) shell().toast(I.t("ntf.approved"));
+          paint();
+        });
+        return;
+      }
       var b=e.target.closest("[data-ntf]"); if(!b) return;
       var id=parseInt(b.getAttribute("data-ntf"),10), it=null;
       items.forEach(function(x){ if(x.id===id) it=x; });

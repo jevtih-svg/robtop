@@ -15,7 +15,7 @@ window.RobTop = window.RobTop || {};
       if(!r.ok) throw new Error("http "+r.status);
       return r.json();
     },
-    get: function(p){ return fetch(API.base+p,{headers:{"Accept":"application/json"}}).then(function(r){ return API._h(r,p); }); },
+    get: function(p){ return fetch(API.base+p,{headers:{"Accept":"application/json"},cache:"no-store"}).then(function(r){ return API._h(r,p); }); },
     post: function(p,b){ return fetch(API.base+p,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}).then(function(r){ return API._h(r,p); }); }
   };
   RT.API = API;
@@ -225,10 +225,15 @@ window.RobTop = window.RobTop || {};
     var pc=parentChild(); if(pc) b.child=pc;
     return API.post("tasks.php",b);
   }
+  function taskLink(params){
+    var p=params||{}, l={module:"bank"};
+    if(p.taskId!=null) l.item=String(p.taskId);
+    return l;
+  }
   function tasksNotify(to,type,params){ /* fire-and-forget; в демо — no-op */
     if(RT.isDemo()) return;
     /* src:"tasks" — шаблоны текста ntf.ev.tasks.*; deep-link ведёт в Копилку (модуль «Задания» удалён 2026-06-09, UI заданий — вкладка bank) */
-    var b={op:"send",to:to,src:"tasks",type:type,params:params||null,link:{module:"bank"}};
+    var b={op:"send",to:to,src:"tasks",type:type,params:params||null,link:taskLink(params)};
     var pc=parentChild(); if(pc) b.child=pc;
     API.post("notify.php",b).catch(function(){});
   }
@@ -257,12 +262,12 @@ window.RobTop = window.RobTop || {};
     o=o||{};
     var rec={ title:String(o.title||"").slice(0,120), points:clampPts(o.points) };
     if(!rec.title) return Promise.resolve({ok:false});
-    function fin(){ tasksNotify("parents","task_proposed",{name:selfName(),title:rec.title,n:rec.points}); return {ok:true}; }
+    function fin(item){ var sh=RT._shell||{}; tasksNotify("parents","task_proposed",{name:selfName(),title:rec.title,n:rec.points,taskId:item&&item.id,child:sh.user&&sh.user.id}); return {ok:true}; }
     if(RT.isDemo()){
-      demoData("tasks","create","items",{data:{title:rec.title,points:rec.points,type:"once",origin:"child",timesDone:0,status:"pending",claimedAt:Date.now()}});
-      return Promise.resolve(fin());
+      var dr=demoData("tasks","create","items",{data:{title:rec.title,points:rec.points,type:"once",origin:"child",timesDone:0,status:"pending",claimedAt:Date.now()}});
+      return Promise.resolve(fin(dr&&dr.item));
     }
-    return tasksPost("propose",rec).then(function(r){ return (r&&r.ok)?fin():{ok:false}; })
+    return tasksPost("propose",rec).then(function(r){ return (r&&r.ok)?fin(r.item):{ok:false}; })
       .catch(function(){ return {ok:false}; });
   }
   function tasksUpdate(id,patch){ /* родитель: правка названия/очков/типа */
@@ -285,7 +290,7 @@ window.RobTop = window.RobTop || {};
   }
   function tasksClaim(task){ /* ребёнок «Сделал!» → {ok} (всегда на проверку родителю) */
     if(RT.isDemo()){ demoStatus(task.id,"pending",{claimedAt:Date.now()}); return Promise.resolve(claimFin()); }
-    function claimFin(){ tasksNotify("parents","task_claim",{name:selfName(),title:String(task.title||""),n:parseInt(task.points,10)||10}); return {ok:true}; }
+    function claimFin(){ var sh=RT._shell||{}; tasksNotify("parents","task_claim",{name:selfName(),title:String(task.title||""),n:parseInt(task.points,10)||10,taskId:task.id,child:sh.user&&sh.user.id}); return {ok:true}; }
     return tasksPost("claim",{id:task.id}).then(function(r){ return (r&&r.ok)?claimFin():{ok:false}; })
       .catch(function(){ return {ok:false}; });
   }
