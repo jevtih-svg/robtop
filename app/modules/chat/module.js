@@ -28,6 +28,14 @@
    ─ КЛАВИАТУРА не гаснет при отправке: фокус удерживает preventDefault на pointerdown кнопок
      композера (#chComp .cbtn). iOS НЕ держит фокус синтетическим mousedown — поэтому ведущий
      слушатель именно pointerdown (mousedown оставлен фолбэком). + фолбэк-рефокус поля после send.
+   КЛАВИАТУРА (v1.3.1, 2026-06-10 — следящий rAF-цикл вместо снимков):
+   ─ Снимок visualViewport по одному событию ненадёжен в iOS-PWA: финальный resize после анимации
+     клавиатуры/смены панели автодополнения иногда не приходит — слой замирал со старой высотой
+     (композер «висел» выше клавиатуры, в зазоре светилась страница и маркер версии), а дискретные
+     прыжки высоты читались как «статтер». Теперь события только БУДЯТ короткий rAF-цикл (kbKick/
+     kbFrame): каждый кадр перечитывает vv, пишет стили только при изменении, продлевает себя пока
+     значения едут и гаснет через KB_TAIL после затишья. reExpandViewport зовётся при расфокусе в
+     ЛЮБОМ виде (раньше только в треде — «назад» с открытой клавиатурой оставлял редкую щель).
    ─ «ЩЕЛЬ» СНИЗУ ПОСЛЕ ЧАТА: html.ch-lock (overflow:hidden) + клавиатура схлопывают iOS-PWA
      layout-вьюпорт ниже экрана → нижний бар застревает выше реального низа. unmount зовёт
      sdk.ui.fixViewport() (= rtForceFullViewport оболочки) — заново разворачивает вьюпорт. */
@@ -86,6 +94,9 @@
       infoTitle:"Ziņa", infoClose:"Aizvērt"
     }}
   };
+  /* standalone-PWA (иконка на домашнем экране)? Только там iOS схлопывает layout-вьюпорт
+     клавиатурой — reExpandViewport гейтится этим флагом */
+  var RT_STANDALONE=!!(navigator.standalone || (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches));
   /* back/plus — из общего реестра иконок оболочки (RobTop._shell.icons), SVG не дублируем */
   var HI=(window.RobTop&&RobTop._shell&&RobTop._shell.icons)||{};
   var BACK_IC=HI.back||"";
@@ -150,6 +161,7 @@
        на его высоту (без .ch-thread). Переписка же полноэкранная — бар прячется (см. renderThread). */
     if(E.app) E.app.classList.remove("ch-thread");
     if(sdk&&sdk.ui&&sdk.ui.hud) sdk.ui.hud({hidden:false});
+    kbKick(); /* возврат из треда: цикл снимет инлайн-стили слоя и добьёт схлопнутый вьюпорт */
     var h='<div class="ch-head"><button class="back" id="chBack" aria-label="'+esc(sdk.i18n.t("common.back"))+'">'+BACK_IC+'</button>'
       +'<div class="ch-head-main"><div class="ch-title">'+BUBBLE_E+' '+esc(sdk.i18n.t("tile.chat"))+'</div>'
       +'<div class="ch-sub">'+esc(t("subtitle"))+'</div></div>'
@@ -248,7 +260,7 @@
       E.input.addEventListener("paste",onComposerPaste);
     }
     renderMsgs();
-    vpApply();
+    vpApply(); kbKick();
   }
   /* статус МОЕГО сообщения по маркерам читателей (S.readers): read = кто-то прочитал
      (last_read_id >= id); delivered = кто-то был в сети после отправки (seen_at >= времени) */
@@ -321,6 +333,7 @@
     /* contenteditable иногда оставляет <br>/<div> после очистки — нормализуем, чтобы :empty показал плейсхолдер */
     if(!E.input.textContent.replace(/​/g,"").trim()){ if(E.input.innerHTML!=="") E.input.innerHTML=""; }
     updateSendState();
+    kbKick(); /* набор меняет панель автодополнения над клавиатурой → высота vv плывёт без resize-события */
   }
   function onComposerKey(e){
     if(e.key==="Enter" && !e.shiftKey && !(e.isComposing||e.keyCode===229)){
@@ -440,6 +453,11 @@
      Зовётся из vpApply (расфокус в треде); сам себя гасит, если вьюпорт уже полный или идёт разворот. */
   function reExpandViewport(){
     if(!alive() || S.reExpanding) return;
+    /* схлопывание layout-вьюпорта — болезнь iOS-STANDALONE (PWA с иконки). В обычном браузере
+       и на Android guard «вьюпорт полный» по screen.height всегда ложный (screen включает
+       системные бары) — без этого гейта цикл fixViewport гонялся бы вхолостую на каждый mount/
+       renderList (ревью 2026-06-10). */
+    if(!RT_STANDALONE) return;
     if(!(sdk&&sdk.ui&&sdk.ui.fixViewport)) return;
     if(!(screen&&screen.height) || window.innerHeight>=screen.height-2) return; /* вьюпорт уже полный — нечего чинить */
     S.reExpanding=true;
@@ -449,21 +467,57 @@
       if(S) S.reExpanding=false;
     });
   }
+  /* vpApply: применяет visualViewport к слою. Пишет стили ТОЛЬКО при изменении значений
+     (кадровый цикл kbFrame зовёт её каждый кадр — без этого был бы layout-трэш) и возвращает,
+     изменилось ли что-то (цикл по этому продлевает слежение). */
   function vpApply(){
-    if(!alive() || !E.app) return;
+    if(!alive() || !E.app) return false;
     var vv=window.visualViewport;
     var focused=!!(E.input && document.activeElement===E.input);
+    var h="", tr="";
     if(vv && focused){
-      E.app.style.height=Math.round(vv.height)+"px";
+      h=Math.round(vv.height)+"px";
       var off=Math.round(vv.offsetTop||0);
-      E.app.style.transform = off>0 ? "translateY("+off+"px)" : "";
-    } else {
-      E.app.style.height=""; E.app.style.transform=""; /* нет фокуса → полный экран (100dvh) */
-      if(S.view==="thread") reExpandViewport(); /* клавиатура закрыта в треде — добить вьюпорт до экрана */
-    }
+      tr = off>0 ? "translateY("+off+"px)" : "";
+    } /* нет фокуса → пустые инлайны = полный экран (CSS 100dvh) */
+    var changed=(h!==S.apH)||(tr!==S.apTr);
+    if(changed){ E.app.style.height=h; E.app.style.transform=tr; S.apH=h; S.apTr=tr; }
+    /* клавиатуры нет: добить схлопнутый iOS-вьюпорт в ЛЮБОМ виде. Раньше — только в треде,
+       и «назад» из переписки с открытой клавиатурой (blur догонял уже в списке, S.view="list")
+       оставлял редкую «щель» снизу до выхода из чата (фидбек Джеффа 2026-06-10).
+       reExpandViewport сам гасится, если вьюпорт полный или разворот уже идёт. */
+    if(!focused) reExpandViewport();
     syncKb();
-    if(focused && !S.kbOpen) scrollBottom(); /* доскролл только на переходе «открылась» */
+    /* доскролл при открытии делает focusin (таймаут 350мс) + kbFrame держит низ во время анимации */
     S.kbOpen=focused;
+    return changed;
+  }
+  /* ---- следящий цикл клавиатуры (фикс 2026-06-10, фидбек Джеффа: «статтер» при выезде
+     клавиатуры; редкий «композер выше курсора, виден маркер версии, зазор над клавиатурой»).
+     Снимок vv по одному событию НЕНАДЁЖЕН в iOS-PWA: финальный resize после анимации клавиатуры
+     (и смены панели автодополнения) иногда не приходит — слой замирал со старой высотой, между
+     композером и клавиатурой светилась страница. Вместо снимков короткий rAF-цикл: каждый кадр
+     перечитывает vv и применяет только изменения. Пока значения едут — цикл продлевает себя сам
+     (слой движется ВМЕСТЕ с клавиатурой, рывка нет); затихли — гаснет через KB_TAIL мс, и
+     пропущенное событие добирается следующим кадром, а не висит до выхода из чата. */
+  var KB_TAIL=350;
+  /* performance.now() (НЕ Date.now): монотонные часы — перевод системного времени на устройстве
+     не оставит цикл крутиться часами (ревью 2026-06-10) */
+  function kbNow(){ return (window.performance&&performance.now)?performance.now():Date.now(); }
+  function kbKick(){
+    if(!S || !alive()) return;
+    S.kbUntil=kbNow()+KB_TAIL;
+    if(!S.kbRaf) S.kbRaf=requestAnimationFrame(kbFrame);
+  }
+  function kbFrame(){
+    if(!S) return;
+    S.kbRaf=null;
+    if(!alive() || !E.app) return;
+    if(vpApply()){
+      S.kbUntil=kbNow()+KB_TAIL; /* значения ещё меняются — следим дальше */
+      if(S.stick && S.kbOpen) scrollBottom(); /* лента прилипла к низу — держим последнее сообщение видимым, пока слой едет */
+    }
+    if(kbNow()<S.kbUntil) S.kbRaf=requestAnimationFrame(kbFrame);
   }
   /* файл-инпут создаём НА ЛЕТУ (а не держим скрытый <input> в разметке): постоянный второй
      <input> клавиатура считает полем и рисует стрелки «пред./след.». Жест клика сохраняется. */
@@ -480,7 +534,7 @@
   }
   function kbSetup(){
     if(S.vv) return;
-    S.vv=vpApply;
+    S.vv=kbKick; /* события только БУДЯТ следящий цикл; применяет значения сам цикл (kbFrame) */
     if(window.visualViewport){
       window.visualViewport.addEventListener("resize",S.vv);
       window.visualViewport.addEventListener("scroll",S.vv);
@@ -495,6 +549,7 @@
     }
     window.removeEventListener("orientationchange",S.vv);
     S.vv=null;
+    if(S.kbRaf){ try{ cancelAnimationFrame(S.kbRaf); }catch(e){} S.kbRaf=null; }
   }
 
   /* ---- удаление своего сообщения ---- */
@@ -636,7 +691,8 @@
     S={ alive:true, view:"list", tid:null, threads:[], roster:[], me:0, isParent:false,
         family:true, loaded:false, msgs:[], readers:[], more:false, msgsLoaded:false,
         sending:false, photo:null, sheet:null, pendingTid:null, vv:null, ty:null, stick:true, kbOpen:false,
-        reExpanding:false, lpTimer:null, lpX:0, lpY:0, suppressClick:false };
+        reExpanding:false, lpTimer:null, lpX:0, lpY:0, suppressClick:false,
+        kbRaf:null, kbUntil:0, apH:"", apTr:"" /* следящий цикл клавиатуры + последние применённые стили слоя */ };
     E={};
     /* guardrails: детский бар «Домой» виден и в чате (универсально) — слой .ch-app укорочен на его
        высоту (module.css), композер сидит над баром; раньше тут было hud({hidden:true}), убрано.
@@ -720,13 +776,14 @@
     E.app.addEventListener("focusin",function(e){
       if(e.target && e.target.id==="chInput"){
         if(E.app) E.app.classList.add("kb-open"); S.kbOpen=true;
-        setTimeout(function(){ if(alive()){ vpApply(); scrollBottom(); } },300);
+        kbKick(); /* следящий цикл ведёт слой через ВСЮ анимацию клавиатуры (без рывка-снапа) */
+        setTimeout(function(){ if(alive()) scrollBottom(); },350); /* допин ленты после выезда */
       }
     });
     E.app.addEventListener("focusout",function(e){
       if(e.target && e.target.id==="chInput"){
         /* задержка: при отправке фокус удерживается (mousedown preventDefault), ложного закрытия нет */
-        setTimeout(function(){ if(alive() && document.activeElement!==E.input){ if(E.app) E.app.classList.remove("kb-open"); S.kbOpen=false; vpApply(); } },80);
+        setTimeout(function(){ if(alive() && document.activeElement!==E.input){ if(E.app) E.app.classList.remove("kb-open"); S.kbOpen=false; kbKick(); } },80);
       }
     });
     kbSetup();
