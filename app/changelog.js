@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.10.12", d:"2026-06-10", t:{
+    en:"Find the Object photos are now tiny (but still clear), so they upload reliably even on weak internet.",
+    ru:"Фото в «Найти предмет» теперь совсем лёгкие (но разборчивые) — загружаются надёжно даже на слабом интернете.",
+    lv:"«Atrodi priekšmetu» foto tagad ir pavisam viegli (bet skaidri) — augšupielādējas droši pat ar vāju internetu." } },
   { v:"2026.06.10.11", d:"2026-06-10", t:{
     en:"Find the Object is fully fixed: stuck photo reviews are cleared automatically (points were already given), and new photos always upload properly.",
     ru:"«Найти предмет» починен полностью: застрявшие проверки фото расчищены автоматически (очки за них уже начислены), а новые фото всегда загружаются правильно.",
