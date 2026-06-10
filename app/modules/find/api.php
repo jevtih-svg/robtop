@@ -34,7 +34,10 @@ function rt_find_action($db, $uid, $type, $itemId, $data) {
     $sub['st'] = $ok ? 'correct' : 'wrong';
     $sub['rev'] = $rev;
     $json = json_encode($sub, JSON_UNESCAPED_UNICODE);
-    if ($json === false || strlen($json) > 65535) rt_json(['error' => 'bad_data'], 422);
+    // Гард 1МБ, НЕ 65535: колонка module_data.data — JSON (без потолка TEXT в 64КБ),
+    // а легаси-сабы со старым фолбэком «фото инлайном» весят 100-300КБ — на 64КБ
+    // они никогда не проходили проверку (422 bad_data, баг Джеффа 2026-06-10).
+    if ($json === false || strlen($json) > 1048576) rt_json(['error' => 'bad_data'], 422);
 
     $db->prepare("UPDATE module_data SET data=?, updated_at=NOW() WHERE id=? AND user_id=?")
        ->execute([$json, (int)$itemId, $child]);
