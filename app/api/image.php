@@ -57,8 +57,81 @@ function rt_img_public_ok($db, $ownerId, $kind) {
     } catch (Throwable $e) { return false; }
 }
 
+function rt_img_same_family_or_guardian_scope($db, $viewer, $ownerId) {
+    if ($viewer > 0 && $viewer === $ownerId) return true;
+    try {
+        $fv = rt_user_family_id($db, $viewer);
+        $fo = rt_user_family_id($db, $ownerId);
+        if ($fv && $fo && (int)$fv === (int)$fo) return true;
+    } catch (Throwable $e) { /* continue below */ }
+    try {
+        $s = $db->prepare(
+            "SELECT 1
+               FROM guardianships g1
+               JOIN guardianships g2 ON g1.guardian_user_id = g2.guardian_user_id
+              WHERE g1.child_user_id = ? AND g2.child_user_id = ?
+                AND g1.status = 'active' AND g2.status = 'active'
+              LIMIT 1"
+        );
+        $s->execute([$viewer, $ownerId]);
+        if ($s->fetchColumn()) return true;
+        $s = $db->prepare(
+            "SELECT 1 FROM guardianships
+              WHERE ((child_user_id = ? AND guardian_user_id = ?)
+                  OR (child_user_id = ? AND guardian_user_id = ?))
+                AND status = 'active'
+              LIMIT 1"
+        );
+        $s->execute([$viewer, $ownerId, $ownerId, $viewer]);
+        return (bool)$s->fetchColumn();
+    } catch (Throwable $e) { return false; }
+}
+
+function rt_img_can_view_chat($db, $viewer, $path) {
+    try {
+        $s = $db->prepare(
+            "SELECT m.thread_id, t.family_id
+               FROM chat_messages m
+               JOIN chat_threads t ON t.id = m.thread_id
+              WHERE m.photo = ? AND m.deleted_at IS NULL
+              LIMIT 1"
+        );
+        $s->execute([$path]);
+        $r = $s->fetch();
+        if (!$r) return false;
+        $s = $db->prepare("SELECT 1 FROM chat_members WHERE thread_id = ? AND user_id = ? LIMIT 1");
+        $s->execute([(int)$r['thread_id'], $viewer]);
+        if ($s->fetchColumn()) return true;
+        $s = $db->prepare(
+            "SELECT 1 FROM family_members
+              WHERE family_id = ? AND user_id = ? AND role IN ('owner','parent') AND status = 'active'
+              LIMIT 1"
+        );
+        $s->execute([(int)$r['family_id'], $viewer]);
+        return (bool)$s->fetchColumn();
+    } catch (Throwable $e) { return false; }
+}
+
+function rt_img_can_view_shop($db, $viewer, $ownerId, $path) {
+    if (!rt_img_same_family_or_guardian_scope($db, $viewer, $ownerId)) return false;
+    try {
+        $s = $db->prepare(
+            "SELECT 1 FROM module_data
+              WHERE module = 'shop' AND collection IN ('items','orders') AND deleted_at IS NULL
+                AND JSON_UNQUOTE(JSON_EXTRACT(data, '$.photo')) = ?
+              LIMIT 1"
+        );
+        $s->execute([$path]);
+        return (bool)$s->fetchColumn();
+    } catch (Throwable $e) { return false; }
+}
+
 $db = rt_db();
-if (!rt_img_can_view($db, $viewer, $ownerId) && !rt_img_public_ok($db, $ownerId, $kind)) {
+$path = 'uploads/' . $rel;
+if (!rt_img_can_view($db, $viewer, $ownerId)
+    && !rt_img_public_ok($db, $ownerId, $kind)
+    && !($kind === 'chat' && rt_img_can_view_chat($db, $viewer, $path))
+    && !($kind === 'shop' && rt_img_can_view_shop($db, $viewer, $ownerId, $path))) {
     http_response_code(403); exit;
 }
 
