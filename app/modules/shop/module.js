@@ -24,6 +24,7 @@
       btnBuy:"Buy", lack:"need {n} more",
       confirmBuy:"Buy “{t}” for {n} points?", btnConfirm:"Buy!",
       sentToast:"Sent to parents! Points are taken",
+      buyFail:"Couldn't buy it — try again", notEnough:"Not enough points",
       ordersTitle:"My purchases", ordersEmpty:"Nothing bought yet",
       ordersA11y:"My purchases",
       approvalsTitle:"Purchases to approve",
@@ -48,6 +49,7 @@
       btnBuy:"Купить", lack:"не хватает {n}",
       confirmBuy:"Купить «{t}» за {n} пунктов?", btnConfirm:"Покупаю!",
       sentToast:"Отправлено родителям! Пункты списаны",
+      buyFail:"Не получилось купить — попробуй ещё раз", notEnough:"Не хватает пунктов",
       ordersTitle:"Мои покупки", ordersEmpty:"Пока ничего не куплено",
       ordersA11y:"Мои покупки",
       approvalsTitle:"Покупки на подтверждение",
@@ -72,6 +74,7 @@
       btnBuy:"Pirkt", lack:"pietrūkst {n}",
       confirmBuy:"Pirkt “{t}” par {n} punktiem?", btnConfirm:"Pērku!",
       sentToast:"Nosūtīts vecākiem! Punkti noņemti",
+      buyFail:"Neizdevās nopirkt — mēģini vēlreiz", notEnough:"Nepietiek punktu",
       ordersTitle:"Mani pirkumi", ordersEmpty:"Vēl nekas nav nopirkts",
       ordersA11y:"Mani pirkumi",
       approvalsTitle:"Pirkumi apstiprināšanai",
@@ -183,9 +186,15 @@
   function buy(it){
     if(busy) return; busy=true;
     var d=it.data||{}, p=price(d);
+    function buyError(err){
+      busy=false;
+      var msg=String(err&&err.message||"");
+      sdk.ui.toast(/not_enough_points/.test(msg) ? t("notEnough") : t("buyFail"));
+      load();
+    }
     /* SEC 2026-06-09: цену списывает СЕРВЕР по каталогу (sdk.points.spend), не клиент — затем заказ */
     sdk.points.spend(it.id).then(function(out){
-      if(!out || !out.ok){ busy=false; sdk.ui.toast(t("loadFail")); return; }
+      if(!out || !out.ok){ buyError(); return; }
       var paid=(out.price!=null)?out.price:p;
       var save = out.order
         ? Promise.resolve(out.order)
@@ -196,8 +205,8 @@
         sdk.events.track("shop_buy",{title:d.title||"",price:paid});
         sdk.ui.toast(t("sentToast")); sdk.ui.haptics("light"); sdk.ui.chime();
         load();
-      }).catch(function(){ busy=false; sdk.ui.toast(t("loadFail")); load(); });
-    }).catch(function(){ busy=false; sdk.ui.toast(t("loadFail")); load(); });
+      }).catch(buyError);
+    }).catch(buyError);
   }
 
   /* ---------- подтверждение покупки (родитель) ---------- */

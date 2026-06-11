@@ -96,6 +96,7 @@ switch ($op) {
         if (isset($disabled[(string)$uid])) rt_json(['error' => 'item_unavailable'], 403);
         if (rt_points_balance($db, $uid) < $price) rt_json(['error' => 'not_enough_points'], 409);
 
+        $odata = null; $orderId = 0;
         try {
             $db->beginTransaction();
             rt_points_write($db, $uid, -$price, 'spend', 'shop', 'spend', $shopItem['title']);
@@ -113,16 +114,17 @@ switch ($op) {
             $st->execute([$uid, json_encode($odata, JSON_UNESCAPED_UNICODE)]);
             $orderId = (int)$db->lastInsertId();
             $db->commit();
-            rt_log('shop', 'buy', $orderId, $shopItem['title'], null, 'pending', ['item' => $item, 'price' => $price], $uid);
-            $now = round(microtime(true) * 1000);
-            rt_json(['ok' => true, 'price' => $price, 'order' => [
-                'id' => (string)$orderId, 'status' => 'pending', 'favorite' => false,
-                'data' => $odata, 'createdAt' => $now, 'updatedAt' => $now,
-            ]]);
         } catch (Throwable $e) {
             if ($db->inTransaction()) $db->rollBack();
             rt_json(['error' => 'purchase_failed'], 500);
         }
+        try { rt_log('shop', 'buy', $orderId, $shopItem['title'], null, 'pending', ['item' => $item, 'price' => $price], $uid); }
+        catch (Throwable $e) { /* analytics must not break a completed purchase */ }
+        $now = round(microtime(true) * 1000);
+        rt_json(['ok' => true, 'price' => $price, 'order' => [
+            'id' => (string)$orderId, 'status' => 'pending', 'favorite' => false,
+            'data' => $odata, 'createdAt' => $now, 'updatedAt' => $now,
+        ]]);
     }
 
     case 'refund': {
