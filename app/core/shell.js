@@ -63,23 +63,23 @@ window.RobTop = window.RobTop || {};
 
   /* ---- встроенный список модулей (демо/фолбэк). name — фолбэк, отображается tile.<id> ---- */
   var DEFAULTS=[
-    {id:"wishlist",name:"Wishlist",color:"#ff3db0",status:"active",source:"native",server:true,sort:10},
+    {id:"wishlist",name:"Wishlist",color:"#ff3db0",status:"active",source:"native",server:true,sort:10,permissions:["camera"]},
     {id:"reverse",name:"Words Backwards",color:"#ff7a3d",status:"active",source:"native",server:false,sort:20},
-    {id:"mood",name:"Mood of the Day",color:"#ffd23b",status:"active",source:"native",sort:30},
-    {id:"teeth",name:"Toothbrushing Timer",color:"#19e3ff",status:"active",source:"native",sort:40},
-    {id:"guess",name:"Guess the Number",color:"#a64bff",status:"active",source:"native",sort:50},
+    {id:"mood",name:"Mood of the Day",color:"#ffd23b",status:"active",source:"native",sort:30,permissions:["camera"]},
+    {id:"teeth",name:"Toothbrushing Timer",color:"#19e3ff",status:"active",source:"native",sort:40,permissions:["notifications","points"]},
+    {id:"guess",name:"Guess the Number",color:"#a64bff",status:"active",source:"native",sort:50,permissions:["points"]},
     {id:"names",name:"Funny Names",color:"#38e8a0",status:"active",source:"native",sort:60},
     {id:"days",name:"Day Counter",color:"#3b6bff",status:"active",source:"native",sort:70},
-    {id:"find",name:"Find the Object",color:"#19e3ff",status:"active",source:"native",sort:80},
+    {id:"find",name:"Find the Object",color:"#19e3ff",status:"active",source:"native",sort:80,permissions:["points","camera"]},
     {id:"museum",name:"Home Museum",color:"#c0a0ff",status:"soon",source:"native",sort:90},
-    {id:"rating",name:"Day Rating",color:"#ffd23b",status:"active",source:"native",sort:100},
+    {id:"rating",name:"Day Rating",color:"#ffd23b",status:"active",source:"native",sort:100,permissions:["camera"]},
     {id:"friends",name:"Friends",color:"#c08bff",status:"active",source:"native",sort:105},
     {id:"lost",name:"Lost & Found",color:"#2bf0c0",status:"soon",source:"native",sort:110},
-    {id:"walk",name:"Dog Walk",color:"#38e8a0",status:"active",source:"native",sort:115},
-    {id:"snake",name:"Snake",color:"#19e3ff",status:"active",source:"native",sort:117},
-    {id:"bank",name:"Piggy Bank",color:"#ff4d6d",status:"active",source:"native",wide:true,sort:120},
-    {id:"shop",name:"Shop",color:"#ff2bd6",status:"active",source:"native",sort:130},
-    {id:"chat",name:"Chat",color:"#3b6bff",status:"active",source:"native",server:true,sort:135}
+    {id:"walk",name:"Dog Walk",color:"#38e8a0",status:"active",source:"native",sort:115,permissions:["points","camera"]},
+    {id:"snake",name:"Snake",color:"#19e3ff",status:"active",source:"native",sort:117,permissions:["points"]},
+    {id:"bank",name:"Piggy Bank",color:"#ff4d6d",status:"active",source:"native",wide:true,sort:120,permissions:["points"]},
+    {id:"shop",name:"Shop",color:"#ff2bd6",status:"active",source:"native",sort:130,permissions:["points","camera"]},
+    {id:"chat",name:"Chat",color:"#3b6bff",status:"active",source:"native",server:true,sort:135,permissions:["camera"]}
   ];
 
   /* ---- localStorage помощники (демо) ---- */
@@ -718,7 +718,7 @@ window.RobTop = window.RobTop || {};
     var inst=getInstalled();
     Object.keys(inst).forEach(function(id){
       var man=inst[id].manifest||{};
-      list.push({id:id,name:man.name||id,color:man.color||"#19e3ff",status:man.status||"active",source:"installed",server:false,icon:man.icon||null,enabled:1,sort:man.sort||500});
+      list.push({id:id,name:man.name||id,color:man.color||"#19e3ff",status:man.status||"active",source:"installed",server:false,icon:man.icon||null,permissions:Array.isArray(man.permissions)?man.permissions:[],enabled:1,sort:man.sort||500});
     });
     mergeOverrides(list);
     list.sort(function(a,b){ return (a.sort||0)-(b.sort||0); });

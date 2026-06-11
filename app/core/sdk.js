@@ -86,6 +86,10 @@ window.RobTop = window.RobTop || {};
     if(!id){ try{ id=parseInt(localStorage.getItem("rt_parent_child")||"",10)||null; }catch(e){ id=null; } }
     return id||null;
   }
+  function uploadChildScope(kind){
+    kind = String(kind||"");
+    return /^(wishlist|rating|mood|find|walk|shop)$/.test(kind);
+  }
   function dataOp(mod, op, coll, payload){
     if(RT.isDemo()) return Promise.resolve(demoData(mod, op, coll, payload));
     var body=Object.assign({op:op, module:mod, collection:coll||"default"}, payload||{});
@@ -381,7 +385,7 @@ window.RobTop = window.RobTop || {};
         /* upload(dataUrl,kind) — загрузка готового dataUrl. Ф4: требует permission "camera". */
         upload:function(dataUrl,kind){
           if(!hasPerm("camera")){ if(window.console&&console.warn) console.warn("RobTop: модуль '"+mod+"' без разрешения 'camera' — upload проигнорирован"); return Promise.resolve({ ok:false, denied:true }); }
-          var b={dataUrl:dataUrl, kind:kind||mod}, pc=parentChild(); if(pc) b.child=pc;
+          var k=kind||mod, b={dataUrl:dataUrl, kind:k}, pc=uploadChildScope(k)?parentChild():null; if(pc) b.child=pc;
           return API.post("upload.php",b);
         },
         /* pick(opts) — ЕДИНЫЙ выбор фото (Ф4): открыть выбор → ресайз → (демо: dataUrl /

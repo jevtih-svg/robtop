@@ -216,6 +216,24 @@ function rt_module_row($db, $id) {
 function rt_module_meta($r) {
     $man = (!empty($r['manifest'])) ? json_decode($r['manifest'], true) : [];
     if (!is_array($man)) $man = [];
+    $perms = (isset($man['permissions']) && is_array($man['permissions'])) ? $man['permissions'] : null;
+    if ($perms === null && isset($r['source']) && $r['source'] === 'native') {
+        // Compatibility for installs whose modules.manifest rows predate the permission gate.
+        $nativePerms = [
+            'wishlist' => ['camera'],
+            'mood'     => ['camera'],
+            'rating'   => ['camera'],
+            'find'     => ['points', 'camera'],
+            'walk'     => ['points', 'camera'],
+            'shop'     => ['points', 'camera'],
+            'chat'     => ['camera'],
+            'bank'     => ['points'],
+            'guess'    => ['points'],
+            'snake'    => ['points'],
+            'teeth'    => ['notifications', 'points'],
+        ];
+        $perms = isset($nativePerms[$r['id']]) ? $nativePerms[$r['id']] : [];
+    }
     return [
         'id'      => $r['id'],
         'name'    => $r['name'],
@@ -227,6 +245,8 @@ function rt_module_meta($r) {
         // roles ОБЯЗАТЕЛЬНО отдаются клиенту: sdk.can() модуля читает meta.roles; без них
         // can("edit") падал в дефолт ["child"] и родитель видел пустой мастер walk (фикс v.22)
         'roles'   => (isset($man['roles']) && is_array($man['roles'])) ? $man['roles'] : null,
+        // permissions ОБЯЗАТЕЛЬНО отдаются клиенту: sdk.media/sdk.points гейтят доступ по meta.permissions.
+        'permissions' => $perms !== null ? array_values(array_unique(array_map('strval', $perms))) : [],
         'source'  => $r['source'],
         'server'  => ((int)$r['server'] === 1),
     ];

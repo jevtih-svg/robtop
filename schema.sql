@@ -244,22 +244,22 @@ CREATE TABLE IF NOT EXISTS tasks (
 
 -- ---------- Заполнение реестра родными модулями ----------
 INSERT INTO modules (id, name, version, manifest, source, trusted, server, enabled, sort_order) VALUES
- ('wishlist','Виш-лист','2.0.0','{"color":"#ff3db0","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,1,1,10),
+ ('wishlist','Виш-лист','2.0.0','{"color":"#ff3db0","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]},"permissions":["camera"]}','native',1,1,1,10),
  ('reverse','Слова наоборот','1.0.0','{"color":"#ff7a3d","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,20),
- ('mood','Настроение дня','1.0.0','{"color":"#ffd23b","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,30),
- ('teeth','Таймер чистки зубов','1.0.0','{"color":"#19e3ff","status":"active","roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,40),
- ('guess','Угадай число','1.0.0','{"color":"#a64bff","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,50),
+ ('mood','Настроение дня','1.0.0','{"color":"#ffd23b","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]},"permissions":["camera"]}','native',1,0,1,30),
+ ('teeth','Таймер чистки зубов','1.0.0','{"color":"#19e3ff","status":"active","roles":{"edit":["child"],"read":["child","parent"]},"permissions":["notifications","points"]}','native',1,0,1,40),
+ ('guess','Угадай число','1.0.0','{"color":"#a64bff","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]},"permissions":["points"]}','native',1,0,1,50),
  ('names','Смешные имена','1.0.0','{"color":"#38e8a0","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,60),
  ('days','Счётчик дней','1.0.0','{"color":"#3b6bff","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,70),
- ('find','Найти предмет','1.0.0','{"color":"#19e3ff","status":"active","wide":false,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,0,1,80),
+ ('find','Найти предмет','1.0.0','{"color":"#19e3ff","status":"active","wide":false,"roles":{"edit":["child","parent"],"read":["child","parent"]},"permissions":["points","camera"]}','native',1,0,1,80),
  ('museum','Домашний музей','1.0.0','{"color":"#c0a0ff","status":"soon"}','native',1,0,1,90),
- ('rating','Оценка дня','1.0.0','{"color":"#ffd23b","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,100),
+ ('rating','Оценка дня','1.0.0','{"color":"#ffd23b","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]},"permissions":["camera"]}','native',1,0,1,100),
  ('friends','Друзья','1.0.0','{"color":"#c08bff","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,105),
  ('lost','Бюро находок','1.0.0','{"color":"#2bf0c0","status":"soon"}','native',1,0,1,110),
- ('walk','Прогулка','1.2.0','{"color":"#38e8a0","status":"active","wide":false,"familyPool":true,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,0,1,115),
- ('snake','Змейка','1.0.0','{"color":"#19e3ff","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,117),
- ('bank','Копилка','1.0.0','{"color":"#ff4d6d","status":"active","wide":true,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,0,1,120),
- ('shop','Магазин','1.0.0','{"color":"#ff2bd6","status":"active","wide":false,"familyCollections":["items"],"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,0,1,130),
- ('chat','Чат','1.0.0','{"color":"#3b6bff","status":"active","wide":false,"roles":{"edit":["child","parent"],"read":["child","parent"]}}','native',1,1,1,135)
+ ('walk','Прогулка','1.2.0','{"color":"#38e8a0","status":"active","wide":false,"familyPool":true,"roles":{"edit":["child","parent"],"read":["child","parent"]},"permissions":["points","camera"]}','native',1,0,1,115),
+ ('snake','Змейка','1.0.0','{"color":"#19e3ff","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]},"permissions":["points"]}','native',1,0,1,117),
+ ('bank','Копилка','1.0.0','{"color":"#ff4d6d","status":"active","wide":true,"roles":{"edit":["child","parent"],"read":["child","parent"]},"permissions":["points"]}','native',1,0,1,120),
+ ('shop','Магазин','1.0.0','{"color":"#ff2bd6","status":"active","wide":false,"familyCollections":["items"],"roles":{"edit":["child","parent"],"read":["child","parent"]},"permissions":["points","camera"]}','native',1,0,1,130),
+ ('chat','Чат','1.0.0','{"color":"#3b6bff","status":"active","wide":false,"roles":{"edit":["child","parent"],"read":["child","parent"]},"permissions":["camera"]}','native',1,1,1,135)
 ON DUPLICATE KEY UPDATE name=VALUES(name), manifest=VALUES(manifest), server=VALUES(server), updated_at=NOW();
 -- ============================================================

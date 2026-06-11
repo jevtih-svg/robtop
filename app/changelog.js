@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.11.1", d:"2026-06-11", t:{
+    en:"Photo uploads are restored across the apps, including chat photos from parent accounts.",
+    ru:"Загрузка фото снова работает во всех приложениях, включая фото в чате от родительских аккаунтов.",
+    lv:"Foto augšupielāde atkal darbojas visās lietotnēs, tostarp čata foto no vecāku kontiem." } },
   { v:"2026.06.10.15", d:"2026-06-10", t:{
     en:"Find the Object: the camera preview now shows live right away (no black screen), photo sending can't get stuck on a weak connection, and the game fits the screen without scrolling.",
     ru:"«Найти предмет»: превью камеры теперь сразу показывает живую картинку (без чёрного экрана), отправка фото не зависает на слабой связи, а игра помещается на экране без прокрутки.",
