@@ -12,7 +12,12 @@
  */
 require __DIR__ . '/_bootstrap.php';
 header_remove('Content-Type');           // _bootstrap выставил application/json — здесь отдаём картинку
-header('Cache-Control: private, max-age=86400');
+
+function rt_img_fail($code) {
+    header('Cache-Control: no-store');
+    http_response_code($code);
+    exit;
+}
 
 $rel = isset($_GET['p']) ? (string)$_GET['p'] : '';
 $rel = ltrim($rel, '/');
@@ -20,7 +25,7 @@ if (strpos($rel, 'uploads/') === 0) $rel = substr($rel, 8);
 // строго users/<id>/<kind>/<file>; никаких обходов каталога
 if ($rel === '' || strpos($rel, '..') !== false ||
     !preg_match('#^users/(\d+)/([A-Za-z0-9_]+)/[A-Za-z0-9._-]+$#', $rel, $m)) {
-    http_response_code(400); exit;
+    rt_img_fail(400);
 }
 $ownerId = (int)$m[1];
 $kind    = (string)$m[2];
@@ -132,17 +137,18 @@ if (!rt_img_can_view($db, $viewer, $ownerId)
     && !rt_img_public_ok($db, $ownerId, $kind)
     && !($kind === 'chat' && rt_img_can_view_chat($db, $viewer, $path))
     && !($kind === 'shop' && rt_img_can_view_shop($db, $viewer, $ownerId, $path))) {
-    http_response_code(403); exit;
+    rt_img_fail(403);
 }
 
 $base = realpath(__DIR__ . '/../uploads');
 $full = $base ? realpath($base . '/' . $rel) : false;
-if ($full === false || strpos($full, $base) !== 0 || !is_file($full)) { http_response_code(404); exit; }
+if ($full === false || strpos($full, $base) !== 0 || !is_file($full)) { rt_img_fail(404); }
 
 $ext  = strtolower(pathinfo($full, PATHINFO_EXTENSION));
 $mime = $ext === 'png' ? 'image/png'
       : ($ext === 'webp' ? 'image/webp'
       : ($ext === 'gif' ? 'image/gif' : 'image/jpeg'));
+header('Cache-Control: private, max-age=86400');
 header('Content-Type: ' . $mime);
 header('Content-Length: ' . filesize($full));
 readfile($full);

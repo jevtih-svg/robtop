@@ -19,7 +19,9 @@ window.RobTop = window.RobTop || {};
   function dayKey(d){ d=d||new Date(); return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
   function mediaUrl(s){
     s=String(s==null?"":s);
-    return s.indexOf("uploads/")===0 ? ("api/image.php?p="+encodeURIComponent(s)) : s;
+    return s.indexOf("uploads/")===0
+      ? ("api/image.php?p="+encodeURIComponent(s)+(window.RT_VER?("&v="+encodeURIComponent(window.RT_VER)):""))
+      : s;
   }
   RT.util = { esc:esc, escAttr:escAttr, uid:uid, pad2:pad2, dayKey:dayKey, mediaUrl:mediaUrl };
 })(window.RobTop);
