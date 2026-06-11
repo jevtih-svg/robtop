@@ -189,7 +189,7 @@
     function buyError(err){
       busy=false;
       var msg=String(err&&err.message||"");
-      sdk.ui.toast(/not_enough_points/.test(msg) ? t("notEnough") : t("buyFail"));
+      sdk.ui.toast(/not_enough_points/.test(msg) ? t("notEnough") : (t("buyFail")+(msg?" · "+msg:"")));
       load();
     }
     /* SEC 2026-06-09: цену списывает СЕРВЕР по каталогу (sdk.points.spend), не клиент — затем заказ */

@@ -189,16 +189,47 @@ function rt_points_walk_reverse($db, $uid, $entryId) {
     } catch (Throwable $e) { return ['n' => 0]; }
 }
 
+function rt_points_same_shop_scope($db, $uid, $ownerUid) {
+    $uid = (int)$uid; $ownerUid = (int)$ownerUid;
+    if ($uid <= 0 || $ownerUid <= 0) return false;
+    if ($uid === $ownerUid) return true;
+    try {
+        $fu = rt_user_family_id($db, $uid);
+        $fo = rt_user_family_id($db, $ownerUid);
+        if ($fu && $fo && (int)$fu === (int)$fo) return true;
+    } catch (Throwable $e) { /* continue below */ }
+    try {
+        $s = $db->prepare(
+            "SELECT 1
+               FROM guardianships g1
+               JOIN guardianships g2 ON g1.guardian_user_id = g2.guardian_user_id
+              WHERE g1.child_user_id = ? AND g2.child_user_id = ?
+                AND g1.status = 'active' AND g2.status = 'active'
+              LIMIT 1"
+        );
+        $s->execute([$uid, $ownerUid]);
+        if ($s->fetch()) return true;
+    } catch (Throwable $e) { /* no guardianships table on legacy installs */ }
+    return false;
+}
+
 /** Товар из каталога Магазина (familyCollection items — общий пул семьи). null, если нет/невалиден. */
 function rt_points_shop_item($db, $uid, $itemId) {
     try {
         $pool = rt_family_pool_uid($db, $uid);
         $s = $db->prepare(
-            "SELECT id, data FROM module_data WHERE id=? AND user_id=? AND module='shop' AND collection='items' AND deleted_at IS NULL LIMIT 1"
+            "SELECT id, user_id, data FROM module_data WHERE id=? AND user_id=? AND module='shop' AND collection='items' AND deleted_at IS NULL LIMIT 1"
         );
         $s->execute([(int)$itemId, (int)$pool]);
         $r = $s->fetch();
-        if (!$r) return null;
+        if (!$r) {
+            $s = $db->prepare(
+                "SELECT id, user_id, data FROM module_data WHERE id=? AND module='shop' AND collection='items' AND deleted_at IS NULL LIMIT 1"
+            );
+            $s->execute([(int)$itemId]);
+            $r = $s->fetch();
+            if (!$r || !rt_points_same_shop_scope($db, $uid, (int)$r['user_id'])) return null;
+        }
         $d = $r['data'] !== null ? json_decode($r['data'], true) : null;
         if (!is_array($d)) return null;
         $p = (is_array($d) && isset($d['price'])) ? (int)$d['price'] : 0;
