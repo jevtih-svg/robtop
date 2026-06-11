@@ -189,18 +189,33 @@ function rt_points_walk_reverse($db, $uid, $entryId) {
     } catch (Throwable $e) { return ['n' => 0]; }
 }
 
-/** Цена товара из каталога Магазина (familyCollection items — общий пул семьи). 0, если нет/невалидна. */
-function rt_points_shop_price($db, $uid, $itemId) {
+/** Товар из каталога Магазина (familyCollection items — общий пул семьи). null, если нет/невалиден. */
+function rt_points_shop_item($db, $uid, $itemId) {
     try {
         $pool = rt_family_pool_uid($db, $uid);
         $s = $db->prepare(
-            "SELECT data FROM module_data WHERE id=? AND user_id=? AND module='shop' AND collection='items' AND deleted_at IS NULL LIMIT 1"
+            "SELECT id, data FROM module_data WHERE id=? AND user_id=? AND module='shop' AND collection='items' AND deleted_at IS NULL LIMIT 1"
         );
         $s->execute([(int)$itemId, (int)$pool]);
         $r = $s->fetch();
-        if (!$r) return 0;
+        if (!$r) return null;
         $d = $r['data'] !== null ? json_decode($r['data'], true) : null;
+        if (!is_array($d)) return null;
         $p = (is_array($d) && isset($d['price'])) ? (int)$d['price'] : 0;
-        return $p > 0 ? $p : 0;
-    } catch (Throwable $e) { return 0; }
+        if ($p > RT_POINTS_GRANT_MAX) $p = RT_POINTS_GRANT_MAX;
+        if ($p <= 0) return null;
+        return [
+            'id' => (int)$r['id'],
+            'title' => isset($d['title']) ? (string)$d['title'] : '',
+            'price' => $p,
+            'photo' => isset($d['photo']) && is_string($d['photo']) && $d['photo'] !== '' ? $d['photo'] : null,
+            'disabledFor' => isset($d['disabledFor']) && is_array($d['disabledFor']) ? $d['disabledFor'] : [],
+        ];
+    } catch (Throwable $e) { return null; }
+}
+
+/** Цена товара из каталога Магазина (familyCollection items — общий пул семьи). 0, если нет/невалидна. */
+function rt_points_shop_price($db, $uid, $itemId) {
+    $it = rt_points_shop_item($db, $uid, $itemId);
+    return $it ? (int)$it['price'] : 0;
 }

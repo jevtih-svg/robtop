@@ -11,7 +11,7 @@
  *     - reason parent_give|parent_take|parent_penalty|daily_bonus или *_manual (teeth_manual):
  *       ТОЛЬКО роль parent (rt_can_manage_child для child=<id>); сумма родителя, кламп ±10000.
  *     - task_done / streak_bonus / spend — через add НЕЛЬЗЯ (только tasks.php / op spend|refund).
- *   op spend  {item, child?}    — покупка: цена из каталога Магазина, списываем её (не клиентскую).
+ *   op spend  {item, child?}    — покупка: цена из каталога Магазина, списываем её и создаём pending-заказ.
  *   op refund {order, child?}   — родитель отклонил заказ: вернуть цену (по каталогу), идемпотентно.
  *
  * Скоуп (чей леджер) — как в data.php: ребёнок → свой; родитель → выбранный child (rt_can_manage_child).
@@ -86,14 +86,43 @@ switch ($op) {
     }
 
     case 'spend': {
-        // покупка товара: цена — из каталога (familyCollection items), баланс проверяем
+        // покупка товара: цена — из каталога (familyCollection items), заказ создаётся атомарно со списанием.
         $item = isset($body['item']) ? (int)$body['item'] : 0;
         if ($item <= 0) rt_json(['error' => 'item required'], 422);
-        $price = rt_points_shop_price($db, $uid, $item);
+        $shopItem = rt_points_shop_item($db, $uid, $item);
+        $price = $shopItem ? (int)$shopItem['price'] : 0;
         if ($price <= 0) rt_json(['error' => 'bad_price'], 422);
-        // баланс может уйти в минус — как в прежней клиентской логике (sdk.points.add(-p,'spend')).
-        rt_points_write($db, $uid, -$price, 'spend', 'shop', 'spend', $note);
-        rt_json(['ok' => true, 'price' => $price]);
+        $disabled = array_flip(array_map('strval', isset($shopItem['disabledFor']) ? $shopItem['disabledFor'] : []));
+        if (isset($disabled[(string)$uid])) rt_json(['error' => 'item_unavailable'], 403);
+        if (rt_points_balance($db, $uid) < $price) rt_json(['error' => 'not_enough_points'], 409);
+
+        try {
+            $db->beginTransaction();
+            rt_points_write($db, $uid, -$price, 'spend', 'shop', 'spend', $shopItem['title']);
+            $odata = [
+                'itemId' => (string)$item,
+                'title'  => $shopItem['title'],
+                'price'  => $price,
+                'photo'  => $shopItem['photo'],
+                'status' => 'pending',
+            ];
+            $st = $db->prepare(
+                "INSERT INTO module_data (user_id, module, collection, status, favorite, sort, data, created_at, updated_at)
+                 VALUES (?, 'shop', 'orders', 'pending', 0, 0, ?, NOW(), NOW())"
+            );
+            $st->execute([$uid, json_encode($odata, JSON_UNESCAPED_UNICODE)]);
+            $orderId = (int)$db->lastInsertId();
+            $db->commit();
+            rt_log('shop', 'buy', $orderId, $shopItem['title'], null, 'pending', ['item' => $item, 'price' => $price], $uid);
+            $now = round(microtime(true) * 1000);
+            rt_json(['ok' => true, 'price' => $price, 'order' => [
+                'id' => (string)$orderId, 'status' => 'pending', 'favorite' => false,
+                'data' => $odata, 'createdAt' => $now, 'updatedAt' => $now,
+            ]]);
+        } catch (Throwable $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            rt_json(['error' => 'purchase_failed'], 500);
+        }
     }
 
     case 'refund': {

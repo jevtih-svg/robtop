@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.11.2", d:"2026-06-11", t:{
+    en:"Shop purchases now work reliably: points are deducted and parents see the purchase waiting to be finalized.",
+    ru:"Покупки в Магазине теперь работают надёжно: пункты списываются, а родитель видит покупку на подтверждение.",
+    lv:"Pirkumi Veikalā tagad darbojas uzticami: punkti tiek noņemti, un vecāks redz pirkumu apstiprināšanai." } },
   { v:"2026.06.11.1", d:"2026-06-11", t:{
     en:"Photo uploads are restored across the apps, including chat photos from parent accounts.",
     ru:"Загрузка фото снова работает во всех приложениях, включая фото в чате от родительских аккаунтов.",

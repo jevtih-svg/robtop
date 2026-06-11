@@ -187,14 +187,17 @@
     sdk.points.spend(it.id).then(function(out){
       if(!out || !out.ok){ busy=false; sdk.ui.toast(t("loadFail")); return; }
       var paid=(out.price!=null)?out.price:p;
-      sdk.data.create("orders",{ itemId:String(it.id), title:d.title||"", price:paid,
-        photo:d.photo||null, status:"pending" }).catch(function(){}).then(function(){
+      var save = out.order
+        ? Promise.resolve(out.order)
+        : sdk.data.create("orders",{ itemId:String(it.id), title:d.title||"", price:paid,
+            photo:d.photo||null, status:"pending" });
+      save.then(function(){
         busy=false;
         sdk.events.track("shop_buy",{title:d.title||"",price:paid});
         sdk.ui.toast(t("sentToast")); sdk.ui.haptics("light"); sdk.ui.chime();
         load();
-      });
-    });
+      }).catch(function(){ busy=false; sdk.ui.toast(t("loadFail")); load(); });
+    }).catch(function(){ busy=false; sdk.ui.toast(t("loadFail")); load(); });
   }
 
   /* ---------- подтверждение покупки (родитель) ---------- */
@@ -273,7 +276,7 @@
         +'<input type="file" id="shFile" accept="image/*" hidden>'
         +'<input type="text" id="shTitle" maxlength="60" placeholder="'+esc(t("itemTitlePh"))+'" value="'+esc(d.title||"")+'">'
         +'<label class="sh-lbl" for="shPrice">'+esc(t("itemPriceLbl"))+'</label>'
-        +'<input type="number" id="shPrice" inputmode="numeric" min="1" max="1000000" value="'+(price(d)||"")+'">'
+        +'<input type="number" id="shPrice" inputmode="numeric" min="1" max="10000" value="'+(price(d)||"")+'">'
         +checklist
       +'</div>'
       +'<div class="sheet-actions">'
@@ -332,7 +335,7 @@
       if(!title){ sdk.ui.toast(t("needTitle")); return; }
       var p=parseInt(box.querySelector("#shPrice").value,10)||0;
       if(p<=0){ sdk.ui.toast(t("needPrice")); return; }
-      if(p>1000000) p=1000000;
+      if(p>10000) p=10000;
       var payload={ title:title, price:p, photo:photo };
       if(kids.length) payload.disabledFor=readDisabled();   /* чек-лист доступности — только если детей знаем */
       busy=true;
