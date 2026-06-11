@@ -668,7 +668,7 @@ window.RobTop = window.RobTop || {};
 
   /* ---------- начисление очков / штраф родителем ---------- */
   var _bsdk=null, giveBusy=false;
-  function bankSdk(){ if(!_bsdk) _bsdk=RT.createSdk({id:"bank"}); return _bsdk; }
+  function bankSdk(){ if(!_bsdk) _bsdk=RT.createSdk({id:"bank",permissions:["points"]}); return _bsdk; }
   function openGive(){ openPoints(false); }
   function openPen(){ openPoints(true); }
   function openPoints(pen){
@@ -716,6 +716,9 @@ window.RobTop = window.RobTop || {};
         RT.API.post("notify.php",{op:"send",to:"child",child:S.childId||0,src:"bank",
           type:pen?"penalty":"points_given",params:{n:n,note:note},link:{module:"bank"}}).catch(function(){});
         fetchData(S.childId);
+      }).catch(function(){
+        giveBusy=false; go.disabled=false;
+        RT._shell.toast(t("parent.give.fail"));
       });
     };
   }

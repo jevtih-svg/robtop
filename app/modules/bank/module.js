@@ -752,6 +752,9 @@
       sdk.points.add(n[0],n[1],n[2]).then(function(out){
         busy=false;
         if(pointsResult(out, op, n[0], note)){ ctl.close(); load(); }
+      }).catch(function(){
+        busy=false;
+        sdk.ui.toast(t("loadFail"));
       });
     };
   }
