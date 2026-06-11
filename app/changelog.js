@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.11.7", d:"2026-06-11", t:{
+    en:"Child devices can now load images attached to shared store and family app records.",
+    ru:"Детские устройства теперь видят картинки из общих записей магазина и семейных приложений.",
+    lv:"Bērnu ierīces tagad redz attēlus koplietotos veikala un ģimenes lietotņu ierakstos." } },
   { v:"2026.06.11.6", d:"2026-06-11", t:{
     en:"Image fixes now also clear old denied-image cache on child devices.",
     ru:"Фиксы картинок теперь также сбрасывают старый кэш запрещённых изображений на детских устройствах.",

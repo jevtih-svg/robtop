@@ -131,12 +131,45 @@ function rt_img_can_view_shop($db, $viewer, $ownerId, $path) {
     } catch (Throwable $e) { return false; }
 }
 
+function rt_img_manifest_shares_collection($manifest, $collection) {
+    $man = $manifest ? json_decode((string)$manifest, true) : [];
+    if (!is_array($man)) return false;
+    if (!empty($man['familyPool'])) return true;
+    $cols = (isset($man['familyCollections']) && is_array($man['familyCollections'])) ? $man['familyCollections'] : [];
+    return in_array((string)$collection, $cols, true);
+}
+
+function rt_img_can_view_module_data($db, $viewer, $ownerId, $path) {
+    if ($viewer <= 0 || !rt_img_same_family_or_guardian_scope($db, $viewer, $ownerId)) return false;
+    try {
+        $s = $db->prepare(
+            "SELECT md.user_id, md.collection, m.manifest
+               FROM module_data md
+               JOIN modules m ON m.id = md.module AND m.deleted_at IS NULL AND m.enabled = 1
+              WHERE md.deleted_at IS NULL
+                AND JSON_SEARCH(md.data, 'one', ?) IS NOT NULL
+              LIMIT 50"
+        );
+        $s->execute([$path]);
+        foreach ($s->fetchAll() as $r) {
+            $rowUid = (int)$r['user_id'];
+            if ($rowUid === $viewer) return true;
+            if (rt_img_same_family_or_guardian_scope($db, $viewer, $rowUid)
+                && rt_img_manifest_shares_collection($r['manifest'], $r['collection'])) {
+                return true;
+            }
+        }
+        return false;
+    } catch (Throwable $e) { return false; }
+}
+
 $db = rt_db();
 $path = 'uploads/' . $rel;
 if (!rt_img_can_view($db, $viewer, $ownerId)
     && !rt_img_public_ok($db, $ownerId, $kind)
     && !($kind === 'chat' && rt_img_can_view_chat($db, $viewer, $path))
-    && !($kind === 'shop' && rt_img_can_view_shop($db, $viewer, $ownerId, $path))) {
+    && !($kind === 'shop' && rt_img_can_view_shop($db, $viewer, $ownerId, $path))
+    && !rt_img_can_view_module_data($db, $viewer, $ownerId, $path)) {
     rt_img_fail(403);
 }
 
