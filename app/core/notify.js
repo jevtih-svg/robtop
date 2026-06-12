@@ -260,7 +260,9 @@ window.RobTop = window.RobTop || {};
       data:{ ok:1, child:p.child||0 }
     };
     if(!b.data.child && lk.child) b.data.child=lk.child;
-    return RT.API.post("action.php",b).then(function(r){ return !!(r&&r.ok); }).catch(function(){ return false; });
+    return RT.API.post("action.php",b).then(function(r){ return !!(r&&r.ok); }).catch(function(e){
+      return /http 409/.test(String(e&&e.message||"")) ? "stale" : false;
+    });
   }
   function approveFromNtf(it){
     return it && it.src==="find" ? approveFindFromNtf(it) : approveTaskFromNtf(it);
@@ -365,7 +367,7 @@ window.RobTop = window.RobTop || {};
           if(!ok){ ab.disabled=false; if(shell().toast) shell().toast(I.t("ntf.approveFail")); return; }
           if(ai.params) ai.params.reviewPending=0;
           ai.read=true; markRead(aid); ab.textContent=I.t("ntf.approved");
-          if(shell().toast) shell().toast(I.t("ntf.approved"));
+          if(ok!=="stale" && shell().toast) shell().toast(I.t("ntf.approved"));
           paint();
         });
         return;
@@ -416,7 +418,7 @@ window.RobTop = window.RobTop || {};
           if(!ok){ ab.disabled=false; if(shell().toast) shell().toast(I.t("ntf.approveFail")); return; }
           if(ai.params) ai.params.reviewPending=0;
           ai.read=true; markRead(aid); ab.textContent=I.t("ntf.approved");
-          if(shell().toast) shell().toast(I.t("ntf.approved"));
+          if(ok!=="stale" && shell().toast) shell().toast(I.t("ntf.approved"));
           paint();
         });
         return;
