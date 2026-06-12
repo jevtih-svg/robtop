@@ -363,6 +363,8 @@
   var statsCache=null;
   var META={ id:null, cooldownMin:null }; /* настройка родителя: перерыв между локальными играми */
   var PD=null;            /* drag-состояние расстановки {idx,grabK,x,y,moved} */
+  var OPP_FLASH=null;     /* {cells,ts} — куда только что выстрелил соперник (кольцо на моей доске) */
+  var oppSeen={ id:null, n:0 }; /* сколько выстрелов соперника уже показано (семейный матч) */
 
   function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
@@ -464,6 +466,7 @@
     }).then(function(){ if(alive&&view==="home") render(); })
       .catch(function(){ if(alive) sdk.ui.toast(t("saveFailed")); });
   }
+  function flashOpp(cells){ OPP_FLASH={ cells:(cells||[]).slice(), ts:Date.now() }; }
   function celebrate(won){
     if(won){ sdk.ui.confetti(); sdk.ui.chime(); sdk.ui.haptics([20,30,60]); }
     else sdk.ui.haptics([10,30,10]);
@@ -535,6 +538,7 @@
       if(!res){ g.turn=0; saveLocal(); render(); return; }
       g.shots[1]=g.shots[1].concat(res.cells);
       g.shotN[1]++;
+      flashOpp([i]); /* показать, КУДА выстрелил робот (фидбек Джеффа 2026-06-12) */
       sfx(res.r);
       var hits=hitCount(grid,setToSet(g.shots[1]));
       if(hits>=DECKS){ finishLocal(1); return; }
@@ -655,7 +659,11 @@
       else view="home";
       render(); return;
     }
-    if(st==="battle"){ view=F.my>=0?"battle":"home"; render(); return; }
+    if(st==="battle"){
+      view=F.my>=0?"battle":"home";
+      if(F.my>=0){ oppSeen={ id:String(F.rec.id), n:((F.st.shots&&F.st.shots[1-F.my])||[]).length }; }
+      render(); return;
+    }
     view="home"; render();
   }
   function famPlaceDone(){
@@ -791,6 +799,18 @@
       return;
     }
     if(ctx==="fam"&&view==="battle"){
+      /* ходы соперника, прилетевшие этим тиком — подсветить кольцом на моей доске */
+      var oshots=(F.st.shots&&F.st.shots[1-F.my])||[];
+      if(oppSeen.id!==String(F.rec.id)) oppSeen={ id:String(F.rec.id), n:oshots.length };
+      else if(oshots.length>oppSeen.n){
+        var fresh=oshots.slice(oppSeen.n);
+        oppSeen.n=oshots.length;
+        flashOpp(fresh);
+        var mg=F.fleets[F.my]?gridOf(F.fleets[F.my].data.ships):null, hitAny=false, k;
+        if(mg) for(k=0;k<fresh.length;k++) if(mg[fresh[k]]>=0) hitAny=true;
+        sfx(hitAny?"hit":"miss");
+        sdk.ui.haptics(hitAny?[15,25]:8);
+      }
       if(sameRec&&prev.turn!==F.st.turn&&F.st.turn===F.my) sdk.ui.haptics([10,40,10]);
       renderIfChanged(); return;
     }
@@ -848,6 +868,7 @@
         else cls+=" miss";
       } else if(shipIdx>=0&&!o.oppView) cls+=" ship";
       if(o.pick&&o.pick.has(i)) cls+=" pick";
+      if(o.flash&&o.flash.has(i)) cls+=" oflash";
       if(o.aim===i) cls+=" aim";
       h+='<button type="button" class="'+cls+'" data-i="'+i+'" aria-label="'+esc((letters[xOf(i)]||"")+(yOf(i)+1))+'"></button>';
     }
@@ -1058,7 +1079,8 @@
       +boardHtml({ships:oppShips,shots:myShots,oppView:true,dis:!mineTurn,aim:aim,main:true,act:mineTurn})
       +'<button type="button" class="sb-fire" data-act="fire"'+(mineTurn&&aim>=0?"":" disabled")+'>🎯 '+esc(t("fire"))+(aim>=0?" — "+esc(cellName(aim)):"")+'</button>'
       +'<div class="sb-bbot">'
-      +boardHtml({ships:myShips,shots:oppShots,oppView:false,mini:true,dis:true,aim:-1})
+      +boardHtml({ships:myShips,shots:oppShots,oppView:false,mini:true,dis:true,aim:-1,
+          flash:(OPP_FLASH&&Date.now()-OPP_FLASH.ts<2500)?setToSet(OPP_FLASH.cells):null})
       +'<div class="sb-fcol">'+fleetBar(oppShips,myShots,t("oppWaters"))+fleetBar(myShips,oppShots,t("myFleet"))+'</div>'
       +'</div>'
       +'</div>';
@@ -1329,7 +1351,7 @@
     view="home"; ctx="local"; g=null; P=null; aim=-1; saving=false; curSheet=null; lastRes=null;
     F={ rec:null, st:null, my:-1, fleets:[null,null], finished:[] };
     hist=[]; histLoaded=false; famPrev=null; lastFp=null; statsCache=null;
-    META={ id:null, cooldownMin:null }; PD=null;
+    META={ id:null, cooldownMin:null }; PD=null; OPP_FLASH=null; oppSeen={ id:null, n:0 };
     var title=sdk.i18n.t("tile.seabattle");
     var body=sdk.ui.frame({
       titleHtml:'<div class="sb-title">'+esc(title)+'</div><div class="sb-sub">'+esc(t("subtitle"))+'</div>',
@@ -1363,6 +1385,7 @@
     if(curSheet&&curSheet.close){ try{ curSheet.close(); }catch(e){} }
     curSheet=null; root=null; g=null; P=null; F={rec:null,st:null,my:-1,fleets:[null,null],finished:[]};
     hist=[]; lastRes=null; famPrev=null; lastFp=null; statsCache=null; PD=null;
+    OPP_FLASH=null; oppSeen={ id:null, n:0 };
   }
   function refresh(){
     try{

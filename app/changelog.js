@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.12.6", d:"2026-06-12", t:{
+    en:"Sea Battle: the opponent's shot now flashes a pulsing ring on your board, so you always see where they fired.",
+    ru:"Морской бой: выстрел соперника теперь подсвечивается пульсирующим кольцом на твоей доске — всегда видно, куда он стрелял.",
+    lv:"Jūras kauja: pretinieka šāviens tagad iezīmējas ar pulsējošu gredzenu uz tava laukuma — vienmēr redzams, kur viņš šāva." } },
   { v:"2026.06.12.5", d:"2026-06-12", t:{
     en:"Sea Battle: the game history is now private (everyone sees only their own games), and surrendering shows as “gave up”, not a defeat.",
     ru:"Морской бой: история игр теперь личная (каждый видит только свои игры), а сдача отображается как «сдался», а не поражение.",
