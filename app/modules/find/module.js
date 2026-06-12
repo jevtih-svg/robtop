@@ -408,7 +408,7 @@
       sdk.data.create("subs", rec).catch(function(){ return null; }).then(function(it){
         if(!it){ uploadFailed(); return; } /* саб НЕ создан — честно просим повторить */
         subs.push({id:it.id,d:rec});
-        sdk.notify.send("parents","pending",{ params:{ name:(sdk.user&&sdk.user.name)||"", desc:desc }, link:{ module:"find" } });
+        sdk.notify.send("parents","pending",{ params:{ name:(sdk.user&&sdk.user.name)||"", desc:desc, subId:it.id, child:sdk.user&&sdk.user.id }, link:{ module:"find", item:it.id } });
         sdk.events.track("find_submit",{ diff:rec.diff });
         sdk.ui.haptics(10); sdk.ui.toast(t("submitted"));
         afterPlay();

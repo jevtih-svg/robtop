@@ -232,12 +232,26 @@ window.RobTop = window.RobTop || {};
   }
   function canApprove(it){
     var p=(it&&it.params)||{};
-    return it && it.src==="tasks" && (it.type==="task_claim" || it.type==="task_proposed") && p.taskId;
+    if (it && it.src==="tasks" && (it.type==="task_claim" || it.type==="task_proposed") && p.taskId) return true;
+    return !!(it && it.src==="find" && it.type==="pending" && p.subId && p.reviewPending);
   }
   function approveTaskFromNtf(it){
     var p=(it&&it.params)||{}, b={op:"approve",id:p.taskId};
     if(p.child) b.child=p.child;
     return RT.API.post("tasks.php",b).then(function(r){ return !!(r&&r.ok); }).catch(function(){ return false; });
+  }
+  function approveFindFromNtf(it){
+    var p=(it&&it.params)||{}, lk=(it&&it.link)||{}, b={
+      module:"find",
+      type:"review",
+      itemId:p.subId,
+      data:{ ok:1, child:p.child||0 }
+    };
+    if(!b.data.child && lk.child) b.data.child=lk.child;
+    return RT.API.post("action.php",b).then(function(r){ return !!(r&&r.ok); }).catch(function(){ return false; });
+  }
+  function approveFromNtf(it){
+    return it && it.src==="find" ? approveFindFromNtf(it) : approveTaskFromNtf(it);
   }
 
   /* =================== БАННЕРЫ (iOS-стиль) =================== */
@@ -335,8 +349,9 @@ window.RobTop = window.RobTop || {};
         items.forEach(function(x){ if(x.id===aid) ai=x; });
         if(!ai) return;
         ab.disabled=true;
-        approveTaskFromNtf(ai).then(function(ok){
+        approveFromNtf(ai).then(function(ok){
           if(!ok){ ab.disabled=false; if(shell().toast) shell().toast(I.t("ntf.approveFail")); return; }
+          if(ai.params) ai.params.reviewPending=0;
           ai.read=true; markRead(aid); ab.textContent=I.t("ntf.approved");
           if(shell().toast) shell().toast(I.t("ntf.approved"));
           paint();
@@ -385,8 +400,9 @@ window.RobTop = window.RobTop || {};
         items.forEach(function(x){ if(x.id===aid) ai=x; });
         if(!ai) return;
         ab.disabled=true;
-        approveTaskFromNtf(ai).then(function(ok){
+        approveFromNtf(ai).then(function(ok){
           if(!ok){ ab.disabled=false; if(shell().toast) shell().toast(I.t("ntf.approveFail")); return; }
+          if(ai.params) ai.params.reviewPending=0;
           ai.read=true; markRead(aid); ab.textContent=I.t("ntf.approved");
           if(shell().toast) shell().toast(I.t("ntf.approved"));
           paint();

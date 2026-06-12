@@ -54,7 +54,7 @@ switch ($op) {
 
     case 'list': {
         $before = isset($b['before']) ? (int)$b['before'] : 0;
-        $sql = "SELECT id, src, type, params, link, read_at,
+        $sql = "SELECT id, src, type, params, link, actor_id, read_at,
                        UNIX_TIMESTAMP(created_at)*1000 AS createdAt
                 FROM notifications WHERE user_id = ?" . ($before > 0 ? " AND id < ?" : "")
              . " ORDER BY id DESC LIMIT 50";
@@ -62,11 +62,25 @@ switch ($op) {
         $s->execute($before > 0 ? [$UID, $before] : [$UID]);
         $items = [];
         foreach ($s->fetchAll() as $r) {
+            $params = $r['params'] !== null ? json_decode($r['params'], true) : null;
+            if (!is_array($params)) $params = null;
+            if ($r['src'] === 'find' && $r['type'] === 'pending' && $params && !empty($params['subId']) && !empty($r['actor_id'])) {
+                try {
+                    $q = $db->prepare(
+                        "SELECT JSON_UNQUOTE(JSON_EXTRACT(data, '$.st')) AS st
+                           FROM module_data
+                          WHERE id=? AND user_id=? AND module='find' AND collection='subs' AND deleted_at IS NULL
+                          LIMIT 1"
+                    );
+                    $q->execute([(int)$params['subId'], (int)$r['actor_id']]);
+                    $params['reviewPending'] = ($q->fetchColumn() === 'pending') ? 1 : 0;
+                } catch (Throwable $e) { $params['reviewPending'] = 0; }
+            }
             $items[] = [
                 'id'        => (int)$r['id'],
                 'src'       => $r['src'],
                 'type'      => $r['type'],
-                'params'    => $r['params'] !== null ? json_decode($r['params'], true) : null,
+                'params'    => $params,
                 'link'      => $r['link'] !== null ? json_decode($r['link'], true) : null,
                 'read'      => $r['read_at'] !== null,
                 'createdAt' => (int)$r['createdAt'],
