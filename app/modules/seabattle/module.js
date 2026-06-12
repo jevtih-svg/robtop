@@ -42,6 +42,7 @@
     coolOff:"Off", coolMin:"{n} min",
     coolWait:"Break! Next game in {t}",
     winTitle:"Victory! 🏆", loseTitle:"Defeat", winBy:"{name} wins! 🏆",
+    surrTitle:"Surrendered 🏳", oppGaveUp:"The opponent surrendered 🏳",
     encourage:"You almost had it — try again!",
     rScore:"hits", rShots:"shots", rAcc:"accuracy",
     again:"Rematch",
@@ -52,7 +53,7 @@
     famYourTurn:"Your turn!", famOppTurn:"{name}'s turn",
     stGames:"games", stWins:"wins",
     histTitle:"Game history", histEmpty:"No battles yet — start one!",
-    bWin:"win", bLoss:"loss",
+    bWin:"win", bLoss:"loss", bSurr:"gave up",
     loadFailed:"Couldn't load", saveFailed:"Couldn't save, try again"
   }, bank:{ r_seabattle_win:"Sea Battle — victory!", r_seabattle_loss:"Sea Battle — defeat" }},
   ru:{ seabattle:{
@@ -90,6 +91,7 @@
     coolOff:"Выкл", coolMin:"{n} мин",
     coolWait:"Перерыв! Следующая игра через {t}",
     winTitle:"Победа! 🏆", loseTitle:"Поражение", winBy:"{name} побеждает! 🏆",
+    surrTitle:"Сдался 🏳", oppGaveUp:"Соперник сдался 🏳",
     encourage:"Почти получилось — попробуй ещё раз!",
     rScore:"попаданий", rShots:"выстрелов", rAcc:"точность",
     again:"Реванш",
@@ -100,7 +102,7 @@
     famYourTurn:"Твой ход!", famOppTurn:"Ход: {name}",
     stGames:"игр", stWins:"побед",
     histTitle:"История игр", histEmpty:"Боёв ещё не было — начни первый!",
-    bWin:"победа", bLoss:"поражение",
+    bWin:"победа", bLoss:"поражение", bSurr:"сдался",
     loadFailed:"Не удалось загрузить", saveFailed:"Не получилось сохранить, попробуй ещё раз"
   }, bank:{ r_seabattle_win:"Морской бой — победа!", r_seabattle_loss:"Морской бой — поражение" }},
   lv:{ seabattle:{
@@ -138,6 +140,7 @@
     coolOff:"Izslēgts", coolMin:"{n} min",
     coolWait:"Pauze! Nākamā spēle pēc {t}",
     winTitle:"Uzvara! 🏆", loseTitle:"Zaudējums", winBy:"{name} uzvar! 🏆",
+    surrTitle:"Padevās 🏳", oppGaveUp:"Pretinieks padevās 🏳",
     encourage:"Gandrīz izdevās — mēģini vēlreiz!",
     rScore:"trāpījumi", rShots:"šāvieni", rAcc:"precizitāte",
     again:"Revanšs",
@@ -148,7 +151,7 @@
     famYourTurn:"Tavs gājiens!", famOppTurn:"Gājiens: {name}",
     stGames:"spēles", stWins:"uzvaras",
     histTitle:"Spēļu vēsture", histEmpty:"Kauju vēl nav — sāc pirmo!",
-    bWin:"uzvara", bLoss:"zaudējums",
+    bWin:"uzvara", bLoss:"zaudējums", bSurr:"padevās",
     loadFailed:"Neizdevās ielādēt", saveFailed:"Neizdevās saglabāt, mēģini vēlreiz"
   }, bank:{ r_seabattle_win:"Jūras kauja — uzvara!", r_seabattle_loss:"Jūras kauja — zaudējums" }}
   };
@@ -546,7 +549,7 @@
     var myHits=hitCount(grid1,setToSet(g.shots[0]));
     var oppHits=hitCount(grid0,setToSet(g.shots[1]));
     var durSec=Math.round((Date.now()-g.startMs)/1000);
-    lastRes={ mode:g.mode, diff:g.diff, winner:winnerIdx,
+    lastRes={ mode:g.mode, diff:g.diff, winner:winnerIdx, surr:!!surrender,
       score:[myHits,oppHits], shots:g.shotN.slice(), names:[localName(0),localName(1)] };
     try{ sdk.storage.local("lastEnd").set(Date.now()); }catch(e){} /* старт перерыва */
     if(g.mode==="bot"){
@@ -554,7 +557,7 @@
       lastRes.acc=accOf(g.shotN[0],myHits);
       track("battle_finished",{mode:"bot",diff:g.diff||"",result:won?"win":"loss",
         shots:g.shotN[0],acc:lastRes.acc,durSec:durSec,by:myName()});
-      saveHistory({ mode:"bot", diff:g.diff||"", result:won?"win":"loss",
+      saveHistory({ mode:"bot", diff:g.diff||"", result:won?"win":"loss", surr:surrender?1:0,
         score:[myHits,oppHits], shots:g.shotN[0], acc:lastRes.acc,
         author:myName(), authorUid:sdk.user&&sdk.user.id, date:todayStr(), time:nowHM() });
       celebrate(won);
@@ -715,7 +718,7 @@
   /* победа в семейном матче: оповещение/событие — на устройстве победителя (очков нет) */
   function famWon(justNow){
     var sc=famScore(), names=famNames(), nn=F.st.n||[0,0];
-    lastRes={ mode:"fam", iWon:true, winner:F.st.winner, names:names,
+    lastRes={ mode:"fam", iWon:true, winner:F.st.winner, names:names, oppSurr:F.st.result==="surrender",
       score:[sc[F.my],sc[1-F.my]], shots:[nn[F.my],nn[1-F.my]] };
     track("battle_finished",{mode:"family",result:"win",shots:nn[F.my],by:myName()});
     if(justNow) sdk.notify.send("family","finished",{ params:{name:names[F.st.winner]||myName(),score:sc[F.st.winner]+":"+sc[1-F.st.winner]}, link:{module:"seabattle"} });
@@ -726,7 +729,7 @@
   }
   function famLost(){
     var sc=famScore(), names=famNames(), nn=F.st.n||[0,0];
-    lastRes={ mode:"fam", iWon:false, winner:F.st.winner, names:names,
+    lastRes={ mode:"fam", iWon:false, winner:F.st.winner, names:names, surr:F.st.result==="surrender",
       score:[sc[F.my],sc[1-F.my]], shots:[nn[F.my],nn[1-F.my]] };
     if(isChild()) track("battle_finished",{mode:"family",result:"loss",shots:nn[F.my]||0,by:myName()});
     celebrate(false);
@@ -933,15 +936,19 @@
     return h;
   }
   function histRows(){
-    /* история = бот/hot-seat записи + завершённые семейные матчи, новые сверху */
-    var rows=[],i,d;
+    /* история — ТОЛЬКО СВОЯ (приватность, фидбек Джеффа 2026-06-12): пул familyPool общий,
+       поэтому фильтруем на показе — бот/hot-seat по автору, семейные матчи по участию */
+    var rows=[],i,d,mine;
     for(i=0;i<hist.length;i++){
       d=hist[i].data||{};
+      if(String(d.authorUid)!==myUid()) continue;
       rows.push({ at:hist[i].createdAt||0, d:d, fam:false });
     }
     for(i=0;i<F.finished.length;i++){
       d=F.finished[i].data||{};
-      rows.push({ at:F.finished[i].createdAt||0, d:d, fam:true });
+      mine=d.p0&&String(d.p0.uid)===myUid()?0:(d.p1&&String(d.p1.uid)===myUid()?1:-1);
+      if(mine<0) continue;
+      rows.push({ at:F.finished[i].createdAt||0, d:d, fam:true, mine:mine });
     }
     rows.sort(function(a,b){ return b.at-a.at; });
     return rows.slice(0,60);
@@ -956,15 +963,18 @@
       if(r.fam){
         var names=[d.p0?d.p0.name:"",d.p1?d.p1.name:""];
         var winIdx=d.st?d.st.winner:0;
-        var mine=d.p0&&String(d.p0.uid)===myUid()?0:(d.p1&&String(d.p1.uid)===myUid()?1:-1);
+        var surr=d.st&&d.st.result==="surrender";
         e="⚔️"; t1=t("vsLine",{a:names[0],b:names[1]});
         t2=t("mdFam")+" · "+esc(humanDate(d.fdate||d.date||""));
-        if(mine>=0) badge=winIdx===mine?'<span class="sb-badge win">'+esc(t("bWin"))+'</span>':'<span class="sb-badge loss">'+esc(t("bLoss"))+'</span>';
-        else badge='<span class="sb-badge mid">'+esc(names[winIdx]||"")+' 🏆</span>';
+        badge=winIdx===r.mine?'<span class="sb-badge win">'+esc(t("bWin"))+'</span>'
+             :(surr?'<span class="sb-badge mid">🏳 '+esc(t("bSurr"))+'</span>'
+                   :'<span class="sb-badge loss">'+esc(t("bLoss"))+'</span>');
       } else if(d.mode==="bot"){
         e="🤖"; t1=t("mdBot",{d:diffLabel(d.diff||"normal")});
         t2=(d.score?d.score[0]+":"+d.score[1]+" · ":"")+esc(humanDate(d.date||""))+(d.author?" · "+esc(d.author):"");
-        badge=d.result==="win"?'<span class="sb-badge win">'+esc(t("bWin"))+'</span>':'<span class="sb-badge loss">'+esc(t("bLoss"))+'</span>';
+        badge=d.result==="win"?'<span class="sb-badge win">'+esc(t("bWin"))+'</span>'
+             :(d.surr?'<span class="sb-badge mid">🏳 '+esc(t("bSurr"))+'</span>'
+                     :'<span class="sb-badge loss">'+esc(t("bLoss"))+'</span>');
       } else {
         e="🤝"; t1=t("mdHot");
         t2=(d.score?d.score[0]+":"+d.score[1]+" · ":"")+esc(humanDate(d.date||""))+(d.author?" · "+esc(d.author):"");
@@ -1060,13 +1070,13 @@
     if(r.mode==="hot"){
       emoji="🏆"; title=t("winBy",{name:r.names[r.winner]});
     } else if(r.mode==="fam"){
-      emoji=r.iWon?"🏆":"💧";
-      title=r.iWon?t("winTitle"):t("loseTitle");
-      sub=r.iWon?"":t("encourage");
+      emoji=r.iWon?"🏆":(r.surr?"🏳":"💧");
+      title=r.iWon?t("winTitle"):(r.surr?t("surrTitle"):t("loseTitle"));
+      sub=r.iWon?(r.oppSurr?t("oppGaveUp"):""):t("encourage");
     } else {
       var won=r.winner===0;
-      emoji=won?"🏆":"💧";
-      title=won?t("winTitle"):t("loseTitle");
+      emoji=won?"🏆":(r.surr?"🏳":"💧");
+      title=won?t("winTitle"):(r.surr?t("surrTitle"):t("loseTitle"));
       sub=won?"":t("encourage");
     }
     h+='<span class="e">'+emoji+'</span><div class="t1">'+esc(title)+'</div>';

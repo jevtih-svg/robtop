@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.12.5", d:"2026-06-12", t:{
+    en:"Sea Battle: the game history is now private (everyone sees only their own games), and surrendering shows as “gave up”, not a defeat.",
+    ru:"Морской бой: история игр теперь личная (каждый видит только свои игры), а сдача отображается как «сдался», а не поражение.",
+    lv:"Jūras kauja: spēļu vēsture tagad ir privāta (katrs redz tikai savas spēles), un padošanās tiek rādīta kā “padevās”, nevis zaudējums." } },
   { v:"2026.06.12.4", d:"2026-06-12", t:{
     en:"Sea Battle v1.1: drag ships to move them and rotate them right on the board, the battle fits one screen, the active board shows whose turn it is, and points are gone — parents set a break between games instead.",
     ru:"Морской бой v1.1: корабли можно перетаскивать и поворачивать прямо на поле, бой помещается на один экран, чей ход — видно по активному полю, а очки убраны: вместо них родитель настраивает перерыв между играми.",
