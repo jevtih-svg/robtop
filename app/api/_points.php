@@ -28,8 +28,6 @@ function rt_points_tariff() {
         'find_wrong'    => ['n' => -5, 'kind' => 'loss'],
         'find_timeout'  => ['n' => -5, 'kind' => 'loss'],
         'find_bonus'    => ['n' => 10, 'kind' => 'win'],
-        'seabattle_win'  => ['n' => 10, 'kind' => 'win'],
-        'seabattle_loss' => ['n' => -5, 'kind' => 'loss'],
     ];
 }
 

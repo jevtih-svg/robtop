@@ -1,7 +1,7 @@
 /* RobTop — модуль «Морской бой». Классика 10×10: против робота (3 уровня), вдвоём на одном
    устройстве (hot-seat) и семейный матч на двух устройствах (familyPool: записи matches/fleets,
-   ходы доезжают хуком refresh ~4с). Очки: seabattle_win +10 / seabattle_loss −5 (бот),
-   победа в семейном матче +10 ребёнку; тарифы — сервер (api/_points.php), канон ГАЙД-очки.md. */
+   ходы доезжают хуком refresh ~4с). БЕЗ очков (решение Джеффа 2026-06-12); вместо мотивации —
+   родительский перерыв между локальными играми (meta.cooldownMin, деф. 1 мин, как в find). */
 (function(){
   "use strict";
 
@@ -29,12 +29,18 @@
     passTo:"Pass the device to {name}", passHint:"No peeking! 🙈", passBtn:"I'm ready!",
     oppWaters:"Enemy waters", myFleet:"Your fleet",
     yourTurn:"Your turn — fire!", oppTurn:"{name} is aiming…", botThinks:"The robot is thinking…",
-    fire:"Fire!", aimHint:"Tap a cell, then — Fire!",
+    fire:"Fire!",
     hit:"Hit! Shoot again", miss:"Miss", sunk:"Sunk! 💥",
     giveUp:"Surrender",
-    giveUpBot:"Surrender? It counts as a defeat (−5).",
+    giveUpBot:"Surrender? It counts as a defeat.",
     giveUpFam:"Surrender? {name} wins.",
     giveUpHot:"End the game without a result?",
+    moveHint:"Drag the ship, or tap Rotate",
+    setTitle:"Game settings",
+    coolTitle:"Break between games",
+    coolHint:"How long a child waits before the next robot or two-player game. Family matches are never limited.",
+    coolOff:"Off", coolMin:"{n} min",
+    coolWait:"Break! Next game in {t}",
     winTitle:"Victory! 🏆", loseTitle:"Defeat", winBy:"{name} wins! 🏆",
     encourage:"You almost had it — try again!",
     rScore:"hits", rShots:"shots", rAcc:"accuracy",
@@ -44,7 +50,7 @@
     famAccept:"Accept the challenge", famTaken:"The challenge is already taken",
     famPlaceWait:"{name} is placing ships…", famBusy:"{a} vs {b} — a match is on",
     famYourTurn:"Your turn!", famOppTurn:"{name}'s turn",
-    statsTitle:"My stats", stGames:"games", stWins:"wins", stAcc:"accuracy",
+    stGames:"games", stWins:"wins",
     histTitle:"Game history", histEmpty:"No battles yet — start one!",
     bWin:"win", bLoss:"loss",
     loadFailed:"Couldn't load", saveFailed:"Couldn't save, try again"
@@ -71,12 +77,18 @@
     passTo:"Передай устройство: {name}", passHint:"Не подглядывать! 🙈", passBtn:"Я готов!",
     oppWaters:"Воды противника", myFleet:"Твой флот",
     yourTurn:"Твой ход — огонь!", oppTurn:"{name} целится…", botThinks:"Робот думает…",
-    fire:"Огонь!", aimHint:"Тапни клетку, потом — Огонь!",
+    fire:"Огонь!",
     hit:"Попал! Стреляй ещё", miss:"Мимо", sunk:"Потопил! 💥",
     giveUp:"Сдаться",
-    giveUpBot:"Сдаться? Засчитается поражение (−5).",
+    giveUpBot:"Сдаться? Засчитается поражение.",
     giveUpFam:"Сдаться? Победит {name}.",
     giveUpHot:"Закончить игру без результата?",
+    moveHint:"Перетащи корабль или жми «Повернуть»",
+    setTitle:"Настройки игры",
+    coolTitle:"Перерыв между играми",
+    coolHint:"Сколько ребёнок ждёт до следующей игры с роботом или вдвоём. Семейные матчи без ограничений.",
+    coolOff:"Выкл", coolMin:"{n} мин",
+    coolWait:"Перерыв! Следующая игра через {t}",
     winTitle:"Победа! 🏆", loseTitle:"Поражение", winBy:"{name} побеждает! 🏆",
     encourage:"Почти получилось — попробуй ещё раз!",
     rScore:"попаданий", rShots:"выстрелов", rAcc:"точность",
@@ -86,7 +98,7 @@
     famAccept:"Принять вызов", famTaken:"Вызов уже принят",
     famPlaceWait:"{name} расставляет корабли…", famBusy:"{a} против {b} — матч уже идёт",
     famYourTurn:"Твой ход!", famOppTurn:"Ход: {name}",
-    statsTitle:"Моя статистика", stGames:"игр", stWins:"побед", stAcc:"точность",
+    stGames:"игр", stWins:"побед",
     histTitle:"История игр", histEmpty:"Боёв ещё не было — начни первый!",
     bWin:"победа", bLoss:"поражение",
     loadFailed:"Не удалось загрузить", saveFailed:"Не получилось сохранить, попробуй ещё раз"
@@ -113,12 +125,18 @@
     passTo:"Padod ierīci: {name}", passHint:"Nelūrēt! 🙈", passBtn:"Esmu gatavs!",
     oppWaters:"Pretinieka ūdeņi", myFleet:"Tava flote",
     yourTurn:"Tavs gājiens — uguni!", oppTurn:"{name} mērķē…", botThinks:"Robots domā…",
-    fire:"Uguni!", aimHint:"Pieskaries rūtiņai, tad — Uguni!",
+    fire:"Uguni!",
     hit:"Trāpīts! Šauj vēlreiz", miss:"Garām", sunk:"Nogremdēts! 💥",
     giveUp:"Padoties",
-    giveUpBot:"Padoties? Tiks ieskaitīts zaudējums (−5).",
+    giveUpBot:"Padoties? Tiks ieskaitīts zaudējums.",
     giveUpFam:"Padoties? Uzvarēs {name}.",
     giveUpHot:"Beigt spēli bez rezultāta?",
+    moveHint:"Velc kuģi vai spied “Pagriezt”",
+    setTitle:"Spēles iestatījumi",
+    coolTitle:"Pauze starp spēlēm",
+    coolHint:"Cik ilgi bērns gaida līdz nākamajai spēlei ar robotu vai divatā. Ģimenes mačiem ierobežojuma nav.",
+    coolOff:"Izslēgts", coolMin:"{n} min",
+    coolWait:"Pauze! Nākamā spēle pēc {t}",
     winTitle:"Uzvara! 🏆", loseTitle:"Zaudējums", winBy:"{name} uzvar! 🏆",
     encourage:"Gandrīz izdevās — mēģini vēlreiz!",
     rScore:"trāpījumi", rShots:"šāvieni", rAcc:"precizitāte",
@@ -128,7 +146,7 @@
     famAccept:"Pieņemt izaicinājumu", famTaken:"Izaicinājums jau pieņemts",
     famPlaceWait:"{name} izvieto kuģus…", famBusy:"{a} pret {b} — mačs jau notiek",
     famYourTurn:"Tavs gājiens!", famOppTurn:"Gājiens: {name}",
-    statsTitle:"Mana statistika", stGames:"spēles", stWins:"uzvaras", stAcc:"precizitāte",
+    stGames:"spēles", stWins:"uzvaras",
     histTitle:"Spēļu vēsture", histEmpty:"Kauju vēl nav — sāc pirmo!",
     bWin:"uzvara", bLoss:"zaudējums",
     loadFailed:"Neizdevās ielādēt", saveFailed:"Neizdevās saglabāt, mēģini vēlreiz"
@@ -340,6 +358,8 @@
   var famPrev=null;       /* {id,status,turn} для детекта переходов на refresh */
   var lastFp=null;        /* отпечаток последнего рендера: refresh не перерисовывает без изменений */
   var statsCache=null;
+  var META={ id:null, cooldownMin:null }; /* настройка родителя: перерыв между локальными играми */
+  var PD=null;            /* drag-состояние расстановки {idx,grabK,x,y,moved} */
 
   function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
@@ -406,6 +426,30 @@
       hist=(items||[]).slice().sort(function(a,b){ return (b.createdAt||0)-(a.createdAt||0); });
       histLoaded=true;
     }).catch(function(){ histLoaded=true; });
+  }
+  function loadMeta(){
+    return sdk.data.list("meta").then(function(items){
+      if(items&&items.length){ META.id=items[0].id; META.cooldownMin=(items[0].data||{}).cooldownMin; }
+    }).catch(function(){});
+  }
+  /* перерыв между локальными играми (бот/hot-seat): только для ребёнка, семья не ограничена */
+  function coolMs(){ var m=META.cooldownMin; if(m==null) m=1; return Math.max(0,+m||0)*60000; }
+  function coolLeft(){
+    if(!isChild()||!coolMs()) return 0;
+    var le=+(sdk.storage.local("lastEnd").get()||0);
+    var r=le+coolMs()-Date.now();
+    return r>0?r:0;
+  }
+  function coolFmt(ms){
+    var s=Math.ceil(ms/1000), m=Math.floor(s/60);
+    return (m>0?m+":":"0:")+pad2(s%60);
+  }
+  function coolGate(){
+    var r=coolLeft();
+    if(!r) return false;
+    sdk.ui.haptics(10);
+    sdk.ui.toast(t("coolWait",{t:coolFmt(r)}));
+    return true;
   }
 
   /* =================== очки/итоги =================== */
@@ -504,11 +548,10 @@
     var durSec=Math.round((Date.now()-g.startMs)/1000);
     lastRes={ mode:g.mode, diff:g.diff, winner:winnerIdx,
       score:[myHits,oppHits], shots:g.shotN.slice(), names:[localName(0),localName(1)] };
+    try{ sdk.storage.local("lastEnd").set(Date.now()); }catch(e){} /* старт перерыва */
     if(g.mode==="bot"){
       var won=winnerIdx===0;
       lastRes.acc=accOf(g.shotN[0],myHits);
-      if(isChild()) sdk.points.add(won?10:-5, won?"seabattle_win":"seabattle_loss");
-      lastRes.pts=isChild()?(won?10:-5):0;
       track("battle_finished",{mode:"bot",diff:g.diff||"",result:won?"win":"loss",
         shots:g.shotN[0],acc:lastRes.acc,durSec:durSec,by:myName()});
       saveHistory({ mode:"bot", diff:g.diff||"", result:won?"win":"loss",
@@ -669,16 +712,12 @@
       if(alive){ sdk.ui.toast(t("saveFailed")); loadFam().then(function(){ if(alive) render(); }); }
     });
   }
-  /* победа в семейном матче: очки/оповещение/событие — на устройстве победителя */
+  /* победа в семейном матче: оповещение/событие — на устройстве победителя (очков нет) */
   function famWon(justNow){
     var sc=famScore(), names=famNames(), nn=F.st.n||[0,0];
     lastRes={ mode:"fam", iWon:true, winner:F.st.winner, names:names,
-      score:[sc[F.my],sc[1-F.my]], shots:[nn[F.my],nn[1-F.my]],
-      pts:isChild()?10:0 };
-    if(isChild()){
-      sdk.points.add(10,"seabattle_win");
-      track("battle_finished",{mode:"family",result:"win",shots:nn[F.my],by:myName()});
-    }
+      score:[sc[F.my],sc[1-F.my]], shots:[nn[F.my],nn[1-F.my]] };
+    track("battle_finished",{mode:"family",result:"win",shots:nn[F.my],by:myName()});
     if(justNow) sdk.notify.send("family","finished",{ params:{name:names[F.st.winner]||myName(),score:sc[F.st.winner]+":"+sc[1-F.st.winner]}, link:{module:"seabattle"} });
     celebrate(true);
     ctx="fam"; view="result"; famPrev=null;
@@ -688,7 +727,7 @@
   function famLost(){
     var sc=famScore(), names=famNames(), nn=F.st.n||[0,0];
     lastRes={ mode:"fam", iWon:false, winner:F.st.winner, names:names,
-      score:[sc[F.my],sc[1-F.my]], shots:[nn[F.my],nn[1-F.my]], pts:0 };
+      score:[sc[F.my],sc[1-F.my]], shots:[nn[F.my],nn[1-F.my]] };
     if(isChild()) track("battle_finished",{mode:"family",result:"loss",shots:nn[F.my]||0,by:myName()});
     celebrate(false);
     ctx="fam"; view="result"; famPrev=null; render();
@@ -774,7 +813,8 @@
   function colLetters(){ return String(t("cols")||"ABCDEFGHIJ").split(""); }
   function cellName(i){ return (colLetters()[xOf(i)]||"")+(yOf(i)+1); }
 
-  /* доска. opts: {ships, myShots(Set), oppView:bool, mini:bool, dis:bool, aim} */
+  /* доска. opts: {ships, shots(Set), oppView, mini, dis, aim, main(бой: крупная), act(мой ход),
+                   place(расстановка: touch-action none), pick(Set выбранных клеток)} */
   function boardHtml(o){
     var grid=o.ships?gridOf(o.ships):null;
     var shots=o.shots||new Set();
@@ -786,7 +826,9 @@
         if(all) sunkMap[s]=1;
       }
     }
-    var cls,letters=colLetters(),h='<div class="sb-bwrap'+(o.mini?' mini':'')+'">';
+    var wrapCls='sb-bwrap'+(o.mini?' mini':'')+(o.main?' main':'')
+      +(o.main?(o.act?' act':' wait'):'');
+    var cls,letters=colLetters(),h='<div class="'+wrapCls+'">';
     if(!o.mini){
       h+='<span></span><div class="sb-cols">';
       for(var c=0;c<N;c++) h+='<span>'+esc(letters[c]||"")+'</span>';
@@ -794,7 +836,7 @@
       for(var r=0;r<N;r++) h+='<span>'+(r+1)+'</span>';
       h+='</div>';
     }
-    h+='<div class="sb-grid'+(o.dis?' dis':'')+'" data-board="'+(o.oppView?'opp':'my')+'">';
+    h+='<div class="sb-grid'+(o.dis?' dis':'')+(o.place?' pl':'')+'" data-board="'+(o.oppView?'opp':'my')+'">';
     for(var i=0;i<CELLS;i++){
       cls="sb-c";
       var shot=shots.has(i), shipIdx=grid?grid[i]:-1;
@@ -802,6 +844,7 @@
         if(shipIdx>=0) cls+=sunkMap[shipIdx]?" sunk":" hit";
         else cls+=" miss";
       } else if(shipIdx>=0&&!o.oppView) cls+=" ship";
+      if(o.pick&&o.pick.has(i)) cls+=" pick";
       if(o.aim===i) cls+=" aim";
       h+='<button type="button" class="'+cls+'" data-i="'+i+'" aria-label="'+esc((letters[xOf(i)]||"")+(yOf(i)+1))+'"></button>';
     }
@@ -886,12 +929,6 @@
       +'<button type="button" class="sb-mode" data-act="hot"><span class="e">🤝</span><span><span class="t1">'+esc(t("mHot"))+'</span><span class="t2">'+esc(t("mHotSub"))+'</span></span></button>'
       +'<button type="button" class="sb-mode'+(sdk.isDemo()?' dis':'')+'" data-act="fam"><span class="e">⚔️</span><span><span class="t1">'+esc(t("mFam"))+'</span><span class="t2">'+esc(sdk.isDemo()?t("famDemo"):t("mFamSub"))+'</span></span></button>'
       +'</div>';
-    var s=statsMine();
-    h+='<div class="sb-stats">'
-      +'<div class="s"><div class="n">'+s.games+'</div><div class="l">'+esc(t("stGames"))+'</div></div>'
-      +'<div class="s"><div class="n">'+s.wins+'</div><div class="l">'+esc(t("stWins"))+'</div></div>'
-      +'<div class="s"><div class="n">'+s.acc+'%</div><div class="l">'+esc(t("stAcc"))+'</div></div>'
-      +'</div>';
     h+='<div class="store-section">'+esc(t("histTitle"))+'</div>'+histHtml();
     return h;
   }
@@ -951,8 +988,9 @@
     var who=ctx==="fam"?myName():(g&&g.mode==="hot"?localName(g.pf):myName());
     var title=(g&&g.mode==="hot")?t("placeFor",{name:who}):t("placeTitle");
     var left=FLEET.length-P.ships.length,i;
+    var pick=P.selPlaced!=null&&P.ships[P.selPlaced]?new Set(P.ships[P.selPlaced].cells):null;
     var h='<div class="sb-card"><div class="sb-card-title">'+esc(title)+'</div>'
-      +boardHtml({ships:P.ships,shots:new Set(),oppView:false,aim:-1})
+      +boardHtml({ships:P.ships,shots:new Set(),oppView:false,aim:-1,place:true,pick:pick})
       +'<div class="sb-dock">';
     for(i=0;i<SIZES.length;i++){
       var L=SIZES[i], cnt=remainOf(L), sel=P.sel===L;
@@ -962,10 +1000,10 @@
       h+=chip;
     }
     h+='</div>'
-      +'<div class="sb-msg">'+esc(left?sdk.plural(left,"left"):"")+'</div>'
+      +'<div class="sb-msg">'+esc(P.selPlaced!=null?t("moveHint"):(left?sdk.plural(left,"left"):""))+'</div>'
       +'<div class="sb-ctl">'
       +'<button type="button" class="sb-btn" data-act="rand">'+esc(t("random"))+'</button>'
-      +'<button type="button" class="sb-btn" data-act="rot">'+esc(t("rotate"))+(P.horiz?" ↔":" ↕")+'</button>'
+      +'<button type="button" class="sb-btn'+(P.selPlaced!=null?" hot":"")+'" data-act="rot">'+esc(t("rotate"))+(P.selPlaced!=null?"":(P.horiz?" ↔":" ↕"))+'</button>'
       +'<button type="button" class="sb-btn warn" data-act="clearB">'+esc(t("clear"))+'</button>'
       +'</div>'
       +'<button type="button" class="sb-bigbtn" data-act="placeDone"'+(left?" disabled":"")+'>'+esc(t("ready"))+'</button>'
@@ -982,33 +1020,38 @@
   }
 
   function battleHtml(){
-    var myShips,oppShips,myShots,oppShots,statusTxt,mineTurn,oppName,msg="";
+    var myShips,oppShips,myShots,oppShots,statusTxt,mineTurn,oppName,nShots=0,last="";
     if(ctx==="fam"){
       if(!F.rec||F.my<0||!F.fleets[0]||!F.fleets[1]) return "";
       myShips=F.fleets[F.my].data.ships; oppShips=F.fleets[1-F.my].data.ships;
       myShots=setToSet(F.st.shots&&F.st.shots[F.my]); oppShots=setToSet(F.st.shots&&F.st.shots[1-F.my]);
       mineTurn=F.st.turn===F.my; oppName=famNames()[1-F.my]||"";
-      statusTxt=mineTurn?t("yourTurn"):t("oppTurn",{name:oppName});
-      if(F.lastR) msg=t(F.lastR==="miss"?"miss":(F.lastR==="hit"?"hit":"sunk"));
+      nShots=(F.st.n||[0,0])[F.my]||0; last=F.lastR||"";
+      statusTxt=mineTurn?((last==="hit"||last==="sunk")?t(last):t("yourTurn")):t("oppTurn",{name:oppName});
     } else {
       var v=viewerIdx();
       myShips=g.ships[v]; oppShips=g.ships[1-v];
       myShots=setToSet(g.shots[v]); oppShots=setToSet(g.shots[1-v]);
       mineTurn=g.mode==="bot"?g.turn===0:true;
-      oppName=localName(1-v);
-      statusTxt=mineTurn?t("yourTurn"):t("botThinks");
-      if(g.msg) msg=t(g.msg==="miss"?"miss":(g.msg==="hit"?"hit":"sunk"));
+      nShots=g.shotN[v]||0; last=g.msg||"";
+      statusTxt=mineTurn?((last==="hit"||last==="sunk")?t(last):t("yourTurn")):t("botThinks");
     }
-    var h='<div class="sb-status'+(mineTurn?" mine":" wait")+'">'+esc(statusTxt)+'</div>'
-      +fleetBar(oppShips,myShots,t("oppWaters"))
-      +boardHtml({ships:oppShips,shots:myShots,oppView:true,dis:!mineTurn,aim:aim})
-      +'<div class="sb-msg'+(msg&&msg!==t("miss")?" hot":"")+'">'+esc(msg||t("aimHint"))+'</div>'
-      +'<button type="button" class="sb-bigbtn" data-act="fire"'+(mineTurn&&aim>=0?"":" disabled")+'>🎯 '+esc(t("fire"))+(aim>=0?" — "+esc(cellName(aim)):"")+'</button>'
-      +'<div class="sb-minilbl">'+esc(t("myFleet"))+'</div>'
+    /* компактный бой в один экран (фидбек Джеффа): статус+статистика раунда+сдаться в одной
+       строке, активное поле подсвечено (ход виден по самой доске), флот и своя мини-доска внизу */
+    var og=gridOf(oppShips), nHits=hitCount(og,myShots);
+    return '<div class="sb-bt">'
+      +'<div class="sb-btop">'
+      +'<span class="sb-turn'+(mineTurn?" mine":" wait")+'">'+esc(statusTxt)+'</span>'
+      +'<span class="sb-rst">🎯 '+nShots+' · 💥 '+nHits+'</span>'
+      +'<button type="button" class="sb-flag" data-act="giveUp" aria-label="'+esc(t("giveUp"))+'">🏳</button>'
+      +'</div>'
+      +boardHtml({ships:oppShips,shots:myShots,oppView:true,dis:!mineTurn,aim:aim,main:true,act:mineTurn})
+      +'<button type="button" class="sb-fire" data-act="fire"'+(mineTurn&&aim>=0?"":" disabled")+'>🎯 '+esc(t("fire"))+(aim>=0?" — "+esc(cellName(aim)):"")+'</button>'
+      +'<div class="sb-bbot">'
       +boardHtml({ships:myShips,shots:oppShots,oppView:false,mini:true,dis:true,aim:-1})
-      +fleetBar(myShips,oppShots,t("myFleet"))
-      +'<div class="sb-ctl"><button type="button" class="sb-btn warn" data-act="giveUp">🏳 '+esc(t("giveUp"))+'</button></div>';
-    return h;
+      +'<div class="sb-fcol">'+fleetBar(oppShips,myShots,t("oppWaters"))+fleetBar(myShips,oppShots,t("myFleet"))+'</div>'
+      +'</div>'
+      +'</div>';
   }
 
   function resultHtml(){
@@ -1028,7 +1071,6 @@
     }
     h+='<span class="e">'+emoji+'</span><div class="t1">'+esc(title)+'</div>';
     if(sub) h+='<div class="t2">'+esc(sub)+'</div>';
-    if(r.pts) h+='<div class="pts '+(r.pts>0?"plus":"minus")+'">'+(r.pts>0?"+":"")+r.pts+'</div>';
     var myShots=r.mode==="hot"?(r.shots[0]+r.shots[1]):r.shots[0];
     h+='<div class="sb-resgrid">'
       +'<div class="s"><div class="n">'+esc(String(r.score[0]))+":"+esc(String(r.score[1]))+'</div><div class="l">'+esc(t("rScore"))+'</div></div>'
@@ -1073,18 +1115,18 @@
     var cell=e.target.closest(".sb-c");
     if(btn){
       var act=btn.getAttribute("data-act");
-      if(act==="bot"){ ctx="local"; view="diff"; render(); }
-      else if(act==="hot"){ newLocal("hot",null); }
+      if(act==="bot"){ if(coolGate()) return; ctx="local"; view="diff"; render(); }
+      else if(act==="hot"){ if(coolGate()) return; newLocal("hot",null); }
       else if(act==="fam"){ famCreate(); }
-      else if(act==="diff"){ newLocal("bot",btn.getAttribute("data-d")||"normal"); }
+      else if(act==="diff"){ if(coolGate()) return; newLocal("bot",btn.getAttribute("data-d")||"normal"); }
       else if(act==="resume"){ resumeLocal(); }
       else if(act==="famAccept"){ famAccept(); }
       else if(act==="famCancel"){ famCancel(); }
       else if(act==="famOpen"){ openFam(); }
-      else if(act==="dock"){ if(P){ var L=+btn.getAttribute("data-l"); if(remainOf(L)>0){ P.sel=L; sdk.ui.haptics(6); render(); } } }
-      else if(act==="rand"){ if(P){ var f=randomFleet(); if(f){ P.ships=f; P.sel=null; sdk.ui.haptics(8); render(); } } }
-      else if(act==="rot"){ if(P){ P.horiz=!P.horiz; sdk.ui.haptics(6); render(); } }
-      else if(act==="clearB"){ if(P){ P.ships=[]; P.sel=null; render(); } }
+      else if(act==="dock"){ if(P){ var L=+btn.getAttribute("data-l"); if(remainOf(L)>0){ P.sel=L; P.selPlaced=null; sdk.ui.haptics(6); render(); } } }
+      else if(act==="rand"){ if(P){ var f=randomFleet(); if(f){ P.ships=f; P.sel=null; P.selPlaced=null; sdk.ui.haptics(8); render(); } } }
+      else if(act==="rot"){ if(P) rotateAction(); }
+      else if(act==="clearB"){ if(P){ P.ships=[]; P.sel=null; P.selPlaced=null; render(); } }
       else if(act==="placeDone"){ ctx==="fam"?famPlaceDone():placeDone(); }
       else if(act==="passOk"){ passReady(); }
       else if(act==="fire"){ fireAim(); }
@@ -1096,8 +1138,8 @@
     if(cell){
       var i=+cell.getAttribute("data-i");
       var board=cell.parentNode.getAttribute("data-board");
-      if(view==="place"&&P) placeTap(i);
-      else if(view==="battle"&&board==="opp") aimTap(i,cell);
+      /* расстановку целиком ведут pointer-обработчики (тап/выбор/перенос) */
+      if(view==="battle"&&board==="opp") aimTap(i,cell);
     }
   }
   function remainOf(L){
@@ -1109,24 +1151,107 @@
     for(var k=0;k<SIZES.length;k++) if(remainOf(SIZES[k])>0) return SIZES[k];
     return null;
   }
-  function placeTap(i){
-    var grid=gridOf(P.ships), s=grid[i];
-    if(s>=0){ /* снять корабль обратно в док */
-      var len=P.ships[s].cells.length;
-      P.ships.splice(s,1); P.sel=len; sdk.ui.haptics(6); render(); return;
-    }
+  /* ---- расстановка: тап по пустой — поставить из дока, тап по кораблю — выбрать,
+          перенос пальцем — передвинуть, перенос на док — вернуть, «Повернуть» — на поле ---- */
+  function shipHoriz(s){ return s.cells.length<2||(s.cells[1]-s.cells[0]===1); }
+  function gridWithout(idx){
+    var ships=[],i; for(i=0;i<P.ships.length;i++) if(i!==idx) ships.push(P.ships[i]);
+    return gridOf(ships);
+  }
+  function shakeCell(i){
+    var el=root&&root.querySelector('.sb-grid .sb-c[data-i="'+i+'"]');
+    if(el){ el.classList.add("bad"); setTimeout(function(){ el.classList.remove("bad"); },350); }
+    sdk.ui.haptics(15);
+  }
+  function placeNewAt(i){
     var L=P.sel||nextSize();
     if(!L){ sdk.ui.toast(t("pickShip")); return; }
+    var grid=gridOf(P.ships);
     var c=cellsAt(xOf(i),yOf(i),L,P.horiz);
-    if(!c||!canPlace(grid,c)){
-      var el=root.querySelector('.sb-grid .sb-c[data-i="'+i+'"]');
-      if(el){ el.classList.add("bad"); setTimeout(function(){ el.classList.remove("bad"); },350); }
-      sdk.ui.haptics(15); sdk.ui.toast(t("badSpot")); return;
-    }
+    if(!c||!canPlace(grid,c)){ shakeCell(i); sdk.ui.toast(t("badSpot")); return; }
     P.ships.push({cells:c});
     if(remainOf(L)<=0) P.sel=nextSize();
     sdk.ui.haptics(8); render();
   }
+  function rotateAction(){
+    if(P.selPlaced==null){ P.horiz=!P.horiz; sdk.ui.haptics(6); render(); return; }
+    var s=P.ships[P.selPlaced];
+    if(!s||s.cells.length<2){ sdk.ui.haptics(6); return; }
+    var h=!shipHoriz(s), len=s.cells.length;
+    var ax=xOf(s.cells[0]), ay=yOf(s.cells[0]);
+    if(h&&ax>N-len) ax=N-len;       /* прижать к краю, чтобы поворот не вылез за поле */
+    if(!h&&ay>N-len) ay=N-len;
+    var c=cellsAt(ax,ay,len,h);
+    if(!c||!canPlace(gridWithout(P.selPlaced),c)){ shakeCell(s.cells[0]); sdk.ui.toast(t("badSpot")); return; }
+    s.cells=c; sdk.ui.haptics(8); render();
+  }
+  function tryMoveShip(idx,grabK,ti){
+    var s=P.ships[idx], h=shipHoriz(s), len=s.cells.length;
+    var ax=xOf(ti)-(h?grabK:0), ay=yOf(ti)-(h?0:grabK);
+    var c=(ax>=0&&ay>=0)?cellsAt(ax,ay,len,h):null;
+    if(!c||!canPlace(gridWithout(idx),c)){ shakeCell(ti); render(); return; }
+    s.cells=c; P.selPlaced=idx; sdk.ui.haptics(8); render();
+  }
+  function clearDropPreview(){
+    if(!root) return;
+    var els=root.querySelectorAll(".sb-c.drop-ok,.sb-c.drop-bad"),k;
+    for(k=0;k<els.length;k++){ els[k].classList.remove("drop-ok"); els[k].classList.remove("drop-bad"); }
+  }
+  function dropPreview(ti){
+    clearDropPreview();
+    if(ti<0||!PD||!P) return;
+    var s=P.ships[PD.idx], h=shipHoriz(s), len=s.cells.length;
+    var ax=xOf(ti)-(h?PD.grabK:0), ay=yOf(ti)-(h?0:PD.grabK);
+    var c=(ax>=0&&ay>=0)?cellsAt(ax,ay,len,h):null;
+    var ok=!!(c&&canPlace(gridWithout(PD.idx),c));
+    var list=c||[ti],k;
+    for(k=0;k<list.length;k++){
+      var el=root.querySelector('.sb-grid .sb-c[data-i="'+list[k]+'"]');
+      if(el) el.classList.add(ok?"drop-ok":"drop-bad");
+    }
+  }
+  function plDown(e){
+    if(view!=="place"||!P) return;
+    var cell=e.target&&e.target.closest?e.target.closest(".sb-c"):null;
+    if(!cell) return;
+    var i=+cell.getAttribute("data-i");
+    var s=gridOf(P.ships)[i];
+    PD={ idx:s, cell:i, grabK:s>=0?P.ships[s].cells.indexOf(i):0, x:e.clientX, y:e.clientY, moved:false };
+  }
+  function plMove(e){
+    if(!PD||view!=="place"||!P) return;
+    if(PD.idx<0) return; /* потянули с пустой клетки — остаётся тапом */
+    if(!PD.moved){
+      if(Math.abs(e.clientX-PD.x)+Math.abs(e.clientY-PD.y)<10) return;
+      PD.moved=true; P.selPlaced=PD.idx;
+    }
+    var el=document.elementFromPoint(e.clientX,e.clientY);
+    var cell=el&&el.closest?el.closest(".sb-c"):null;
+    dropPreview(cell?+cell.getAttribute("data-i"):-1);
+  }
+  function plUp(e){
+    if(!PD) return;
+    var pd=PD; PD=null; clearDropPreview();
+    if(view!=="place"||!P) return;
+    if(!pd.moved){
+      if(pd.idx>=0){ /* тап по кораблю: выбрать / снять выбор (НЕ убирать в док) */
+        P.selPlaced=(P.selPlaced===pd.idx)?null:pd.idx;
+        sdk.ui.haptics(6); render();
+      } else if(P.selPlaced!=null){ P.selPlaced=null; render(); }
+      else placeNewAt(pd.cell);
+      return;
+    }
+    var el=document.elementFromPoint(e.clientX,e.clientY);
+    if(el&&el.closest&&el.closest(".sb-dock")){ /* стащили на док — вернуть корабль */
+      var len=P.ships[pd.idx].cells.length;
+      P.ships.splice(pd.idx,1); P.selPlaced=null; P.sel=len;
+      sdk.ui.haptics(6); render(); return;
+    }
+    var cell=el&&el.closest?el.closest(".sb-c"):null;
+    if(cell) tryMoveShip(pd.idx,pd.grabK,+cell.getAttribute("data-i"));
+    else render();
+  }
+  function plCancel(){ PD=null; clearDropPreview(); }
   function aimTap(i,cell){
     var mineTurn = ctx==="fam" ? (F.st&&F.st.status==="battle"&&F.st.turn===F.my)
                                : (g&&g.phase==="battle"&&(g.mode!=="bot"||g.turn===0));
@@ -1134,7 +1259,7 @@
     var shots = ctx==="fam" ? setToSet(F.st.shots&&F.st.shots[F.my]) : setToSet(g.shots[viewerIdx()]);
     if(shots.has(i)) return;
     if(aim===i){ fireAim(); return; }
-    aim=i; sdk.ui.haptics(6); sfx("fire"); render();
+    aim=i; sdk.ui.haptics(6); render(); /* без звука: прицел — тихий (фидбек Джеффа) */
   }
   function fireAim(){
     if(aim<0) return;
@@ -1152,41 +1277,70 @@
     render();
   }
 
-  /* =================== статистика (шторка) =================== */
-  function openStats(){
-    var s=statsMine(), node=document.createElement("div");
-    node.innerHTML='<h2>'+esc(t("statsTitle"))+'</h2>'
-      +'<div class="sb-pgrid">'
-      +'<div class="sb-pstat"><div class="n">'+s.games+'</div><div class="l">'+esc(t("stGames"))+'</div></div>'
-      +'<div class="sb-pstat"><div class="n">'+s.wins+'</div><div class="l">'+esc(t("stWins"))+'</div></div>'
-      +'<div class="sb-pstat"><div class="n">'+s.acc+'%</div><div class="l">'+esc(t("stAcc"))+'</div></div>'
-      +'</div>'
-      +'<div class="sheet-actions" style="margin-top:14px"><button class="btn btn-cancel" data-close style="flex:1">'+esc(t("common.close"))+'</button></div>';
+  /* =================== настройки родителя (перерыв между играми) =================== */
+  function parentAllowed(){ return sdk.role==="parent"||sdk.isDemo(); }
+  function openSettings(){
+    var cur=META.cooldownMin==null?1:+META.cooldownMin;
+    var opts=[0,1,5,10,30], node=document.createElement("div"), i;
+    var h='<h2>'+esc(t("setTitle"))+'</h2>'
+      +'<div class="sb-card-title" style="font-size:15px">'+esc(t("coolTitle"))+'</div>'
+      +'<div class="sb-hint">'+esc(t("coolHint"))+'</div>'
+      +'<div class="sb-coolrow">';
+    for(i=0;i<opts.length;i++){
+      h+='<button type="button" class="sb-coolchip'+(opts[i]===cur?" on":"")+'" data-m="'+opts[i]+'">'
+        +esc(opts[i]?t("coolMin",{n:opts[i]}):t("coolOff"))+'</button>';
+    }
+    h+='</div><div class="sheet-actions" style="margin-top:14px"><button class="btn btn-cancel" data-close style="flex:1">'+esc(t("common.close"))+'</button></div>';
+    node.innerHTML=h;
     var sh=sdk.ui.sheet(node); curSheet=sh;
-    node.querySelector("[data-close]").addEventListener("click",function(){ curSheet=null; sh.close(); });
+    node.addEventListener("click",function(ev){
+      var ch=ev.target.closest(".sb-coolchip");
+      if(ch){
+        var m=+ch.getAttribute("data-m");
+        var p=META.id?sdk.data.update("meta",META.id,{cooldownMin:m})
+                     :sdk.data.create("meta",{cooldownMin:m}).then(function(it){ if(it) META.id=it.id; });
+        Promise.resolve(p).then(function(){
+          if(!alive) return;
+          META.cooldownMin=m;
+          var cs=node.querySelectorAll(".sb-coolchip"),k;
+          for(k=0;k<cs.length;k++) cs[k].classList.toggle("on",+cs[k].getAttribute("data-m")===m);
+          sdk.ui.haptics(8); sdk.ui.toast(t("common.done"));
+        }).catch(function(){ if(alive) sdk.ui.toast(t("saveFailed")); });
+        return;
+      }
+      if(ev.target.closest("[data-close]")){ curSheet=null; sh.close(); }
+    });
   }
 
   /* =================== mount / unmount / refresh / link =================== */
+  var GEAR_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.1"/><path d="M19.2 12c0-.4 0-.8-.1-1.2l2-1.5-2-3.4-2.3 1a7.4 7.4 0 0 0-2-1.2L14.4 3h-4l-.4 2.7a7.4 7.4 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5a7.3 7.3 0 0 0 0 2.4l-2 1.5 2 3.4 2.3-1a7.4 7.4 0 0 0 2 1.2l.4 2.7h4l.4-2.7a7.4 7.4 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z"/></svg>';
   function mount(rootEl,theSdk){
     sdk=theSdk; root=rootEl; alive=true;
     view="home"; ctx="local"; g=null; P=null; aim=-1; saving=false; curSheet=null; lastRes=null;
     F={ rec:null, st:null, my:-1, fleets:[null,null], finished:[] };
     hist=[]; histLoaded=false; famPrev=null; lastFp=null; statsCache=null;
+    META={ id:null, cooldownMin:null }; PD=null;
     var title=sdk.i18n.t("tile.seabattle");
     var body=sdk.ui.frame({
       titleHtml:'<div class="sb-title">'+esc(title)+'</div><div class="sb-sub">'+esc(t("subtitle"))+'</div>',
       backLabel:t("common.back"),
       back:function(){ if(view!=="home"){ if(view==="battle"&&ctx==="local") saveLocal(); goHome(); return; } sdk.ui.back(); },
-      actions:[{ icon:"stats", id:"sbStats", label:t("statsTitle"), onClick:openStats }]
+      actions:[ parentAllowed()&&{ icon:GEAR_IC, id:"sbSet", label:t("setTitle"), onClick:openSettings } ]
     }).body;
     body.innerHTML='<div class="sb"></div>';
-    /* делегирование — на внутреннем .sb (пересоздаётся при каждом mount), НЕ на root */
-    root.querySelector(".sb").addEventListener("click",onTap);
+    /* делегирование — на внутреннем .sb (пересоздаётся при каждом mount), НЕ на root;
+       drag-n-drop расстановки — pointer-события (document-слушатели снимает sdk.on при unmount) */
+    var sbEl=root.querySelector(".sb");
+    sbEl.addEventListener("click",onTap);
+    sbEl.addEventListener("pointerdown",plDown);
+    sdk.on(document,"pointermove",plMove);
+    sdk.on(document,"pointerup",plUp);
+    sdk.on(document,"pointercancel",plCancel);
     g=loadLocal();
     render();
-    Promise.all([loadFam(),loadHist()]).then(function(){
+    Promise.all([loadFam(),loadHist(),loadMeta()]).then(function(){
       if(!alive) return;
-      famPrev=F.rec&&F.st?{status:F.st.status,turn:F.st.turn}:null;
+      famPrev=F.rec&&F.st?{id:String(F.rec.id),status:F.st.status,turn:F.st.turn}:null;
       famClaimIfNeeded();
       render();
     }).catch(function(){ if(alive){ histLoaded=true; render(); sdk.ui.toast(t("loadFailed")); } });
@@ -1198,7 +1352,7 @@
     try{ sdk.ui.hud({hidden:false}); }catch(e){}
     if(curSheet&&curSheet.close){ try{ curSheet.close(); }catch(e){} }
     curSheet=null; root=null; g=null; P=null; F={rec:null,st:null,my:-1,fleets:[null,null],finished:[]};
-    hist=[]; lastRes=null; famPrev=null; lastFp=null; statsCache=null;
+    hist=[]; lastRes=null; famPrev=null; lastFp=null; statsCache=null; PD=null;
   }
   function refresh(){
     try{
@@ -1210,7 +1364,7 @@
       /* локальная партия: сеть не трогаем; семейный пул догрузит goHome при возврате
          (клейм семейной победы подождёт — не выдёргиваем ребёнка из партии с ботом) */
       if(ctx==="local"&&(view==="place"||view==="pass"||view==="battle")) return true;
-      Promise.all([loadFam(), view==="home"?loadHist():Promise.resolve()])
+      Promise.all([loadFam(), view==="home"?Promise.all([loadHist(),loadMeta()]):Promise.resolve()])
         .then(function(){ if(alive) famApply(); });
       return true;
     }catch(e){ return true; }

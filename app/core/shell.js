@@ -81,7 +81,7 @@ window.RobTop = window.RobTop || {};
     {id:"bank",name:"Piggy Bank",color:"#ff4d6d",status:"active",source:"native",wide:true,sort:120,permissions:["points"]},
     {id:"shop",name:"Shop",color:"#ff2bd6",status:"active",source:"native",sort:130,permissions:["points","camera"]},
     {id:"chat",name:"Chat",color:"#3b6bff",status:"active",source:"native",server:true,sort:135,permissions:["camera"]},
-    {id:"seabattle",name:"Sea Battle",color:"#3b6bff",status:"active",source:"native",sort:140,permissions:["points"]}
+    {id:"seabattle",name:"Sea Battle",color:"#3b6bff",status:"active",source:"native",sort:140}
   ];
 
   /* ---- localStorage помощники (демо) ---- */

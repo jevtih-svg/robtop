@@ -74,8 +74,8 @@ window.RobTop = window.RobTop || {};
       mood:{ mood_set:"Mood of the day: {e} {name}" },
       reverse:{ created:"Reversed a word" },
       guess:{ win:"Guess the Number: guessed it! +10", wrong:"Guess the Number: wrong answer −5", timeout:"Guess the Number: time ran out −5" },
-      seabattle:{ win:"Sea Battle: beat the robot! +10", loss:"Sea Battle: lost to the robot −5",
-        famWin:"Sea Battle: won the family match! 🏆 +10", famLoss:"Sea Battle: lost the family match",
+      seabattle:{ win:"Sea Battle: beat the robot!", loss:"Sea Battle: lost to the robot",
+        famWin:"Sea Battle: won the family match! 🏆", famLoss:"Sea Battle: lost the family match",
         hot:"Sea Battle: played a two-player game" },
       generic:{ created:"Added an entry", edited:"Edited an entry", moved:"Moved an entry", favorite:"Marked a favorite",
         unfavorite:"Removed a favorite", deleted:"Removed an entry", restored:"Restored an entry", undo:"Undid an action" }
@@ -125,8 +125,8 @@ window.RobTop = window.RobTop || {};
       mood:{ mood_set:"Настроение дня: {e} {name}" },
       reverse:{ created:"Перевернул слово" },
       guess:{ win:"Угадай число: угадал! +10", wrong:"Угадай число: не угадал −5", timeout:"Угадай число: время вышло −5" },
-      seabattle:{ win:"Морской бой: победил робота! +10", loss:"Морской бой: проиграл роботу −5",
-        famWin:"Морской бой: выиграл семейный матч! 🏆 +10", famLoss:"Морской бой: проиграл семейный матч",
+      seabattle:{ win:"Морской бой: победил робота!", loss:"Морской бой: проиграл роботу",
+        famWin:"Морской бой: выиграл семейный матч! 🏆", famLoss:"Морской бой: проиграл семейный матч",
         hot:"Морской бой: сыграл партию вдвоём" },
       generic:{ created:"Добавил запись", edited:"Изменил запись", moved:"Переместил запись", favorite:"Отметил избранное",
         unfavorite:"Снял избранное", deleted:"Удалил запись", restored:"Восстановил запись", undo:"Отменил действие" }
@@ -176,8 +176,8 @@ window.RobTop = window.RobTop || {};
       mood:{ mood_set:"Dienas garastāvoklis: {e} {name}" },
       reverse:{ created:"Apgrieza vārdu" },
       guess:{ win:"Uzmini skaitli: uzminēja! +10", wrong:"Uzmini skaitli: neuzminēja −5", timeout:"Uzmini skaitli: laiks beidzās −5" },
-      seabattle:{ win:"Jūras kauja: uzvarēja robotu! +10", loss:"Jūras kauja: zaudēja robotam −5",
-        famWin:"Jūras kauja: uzvarēja ģimenes mačā! 🏆 +10", famLoss:"Jūras kauja: zaudēja ģimenes mačā",
+      seabattle:{ win:"Jūras kauja: uzvarēja robotu!", loss:"Jūras kauja: zaudēja robotam",
+        famWin:"Jūras kauja: uzvarēja ģimenes mačā! 🏆", famLoss:"Jūras kauja: zaudēja ģimenes mačā",
         hot:"Jūras kauja: spēlēja divatā" },
       generic:{ created:"Pievienoja ierakstu", edited:"Mainīja ierakstu", moved:"Pārvietoja ierakstu", favorite:"Atzīmēja izlasi",
         unfavorite:"Noņēma izlasi", deleted:"Dzēsa ierakstu", restored:"Atjaunoja ierakstu", undo:"Atcēla darbību" }

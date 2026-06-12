@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.12.4", d:"2026-06-12", t:{
+    en:"Sea Battle v1.1: drag ships to move them and rotate them right on the board, the battle fits one screen, the active board shows whose turn it is, and points are gone — parents set a break between games instead.",
+    ru:"Морской бой v1.1: корабли можно перетаскивать и поворачивать прямо на поле, бой помещается на один экран, чей ход — видно по активному полю, а очки убраны: вместо них родитель настраивает перерыв между играми.",
+    lv:"Jūras kauja v1.1: kuģus var pārvilkt un pagriezt tieši uz laukuma, kauja ietilpst vienā ekrānā, aktīvais laukums rāda, kura gājiens, un punktu vairs nav — vecāki iestata pauzi starp spēlēm." } },
   { v:"2026.06.12.3", d:"2026-06-12", t:{
     en:"Old Find approval notifications now disappear cleanly if the finding was already reviewed.",
     ru:"Старые оповещения проверки в «Найти предмет» теперь спокойно убирают кнопку, если находку уже проверили.",
