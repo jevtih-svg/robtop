@@ -5,6 +5,10 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.12.2", d:"2026-06-12", t:{
+    en:"New app: Sea Battle! Play the 10×10 classic vs a robot, together on one device, or a family match on two devices.",
+    ru:"Новое приложение: Морской бой! Классика 10×10 — с роботом, вдвоём на одном устройстве или семейный матч на двух.",
+    lv:"Jauna lietotne: Jūras kauja! Klasika 10×10 — pret robotu, divatā uz vienas ierīces vai ģimenes mačs uz divām." } },
   { v:"2026.06.12.1", d:"2026-06-12", t:{
     en:"Find review notifications now hide Approve after the finding has already been reviewed.",
     ru:"Оповещения проверки в «Найти предмет» теперь скрывают «Одобрить», если находку уже проверили.",

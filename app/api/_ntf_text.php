@@ -26,7 +26,7 @@ function rt_ntf_push_templates() {
     if ($T !== null) return $T;
     $T = [
         'en' => [
-            '_app' => ['tasks'=>'Tasks','bank'=>'Piggy Bank','wishlist'=>'Wishlist','chat'=>'Chat','tickets'=>'Support','walk'=>'Dog'],
+            '_app' => ['tasks'=>'Tasks','bank'=>'Piggy Bank','wishlist'=>'Wishlist','chat'=>'Chat','tickets'=>'Support','walk'=>'Dog','seabattle'=>'Sea Battle'],
             'generic' => 'New notification',
             'tickets'  => [
                 'reply'  => ['who'=>'', 'body'=>'Reply to “{subject}”'],
@@ -59,9 +59,14 @@ function rt_ntf_push_templates() {
             'walk' => [
                 'care_due' => ['who'=>'', 'body'=>'🐶 Time for dog care'],
             ],
+            'seabattle' => [
+                'challenge' => ['who'=>'name', 'body'=>'⚔️ Challenges the family to a sea battle!'],
+                'accepted'  => ['who'=>'name', 'body'=>'Accepted the challenge — place your ships!'],
+                'finished'  => ['who'=>'name', 'body'=>'🏆 Won the sea battle {score}'],
+            ],
         ],
         'ru' => [
-            '_app' => ['tasks'=>'Задания','bank'=>'Копилка','wishlist'=>'Виш-лист','chat'=>'Чат','tickets'=>'Поддержка','walk'=>'Собака'],
+            '_app' => ['tasks'=>'Задания','bank'=>'Копилка','wishlist'=>'Виш-лист','chat'=>'Чат','tickets'=>'Поддержка','walk'=>'Собака','seabattle'=>'Морской бой'],
             'generic' => 'Новое оповещение',
             'tickets'  => [
                 'reply'  => ['who'=>'', 'body'=>'Ответ по обращению «{subject}»'],
@@ -94,9 +99,14 @@ function rt_ntf_push_templates() {
             'walk' => [
                 'care_due' => ['who'=>'', 'body'=>'🐶 Пора по уходу за собакой'],
             ],
+            'seabattle' => [
+                'challenge' => ['who'=>'name', 'body'=>'⚔️ Вызывает семью на морской бой!'],
+                'accepted'  => ['who'=>'name', 'body'=>'Принял(а) вызов — расставляй корабли!'],
+                'finished'  => ['who'=>'name', 'body'=>'🏆 Победил(а) в морском бою {score}'],
+            ],
         ],
         'lv' => [
-            '_app' => ['tasks'=>'Uzdevumi','bank'=>'Krājkase','wishlist'=>'Vēlmju saraksts','chat'=>'Čats','tickets'=>'Atbalsts','walk'=>'Suns'],
+            '_app' => ['tasks'=>'Uzdevumi','bank'=>'Krājkase','wishlist'=>'Vēlmju saraksts','chat'=>'Čats','tickets'=>'Atbalsts','walk'=>'Suns','seabattle'=>'Jūras kauja'],
             'generic' => 'Jauns paziņojums',
             'tickets'  => [
                 'reply'  => ['who'=>'', 'body'=>'Atbilde uz pieteikumu “{subject}”'],
@@ -128,6 +138,11 @@ function rt_ntf_push_templates() {
             ],
             'walk' => [
                 'care_due' => ['who'=>'', 'body'=>'🐶 Laiks suņa aprūpei'],
+            ],
+            'seabattle' => [
+                'challenge' => ['who'=>'name', 'body'=>'⚔️ Izaicina ģimeni uz jūras kauju!'],
+                'accepted'  => ['who'=>'name', 'body'=>'Pieņēma izaicinājumu — izvieto kuģus!'],
+                'finished'  => ['who'=>'name', 'body'=>'🏆 Uzvarēja jūras kaujā {score}'],
             ],
         ],
     ];

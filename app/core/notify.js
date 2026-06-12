@@ -68,7 +68,11 @@ window.RobTop = window.RobTop || {};
         correct:"Find the Object: correct! +{n}",
         wrong:"Find the Object: not counted −{n}",
         bonus:"Difficulty bonus +{n}!" },
-      walk:{ care_due:"Dog care is due" }
+      walk:{ care_due:"Dog care is due" },
+      seabattle:{
+        challenge:"⚔️ {name} challenges the family to a sea battle!",
+        accepted:"{name} accepted the challenge — place your ships!",
+        finished:"🏆 {name} won the sea battle {score}" }
     }
   }},
   ru:{ ntf:{
@@ -111,7 +115,11 @@ window.RobTop = window.RobTop || {};
         correct:"Найти предмет: верно! +{n}",
         wrong:"Найти предмет: не засчитано −{n}",
         bonus:"Бонус за сложность +{n}!" },
-      walk:{ care_due:"Пора по уходу за собакой" }
+      walk:{ care_due:"Пора по уходу за собакой" },
+      seabattle:{
+        challenge:"⚔️ {name} вызывает семью на морской бой!",
+        accepted:"{name} принял(а) вызов — расставляй корабли!",
+        finished:"🏆 {name} победил(а) в морском бою {score}" }
     }
   }},
   lv:{ ntf:{
@@ -154,7 +162,11 @@ window.RobTop = window.RobTop || {};
         correct:"Atrodi priekšmetu: pareizi! +{n}",
         wrong:"Atrodi priekšmetu: netika ieskaitīts −{n}",
         bonus:"Grūtības bonuss +{n}!" },
-      walk:{ care_due:"Laiks suņa aprūpei" }
+      walk:{ care_due:"Laiks suņa aprūpei" },
+      seabattle:{
+        challenge:"⚔️ {name} izaicina ģimeni uz jūras kauju!",
+        accepted:"{name} pieņēma izaicinājumu — izvieto kuģus!",
+        finished:"🏆 {name} uzvarēja jūras kaujā {score}" }
     }
   }}
   });

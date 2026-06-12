@@ -56,9 +56,10 @@ window.RobTop = window.RobTop || {};
     cube:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>',
     gift:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="1.6"/><path d="M4 12.5h16M12 9v11"/><path d="M12 9c-4 0-5.4-2-4.6-3.6C8.2 3.8 11 4.6 12 9zM12 9c4 0 5.4-2 4.6-3.6C15.8 3.8 13 4.6 12 9z"/></svg>',
     chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.6a7.6 7.6 0 0 1-7.6 7.6c-1.3 0-2.5-.3-3.6-.9L4.4 19.6l1.3-5A7.6 7.6 0 1 1 21 11.6z"/><circle cx="9.6" cy="11.6" r="1" fill="currentColor" stroke="none"/><circle cx="13.4" cy="11.6" r="1" fill="currentColor" stroke="none"/><circle cx="17.2" cy="11.6" r="1" fill="currentColor" stroke="none"/></svg>',
-    friends:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.1"/><path d="M3.6 19.2a5.4 5.4 0 0 1 10.8 0"/><path d="M15.5 5.6a3 3 0 0 1 .2 5.6"/><path d="M16.3 13.3a5.4 5.4 0 0 1 4.1 5.9"/></svg>'
+    friends:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.1"/><path d="M3.6 19.2a5.4 5.4 0 0 1 10.8 0"/><path d="M15.5 5.6a3 3 0 0 1 .2 5.6"/><path d="M16.3 13.3a5.4 5.4 0 0 1 4.1 5.9"/></svg>',
+    ship:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15.5l1.4 3h13.2l1.4-3-8-2.6z"/><path d="M7.2 12.9V9.5h9.6v3.4M12 9.5V4.6M12 4.6h3.4v2.4H12"/><path d="M3.2 21.2c1.5 1 3 1 4.4 0 1.5 1 3 1 4.4 0 1.5 1 3 1 4.4 0 1.5 1 3 1 4.4 0" stroke-width="1.6"/></svg>'
   };
-  var TILE_ICON={ wishlist:"cherry", reverse:"reverse", mood:"smile", teeth:"tooth", guess:"quiz", names:"tag", days:"calendar", find:"search", museum:"museum", rating:"star", friends:"friends", lost:"gem", walk:"paw", snake:"snake", bank:"bank", shop:"gift", chat:"chat" };
+  var TILE_ICON={ wishlist:"cherry", reverse:"reverse", mood:"smile", teeth:"tooth", guess:"quiz", names:"tag", days:"calendar", find:"search", museum:"museum", rating:"star", friends:"friends", lost:"gem", walk:"paw", snake:"snake", bank:"bank", shop:"gift", chat:"chat", seabattle:"ship" };
   var BACK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg>';
 
   /* ---- встроенный список модулей (демо/фолбэк). name — фолбэк, отображается tile.<id> ---- */
@@ -79,7 +80,8 @@ window.RobTop = window.RobTop || {};
     {id:"snake",name:"Snake",color:"#19e3ff",status:"active",source:"native",sort:117,permissions:["points"]},
     {id:"bank",name:"Piggy Bank",color:"#ff4d6d",status:"active",source:"native",wide:true,sort:120,permissions:["points"]},
     {id:"shop",name:"Shop",color:"#ff2bd6",status:"active",source:"native",sort:130,permissions:["points","camera"]},
-    {id:"chat",name:"Chat",color:"#3b6bff",status:"active",source:"native",server:true,sort:135,permissions:["camera"]}
+    {id:"chat",name:"Chat",color:"#3b6bff",status:"active",source:"native",server:true,sort:135,permissions:["camera"]},
+    {id:"seabattle",name:"Sea Battle",color:"#3b6bff",status:"active",source:"native",sort:140,permissions:["points"]}
   ];
 
   /* ---- localStorage помощники (демо) ---- */

@@ -1,0 +1,191 @@
+/* RobTop — модуль «Морской бой». Скоуп [data-mod="seabattle"], классы sb-*. Акцент — blue var(--blue). */
+/* нижний резерв не нужен: .rt-body оболочки уже резервирует calc(var(--kidbar-total) + 16px) */
+[data-mod="seabattle"] .sb-title{font-family:var(--font-display);font-size:24px;color:#fff;
+  text-shadow:0 0 12px color-mix(in srgb,var(--blue) 80%,transparent), 0 0 26px color-mix(in srgb,var(--blue) 40%,transparent)}
+[data-mod="seabattle"] .sb-sub{margin:0;color:var(--muted);font-weight:600;font-size:13px}
+
+/* ---- карточки (дом, матч, результат) ---- */
+[data-mod="seabattle"] .sb-card{position:relative;margin-top:14px;border-radius:22px;padding:16px;
+  background:linear-gradient(165deg, rgba(var(--panel-rgb),.6), rgba(var(--panel-rgb),.92));
+  border:1.5px solid color-mix(in srgb,var(--blue) 45%,transparent);
+  box-shadow:0 12px 30px rgba(0,0,0,.5), 0 0 28px -10px var(--blue)}
+[data-mod="seabattle"] .sb-card-title{font-family:var(--font-display);font-size:19px;color:var(--cyan-soft);margin:0 0 6px;
+  text-shadow:0 0 12px color-mix(in srgb,var(--blue) 60%,transparent)}
+[data-mod="seabattle"] .sb-hint{color:var(--muted-2);font-weight:600;font-size:13px;margin:6px 0}
+
+/* ---- выбор режима ---- */
+[data-mod="seabattle"] .sb-modes{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+[data-mod="seabattle"] .sb-mode{display:flex;align-items:center;gap:14px;text-align:left;min-height:72px;
+  padding:14px 16px;border-radius:18px;cursor:pointer;-webkit-tap-highlight-color:transparent;font-family:inherit;
+  background:linear-gradient(165deg, rgba(var(--panel-rgb),.55), rgba(var(--panel-rgb),.9));
+  border:1.5px solid color-mix(in srgb,var(--blue) 40%,transparent);color:var(--ink);
+  transition:transform .1s ease, border-color .15s ease}
+[data-mod="seabattle"] .sb-mode:active{transform:scale(.985)}
+[data-mod="seabattle"] .sb-mode .e{font-size:30px;line-height:1}
+[data-mod="seabattle"] .sb-mode .t1{font-family:var(--font-display);font-size:16px;color:#fff;display:block}
+[data-mod="seabattle"] .sb-mode .t2{font-size:12px;color:var(--muted-2);font-weight:600;margin-top:3px;display:block}
+[data-mod="seabattle"] .sb-mode.dis{opacity:.5}
+
+/* выбор сложности */
+[data-mod="seabattle"] .sb-diffs{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+[data-mod="seabattle"] .sb-diff{display:flex;align-items:center;gap:14px;text-align:left;min-height:64px;
+  padding:12px 16px;border-radius:18px;cursor:pointer;-webkit-tap-highlight-color:transparent;font-family:inherit;
+  background:color-mix(in srgb,var(--blue) 8%,transparent);
+  border:1.5px solid color-mix(in srgb,var(--blue) 40%,transparent);color:var(--ink)}
+[data-mod="seabattle"] .sb-diff:active{transform:scale(.985)}
+[data-mod="seabattle"] .sb-diff .e{font-size:26px}
+[data-mod="seabattle"] .sb-diff .t1{font-family:var(--font-display);font-size:15px;color:#fff;display:block}
+[data-mod="seabattle"] .sb-diff .t2{font-size:12px;color:var(--muted-2);font-weight:600;margin-top:2px;display:block}
+
+/* ---- стат-чипы на доме ---- */
+[data-mod="seabattle"] .sb-stats{display:flex;gap:9px;margin-top:14px}
+[data-mod="seabattle"] .sb-stats .s{flex:1;text-align:center;border-radius:15px;padding:12px 6px 9px;
+  background:rgba(var(--panel-rgb),.55);border:1px solid color-mix(in srgb,var(--blue) 28%,transparent)}
+[data-mod="seabattle"] .sb-stats .n{font-family:var(--font-display);font-size:22px;color:#fff;line-height:1;
+  text-shadow:0 0 10px color-mix(in srgb,var(--blue) 60%,transparent)}
+[data-mod="seabattle"] .sb-stats .l{font-size:10px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;
+  color:var(--muted);margin-top:6px}
+
+/* ---- история ---- */
+[data-mod="seabattle"] .sb-list{display:flex;flex-direction:column;gap:8px}
+[data-mod="seabattle"] .sb-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;
+  background:rgba(var(--panel-rgb),.5);border:1px solid color-mix(in srgb,var(--blue) 20%,transparent)}
+[data-mod="seabattle"] .sb-row .e{font-size:20px}
+[data-mod="seabattle"] .sb-row .tx{flex:1;min-width:0}
+[data-mod="seabattle"] .sb-row .t1{font-weight:700;font-size:13.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+[data-mod="seabattle"] .sb-row .t2{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:2px}
+[data-mod="seabattle"] .sb-badge{font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;white-space:nowrap}
+[data-mod="seabattle"] .sb-badge.win{color:var(--mint);border:1px solid color-mix(in srgb,var(--mint) 55%,transparent);
+  background:color-mix(in srgb,var(--mint) 10%,transparent)}
+[data-mod="seabattle"] .sb-badge.loss{color:var(--red);border:1px solid color-mix(in srgb,var(--red) 50%,transparent);
+  background:color-mix(in srgb,var(--red) 10%,transparent)}
+[data-mod="seabattle"] .sb-badge.mid{color:var(--muted);border:1px solid var(--line-strong);background:rgba(var(--panel-rgb),.5)}
+
+/* ---- доска ---- */
+[data-mod="seabattle"] .sb-bwrap{display:grid;grid-template-columns:16px 1fr;grid-template-rows:14px 1fr;gap:3px;
+  max-width:430px;margin:0 auto}
+[data-mod="seabattle"] .sb-cols{grid-column:2;display:grid;grid-template-columns:repeat(10,1fr);gap:2px}
+[data-mod="seabattle"] .sb-cols span{text-align:center;font-size:9px;font-weight:800;color:var(--muted);line-height:14px}
+[data-mod="seabattle"] .sb-rows{grid-column:1;grid-row:2;display:grid;grid-template-rows:repeat(10,1fr);gap:2px}
+[data-mod="seabattle"] .sb-rows span{text-align:center;font-size:9px;font-weight:800;color:var(--muted);
+  display:flex;align-items:center;justify-content:center}
+[data-mod="seabattle"] .sb-grid{grid-column:2;grid-row:2;display:grid;grid-template-columns:repeat(10,1fr);gap:2px}
+[data-mod="seabattle"] .sb-c{position:relative;aspect-ratio:1;padding:0;border-radius:4px;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;font-family:inherit;
+  background:rgba(var(--panel-rgb),.55);border:1px solid color-mix(in srgb,var(--blue) 22%,transparent)}
+[data-mod="seabattle"] .sb-c.ship{background:color-mix(in srgb,var(--blue) 32%,transparent);
+  border-color:color-mix(in srgb,var(--blue) 75%,transparent);
+  box-shadow:inset 0 0 6px color-mix(in srgb,var(--blue) 45%,transparent)}
+[data-mod="seabattle"] .sb-c.miss::after{content:"";position:absolute;inset:0;margin:auto;width:22%;height:22%;
+  border-radius:50%;background:var(--muted-dim);animation:sb-splash .3s ease}
+[data-mod="seabattle"] .sb-c.hit{background:color-mix(in srgb,var(--magenta) 26%,transparent);
+  border-color:color-mix(in srgb,var(--magenta) 70%,transparent)}
+[data-mod="seabattle"] .sb-c.hit::after{content:"✕";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:900;color:var(--magenta);animation:sb-burst .35s ease;
+  text-shadow:0 0 8px color-mix(in srgb,var(--magenta) 80%,transparent)}
+[data-mod="seabattle"] .sb-c.sunk{background:color-mix(in srgb,var(--red) 36%,transparent);
+  border-color:var(--red);box-shadow:0 0 8px color-mix(in srgb,var(--red) 50%,transparent)}
+[data-mod="seabattle"] .sb-c.sunk::after{content:"✕";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:900;color:#fff}
+[data-mod="seabattle"] .sb-c.aim{outline:2px solid var(--gold);outline-offset:1px;z-index:1;animation:sb-aim 1s ease infinite}
+[data-mod="seabattle"] .sb-c.bad{animation:sb-shake .3s ease;border-color:var(--red)}
+[data-mod="seabattle"] .sb-grid.dis .sb-c{cursor:default}
+
+/* мини-доска своего флота в бою */
+[data-mod="seabattle"] .sb-bwrap.mini{max-width:210px;grid-template-columns:1fr;grid-template-rows:1fr;margin:8px auto 0}
+[data-mod="seabattle"] .sb-bwrap.mini .sb-cols,[data-mod="seabattle"] .sb-bwrap.mini .sb-rows{display:none}
+[data-mod="seabattle"] .sb-bwrap.mini .sb-grid{grid-column:1;grid-row:1;gap:1px}
+[data-mod="seabattle"] .sb-bwrap.mini .sb-c{border-radius:2px}
+[data-mod="seabattle"] .sb-bwrap.mini .sb-c.hit::after,[data-mod="seabattle"] .sb-bwrap.mini .sb-c.sunk::after{font-size:7px}
+
+/* ---- док кораблей (расстановка) ---- */
+[data-mod="seabattle"] .sb-dock{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px;justify-content:center}
+[data-mod="seabattle"] .sb-dchip{display:flex;align-items:center;gap:7px;min-height:44px;padding:8px 12px;border-radius:12px;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;font-family:inherit;
+  border:1.5px solid color-mix(in srgb,var(--blue) 40%,transparent);
+  background:color-mix(in srgb,var(--blue) 8%,transparent);color:var(--ink)}
+[data-mod="seabattle"] .sb-dchip .cells{display:flex;gap:2px}
+[data-mod="seabattle"] .sb-dchip .cells i{width:10px;height:10px;border-radius:2px;
+  background:color-mix(in srgb,var(--blue) 50%,transparent)}
+[data-mod="seabattle"] .sb-dchip .n{font-family:var(--font-display);font-size:13px;color:var(--cyan-soft)}
+[data-mod="seabattle"] .sb-dchip.sel{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,transparent);
+  box-shadow:0 0 12px color-mix(in srgb,var(--gold) 35%,transparent)}
+[data-mod="seabattle"] .sb-dchip.done{opacity:.4}
+
+/* ---- кнопки ---- */
+[data-mod="seabattle"] .sb-ctl{display:flex;gap:8px;margin:10px 0 0;flex-wrap:wrap;justify-content:center}
+[data-mod="seabattle"] .sb-btn{min-height:46px;padding:10px 16px;border-radius:13px;cursor:pointer;font-family:inherit;
+  font-weight:800;font-size:14px;-webkit-tap-highlight-color:transparent;color:var(--cyan-soft);
+  border:1.5px solid color-mix(in srgb,var(--blue) 45%,transparent);
+  background:color-mix(in srgb,var(--blue) 10%,transparent);transition:transform .1s ease}
+[data-mod="seabattle"] .sb-btn:active{transform:scale(.97)}
+[data-mod="seabattle"] .sb-btn.warn{color:var(--red);border-color:color-mix(in srgb,var(--red) 45%,transparent);
+  background:color-mix(in srgb,var(--red) 8%,transparent)}
+[data-mod="seabattle"] .sb-bigbtn{display:block;width:100%;min-height:52px;margin-top:12px;border-radius:16px;cursor:pointer;
+  font-family:var(--font-display);font-size:17px;color:var(--on-bright);border:0;background:var(--accent-grad);
+  box-shadow:0 8px 22px -8px var(--blue);-webkit-tap-highlight-color:transparent;transition:transform .1s ease, opacity .15s ease}
+[data-mod="seabattle"] .sb-bigbtn:active{transform:scale(.98)}
+[data-mod="seabattle"] .sb-bigbtn:disabled{opacity:.35;cursor:default}
+
+/* ---- бой ---- */
+[data-mod="seabattle"] .sb-status{display:flex;align-items:center;justify-content:center;gap:8px;min-height:30px;
+  margin:10px 0 8px;font-family:var(--font-display);font-size:15px;color:var(--cyan-soft);text-align:center}
+[data-mod="seabattle"] .sb-status.mine{color:var(--gold);text-shadow:0 0 10px color-mix(in srgb,var(--gold) 50%,transparent)}
+[data-mod="seabattle"] .sb-status.wait{animation:sb-pulse 1.6s ease infinite}
+[data-mod="seabattle"] .sb-msg{text-align:center;min-height:18px;font-size:13px;font-weight:700;color:var(--muted-2);margin:6px 0}
+[data-mod="seabattle"] .sb-msg.hot{color:var(--magenta)}
+[data-mod="seabattle"] .sb-fleet{display:flex;justify-content:center;gap:6px;margin:6px 0 2px;flex-wrap:wrap}
+[data-mod="seabattle"] .sb-fleet .sh{display:flex;gap:1.5px;opacity:.95}
+[data-mod="seabattle"] .sb-fleet .sh i{width:7px;height:7px;border-radius:1.5px;background:color-mix(in srgb,var(--blue) 55%,transparent)}
+[data-mod="seabattle"] .sb-fleet .sh.dead i{background:color-mix(in srgb,var(--red) 45%,transparent);opacity:.5}
+[data-mod="seabattle"] .sb-fleet .lbl{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.4px;width:100%;text-align:center;margin-top:2px}
+[data-mod="seabattle"] .sb-minilbl{text-align:center;font-size:10px;font-weight:800;letter-spacing:.4px;
+  text-transform:uppercase;color:var(--muted);margin-top:10px}
+
+/* ---- передача устройства / ожидание ---- */
+[data-mod="seabattle"] .sb-pass{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;gap:12px;padding:48px 16px;margin-top:14px}
+[data-mod="seabattle"] .sb-pass .e{font-size:54px;animation:sb-pulse 1.8s ease infinite}
+[data-mod="seabattle"] .sb-pass .t1{font-family:var(--font-display);font-size:21px;color:#fff}
+[data-mod="seabattle"] .sb-pass .t2{font-size:13px;font-weight:600;color:var(--muted-2)}
+
+/* ---- результат ---- */
+[data-mod="seabattle"] .sb-res{text-align:center;padding:18px 14px}
+[data-mod="seabattle"] .sb-res .e{font-size:58px;display:block;margin-bottom:6px;animation:sb-pop .4s ease}
+[data-mod="seabattle"] .sb-res .t1{font-family:var(--font-display);font-size:26px;color:#fff;
+  text-shadow:0 0 14px color-mix(in srgb,var(--blue) 70%,transparent)}
+[data-mod="seabattle"] .sb-res .t2{font-size:13px;font-weight:600;color:var(--muted-2);margin-top:4px}
+[data-mod="seabattle"] .sb-res .pts{display:inline-block;margin-top:10px;padding:7px 16px;border-radius:999px;
+  font-family:var(--font-display);font-size:15px}
+[data-mod="seabattle"] .sb-res .pts.plus{color:var(--gold);border:1px solid color-mix(in srgb,var(--gold) 50%,transparent);
+  background:color-mix(in srgb,var(--gold) 9%,transparent)}
+[data-mod="seabattle"] .sb-res .pts.minus{color:var(--red);border:1px solid color-mix(in srgb,var(--red) 45%,transparent);
+  background:color-mix(in srgb,var(--red) 8%,transparent)}
+[data-mod="seabattle"] .sb-resgrid{display:flex;gap:9px;margin-top:14px}
+[data-mod="seabattle"] .sb-resgrid .s{flex:1;text-align:center;border-radius:15px;padding:12px 6px 9px;
+  background:rgba(var(--panel-rgb),.55);border:1px solid color-mix(in srgb,var(--blue) 28%,transparent)}
+[data-mod="seabattle"] .sb-resgrid .n{font-family:var(--font-display);font-size:20px;color:#fff}
+[data-mod="seabattle"] .sb-resgrid .l{font-size:10px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;
+  color:var(--muted);margin-top:5px}
+
+/* ---- статистика (шторка) ---- */
+[data-mod="seabattle"] .sb-pgrid,.sheet .sb-pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}
+.sheet .sb-pstat{text-align:center;border-radius:15px;padding:12px 6px 9px;
+  background:rgba(var(--panel-rgb),.55);border:1px solid color-mix(in srgb,var(--blue) 28%,transparent)}
+.sheet .sb-pstat .n{font-family:var(--font-display);font-size:22px;color:#fff}
+.sheet .sb-pstat .l{font-size:10px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--muted);margin-top:5px}
+
+/* ---- анимации ---- */
+@keyframes sb-pop{0%{transform:scale(.7)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes sb-burst{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.5)}100%{transform:scale(1);opacity:1}}
+@keyframes sb-splash{0%{transform:scale(.2);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes sb-aim{0%,100%{outline-color:var(--gold)}50%{outline-color:color-mix(in srgb,var(--gold) 35%,transparent)}}
+@keyframes sb-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+@keyframes sb-pulse{0%,100%{opacity:1}50%{opacity:.55}}
+@media (prefers-reduced-motion: reduce){
+  [data-mod="seabattle"] .sb-c.hit::after,[data-mod="seabattle"] .sb-c.miss::after,
+  [data-mod="seabattle"] .sb-c.aim,[data-mod="seabattle"] .sb-c.bad,
+  [data-mod="seabattle"] .sb-pass .e,[data-mod="seabattle"] .sb-res .e,
+  [data-mod="seabattle"] .sb-status.wait{animation:none}
+}

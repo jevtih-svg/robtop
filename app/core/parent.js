@@ -44,7 +44,7 @@ window.RobTop = window.RobTop || {};
       teeth:"streak {n} 🔥", rating:"avg {avg}★", mood:"most {e}", reverse:"{c} words", guess:"{w} of {c}",
       walk:"{c} walks", names:"fun names", snake:"snake", bank:"{p} pts · {s} 🔥",
       tasks:"⏳ {n} waiting", tasksNone:"{n} active", shop:"🛍 {n} to approve", shopNone:"{n} prizes",
-      chat:"open chat", none:"open" },
+      chat:"open chat", seabattle:"{w} of {c} won", none:"open" },
     m:{ lastEvents:"Recent events", empty:"Nothing here yet.",
       noText:"no comment", liked:"Liked: {x}", walkAdd:"🐾 Log a walk" },
     give:{ btn:"⭐ Give points", title:"Give points", customPh:"How many", notePh:"What for? (the child will see it)",
@@ -74,6 +74,9 @@ window.RobTop = window.RobTop || {};
       mood:{ mood_set:"Mood of the day: {e} {name}" },
       reverse:{ created:"Reversed a word" },
       guess:{ win:"Guess the Number: guessed it! +10", wrong:"Guess the Number: wrong answer −5", timeout:"Guess the Number: time ran out −5" },
+      seabattle:{ win:"Sea Battle: beat the robot! +10", loss:"Sea Battle: lost to the robot −5",
+        famWin:"Sea Battle: won the family match! 🏆 +10", famLoss:"Sea Battle: lost the family match",
+        hot:"Sea Battle: played a two-player game" },
       generic:{ created:"Added an entry", edited:"Edited an entry", moved:"Moved an entry", favorite:"Marked a favorite",
         unfavorite:"Removed a favorite", deleted:"Removed an entry", restored:"Restored an entry", undo:"Undid an action" }
     }
@@ -92,7 +95,7 @@ window.RobTop = window.RobTop || {};
       teeth:"серия {n} 🔥", rating:"средняя {avg}★", mood:"чаще {e}", reverse:"{c} слов", guess:"{w} из {c}",
       walk:"{c} прогулок", names:"смешные имена", snake:"змейка", bank:"{p} оч · {s} 🔥",
       tasks:"⏳ {n} ждут проверки", tasksNone:"{n} активных", shop:"🛍 {n} на подтверждении", shopNone:"{n} призов",
-      chat:"открыть чат", none:"открыть" },
+      chat:"открыть чат", seabattle:"{w} из {c} побед", none:"открыть" },
     m:{ lastEvents:"Последние события", empty:"Пока пусто.",
       noText:"без комментария", liked:"Понравилось: {x}", walkAdd:"🐾 Записать прогулку" },
     give:{ btn:"⭐ Начислить очки", title:"Начислить очки", customPh:"Сколько", notePh:"За что? (увидит ребёнок)",
@@ -122,6 +125,9 @@ window.RobTop = window.RobTop || {};
       mood:{ mood_set:"Настроение дня: {e} {name}" },
       reverse:{ created:"Перевернул слово" },
       guess:{ win:"Угадай число: угадал! +10", wrong:"Угадай число: не угадал −5", timeout:"Угадай число: время вышло −5" },
+      seabattle:{ win:"Морской бой: победил робота! +10", loss:"Морской бой: проиграл роботу −5",
+        famWin:"Морской бой: выиграл семейный матч! 🏆 +10", famLoss:"Морской бой: проиграл семейный матч",
+        hot:"Морской бой: сыграл партию вдвоём" },
       generic:{ created:"Добавил запись", edited:"Изменил запись", moved:"Переместил запись", favorite:"Отметил избранное",
         unfavorite:"Снял избранное", deleted:"Удалил запись", restored:"Восстановил запись", undo:"Отменил действие" }
     }
@@ -140,7 +146,7 @@ window.RobTop = window.RobTop || {};
       teeth:"sērija {n} 🔥", rating:"vidēji {avg}★", mood:"biežāk {e}", reverse:"{c} vārdi", guess:"{w} no {c}",
       walk:"{c} pastaigas", names:"smieklīgi vārdi", snake:"čūska", bank:"{p} p · {s} 🔥",
       tasks:"⏳ {n} gaida", tasksNone:"{n} aktīvi", shop:"🛍 {n} apstiprināt", shopNone:"{n} balvas",
-      chat:"atvērt čatu", none:"atvērt" },
+      chat:"atvērt čatu", seabattle:"{w} no {c} uzvaras", none:"atvērt" },
     m:{ lastEvents:"Pēdējie notikumi", empty:"Vēl nekā nav.",
       noText:"bez komentāra", liked:"Patika: {x}", walkAdd:"🐾 Pierakstīt pastaigu" },
     give:{ btn:"⭐ Piešķirt punktus", title:"Piešķirt punktus", customPh:"Cik daudz", notePh:"Par ko? (bērns redzēs)",
@@ -170,6 +176,9 @@ window.RobTop = window.RobTop || {};
       mood:{ mood_set:"Dienas garastāvoklis: {e} {name}" },
       reverse:{ created:"Apgrieza vārdu" },
       guess:{ win:"Uzmini skaitli: uzminēja! +10", wrong:"Uzmini skaitli: neuzminēja −5", timeout:"Uzmini skaitli: laiks beidzās −5" },
+      seabattle:{ win:"Jūras kauja: uzvarēja robotu! +10", loss:"Jūras kauja: zaudēja robotam −5",
+        famWin:"Jūras kauja: uzvarēja ģimenes mačā! 🏆 +10", famLoss:"Jūras kauja: zaudēja ģimenes mačā",
+        hot:"Jūras kauja: spēlēja divatā" },
       generic:{ created:"Pievienoja ierakstu", edited:"Mainīja ierakstu", moved:"Pārvietoja ierakstu", favorite:"Atzīmēja izlasi",
         unfavorite:"Noņēma izlasi", deleted:"Dzēsa ierakstu", restored:"Atjaunoja ierakstu", undo:"Atcēla darbību" }
     }
@@ -262,6 +271,7 @@ window.RobTop = window.RobTop || {};
       case "mood":     return e.type==="mood_set";
       case "guess":    return e.type==="round_played";
       case "reverse":  return e.type==="created" && coll==="history";
+      case "seabattle":return e.type==="battle_finished";
       default:         return GEN_DOMAIN[e.type]===1 && coll!=="meta";
     }
   }
@@ -277,6 +287,10 @@ window.RobTop = window.RobTop || {};
     if(e.module==="guess" && e.type==="round_played"){
       var r=(e.meta&&e.meta.result)||"wrong";
       key="parent.ev.guess."+(r==="win"?"win":(r==="timeout"?"timeout":"wrong"));
+    }
+    if(e.module==="seabattle" && e.type==="battle_finished"){
+      var sm=(e.meta&&e.meta.mode)||"bot", sr=(e.meta&&e.meta.result)||"win";
+      key="parent.ev.seabattle."+(sm==="hotseat"?"hot":(sm==="family"?(sr==="win"?"famWin":"famLoss"):(sr==="win"?"win":"loss")));
     }
     if(e.module==="rating" && e.type==="day_rated"){ var st=(e.meta&&+e.meta.stars)||0; p.stars=stars(st)+" "+st; }
     if(e.module==="mood" && e.type==="mood_set"){
@@ -311,17 +325,19 @@ window.RobTop = window.RobTop || {};
     var mc={},topMood=null;
     for(i=0;i<per.length;i++){ if(per[i].module==="mood"&&per[i].meta&&per[i].meta.mood){ var mm=per[i].meta.mood; mc[mm]=(mc[mm]||0)+1; } }
     for(var mk in mc){ if(mc.hasOwnProperty(mk)&&(topMood===null||mc[mk]>mc[topMood])) topMood=mk; }
-    var words=0,gW=0,gC=0,teethN=0,walkN=0,moodN=0;
+    var words=0,gW=0,gC=0,teethN=0,walkN=0,moodN=0,sbW=0,sbC=0;
     for(i=0;i<per.length;i++){
       if(per[i].module==="reverse") words++;
       if(per[i].module==="guess"){ gC++; if(per[i].meta&&per[i].meta.result==="win") gW++; }
       if(per[i].module==="teeth"&&per[i].to!=="skipped") teethN++;
       if(per[i].module==="walk") walkN++;
       if(per[i].module==="mood") moodN++;
+      /* hot-seat не считаем: стороны не проверяемы, у события нет result */
+      if(per[i].module==="seabattle"&&per[i].meta&&per[i].meta.mode!=="hotseat"){ sbC++; if(per[i].meta.result==="win") sbW++; }
     }
     return { per:per, perMod:perMod, streak:streak,
       avg:cnt?(sum/cnt).toFixed(1):null, rated:cnt, topMood:topMood, topMoodN:topMood?mc[topMood]:0,
-      words:words, guessWin:gW, guessCnt:gC, teethN:teethN, walkN:walkN, moodN:moodN };
+      words:words, guessWin:gW, guessCnt:gC, teethN:teethN, walkN:walkN, moodN:moodN, sbWin:sbW, sbCnt:sbC };
   }
 
   function kidName(){ return (S.data&&S.data.child&&S.data.child.nickname)||""; }
@@ -354,6 +370,7 @@ window.RobTop = window.RobTop || {};
     if(id==="guess")  return a.guessCnt?t("parent.sum.guess",{w:a.guessWin,c:a.guessCnt}):t("parent.sum.none");
     if(id==="names")  return t("parent.sum.names");
     if(id==="snake")  return t("parent.sum.snake");
+    if(id==="seabattle") return a.sbCnt?t("parent.sum.seabattle",{w:a.sbWin,c:a.sbCnt}):t("parent.sum.none");
     return t("parent.sum.none");
   }
 

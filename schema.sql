@@ -260,6 +260,7 @@ INSERT INTO modules (id, name, version, manifest, source, trusted, server, enabl
  ('snake','Змейка','1.0.0','{"color":"#19e3ff","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]},"permissions":["points"]}','native',1,0,1,117),
  ('bank','Копилка','1.0.0','{"color":"#ff4d6d","status":"active","wide":true,"roles":{"edit":["child","parent"],"read":["child","parent"]},"permissions":["points"]}','native',1,0,1,120),
  ('shop','Магазин','1.0.0','{"color":"#ff2bd6","status":"active","wide":false,"familyCollections":["items"],"roles":{"edit":["child","parent"],"read":["child","parent"]},"permissions":["points","camera"]}','native',1,0,1,130),
- ('chat','Чат','1.0.0','{"color":"#3b6bff","status":"active","wide":false,"roles":{"edit":["child","parent"],"read":["child","parent"]},"permissions":["camera"]}','native',1,1,1,135)
+ ('chat','Чат','1.0.0','{"color":"#3b6bff","status":"active","wide":false,"roles":{"edit":["child","parent"],"read":["child","parent"]},"permissions":["camera"]}','native',1,1,1,135),
+ ('seabattle','Морской бой','1.0.0','{"color":"#3b6bff","status":"active","wide":false,"familyPool":true,"roles":{"edit":["child","parent"],"read":["child","parent"]},"permissions":["points"]}','native',1,0,1,140)
 ON DUPLICATE KEY UPDATE name=VALUES(name), manifest=VALUES(manifest), server=VALUES(server), updated_at=NOW();
 -- ============================================================
