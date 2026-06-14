@@ -16,8 +16,8 @@
    (модуль может объявить опциональный хук link(link, sdk) в register, см. loader.js);
    {view:"ticket",id:5} — переписка тикета; {view:"settings"|"shared"} — настройки.
 
-   Web Push (PWA): sw.js регистрируется ТОЛЬКО при включении тумблера; пуш — «звонок»
-   без payload (сервер api/_push.php), текст показывает sw.js. На iOS пуши работают
+   Web Push (PWA): sw.js регистрируется при включении тумблера и освежается после входа,
+   если на устройстве уже есть разрешённая подписка. Пуш несёт payload с сервера. На iOS пуши работают
    только из приложения, добавленного на экран «Домой» — даём подсказку. */
 window.RobTop = window.RobTop || {};
 (function(RT){
@@ -531,7 +531,7 @@ window.RobTop = window.RobTop || {};
               sub=s; var j=s.toJSON?s.toJSON():{};
               return RT.API.post("push.php",{op:"subscribe",endpoint:s.endpoint,keys:(j&&j.keys)||{},lang:I.get()});
             })
-            .then(function(){ busy=false; mine=true; paint(); shell().toast(I.t("ntf.push.onToast")); })
+            .then(function(){ try{ localStorage.setItem("rt_push_enabled","1"); }catch(e){} busy=false; mine=true; paint(); shell().toast(I.t("ntf.push.onToast")); })
             .catch(function(){ busy=false; shell().toast(I.t("ntf.push.fail")); });
         });
       }
@@ -541,12 +541,31 @@ window.RobTop = window.RobTop || {};
         p.then(function(){
           var u=sub?sub.unsubscribe():Promise.resolve();
           Promise.resolve(u).catch(function(){}).then(function(){
+            try{ localStorage.removeItem("rt_push_enabled"); }catch(e){}
             busy=false; sub=null; mine=false; paint(); shell().toast(I.t("ntf.push.offToast"));
           });
         });
       }
       tgl.onclick=function(){ if(busy) return; if(mine) disable(); else enable(); };
     }).catch(function(){});
+  }
+
+  function refreshPushSubscription(){
+    try{
+      if(!("serviceWorker" in navigator)||!window.PushManager||!window.Notification) return;
+      if(Notification.permission!=="granted") return;
+      RT.API.post("push.php",{op:"key"}).then(function(r){
+        if(!(r&&r.ok&&r.key)) return;
+        return navigator.serviceWorker.register("sw.js?lang="+I.get()+"&v="+encodeURIComponent(window.RT_VER||"1"))
+          .then(function(){ return navigator.serviceWorker.ready; })
+          .then(function(reg){ return reg.pushManager.getSubscription(); })
+          .then(function(s){
+            if(!s) return;
+            var j=s.toJSON?s.toJSON():{};
+            return RT.API.post("push.php",{op:"subscribe",endpoint:s.endpoint,keys:(j&&j.keys)||{},lang:I.get()});
+          });
+      }).catch(function(){});
+    }catch(e){}
   }
 
   /* =================== БЕЙДЖИ АККАУНТОВ УСТРОЙСТВА (op peek) =================== */
@@ -599,6 +618,7 @@ window.RobTop = window.RobTop || {};
     if(ready||(RT.isDemo&&RT.isDemo())) return;
     ensureDom();
     ready=true;
+    refreshPushSubscription();
     api({op:"list"}).then(function(r){
       var items=(r&&r.items)||[];
       seenMax=items.length?items[0].id:0;

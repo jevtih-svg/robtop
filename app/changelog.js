@@ -5,6 +5,11 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.14.3", d:"2026-06-14", t:{
+    en:"Device push notifications now refresh their subscription after app updates and language changes.",
+    ru:"Push-уведомления устройства теперь обновляют подписку после обновления приложения и смены языка.",
+    lv:"Ierices push pazinojumi tagad atsvaidzina abonementu pec lietotnes atjauninajumiem un valodas mainas.",
+    de:"Geraete-Push-Benachrichtigungen aktualisieren ihre Anmeldung jetzt nach App-Updates und Sprachwechseln." } },
   { v:"2026.06.14.2", d:"2026-06-14", t:{
     en:"German is now available across the app, including games, parent screens and email flows.",
     ru:"Немецкий язык теперь доступен во всём приложении, включая игры, родительские экраны и письма.",

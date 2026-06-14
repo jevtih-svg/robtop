@@ -12,7 +12,8 @@ var LANG = (function () {
 var TXT = {
   en: { title: "RobTop", body: "You have a new notification" },
   ru: { title: "RobTop", body: "У тебя новое оповещение" },
-  lv: { title: "RobTop", body: "Tev ir jauns paziņojums" }
+  lv: { title: "RobTop", body: "Tev ir jauns paziņojums" },
+  de: { title: "RobTop", body: "Du hast eine neue Benachrichtigung" }
 };
 
 self.addEventListener("install", function () { self.skipWaiting(); });
