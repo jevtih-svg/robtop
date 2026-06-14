@@ -89,7 +89,32 @@
       deleteItem:"Dzēst balvu", confirmDelItem:"Dzēst balvu “{t}”?",
       needTitle:"Vispirms uzraksti nosaukumu", needPrice:"Vispirms norādi cenu",
       loadFail:"Neizdevās ielādēt veikalu", retry:"Mēģināt vēlreiz"
-    }, bank:{ r_spend_refund:"Veikals — punkti atgriezti" }}
+    }, bank:{ r_spend_refund:"Veikals — punkti atgriezti" }},
+    de:{ shop:{
+      title:"Shop", subtitle:"Preise von deinen Eltern fuer Punkte",
+      hudPts:"Punkte", hudBuys:"Kaeufe",
+      emptyChild:"Noch keine Preise — deine Eltern fuegen bald welche hinzu!",
+      emptyParent:"Fuege den ersten Preis hinzu — Kinder sehen ihn sofort",
+      btnAddItem:"+ Neuer Preis",
+      btnBuy:"Kaufen", lack:"noch {n} noetig",
+      confirmBuy:"“{t}” fuer {n} Punkte kaufen?", btnConfirm:"Kaufen!",
+      sentToast:"An Eltern gesendet! Punkte wurden abgezogen",
+      buyFail:"Kauf fehlgeschlagen — versuch es nochmal", notEnough:"Nicht genug Punkte",
+      ordersTitle:"Meine Kaeufe", ordersEmpty:"Noch nichts gekauft",
+      ordersA11y:"Meine Kaeufe",
+      approvalsTitle:"Kaeufe zum Bestaetigen",
+      stPending:"wartet auf Eltern ⏳", stApproved:"erhalten 🎁", stDeclined:"zurueckgegeben ↩",
+      approveBtn:"✓ Geben", declineBtn:"↩ Punkte zurueck",
+      approvedToast:"Gegeben! 🎁", declinedToast:"Zurueckgegeben, Punkte sind wieder da",
+      giftToast:"Dein Preis “{t}” gehoert dir! 🎁",
+      newItem:"Neuer Preis", editItem:"Preis bearbeiten",
+      itemTitlePh:"Name des Preises", itemPriceLbl:"Preis in Punkten",
+      availTitle:"Fuer Kinder verfuegbar", hiddenFor:"versteckt fuer {n}",
+      addPhoto:"Foto hinzufuegen", replacePhoto:"Foto ersetzen", photoFailed:"Foto konnte nicht hochgeladen werden",
+      deleteItem:"Preis loeschen", confirmDelItem:"Preis “{t}” loeschen?",
+      needTitle:"Schreib zuerst den Namen", needPrice:"Gib zuerst einen Preis ein",
+      loadFail:"Shop konnte nicht geladen werden", retry:"Nochmal versuchen"
+    }, bank:{ r_spend_refund:"Shop — Punkte zurueck" }}
   };
 
   /* стрелка «назад» рисуется каркасом sdk.ui.frame из общего реестра иконок — свой BACK_IC не нужен;

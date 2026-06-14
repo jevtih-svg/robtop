@@ -13,7 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Rubik:wght@400;500;600;700;800&display=swap&subset=cyrillic,cyrillic-ext,latin,latin-ext" rel="stylesheet">
 <style>
   /* ЛЕНДИНГ для незалогиненных (apps.tilley.live/robtop → shell уводит сюда без сессии).
-     Standalone, как w.html: без core/*, мини-i18n en/ru/lv внутри
+     Standalone, как w.html: без core/*, мини-i18n en/ru/lv/de внутри
      (?lang → localStorage robtop_locale → язык браузера → en; ключ общий с приложением —
      выбор языка переезжает в приложение). Тема — всегда неон (тема живёт на аккаунте,
      у гостя аккаунта нет). Mobile-first; ≥640px и ≥960px — десктопные сетки.
@@ -172,7 +172,7 @@
     RobTop · <a href="index.html#login">apps.tilley.live/robtop</a> · <span id="ver"></span></div>
 </div>
 
-<script src="changelog.js?v=2026.06.12.6"></script>
+<script src="changelog.js?v=2026.06.14.2"></script>
 <script>
 "use strict";
 /* ---------- мини-i18n (en по умолчанию, ключ общий с приложением) ---------- */
@@ -183,7 +183,7 @@ en:{
   signIn:"Sign in", heroTag:"Mega App for Parents and Kids",
   heroSub:"One app — many mini-apps: games, daily journals, parent tasks, points and a family prize shop. Kids play and earn, parents see everything.",
   cta:"Open the app", ctaNote:"A parent creates the family right in the app. Sign-in for parents and kids.",
-  chips:["15 apps inside","points & prizes","3 languages","for the whole family"],
+  chips:["15 apps inside","points & prizes","4 languages","for the whole family"],
   howH:"How it works", howSub:"Three steps — and the whole family is in.",
   how:[["A parent creates a family","Sign up by email, add kids by nickname, invite the other parent."],
        ["Kids play and do tasks","Games and daily journals earn points; parent tasks earn even more."],
@@ -217,7 +217,7 @@ en:{
          ["Prize shop","You decide the prizes and prices. Purchases wait for your confirmation."],
          ["App control","Switch any mini-app on or off per child. Wishlist sharing only with your OK."],
          ["Notifications","A bell in the app and Web Push to your phone: tasks, purchases, tickets."],
-         ["Themes & languages","Neon or Tilley Live theme per account. English, Russian, Latvian."]],
+         ["Themes & languages","Neon or Tilley Live theme per account. English, Russian, Latvian, German."]],
   logH:"What's new", logSub:"The app updates often — every version lands here.",
   showAll:"Show all", showLess:"Show less",
   footNote:"A family app: a child's account is created by a parent and protected by a password." },
@@ -227,7 +227,7 @@ ru:{
   signIn:"Войти", heroTag:"Мега-приложение для родителей и детей",
   heroSub:"Одно приложение — много мини-приложений: игры, дневники дня, задания от родителей, очки и семейный магазин призов. Дети играют и зарабатывают, родители всё видят.",
   cta:"Открыть приложение", ctaNote:"Родитель создаёт семью прямо в приложении. Вход — для родителей и детей.",
-  chips:["15 приложений внутри","очки и призы","3 языка","для всей семьи"],
+  chips:["15 приложений внутри","очки и призы","4 языка","для всей семьи"],
   howH:"Как это устроено", howSub:"Три шага — и вся семья внутри.",
   how:[["Родитель создаёт семью","Регистрация по email, дети добавляются по никнейму, второго родителя можно пригласить."],
        ["Дети играют и выполняют задания","Игры и дневники приносят пункты; задания от родителей — ещё больше."],
@@ -261,7 +261,7 @@ ru:{
          ["Магазин призов","Призы и цены назначаете вы. Покупки ждут вашего подтверждения."],
          ["Контроль приложений","Любое мини-приложение можно включить или выключить каждому ребёнку. Шаринг виш-листа — только с вашего разрешения."],
          ["Оповещения","Колокольчик в приложении и Web Push на телефон: задания, покупки, обращения."],
-         ["Темы и языки","Тема «Неон» или «Tilley Live» на каждом аккаунте. Английский, русский, латышский."]],
+         ["Темы и языки","Тема «Неон» или «Tilley Live» на каждом аккаунте. Английский, русский, латышский, немецкий."]],
   logH:"Что нового", logSub:"Приложение часто обновляется — каждая версия попадает сюда.",
   showAll:"Показать все", showLess:"Свернуть",
   footNote:"Семейное приложение: аккаунт ребёнка создаёт родитель, вход защищён паролем." },
@@ -271,7 +271,7 @@ lv:{
   signIn:"Ieiet", heroTag:"Mega lietotne vecākiem un bērniem",
   heroSub:"Viena lietotne — daudzas mini-lietotnes: spēles, dienas žurnāli, vecāku uzdevumi, punkti un ģimenes balvu veikals. Bērni spēlē un pelna, vecāki visu redz.",
   cta:"Atvērt lietotni", ctaNote:"Vecāks izveido ģimeni tieši lietotnē. Pieteikšanās — vecākiem un bērniem.",
-  chips:["15 lietotnes iekšā","punkti un balvas","3 valodas","visai ģimenei"],
+  chips:["15 lietotnes iekšā","punkti un balvas","4 valodas","visai ģimenei"],
   howH:"Kā tas darbojas", howSub:"Trīs soļi — un visa ģimene ir iekšā.",
   how:[["Vecāks izveido ģimeni","Reģistrācija ar e-pastu, bērnus pievieno ar segvārdu, var uzaicināt otru vecāku."],
        ["Bērni spēlē un pilda uzdevumus","Spēles un žurnāli pelna punktus; vecāku uzdevumi — vēl vairāk."],
@@ -305,12 +305,56 @@ lv:{
          ["Balvu veikals","Balvas un cenas nosakāt jūs. Pirkumi gaida jūsu apstiprinājumu."],
          ["Lietotņu kontrole","Jebkuru mini-lietotni var ieslēgt vai izslēgt katram bērnam. Vēlmju saraksta kopīgošana — tikai ar jūsu atļauju."],
          ["Paziņojumi","Zvaniņš lietotnē un Web Push uz tālruni: uzdevumi, pirkumi, pieteikumi."],
-         ["Tēmas un valodas","Tēma Neon vai Tilley Live katram kontam. Angļu, krievu, latviešu."]],
+         ["Tēmas un valodas","Tēma Neon vai Tilley Live katram kontam. Angļu, krievu, latviešu, vācu."]],
   logH:"Kas jauns", logSub:"Lietotne bieži atjaunojas — katra versija nonāk šeit.",
   showAll:"Rādīt visu", showLess:"Sakļaut",
-  footNote:"Ģimenes lietotne: bērna kontu izveido vecāks, pieteikšanās aizsargāta ar paroli." }
+  footNote:"Ģimenes lietotne: bērna kontu izveido vecāks, pieteikšanās aizsargāta ar paroli." },
+de:{
+  metaTitle:"RobTop — Mega-App fuer Eltern und Kinder",
+  metaDesc:"RobTop — Mega-App fuer Eltern und Kinder: Spiele, Aufgaben, Punkte und Preise fuer die ganze Familie.",
+  signIn:"Anmelden", heroTag:"Mega-App fuer Eltern und Kinder",
+  heroSub:"Eine App — viele Mini-Apps: Spiele, Tagesjournale, Elternaufgaben, Punkte und ein Familien-Preisshop. Kinder spielen und verdienen, Eltern sehen alles.",
+  cta:"App oeffnen", ctaNote:"Ein Elternteil erstellt die Familie direkt in der App. Anmeldung fuer Eltern und Kinder.",
+  chips:["15 Apps enthalten","Punkte & Preise","4 Sprachen","fuer die ganze Familie"],
+  howH:"So funktioniert es", howSub:"Drei Schritte — und die ganze Familie ist dabei.",
+  how:[["Ein Elternteil erstellt die Familie","Mit E-Mail registrieren, Kinder per Nickname hinzufuegen, den zweiten Elternteil einladen."],
+       ["Kinder spielen und erledigen Aufgaben","Spiele und Tagesjournale bringen Punkte; Elternaufgaben bringen noch mehr."],
+       ["Punkte werden zu Preisen","Eltern stellen Preise in den Shop — Kinder kaufen sie mit ihren Punkten."]],
+  appsH:"Alle Apps enthalten", appsSub:"Jede Kachel ist eine Mini-App. Eltern koennen jede davon fuer jedes Kind ein- oder ausschalten.",
+  soonSep:"Demnaechst",
+  tiles:{ wishlist:"Wunschliste", reverse:"Woerter rueckwaerts", mood:"Stimmung des Tages", teeth:"Zaehneputz-Timer",
+    guess:"Zahl erraten", names:"Lustige Namen", rating:"Tagesbewertung", friends:"Freunde", bank:"Kasse", shop:"Shop",
+    walk:"Spaziergang", snake:"Snake", tasks:"Aufgaben", chat:"Chat", days:"Tagezaehler", find:"Finde den Gegenstand", seabattle:"Schiffe versenken", museum:"Hausmuseum", lost:"Fundbuero" },
+  apps:{
+    wishlist:"Eine Wunschliste mit Fotos: Will ich / Ueberlege / Gekauft. Teilbar — mit Erlaubnis der Eltern.",
+    mood:"Waehle das Smiley des Tages, fuege ein “weil…” und ein Foto hinzu. Monatsstatistik.",
+    teeth:"Ein 2-Minuten-Timer mit leuchtendem Ring und Sound. Punkte und Tagesserie.",
+    guess:"Eine Mathefrage auf Zeit, Antwort 1–10. Punkte gewinnen, bei Fehlern ein kleiner Abzug.",
+    names:"10.000 erfundene Namen: lustig oder nicht? Verlauf deiner Stimmen in zwei Tabs.",
+    reverse:"Tippe ein Wort — die App dreht es um und liest es laut vor.",
+    rating:"Jeden Abend: 1–5 Sterne, Notiz und Foto. Bis Mitternacht bearbeitbar.",
+    friends:"Beschreibe deine Freunde: nett oder grummelig, Bewertung 1–5, wie ihr euch kennengelernt habt. Geheime Freunde in einem eigenen Tab.",
+    bank:"Alle Punkte leben hier: Elternaufgaben, Serienfeuer und kompletter Verlauf.",
+    shop:"Preise von Eltern: mit Punkten kaufen, ein Elternteil uebergibt den Preis.",
+    walk:"Schneller Hundespaziergang fuer die ganze Familie: Zeit, Stimmung, Kommandos, Fotos.",
+    snake:"Der Nokia-Klassiker in Neon. Neue Rekorde bringen Punkte.",
+    tasks:"Elternaufgaben in der eigenen App: “Erledigt” tippen, Punkte verdienen und Serien aufbauen.",
+    chat:"Ein Familien-Messenger: Chats und Gruppen nur innerhalb der Familie, mit Fotos.",
+    days:"Zaehle die Tage bis zu einem Ereignis.", find:"Finde einen Gegenstand nach Hinweisen und fotografiere ihn.",
+    seabattle:"Das klassische 10×10 Schiffe versenken: gegen Roboter, zu zweit auf einem Geraet oder Familienmatch auf zwei Geraeten.",
+    museum:"Fotografiere deine Kreationen — daraus wird ein Museum.", lost:"Eine Sammlung deiner kleinen Schaetze." },
+  parH:"Fuer Eltern", parSub:"Du siehst das ganze Bild und bleibst freundlich in Kontrolle.",
+  feats:[["Dashboard","Der Tag jedes Kindes auf einen Blick: Stimmungen, Bewertungen, Spiele, Spaziergaenge und ein kompletter Verlauf."],
+         ["Aufgaben & Punkte","Aufgaben erstellen, Erledigung bestaetigen, Bonuspunkte vergeben. Serien halten Kinder motiviert."],
+         ["Preisshop","Du bestimmst Preise und Kosten. Kaeufe warten auf deine Bestaetigung."],
+         ["App-Steuerung","Jede Mini-App pro Kind ein- oder ausschalten. Wunschlisten-Teilen nur mit deinem OK."],
+         ["Benachrichtigungen","Glocke in der App und Web Push aufs Handy: Aufgaben, Kaeufe, Support."],
+         ["Designs & Sprachen","Neon oder Tilley Live pro Konto. Englisch, Russisch, Lettisch, Deutsch."]],
+  logH:"Was ist neu", logSub:"Die App wird oft aktualisiert — jede Version landet hier.",
+  showAll:"Alle anzeigen", showLess:"Weniger anzeigen",
+  footNote:"Eine Familien-App: Das Kinderkonto wird von einem Elternteil erstellt und durch ein Passwort geschuetzt." }
 };
-var LANGS=["en","ru","lv"];
+var LANGS=["en","ru","lv","de"];
 function pickLang(){
   var q=new URLSearchParams(location.search).get('lang');
   if(q && T[q]) return q;

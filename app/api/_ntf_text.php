@@ -145,6 +145,46 @@ function rt_ntf_push_templates() {
                 'finished'  => ['who'=>'name', 'body'=>'🏆 Uzvarēja jūras kaujā {score}'],
             ],
         ],
+        'de' => [
+            '_app' => ['tasks'=>'Aufgaben','bank'=>'Sparschwein','wishlist'=>'Wunschliste','chat'=>'Chat','tickets'=>'Support','walk'=>'Hund','seabattle'=>'Seeschlacht'],
+            'generic' => 'Neue Benachrichtigung',
+            'tickets'  => [
+                'reply'  => ['who'=>'', 'body'=>'Antwort zu “{subject}”'],
+                'closed' => ['who'=>'', 'body'=>'“{subject}” ist geschlossen'],
+            ],
+            'tasks' => [
+                'task_new'      => ['who'=>'',     'body'=>'Neue Aufgabe “{title}” — +{n} Punkte'],
+                'task_claim'    => ['who'=>'name', 'body'=>'“{title}” — bitte pruefen'],
+                'task_done'     => ['who'=>'name', 'body'=>'Hat “{title}” erledigt (+{n})'],
+                'task_approved' => ['who'=>'',     'body'=>'“{title}” bestaetigt — +{n} Punkte!'],
+            ],
+            'bank' => [
+                'task_new'      => ['who'=>'',     'body'=>'Neue Aufgabe “{title}” — +{n} Punkte'],
+                'task_claim'    => ['who'=>'name', 'body'=>'“{title}” — bitte pruefen'],
+                'task_done'     => ['who'=>'name', 'body'=>'Hat “{title}” erledigt (+{n})'],
+                'task_approved' => ['who'=>'',     'body'=>'“{title}” bestaetigt — +{n} Punkte!'],
+                'points_given'  => ['who'=>'',     'body'=>'+{n} Punkte von den Eltern'],
+                'points_taken'  => ['who'=>'',     'body'=>'−{n} Punkte (Eltern)'],
+                'penalty'       => ['who'=>'',     'body'=>'⚠️ Strafe −{n}'],
+                'daily_bonus'   => ['who'=>'',     'body'=>'+5 — alle Aufgaben des Tages!'],
+            ],
+            'wishlist' => [
+                'share_request' => ['who'=>'child', 'body'=>'Moechte die Wunschliste veroeffentlichen'],
+                'share_grant'   => ['who'=>'child', 'body'=>'Hat die Wunschliste mit dir geteilt'],
+            ],
+            'chat' => [
+                'message' => ['who'=>'name', 'body'=>'{text}'],
+                'photo'   => ['who'=>'name', 'body'=>'📷 Foto'],
+            ],
+            'walk' => [
+                'care_due' => ['who'=>'', 'body'=>'🐶 Zeit fuer Hundepflege'],
+            ],
+            'seabattle' => [
+                'challenge' => ['who'=>'name', 'body'=>'⚔️ Fordert die Familie zur Seeschlacht heraus!'],
+                'accepted'  => ['who'=>'name', 'body'=>'Hat angenommen — platziere deine Schiffe!'],
+                'finished'  => ['who'=>'name', 'body'=>'🏆 Hat die Seeschlacht gewonnen {score}'],
+            ],
+        ],
     ];
     return $T;
 }

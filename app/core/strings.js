@@ -522,6 +522,179 @@
         write_failed: "Neizdevās ierakstīt {name}",
         cant_uninstall_native: "Nevar noņemt iebūvētu moduli"
       }
+    },
+
+    /* =================== DEUTSCH =================== */
+    de: {
+      common: {
+        cancel: "Abbrechen", close: "Schliessen", save: "Speichern", delete: "Loeschen",
+        yes: "Ja", no: "Nein", done: "Fertig", undo: "Rueckgaengig", enter: "Anmelden",
+        demo: "Demo", removed: "Entfernt", failed: "Das hat nicht geklappt",
+        back: "Zurueck", home: "Start", confirmTitle: "Bestaetigen?"
+      },
+      home: { tagline: "Waehle eine App", soonSep: "Demnaechst" },
+      reorder: {
+        hint: "Zum Sortieren ziehen",
+        hidden: "Ausgeblendet", hide: "Ausblenden", show: "Anzeigen",
+        lastNo: "Mindestens eine App muss sichtbar bleiben"
+      },
+      hud: { apps: "Apps", available: "verfuegbar" },
+      nav: { apps: "Apps", bank: "Kasse", chat: "Chat", notifications: "Hinweise", settings: "Einstellungen" },
+      sync: { newVer: "Update verfuegbar", reload: "Aktualisieren" },
+      tile: {
+        status: { open: "Oeffnen", soon: "Bald" },
+        soonToast: "{name}: bald!",
+        wishlist: "Wunschliste", reverse: "Woerter rueckwaerts", mood: "Stimmung des Tages",
+        teeth: "Zaehneputz-Timer", guess: "Zahl erraten", names: "Lustige Namen",
+        days: "Tagezaehler", find: "Finde den Gegenstand", museum: "Hausmuseum",
+        rating: "Tagesbewertung", friends: "Freunde", lost: "Fundbuero", walk: "Spaziergang", snake: "Snake", bank: "Kasse", shop: "Shop", chat: "Chat", seabattle: "Schiffe versenken", dice: "Wuerfel"
+      },
+      settings: {
+        open: "Einstellungen", title: "Einstellungen", language: "Sprache",
+        manageApps: "Apps verwalten", theme: "Design"
+      },
+      theme: { neon: "Neon", tilley: "Tilley Live" },
+      family: {
+        title: "Familie",
+        empty: "Noch keine Kinder.",
+        addChild: "Kind hinzufuegen", addHint: "Nur ein Nickname. Kinder brauchen keine E-Mail.",
+        nickPh: "Nickname des Kindes", addBtn: "Erstellen",
+        created: "{name} wurde erstellt. Passwort fuer die erste Anmeldung: {pass}",
+        nickTaken: "Dieser Nickname ist vergeben",
+        invite: "Zweiten Elternteil einladen", inviteHint: "Er oder sie erhaelt Elternrechte. E-Mail eingeben.",
+        inviteBtn: "Einladung erstellen",
+        linkHint: "Sende diesen Link. Er funktioniert einmal und laeuft nach 7 Tagen ab.",
+        copy: "Link kopieren", copied: "Kopiert",
+        resetPass: "Passwort zuruecksetzen", resetConfirm: "Passwort fuer {name} zuruecksetzen? Es wird ein neues Einmalpasswort vergeben.",
+        resetDone: "{name}: Einmalpasswort ist {pass}; bei der Anmeldung wird ein neues gesetzt",
+        block: "Konto sperren", unblock: "Konto entsperren",
+        blockConfirm: "{name} sperren? Die Anmeldung ist dann nicht moeglich. Daten bleiben erhalten.",
+        unblockConfirm: "{name} entsperren?",
+        blockDone: "{name} ist gesperrt", unblockDone: "{name} kann sich wieder anmelden",
+        blocked: "gesperrt",
+        parents: "Eltern", kids: "Kinder", guest: "Gast", roleOwner: "Besitzer", you: "du",
+        transfer: "An echte Eltern uebergeben",
+        transferHint: "Gib die E-Mail des echten Elternteils ein. Diese Person registriert sich und erhaelt Elternrechte fuer dieses Kind; deine vorlaeufige Betreuung endet.",
+        invites: "Einladungen", invitesEmpty: "Keine gesendeten Einladungen.",
+        revoke: "Widerrufen", revoked: "Einladung widerrufen",
+        resend: "Neuer Link", resendDone: "Hier ist ein frischer Link:",
+        invType: { co_parent: "zweiter Elternteil", child_to_child: "Freund", transfer_child: "Kinduebergabe", child_invite_parent: "Elterneinladung" },
+        st: { pending: "ausstehend", accepted: "angenommen", revoked: "widerrufen", expired: "abgelaufen" },
+        share: "Oeffentliche Wunschliste", shareOn: "an", shareOff: "aus",
+        shareConfirmOn: "Wunschliste von {name} fuer alle mit Link oeffnen (inklusive Fotos) und Teilen mit RobTop-Nutzern erlauben?",
+        shareConfirmOff: "Wunschliste von {name} schliessen? Link und alle Freigaben enden sofort.",
+        shareOnDone: "Wunschliste ist freigegeben", shareOffDone: "Wunschliste ist geschlossen"
+      },
+      myparent: {
+        title: "Mein Elternteil",
+        managed: "Dein Elternteil verwaltet dein Konto und deine Familie.",
+        hint: "Du hast in der App noch keinen Elternteil. Gib die E-Mail ein; die Person bekommt eine Einladung und wird hier dein Elternteil.",
+        inviteBtn: "Elternteil einladen", sent: "Einladung gesendet! 📨",
+        pendingHint: "Die Einladung wurde an deinen Elternteil gesendet. Du kannst sie widerrufen und eine neue senden.",
+        revoked: "Einladung widerrufen",
+        conflict: "Einladung existiert bereits, oder du hast schon einen Elternteil"
+      },
+      shared: {
+        title: "Mit mir geteilt",
+        empty: "Noch niemand hat eine Wunschliste mit dir geteilt."
+      },
+      friend: {
+        title: "Freunde",
+        hint: "Du kannst einen Freund einladen — er bekommt sein eigenes RobTop.",
+        invite: "Freund einladen",
+        sheetHint: "Dein Freund waehlt einen Nickname (nie den echten Namen!) und bekommt ein eigenes RobTop. Bis ein Elternteil dazukommt, passt dein Elternteil auf das Konto auf.",
+        makeLink: "Link erstellen",
+        linkReady: "Einladungslink ist bereit:",
+        copy: "Kopieren", copied: "Kopiert",
+        parentOnly: "Ein Freund braucht erst einen echten oder vorlaeufigen Elternteil.",
+        noParent: "Bitte zuerst einen Elternteil einladen."
+      },
+      helpdesk: {
+        ask: "Support kontaktieren",
+        title: "Support",
+        hint: "Beschreibe kurz, was passiert ist. Ein Erwachsener sieht die Nachricht.",
+        ph: "Was ist passiert?",
+        send: "Senden", sent: "Gesendet",
+        tooMany: "Bitte warte kurz vor der naechsten Nachricht.",
+        myTickets: "Meine Anfragen", empty: "Noch keine Anfragen.",
+        closed: "geloest", open: "offen",
+        you: "Du", support: "RobTop-Team",
+        replyPh: "Antwort schreiben…", reply: "Antworten",
+        reopenHint: "Eine Antwort oeffnet die Anfrage wieder.",
+        solve: "Geloest ✓", solveConfirm: "Problem als geloest markieren?",
+        solved: "Als geloest markiert"
+      },
+      reg: {
+        link: "Ich bin ein neuer Elternteil — Familie erstellen",
+        nickPh: "Dein Nickname",
+        title: "Familie erstellen",
+        hint: "Eltern registrieren sich mit E-Mail. Kinder fuegst du danach hinzu; sie brauchen nur einen Nickname.",
+        btn: "Familie erstellen",
+        fail: "Konnte nicht erstellt werden: E-Mail und Nickname pruefen (vielleicht vergeben)"
+      },
+      lock: { hint: "Melde dich an, um fortzufahren", title: "Wer meldet sich an?" },
+      account: {
+        title: "Konto",
+        loading: "Wir pruefen, wer angemeldet ist…",
+        loginHint: "Eltern melden sich mit E-Mail an, Kinder mit Nickname.",
+        loginPh: "E-Mail oder Nickname", passPh: "Passwort",
+        signIn: "Anmelden", signOut: "Abmelden",
+        roleParent: "Elternteil/Betreuung", roleChild: "Kind",
+        badLogin: "Falscher Login oder falsches Passwort",
+        changeTitle: "Neues Passwort festlegen",
+        changeHint: "Du hast dich mit einem Einmalpasswort angemeldet. Lege dein eigenes Passwort fest, um fortzufahren.",
+        newPassPh: "Neues Passwort", saveCont: "Speichern und weiter",
+        weakPass: "Mindestens 4 Zeichen",
+        demoNote: "Anmeldung funktioniert in der Server-Version der App.",
+        welcome: "Willkommen, {name}!", signedOut: "Du bist abgemeldet",
+        guestNote: "Ohne Anmeldung laeuft die App im Familienmodus.",
+        forgot: "Passwort vergessen?",
+        forgotHint: "Nur fuer Eltern: Das Passwort eines Kindes wird vom Elternteil zurueckgesetzt. Gib deine E-Mail ein — wir senden einen Link.",
+        forgotSend: "Link senden", forgotSent: "Falls diese E-Mail registriert ist, wurde der Link gesendet.",
+        deviceList: "Auf diesem Geraet",
+        addAccount: "Konto hinzufuegen",
+        addHint: "Einmal anmelden — das Konto bleibt auf diesem Geraet zum schnellen Wechsel.",
+        orPassword: "Oder mit Passwort anmelden:",
+        switchGone: "Dieses Konto ist nicht mehr verfuegbar — bitte mit Passwort anmelden",
+        removeDev: "Von diesem Geraet entfernen",
+        removeConfirm: "{name} von diesem Geraet entfernen? Zum Zurueckholen brauchst du das Passwort. Daten bleiben erhalten.",
+        removedDev: "{name} wurde von diesem Geraet entfernt"
+      },
+      store: {
+        title: "Apps", adminNote: "App-Verwaltung ist fuer Eltern.",
+        installed: "Installiert", installApp: "App installieren",
+        pickBundle: "📦 Paket waehlen (.robtop.json)",
+        up: "Nach oben", down: "Nach unten", remove: "Entfernen", toggle: "Ein / aus",
+        srcInstalled: "installiert", srcBuiltin: "eingebaut", soonSuffix: " · bald",
+        installedToast: "Installiert: {name}",
+        uninstallTitle: "App entfernen?", uninstallText: "Daten und Ereignisse bleiben erhalten."
+      },
+      err: {
+        install_failed: "Konnte nicht installiert werden", install_error: "Installationsfehler",
+        bundle_not_json: "Defektes Paket (kein JSON)",
+        bundle_no_manifest: "Paket hat kein manifest/files",
+        bad_id: "Ungueltige App-ID",
+        server_code_denied: "Server-Code in einem Paket ist nicht erlaubt",
+        module_load: "Modul wurde nicht geladen", module_error: "Modulfehler",
+        module_open: "“{name}” konnte nicht geoeffnet werden",
+        config_missing: "config.php nicht gefunden",
+        db_failed: "Datenbankverbindung fehlgeschlagen",
+        not_image: "Das ist kein Bild",
+        expected_image: "Ein Bild wird erwartet (png/jpg/webp/gif)",
+        corrupt_data: "Beschaedigte Daten",
+        file_too_big: "Datei ist zu gross",
+        save_failed: "Datei konnte nicht gespeichert werden",
+        need_manifest: "manifest und files sind erforderlich",
+        reserved_id: "Reservierte ID",
+        cant_replace_native: "Eine eingebaute App kann nicht ersetzt werden",
+        bad_filename: "Ungueltiger Dateiname: {name}",
+        bad_type: "Nicht erlaubter Typ: {name}",
+        bundle_too_big: "Paket ist zu gross",
+        no_module_js: "Paket enthaelt keine module.js",
+        no_apps_dir: "Keine Berechtigung fuer den apps-Ordner",
+        write_failed: "{name} konnte nicht geschrieben werden",
+        cant_uninstall_native: "Eine eingebaute App kann nicht entfernt werden"
+      }
     }
   });
 })(window.RobTop);

@@ -1,11 +1,11 @@
 /* RobTop — i18n (интернационализация). Ядро локализации без зависимостей.
    Единый источник правды по языку: активная локаль (localStorage), словари,
-   перевод t(), множественные числа через Intl.PluralRules (en: one/other,
+   перевод t(), множественные числа через Intl.PluralRules (en/de: one/other,
    ru: one/few/many, lv: zero/one/other), даты через Intl.DateTimeFormat,
    язык озвучки (TTS), перевод статического DOM по data-i18n и подписка onChange.
 
    Архитектура:
-   - core/strings.js добавляет словари оболочки: RobTop.i18n.add({en,ru,lv}).
+   - core/strings.js добавляет словари оболочки: RobTop.i18n.add({en,ru,lv,de}).
    - Каждый модуль приносит свои строки через контракт register({...,messages}).
    - Ключи — точечные пути: "home.tagline", "wishlist.tab.want", "err.module_load".
    - Множественное число: значение-объект {one,few,many,other,zero} + params.count.
@@ -16,14 +16,14 @@ window.RobTop = window.RobTop || {};
 (function (RT) {
   "use strict";
 
-  var SUPPORTED = ["en", "ru", "lv"];     // порядок не важен; первый — не дефолт
+  var SUPPORTED = ["en", "ru", "lv", "de"]; // порядок не важен; первый — не дефолт
   var DEFAULT = "en";                      // язык по умолчанию (фолбэк переводов)
-  var NATIVE = { en: "English", ru: "Русский", lv: "Latviešu" }; // подписи в выборе языка
-  var TAG = { en: "en", ru: "ru-RU", lv: "lv-LV" };     // BCP-47 для Intl (даты, числа)
-  var SPEECH = { en: "en-US", ru: "ru-RU", lv: "lv-LV" }; // BCP-47 для Web Speech (TTS)
+  var NATIVE = { en: "English", ru: "Русский", lv: "Latviešu", de: "Deutsch" }; // подписи в выборе языка
+  var TAG = { en: "en", ru: "ru-RU", lv: "lv-LV", de: "de-DE" };     // BCP-47 для Intl (даты, числа)
+  var SPEECH = { en: "en-US", ru: "ru-RU", lv: "lv-LV", de: "de-DE" }; // BCP-47 для Web Speech (TTS)
   var STORE_KEY = "robtop_locale";
 
-  var dict = { en: {}, ru: {}, lv: {} }; // локаль -> вложенный словарь
+  var dict = { en: {}, ru: {}, lv: {}, de: {} }; // локаль -> вложенный словарь
   var listeners = [];                    // подписчики на смену языка
   var prCache = {};                      // кэш Intl.PluralRules по локали
   var current = null;
@@ -37,6 +37,7 @@ window.RobTop = window.RobTop || {};
         var l = String(langs[i] || "").toLowerCase();
         if (l.indexOf("ru") === 0) return "ru";
         if (l.indexOf("lv") === 0) return "lv";
+        if (l.indexOf("de") === 0) return "de";
         if (l.indexOf("en") === 0) return "en";
       }
     } catch (e) {}
@@ -70,7 +71,7 @@ window.RobTop = window.RobTop || {};
     for (var i = 0; i < keys.length; i++) { if (!plu[keys[i]]) return false; }
     return true;
   }
-  // add({ en:{...}, ru:{...}, lv:{...} })
+  // add({ en:{...}, ru:{...}, lv:{...}, de:{...} })
   function add(messages) {
     if (!messages) return;
     SUPPORTED.forEach(function (loc) { if (messages[loc]) deepMerge(dict[loc], messages[loc]); });

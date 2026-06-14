@@ -1045,7 +1045,9 @@ window.RobTop = window.RobTop || {};
       famApi({op:"add_child",nickname:nick}).then(function(r){
         node.querySelector("#kidOut").innerHTML='<p class="set-note" style="color:#ffe08a">'+esc(t("family.created",{name:nick, pass:(r&&r.temp_password)||""}))+'</p>';
         loadFamily();
-      }).catch(function(){ toast(t("family.nickTaken")); });
+      }).catch(function(e){
+        toast(/http 409 nickname taken/.test(String(e&&e.message||"")) ? t("family.nickTaken") : t("common.failed"));
+      });
     };
     setTimeout(function(){ node.querySelector("#kidNick").focus(); },150);
   }

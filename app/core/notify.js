@@ -168,6 +168,53 @@ window.RobTop = window.RobTop || {};
         accepted:"{name} pieņēma izaicinājumu — izvieto kuģus!",
         finished:"🏆 {name} uzvarēja jūras kaujā {score}" }
     }
+  }},
+  de:{ ntf:{
+    title:"Benachrichtigungen", empty:"Noch nichts hier", readAll:"Alle als gelesen markieren", settings:"Einstellungen",
+    allRead:"Alles erledigt!", open:"Benachrichtigungen", app:"RobTop",
+    approve:"Bestaetigen", approved:"Bestaetigt", approveFail:"Konnte nicht bestaetigt werden",
+    generic:"Neuigkeit von {app}", gone:"Diese App ist gerade nicht verfuegbar",
+    push:{ row:"Benachrichtigungen auf diesem Geraet",
+      ios:"Um Benachrichtigungen zu bekommen, fuege RobTop zum Home-Bildschirm hinzu (Teilen → Zum Home-Bildschirm)",
+      denied:"Benachrichtigungen sind in den Browser-Einstellungen blockiert", fail:"Benachrichtigungen konnten nicht aktiviert werden",
+      onToast:"Geraetebenachrichtigungen sind an", offToast:"Geraetebenachrichtigungen sind aus" },
+    ev:{
+      tickets:{ reply:"Support hat geantwortet: “{subject}”", closed:"Anfrage “{subject}” ist geschlossen" },
+      tasks:{
+        task_new:"Neue Aufgabe “{title}” — +{n} Punkte",
+        task_claim:"{name} sagt, “{title}” ist erledigt — pruefen",
+        task_done:"{name} hat “{title}” erledigt (+{n})",
+        task_approved:"“{title}” bestaetigt — +{n} Punkte!",
+        task_returned:"“{title}” zurueckgegeben — versuch es nochmal",
+        task_proposed:"{name} hat “{title}” fuer +{n} gemeldet — pruefen",
+        task_proposal_ok:"Deine Aufgabe “{title}” wurde bestaetigt — +{n} Punkte!",
+        task_proposal_no:"“{title}” wurde diesmal nicht bestaetigt" },
+      bank:{
+        task_new:"Neue Aufgabe “{title}” — +{n} Punkte",
+        task_claim:"{name} sagt, “{title}” ist erledigt — pruefen",
+        task_done:"{name} hat “{title}” erledigt (+{n})",
+        task_approved:"“{title}” bestaetigt — +{n} Punkte!",
+        points_given:"+{n} Punkte von Eltern",
+        points_taken:"−{n} Punkte (Eltern)",
+        penalty:"⚠️ Strafe −{n}",
+        daily_bonus:"+5 — alle Tagesaufgaben!" },
+      wishlist:{
+        share_request:"{child} moechte die Wunschliste veroeffentlichen",
+        share_grant:"{child} hat die Wunschliste mit dir geteilt" },
+      chat:{
+        message:"{name}: {text}",
+        photo:"{name} hat ein Foto gesendet 📷" },
+      find:{
+        pending:"{name} hat ein Foto zur Pruefung gesendet — “{desc}”",
+        correct:"Finde den Gegenstand: richtig! +{n}",
+        wrong:"Finde den Gegenstand: nicht gezaehlt −{n}",
+        bonus:"Schwierigkeitsbonus +{n}!" },
+      walk:{ care_due:"Hundepflege ist faellig" },
+      seabattle:{
+        challenge:"⚔️ {name} fordert die Familie zu Schiffe versenken heraus!",
+        accepted:"{name} hat angenommen — platziere deine Schiffe!",
+        finished:"🏆 {name} hat Schiffe versenken gewonnen {score}" }
+    }
   }}
   });
 

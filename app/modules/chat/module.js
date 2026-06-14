@@ -92,6 +92,23 @@
       older:"Rādīt agrākās ziņas", uploadFail:"Foto neielādējās, mēģini vēlreiz",
       stSent:"Nosūtīts", stDelivered:"Piegādāts", stRead:"Izlasīts", readAt:"Izlasīts {t}",
       infoTitle:"Ziņa", infoClose:"Aizvērt"
+    }},
+    de:{ chat:{
+      subtitle:"Familien-Messenger",
+      newChat:"Neuer Chat", familySec:"Alle Familienchats", you:"Du",
+      noMsgs:"Noch keine Nachrichten", first:"Schreib die erste Nachricht!",
+      noFamily:"Chat ist fuer deine Familie. Lade sie in Einstellungen → Familie ein.",
+      demo:"Chat braucht ein echtes Konto — im Demo-Modus ist er aus.",
+      deleted:"Nachricht geloescht", photoWord:"Foto",
+      write:"Nachricht schreiben…", send:"Senden", addPhoto:"Foto hinzufuegen",
+      delTitle:"Diese Nachricht loeschen?", delText:"Alle sehen stattdessen “Nachricht geloescht”.",
+      delYes:"Loeschen", group:"Gruppe", groupPh:"Gruppenname",
+      pickTitle:"Mit wem chatten?", startChat:"Chat starten", createGroup:"Gruppe erstellen",
+      needTitle:"Gib der Gruppe einen Namen", ro:"Nur Ansicht — du bist nicht in diesem Chat",
+      members:"Im Chat: {names}", errSend:"Konnte nicht gesendet werden, versuch es nochmal", errLoad:"Konnte nicht geladen werden, zieh zum Wiederholen",
+      older:"Aeltere Nachrichten anzeigen", uploadFail:"Foto wurde nicht hochgeladen, versuch es nochmal",
+      stSent:"Gesendet", stDelivered:"Zugestellt", stRead:"Gelesen", readAt:"Gelesen um {t}",
+      infoTitle:"Nachricht", infoClose:"Schliessen"
     }}
   };
   /* standalone-PWA (иконка на домашнем экране)? Только там iOS схлопывает layout-вьюпорт

@@ -77,7 +77,7 @@ function rt_account_by_nickname($db, $nick) {
     return $r ?: null;
 }
 function rt_nickname_taken($db, $nick) {
-    $s = $db->prepare("SELECT 1 FROM users WHERE name = ? LIMIT 1");
+    $s = $db->prepare("SELECT 1 FROM users u JOIN accounts a ON a.user_id = u.id WHERE u.name = ? LIMIT 1");
     $s->execute([trim((string)$nick)]);
     return (bool)$s->fetch();
 }

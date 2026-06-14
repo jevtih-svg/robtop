@@ -15,7 +15,7 @@
   /* ПУБЛИЧНАЯ страница виш-листа: /robtop/w/<ник> (корневой .htaccess → w.html?u=<ник>).
      Доступна любому, у кого есть ссылка, ЕСЛИ родитель включил шаринг ребёнку
      (api/share.php op=view; иначе единый 404 — существование пользователя не раскрываем).
-     Standalone, как family.html: без core/*, мини-i18n en/ru/lv внутри
+     Standalone, как family.html: без core/*, мини-i18n en/ru/lv/de внутри
      (?lang → localStorage robtop_locale → язык браузера → en). Только чтение. */
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   :root{--cyan:#19e3ff;--pink:#ff3db0;--purple:#a64bff;--mint:#2bf0c0;--gold:#ffd23b;--ink:#eaf2ff;--muted:#93a6cf}
@@ -54,6 +54,11 @@
   .empty{color:var(--muted);font-weight:600;font-size:13px;padding:6px 2px 2px}
   .foot{color:var(--muted);font-size:12px;font-weight:600;text-align:center;margin-top:26px}
   .foot a{color:var(--cyan);text-decoration:none;font-weight:700}
+  .topbar{display:flex;align-items:flex-start;gap:10px}
+  .topbar>div:first-child{min-width:0}
+  .lang{display:flex;gap:4px;margin-left:auto;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:3px}
+  .lang button{font-family:inherit;font-weight:800;font-size:11.5px;color:var(--muted);background:none;border:0;border-radius:9px;padding:5px 8px;cursor:pointer}
+  .lang button.on{color:#041018;background:linear-gradient(135deg,var(--cyan),#6ea8ff)}
   /* лайтбокс: полноразмерное фото */
   .lb{position:fixed;inset:0;background:rgba(3,3,12,.93);display:none;align-items:center;justify-content:center;z-index:50;cursor:zoom-out;padding:18px}
   .lb.show{display:flex}
@@ -62,7 +67,10 @@
 </head>
 <body>
 <div class="wrap">
-  <div><h1>Rob<b>Top</b></h1></div>
+  <div class="topbar">
+    <div><h1>Rob<b>Top</b></h1></div>
+    <nav class="lang" id="langSeg" aria-label="Language"></nav>
+  </div>
   <div class="sub" id="subline"></div>
   <div id="app"><div class="card muted" id="loading">…</div></div>
   <div class="foot">RobTop · <a href="index.html" id="toApp">apps.tilley.live/robtop</a></div>
@@ -84,7 +92,11 @@ var T={
   lv:{ title:"Vēlmju saraksts", of:"Vēlmju saraksts — {n}", want:"Gribu", thinking:"Domāju", bought:"Nopirku",
     openLink:"Atvērt saiti", boughtBadge:"Nopirkts", empty:"Šeit vēl nekā nav.",
     nfH:"Vēlmju saraksts nav atrasts", nfP:"Šāda saraksta nav, vai īpašnieks to nav atvēris. Palūdziet pareizu saiti.",
-    errH:"Neizdevās ielādēt", errP:"Pārbaudiet savienojumu un atjaunojiet lapu.", listEmpty:"Vēlmju saraksts pagaidām ir tukšs." }
+    errH:"Neizdevās ielādēt", errP:"Pārbaudiet savienojumu un atjaunojiet lapu.", listEmpty:"Vēlmju saraksts pagaidām ir tukšs." },
+  de:{ title:"Wunschliste", of:"Wunschliste von {n}", want:"Will ich", thinking:"Ueberlege", bought:"Gekauft",
+    openLink:"Link oeffnen", boughtBadge:"Gekauft", empty:"Hier ist noch nichts.",
+    nfH:"Wunschliste nicht gefunden", nfP:"Diese Liste gibt es nicht, oder der Besitzer hat sie nicht geoeffnet. Bitte um den richtigen Link.",
+    errH:"Konnte nicht geladen werden", errP:"Pruefe die Verbindung und lade die Seite neu.", listEmpty:"Die Wunschliste ist noch leer." }
 };
 function lang(){
   var q=new URLSearchParams(location.search).get('lang');
@@ -94,8 +106,21 @@ function lang(){
   for(var i=0;i<langs.length;i++){ var c=String(langs[i]||"").slice(0,2).toLowerCase(); if(T[c]) return c; }
   return 'en';
 }
-var L=T[lang()];
+var CUR=lang(), L=T[CUR];
 function t(k,p){ var s=L[k]||k; if(p) for(var x in p) s=s.replace('{'+x+'}',p[x]); return s; }
+function langSeg(){
+  var box=document.getElementById('langSeg'), langs=['en','ru','lv','de'];
+  box.innerHTML=langs.map(function(l){ return '<button type="button" data-lang="'+l+'" class="'+(l===CUR?'on':'')+'">'+l.toUpperCase()+'</button>'; }).join('');
+  box.addEventListener('click',function(e){
+    var b=e.target.closest&&e.target.closest('button[data-lang]');
+    if(!b) return;
+    var next=b.getAttribute('data-lang')||'en';
+    try{ localStorage.setItem('robtop_locale', next); }catch(x){}
+    var q=new URLSearchParams(location.search);
+    q.set('lang', next);
+    location.search=q.toString();
+  });
+}
 
 var APP=document.getElementById('app'), SUB=document.getElementById('subline');
 var CHERRY='<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="7.5" cy="17" r="3.6"/><circle cx="15.7" cy="17.6" r="3.6"/><path d="M8 14.4C9 8.4 13 5 18.4 3.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16.1 14.6C16.7 9.4 15 6 12 3.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M18.4 3.8c1-1.1 2.7-1.1 3.6.3-1.5.5-2.5.4-3.6-.3z"/></svg>';
@@ -104,6 +129,8 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){retu
 function normUrl(u){ u=(u||"").trim(); if(!u) return ""; if(!/^https?:\/\//i.test(u)) u="https://"+u; return u; }
 function mediaUrl(s){ s=String(s==null?"":s); return s.indexOf("uploads/")===0 ? ("api/image.php?p="+encodeURIComponent(s)) : s; }
 
+document.documentElement.lang=CUR;
+langSeg();
 document.title='RobTop — '+t('title');
 SUB.innerHTML='<span class="cic">'+CHERRY+'</span>'+esc(t('title'));
 

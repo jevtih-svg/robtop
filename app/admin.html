@@ -343,7 +343,7 @@ users:function(){
           '<div class="grp" style="margin-top:8px">Семья</div><select id="cFam2" style="width:100%"><option value="0">Своя новая семья</option>'+fopts+'</select>'+
           '<label style="display:flex;gap:8px;align-items:center;font-weight:700;font-size:13px;margin-top:10px"><input type="checkbox" id="cNotify" checked style="width:auto"> Отправить письмо-приглашение</label>'+
           '<div id="cLangBox"><div class="grp" style="margin-top:8px">Язык письма</div><select id="cLang" style="width:100%">'+
-            '<option value="ru">Русский</option><option value="en">English</option><option value="lv">Latviešu</option></select>'+
+            '<option value="ru">Русский</option><option value="en">English</option><option value="lv">Latviešu</option><option value="de">Deutsch</option></select>'+
           '<p class="lead" style="margin-top:8px">Письмо «Вас пригласили в RobTop»: что это за приложение, зачем присоединяться (задания за очки), вход по email + одноразовый пароль.</p></div>'+
         '</div>'+
         '<div class="row" style="margin-top:14px"><button class="btn ghost" id="cCancel">Отмена</button><button class="btn" id="cGo" style="flex:1">Создать</button></div>');
@@ -486,7 +486,7 @@ families:function(){
   }).catch(fail);
   function openAttachParent(fid){
     var langSel='<div class="grp" style="margin-top:8px">Язык письма</div><select class="apLang" style="width:100%">'+
-      '<option value="ru">Русский</option><option value="en">English</option><option value="lv">Latviešu</option></select>';
+      '<option value="ru">Русский</option><option value="en">English</option><option value="lv">Latviešu</option><option value="de">Deutsch</option></select>';
     var m=modal('<h3>Привязать родителя к семье #'+fid+'</h3><div id="apBody"></div>');
     var body=m.root.querySelector('#apBody');
     function stepSearch(){

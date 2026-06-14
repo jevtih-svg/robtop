@@ -1,5 +1,5 @@
 /* RobTop — генератор пулов смешных имён для модуля «names».
-   3 пула × 10000 уникальных имён: ru / en / lv. Имя = корень (кончается согласной) +
+   4 пула × 10000 уникальных имён: ru / en / lv / de. Имя = корень (кончается согласной) +
    суффикс (начинается гласной) → произносимо. Фильтры: blacklist подстрок по ГОТОВОМУ
    имени (ловит и стыки), длина 4..13, без двойной буквы на стыке, уникальность.
    Seed фиксирован → результат воспроизводим. Запуск: node gen_names.js
@@ -132,14 +132,29 @@ function build(lang, roots, sufs, seed){
   return { roots: roots.length, sufs: sufs.length, total: out.size, pool: arr.slice(0, 10000) };
 }
 
+function readEmbeddedDePool(){
+  const p = require("path").join(__dirname, "..", "app", "modules", "names", "module.js");
+  let s = "";
+  try{ s = fs.readFileSync(p, "utf8"); }catch(e){ return { roots: 0, sufs: 0, total: 0, pool: [] }; }
+  const m = s.match(/var RAW_DE=\s*([\s\S]*?);\s*var POOLS=/);
+  if(!m) return { roots: 0, sufs: 0, total: 0, pool: [] };
+  const parts = [];
+  const re = /"([^"]*)"/g;
+  let x;
+  while((x = re.exec(m[1]))) parts.push(x[1]);
+  const pool = parts.join("").split("|").filter(Boolean);
+  return { roots: 0, sufs: 0, total: pool.length, pool: pool.slice(0, 10000) };
+}
+
 const res = {
   ru: build("ru", RU_ROOTS, RU_SUF, 20260607),
   en: build("en", EN_ROOTS, EN_SUF, 20260608),
-  lv: build("lv", LV_ROOTS, LV_SUF, 20260609)
+  lv: build("lv", LV_ROOTS, LV_SUF, 20260609),
+  de: readEmbeddedDePool()
 };
 
 let ok = true;
-for(const lang of ["ru","en","lv"]){
+for(const lang of ["ru","en","lv","de"]){
   const r = res[lang];
   console.log(lang.toUpperCase(), "roots:", r.roots, "sufs:", r.sufs, "raw unique:", r.total, "pool:", r.pool.length);
   console.log("  samples:", r.pool.slice(0, 22).join(", "));
@@ -147,7 +162,7 @@ for(const lang of ["ru","en","lv"]){
   if(r.pool.length){ console.log("  len min/max/avg:", Math.min(...lens), Math.max(...lens), (lens.reduce((a,b)=>a+b,0)/lens.length).toFixed(1)); }
   if(r.pool.length < 10000){ console.log("  !!! НЕ ХВАТАЕТ:", 10000 - r.pool.length); ok = false; }
   if(new Set(r.pool).size !== r.pool.length){ console.log("  !!! ДУБЛИ"); ok = false; }
-  for(const n of r.pool){ if(isBad(n, lang)){ console.log("  !!! BAD прошёл:", n); ok = false; break; } }
+  for(const n of r.pool){ if(BAD[lang] && isBad(n, lang)){ console.log("  !!! BAD прошёл:", n); ok = false; break; } }
 }
 console.log(ok ? "OK" : "FAIL");
 
@@ -161,4 +176,4 @@ function emit(lang){
   }
   fs.writeFileSync(`pool_${lang}.txt`, lines.join("\n+"));
 }
-if(ok) ["ru","en","lv"].forEach(emit);
+if(ok) ["ru","en","lv","de"].forEach(emit);

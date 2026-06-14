@@ -71,6 +71,27 @@
       parentNote:"Garastāvokli atzīmē bērns. Šis ir skats.",
       noText:"(bez apraksta)",
       aria:{ stats:"Statistika", photo:"Foto" }
+    }},
+    de:{ mood:{
+      subtitle:"Wie fuehlst du dich heute?",
+      hudLeft:"Stimmung <b>des Tages</b>", hudCLbl:"Tage markiert", hudRLbl:"frohe Tage",
+      pickTitle:"Wie ist deine Stimmung heute?", pickHint:"Tippe auf ein Smiley",
+      confirmHint:"Noch einmal tippen zum Bestaetigen",
+      names:{ happy:"Froh", mid:"So lala", sad:"Traurig" },
+      why:"Weil…", whyPh:"z.B. ich heute nett war",
+      liked:"Heute hat mir am besten gefallen…", likedPh:"z.B. einen Film schauen",
+      addPhoto:"Foto hinzufuegen", replacePhoto:"Foto ersetzen", uploadingPhoto:"Foto wird hochgeladen…", photoWait:"Warte, bis das Foto hochgeladen ist",
+      editBtn:"Bearbeiten",
+      savedToast:"Stimmung gespeichert: {name}", saveFailed:"Konnte nicht gespeichert werden",
+      photoFailed:"Foto konnte nicht hochgeladen werden", loadFailed:"Eintraege konnten nicht geladen werden",
+      todayDone:"Stimmung ist markiert!", editUntil:"Du kannst sie bis 22:00 aendern",
+      waitTitle:"Bis morgen frueh!", waitText:"Du kannst deine Stimmung von 6:00 bis 22:00 markieren.",
+      waitIn:"Oeffnet in {time}", unitH:"Std.", unitM:"Min.",
+      historyTitle:"Meine Tage", historyEmpty:"Noch nichts hier. Markiere deine erste Stimmung!",
+      statsTitle:"Stimmungsstatistik", statsTimes:{one:"{count} Mal", other:"{count} Mal"},
+      parentNote:"Nur das Kind markiert die Stimmung. Du siehst nur zu.",
+      noText:"(keine Beschreibung)",
+      aria:{ stats:"Statistik", photo:"Foto" }
     }}
   };
 

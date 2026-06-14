@@ -1,20 +1,21 @@
 /* RobTop — генератор пула описаний для модуля «Найти предмет» (find).
  *
  * Описание = «Найди что-нибудь <прилагательные>». Берём ТОЛЬКО прилагательные,
- * описывающие неопределённое «что-то», — так грамматика чистая во всех 3 языках без
+ * описывающие неопределённое «что-то», — так грамматика чистая во всех 4 языках без
  * согласования рода существительного:
  *   en: "Find something red, round and small"
  *   ru: "Найди что-нибудь красное, круглое и маленькое"   (средний род, ед. ч.)
  *   lv: "Atrodi kaut ko sarkanu, apaļu un mazu"            (vīr. dz. akuzatīvs, -u)
+ *   de: "Finde etwas Rotes, Rundes und Kleines"            (substantiviertes Adjektiv, Nom./Akk. Neutrum)
  *
  * Сложность = число прилагательных (не больше одного на категорию, чтобы не было
  * противоречий «красное и синее»): легко 1, средне 2, сложно 3, невозможно 4.
  * Чем больше ограничений — тем труднее найти предмет, удовлетворяющий ВСЕМ сразу.
  *
  * Выход:
- *   tools/find-pool.min.json            — { adj:{en,ru,lv}, cats:[...], pool:{easy,medium,hard,impossible} }
+ *   tools/find-pool.min.json            — { adj:{en,ru,lv,de}, cats:[...], pool:{easy,medium,hard,impossible} }
  *                                          (встраивается в app/modules/find/module.js на место /*__POOL__*​/)
- *   tools/find-descriptions-10000.txt   — читаемый список всех 10000 на 3 языках (для проверки человеком)
+ *   tools/find-descriptions-10000.txt   — читаемый список всех 10000 на 4 языках (для проверки человеком)
  *   stdout                              — отчёт: счётчики по сложности, всего, уникальность по языкам.
  *
  * Запуск: node tools/gen-find.js
@@ -23,79 +24,79 @@
 const fs = require("fs");
 const path = require("path");
 
-/* ---- 49 прилагательных в 7 категориях. Формы: en | ru (ср. род, ед.ч.) | lv (vīr. akuz., -u) ---- */
+/* ---- 49 прилагательных в 7 категориях. Формы: en | ru (ср. род, ед.ч.) | lv (vīr. akuz., -u) | de (substantiviert, Neutrum) ---- */
 const CATS = [
   { key:"color", adj:[
-    ["red","красное","sarkanu"],
-    ["orange","оранжевое","oranžu"],
-    ["yellow","жёлтое","dzeltenu"],
-    ["green","зелёное","zaļu"],
-    ["blue","синее","zilu"],
-    ["light blue","голубое","gaišzilu"],
-    ["purple","фиолетовое","violetu"],
-    ["pink","розовое","rozā"],
-    ["white","белое","baltu"],
-    ["black","чёрное","melnu"],
-    ["brown","коричневое","brūnu"],
-    ["grey","серое","pelēku"],
-    ["golden","золотое","zeltainu"],
-    ["silver","серебряное","sudrabainu"]
+    ["red","красное","sarkanu","Rotes"],
+    ["orange","оранжевое","oranžu","Oranges"],
+    ["yellow","жёлтое","dzeltenu","Gelbes"],
+    ["green","зелёное","zaļu","Gruenes"],
+    ["blue","синее","zilu","Blaues"],
+    ["light blue","голубое","gaišzilu","Hellblaues"],
+    ["purple","фиолетовое","violetu","Lila"],
+    ["pink","розовое","rozā","Rosa"],
+    ["white","белое","baltu","Weisses"],
+    ["black","чёрное","melnu","Schwarzes"],
+    ["brown","коричневое","brūnu","Braunes"],
+    ["grey","серое","pelēku","Graues"],
+    ["golden","золотое","zeltainu","Goldenes"],
+    ["silver","серебряное","sudrabainu","Silbernes"]
   ]},
   { key:"shape", adj:[
-    ["round","круглое","apaļu"],
-    ["square","квадратное","kvadrātisku"],
-    ["oval","овальное","ovālu"],
-    ["long","длинное","garu"],
-    ["short","короткое","īsu"],
-    ["flat","плоское","plakanu"],
-    ["thin","тонкое","plānu"],
-    ["thick","толстое","biezu"],
-    ["pointy","острое","asu"],
-    ["curved","изогнутое","izliektu"]
+    ["round","круглое","apaļu","Rundes"],
+    ["square","квадратное","kvadrātisku","Quadratisches"],
+    ["oval","овальное","ovālu","Ovales"],
+    ["long","длинное","garu","Langes"],
+    ["short","короткое","īsu","Kurzes"],
+    ["flat","плоское","plakanu","Flaches"],
+    ["thin","тонкое","plānu","Duennes"],
+    ["thick","толстое","biezu","Dickes"],
+    ["pointy","острое","asu","Spitzes"],
+    ["curved","изогнутое","izliektu","Gebogenes"]
   ]},
   { key:"size", adj:[
-    ["big","большое","lielu"],
-    ["small","маленькое","mazu"],
-    ["tiny","крошечное","sīku"],
-    ["huge","огромное","milzīgu"],
-    ["narrow","узкое","šauru"],
-    ["wide","широкое","platu"]
+    ["big","большое","lielu","Grosses"],
+    ["small","маленькое","mazu","Kleines"],
+    ["tiny","крошечное","sīku","Winziges"],
+    ["huge","огромное","milzīgu","Riesiges"],
+    ["narrow","узкое","šauru","Schmales"],
+    ["wide","широкое","platu","Breites"]
   ]},
   { key:"texture", adj:[
-    ["soft","мягкое","mīkstu"],
-    ["hard","твёрдое","cietu"],
-    ["smooth","гладкое","gludu"],
-    ["rough","шершавое","raupju"],
-    ["fluffy","пушистое","pūkainu"],
-    ["sticky","липкое","lipīgu"],
-    ["wet","мокрое","slapju"],
-    ["dry","сухое","sausu"]
+    ["soft","мягкое","mīkstu","Weiches"],
+    ["hard","твёрдое","cietu","Hartes"],
+    ["smooth","гладкое","gludu","Glattes"],
+    ["rough","шершавое","raupju","Raues"],
+    ["fluffy","пушистое","pūkainu","Flauschiges"],
+    ["sticky","липкое","lipīgu","Klebriges"],
+    ["wet","мокрое","slapju","Nasses"],
+    ["dry","сухое","sausu","Trockenes"]
   ]},
   { key:"shine", adj:[
-    ["shiny","блестящее","spīdīgu"],
-    ["matte","матовое","matētu"],
-    ["transparent","прозрачное","caurspīdīgu"],
-    ["sparkly","сверкающее","mirdzošu"]
+    ["shiny","блестящее","spīdīgu","Glaenzendes"],
+    ["matte","матовое","matētu","Mattes"],
+    ["transparent","прозрачное","caurspīdīgu","Durchsichtiges"],
+    ["sparkly","сверкающее","mirdzošu","Funkelndes"]
   ]},
   { key:"weight", adj:[
-    ["warm","тёплое","siltu"],
-    ["cold","холодное","aukstu"],
-    ["light","лёгкое","vieglu"],
-    ["heavy","тяжёлое","smagu"]
+    ["warm","тёплое","siltu","Warmes"],
+    ["cold","холодное","aukstu","Kaltes"],
+    ["light","лёгкое","vieglu","Leichtes"],
+    ["heavy","тяжёлое","smagu","Schweres"]
   ]},
   { key:"pattern", adj:[
-    ["striped","полосатое","svītrainu"],
-    ["spotted","пятнистое","raibu"],
-    ["plain","однотонное","vienkrāsainu"]
+    ["striped","полосатое","svītrainu","Gestreiftes"],
+    ["spotted","пятнистое","raibu","Gepunktetes"],
+    ["plain","однотонное","vienkrāsainu","Einfarbiges"]
   ]}
 ];
 
 /* Плоский список прилагательных + к какой категории относится каждый индекс. */
-const ADJ = { en:[], ru:[], lv:[] };
+const ADJ = { en:[], ru:[], lv:[], de:[] };
 const ADJ_CAT = [];           // ADJ_CAT[i] = индекс категории прилагательного i
 CATS.forEach(function(c, ci){
   c.adj.forEach(function(a){
-    ADJ.en.push(a[0]); ADJ.ru.push(a[1]); ADJ.lv.push(a[2]); ADJ_CAT.push(ci);
+    ADJ.en.push(a[0]); ADJ.ru.push(a[1]); ADJ.lv.push(a[2]); ADJ.de.push(a[3]); ADJ_CAT.push(ci);
   });
 });
 const N = ADJ.en.length;      // 49
@@ -161,8 +162,8 @@ const POOL = {
 };
 
 /* ---- рендер описания (для экспорта и проверки) ---- */
-const LEAD = { en:"Find something ", ru:"Найди что-нибудь ", lv:"Atrodi kaut ko " };
-const ANDW = { en:" and ", ru:" и ", lv:" un " };
+const LEAD = { en:"Find something ", ru:"Найди что-нибудь ", lv:"Atrodi kaut ko ", de:"Finde etwas " };
+const ANDW = { en:" and ", ru:" и ", lv:" un ", de:" und " };
 function joinAdj(words, lang){
   if(words.length===1) return words[0];
   return words.slice(0,-1).join(", ") + ANDW[lang] + words[words.length-1];
@@ -175,16 +176,16 @@ function render(combo, lang){
 /* ---- собрать выходной объект и проверить уникальность ---- */
 const DIFFS = ["easy","medium","hard","impossible"];
 let total = 0;
-const seenByLang = { en:new Set(), ru:new Set(), lv:new Set() };
+const seenByLang = { en:new Set(), ru:new Set(), lv:new Set(), de:new Set() };
 const lines = [];
 DIFFS.forEach(function(d){
   POOL[d].forEach(function(combo){
     total++;
-    ["en","ru","lv"].forEach(function(lang){
+    ["en","ru","lv","de"].forEach(function(lang){
       seenByLang[lang].add(render(combo, lang));
     });
     lines.push(d.toUpperCase().padEnd(11) + " | " +
-      render(combo,"en") + "  ||  " + render(combo,"ru") + "  ||  " + render(combo,"lv"));
+      render(combo,"en") + "  ||  " + render(combo,"ru") + "  ||  " + render(combo,"lv") + "  ||  " + render(combo,"de"));
   });
 });
 
@@ -195,7 +196,7 @@ fs.writeFileSync(path.join(outDir,"find-descriptions-10000.txt"),
   "RobTop — модуль «Найти предмет»: пул описаний\n" +
   "Всего: " + total + " | easy:" + POOL.easy.length + " medium:" + POOL.medium.length +
   " hard:" + POOL.hard.length + " impossible:" + POOL.impossible.length + "\n" +
-  "Формат: СЛОЖНОСТЬ | EN  ||  RU  ||  LV\n" +
+  "Формат: СЛОЖНОСТЬ | EN  ||  RU  ||  LV  ||  DE\n" +
   "".padEnd(80,"=") + "\n" + lines.join("\n") + "\n");
 
 console.log("=== gen-find.js ===");
@@ -205,8 +206,8 @@ console.log("Доступно combos:  easy=%d medium=%d hard(all)=%d impossible
 console.log("В пуле:           easy=%d medium=%d hard=%d impossible=%d",
   POOL.easy.length, POOL.medium.length, POOL.hard.length, POOL.impossible.length);
 console.log("ВСЕГО:", total);
-console.log("Уникальных строк: en=%d ru=%d lv=%d",
-  seenByLang.en.size, seenByLang.ru.size, seenByLang.lv.size);
+console.log("Уникальных строк: en=%d ru=%d lv=%d de=%d",
+  seenByLang.en.size, seenByLang.ru.size, seenByLang.lv.size, seenByLang.de.size);
 console.log("Уникальность по каждому языку == всего ?",
-  seenByLang.en.size===total && seenByLang.ru.size===total && seenByLang.lv.size===total);
+  seenByLang.en.size===total && seenByLang.ru.size===total && seenByLang.lv.size===total && seenByLang.de.size===total);
 console.log("min.json:", (fs.statSync(path.join(outDir,"find-pool.min.json")).size/1024).toFixed(1), "KB");

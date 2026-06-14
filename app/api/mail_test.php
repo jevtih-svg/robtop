@@ -8,7 +8,7 @@
  *
  * Параметры:
  *   to   — куда отправить (валидный email);
- *   lang — язык письма: en | ru | lv (необязателен; фолбэк mail_default_lang → en).
+ *   lang — язык письма: en | ru | lv | de (необязателен; фолбэк mail_default_lang → en).
  *
  * Ответ JSON: {"ok":true,"lang":"ru","driver":"brevo"} или {"ok":false,"error":"..."}.
  */

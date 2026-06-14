@@ -1,10 +1,19 @@
 /* RobTop — ПУБЛИЧНЫЙ журнал изменений. Показывается на лендинге (landing.html).
    ПРАВИЛО: при КАЖДОМ бампе версии добавлять запись СВЕРХУ (новейшая — первая).
    Формат записи: { v:"<версия как в index.html>", d:"ГГГГ-ММ-ДД",
-                    t:{ en:"…", ru:"…", lv:"…" } }
+                    t:{ en:"…", ru:"…", lv:"…", de:"…" } }
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.14.2", d:"2026-06-14", t:{
+    en:"German is now available across the app, including games, parent screens and email flows.",
+    ru:"Немецкий язык теперь доступен во всём приложении, включая игры, родительские экраны и письма.",
+    lv:"Vacu valoda tagad ir pieejama visa lietotne, tostarp speles, vecaku ekrani un e-pasti.",
+    de:"Deutsch ist jetzt in der ganzen App verfuegbar, einschliesslich Spiele, Elternansichten und E-Mails." } },
+  { v:"2026.06.14.1", d:"2026-06-14", t:{
+    en:"Creating a child account no longer falsely reports that a free nickname is taken.",
+    ru:"Создание детского аккаунта больше не говорит ошибочно, что свободный никнейм занят.",
+    lv:"Bērna konta izveide vairs kļūdaini nerāda, ka brīvs segvārds ir aizņemts." } },
   { v:"2026.06.12.6", d:"2026-06-12", t:{
     en:"Sea Battle: the opponent's shot now flashes a pulsing ring on your board, so you always see where they fired.",
     ru:"Морской бой: выстрел соперника теперь подсвечивается пульсирующим кольцом на твоей доске — всегда видно, куда он стрелял.",

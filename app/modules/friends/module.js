@@ -80,6 +80,30 @@
       statsTitle:"Mani draugi", statsTotal:"Draugu kopā", statsBest:"Labākie draugi (5★)",
       parentNote:"Draugus aizpilda bērns. Šis ir skats.",
       aria:{ stats:"Statistika", secret:"Slepens" }
+    }},
+    de:{ friends:{
+      subtitle:"Erzaehle von deinen Freunden",
+      hudLeft:"Meine <b>Freunde</b>", hudCLbl:"Freunde", hudRLbl:"beste (5★)",
+      tabOpen:"Offen", tabSecret:"Geheim",
+      emptyOpen:"Hier sind noch keine Freunde. Tippe “+ Freund hinzufuegen”.",
+      emptySecret:"Noch keine geheimen Freunde. Markiere einen Freund als geheim, um ihn hier zu verstecken.",
+      addFriend:"Freund hinzufuegen", editTitle:"Freund bearbeiten", newTitle:"Neuer Freund",
+      catLbl:"Wie ist dieser Freund?",
+      names:{ kind:"Nett", soso:"So lala", angry:"Grummelig" },
+      nameLbl:"Name des Freundes", namePh:"z.B. Max",
+      starsLbl:"Wie toll ist der Freund?",
+      storyLbl:"Wie seid ihr Freunde geworden?", storyPh:"z.B. Wir haben uns auf dem Spielplatz getroffen",
+      extraLbl:"Sonst noch etwas (optional)", extraPh:"z.B. liebt Dinosaurier",
+      secretToggle:"Geheimer Freund",
+      needName:"Tippe zuerst einen Namen", needCat:"Waehle, wie die Person ist",
+      savedNew:"Freund hinzugefuegt: {name}", savedEdit:"Freund gespeichert: {name}", saveFailed:"Konnte nicht gespeichert werden",
+      loadFailed:"Freunde konnten nicht geladen werden",
+      edit:"Bearbeiten", del:"Loeschen", toSecret:"Geheim machen", toOpen:"Offen machen",
+      deleted:"Freund geloescht", movedSecret:"Zu “Geheim” verschoben", movedOpen:"Zu “Offen” verschoben",
+      noText:"(noch nichts)",
+      statsTitle:"Meine Freunde", statsTotal:"Freunde gesamt", statsBest:"Beste Freunde (5★)",
+      parentNote:"Nur das Kind fuellt Freunde aus. Du siehst nur zu.",
+      aria:{ stats:"Statistik", secret:"Geheim" }
     }}
   };
 

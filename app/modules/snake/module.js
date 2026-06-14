@@ -65,7 +65,25 @@
       parentNote:"Spēlē bērns. Šis ir skats.",
       saveFailed:"Neizdevās saglabāt", loadFailed:"Neizdevās ielādēt",
       aria:{ stats:"Statistika", pause:"Pauze", up:"Uz augšu", down:"Uz leju", left:"Pa kreisi", right:"Pa labi" }
-    }, bank:{ r_snake_record:"Čūska — jauns rekords" }}
+    }, bank:{ r_snake_record:"Čūska — jauns rekords" }},
+    de:{ snake:{
+      subtitle:"Wie auf dem Nokia 3310 — nur in Neon",
+      hudLeft:"🐍 <b>Snake</b>", hudCLbl:"Rekord", hudRLbl:"Spiele",
+      startTitle:"Snake!",
+      startHint:"Friss Futter und wachse — Futter gibt so viele Punkte wie die Geschwindigkeitsstufe. Jedes 5. Futter ruft einen Bonus-Kaefer! Stosse nicht in dich selbst.",
+      speedLbl:"Tempo", recordLine:"Rekord: {n}", startBtn:"Spielen",
+      scoreLbl:"Punkte", speedChip:"Tempo {s}",
+      paused:"Pause", resumeBtn:"Weiter",
+      overTitle:"Spiel vorbei!", newRecord:"🏆 Neuer Rekord! +10 in die Kasse",
+      againBtn:"Nochmal spielen",
+      historyTitle:"Meine Spiele", historyEmpty:"Noch keine Spiele. Tippe “Spielen”!",
+      histMeta:"Tempo {s} · Laenge {l}", badgeRecord:"★ Rekord",
+      statsTitle:"Snake-Statistik", statTotal:"Spiele gesamt", statBest:"Rekord",
+      statRecords:"Rekorde gebrochen", statLen:"laengste Schlange",
+      parentNote:"Das Kind spielt. Du siehst nur zu.",
+      saveFailed:"Konnte nicht gespeichert werden", loadFailed:"Konnte nicht geladen werden",
+      aria:{ stats:"Statistik", pause:"Pause", up:"Nach oben", down:"Nach unten", left:"Nach links", right:"Nach rechts" }
+    }, bank:{ r_snake_record:"Snake — neuer Rekord" }}
   };
 
   /* =================== КОНСТАНТЫ =================== */

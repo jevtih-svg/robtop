@@ -50,13 +50,13 @@ return [
     //   'brevo'   — РЕКОМЕНДУЕТСЯ: реальная отправка через HTTP API Brevo, без библиотек и Composer.
     //               Бесплатно 300 писем/день. Ключ: brevo.com → SMTP & API → API Keys (вид xkeysib-...).
     //   'phpmail' — встроенная PHP mail() через сервер Hostinger (совсем без сервисов; чаще спам).
-    // Шаблоны писем: api/mail/ (en/ru/lv), реестр всех писем: api/mail/registry.php.
+    // Шаблоны писем: api/mail/ (en/ru/lv/de), реестр всех писем: api/mail/registry.php.
     // Тест после настройки (войдя админом в приложение в том же браузере): <сайт>/api/mail_test.php?to=<адрес>&lang=ru
     'mail_driver'        => 'log',
     'mail_from'          => 'noreply@tilley.live',
     'mail_from_name'     => 'RobTop',
     'mail_brevo_key'     => '',    // только для mail_driver = 'brevo'
-    'mail_default_lang'  => 'en',  // язык письма, если запрос не передал lang (en|ru|lv)
+    'mail_default_lang'  => 'en',  // язык письма, если запрос не передал lang (en|ru|lv|de)
     'mail_rate_per_hour' => 5,     // максимум писем на один адрес в час (защита от перебора)
 
     // ===== Web Push (PWA, ГАЙД-оповещения.md) =====

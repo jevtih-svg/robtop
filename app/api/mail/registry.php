@@ -4,7 +4,7 @@
  *
  * Для каждого действия:
  *   desc         — когда отправляется (по-русски, для людей);
- *   file         — имя файлов шаблона в этой папке: <file>.<en|ru|lv>.html;
+ *   file         — имя файлов шаблона в этой папке: <file>.<en|ru|lv|de>.html;
  *   placeholders — какие {{плейсхолдеры}} подставляются в шаблон и тему;
  *   subject      — тема письма на 3 языках.
  *
@@ -26,6 +26,7 @@ return [
             'en' => 'RobTop: password reset',
             'ru' => 'RobTop: сброс пароля',
             'lv' => 'RobTop: paroles atjaunošana',
+            'de' => 'RobTop: Passwort zuruecksetzen',
         ],
     ],
 
@@ -37,6 +38,7 @@ return [
             'en' => 'RobTop: family invitation',
             'ru' => 'RobTop: приглашение в семью',
             'lv' => 'RobTop: ielūgums ģimenei',
+            'de' => 'RobTop: Familieneinladung',
         ],
     ],
 
@@ -48,6 +50,7 @@ return [
             'en' => 'RobTop: access to your child',
             'ru' => 'RobTop: доступ к вашему ребёнку',
             'lv' => 'RobTop: piekļuve jūsu bērnam',
+            'de' => 'RobTop: Zugriff auf dein Kind',
         ],
     ],
 
@@ -59,6 +62,7 @@ return [
             'en' => 'RobTop: you were added to a family',
             'ru' => 'RobTop: вас добавили в семью',
             'lv' => 'RobTop: jūs pievienoja ģimenei',
+            'de' => 'RobTop: Du wurdest zu einer Familie hinzugefuegt',
         ],
     ],
 
@@ -70,6 +74,7 @@ return [
             'en' => 'You are invited to RobTop',
             'ru' => 'Вас пригласили в RobTop',
             'lv' => 'Jūs esat uzaicināts uz RobTop',
+            'de' => 'Du bist zu RobTop eingeladen',
         ],
     ],
 
@@ -81,6 +86,7 @@ return [
             'en' => 'RobTop: your child invites you',
             'ru' => 'RobTop: ваш ребёнок приглашает вас',
             'lv' => 'RobTop: jūsu bērns jūs aicina',
+            'de' => 'RobTop: Dein Kind laedt dich ein',
         ],
     ],
 
@@ -92,6 +98,7 @@ return [
             'en' => 'RobTop: {{child}} asks to share the wishlist',
             'ru' => 'RobTop: {{child}} просит разрешить делиться виш-листом',
             'lv' => 'RobTop: {{child}} lūdz atļauju dalīties ar vēlmju sarakstu',
+            'de' => 'RobTop: {{child}} moechte die Wunschliste teilen',
         ],
     ],
 
@@ -103,6 +110,7 @@ return [
             'en' => 'RobTop: test email',
             'ru' => 'RobTop: тестовое письмо',
             'lv' => 'RobTop: testa vēstule',
+            'de' => 'RobTop: Test-E-Mail',
         ],
     ],
 

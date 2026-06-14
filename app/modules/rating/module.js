@@ -66,6 +66,26 @@
       parentNote:"Dienu vērtē bērns. Šis ir skats.",
       noText:"(bez apraksta)",
       aria:{ stats:"Statistika", stars:"{n} zvaigznes", photo:"Foto" }
+    }},
+    de:{ rating:{
+      subtitle:"Wie war dein Tag?",
+      hudLeft:"Tages<b>bewertung</b>", hudCLbl:"Tage bewertet", hudRLbl:"fuenf Sterne",
+      pickTitle:"Wie war heute?", pickHint:"Tippe auf die Sterne",
+      why:"Weil…", whyPh:"z.B. ich draussen gespielt habe",
+      liked:"Heute hat mir am besten gefallen…", likedPh:"z.B. einen Film schauen",
+      addPhoto:"Foto hinzufuegen", replacePhoto:"Foto ersetzen",
+      editBtn:"Bearbeiten", needStars:"Waehle zuerst die Sterne",
+      savedToast:"Tag bewertet: {stars}★", saveFailed:"Konnte nicht gespeichert werden",
+      photoFailed:"Foto konnte nicht hochgeladen werden", loadFailed:"Konnte nicht geladen werden",
+      todayDone:"Heute ist bewertet!", editUntil:"Du kannst es bis 00:00 aendern",
+      waitTitle:"Komm heute Abend wieder!", waitText:"Du kannst deinen Tag von 20:00 bis 00:00 bewerten.",
+      waitIn:"Oeffnet in {time}", unitH:"Std.", unitM:"Min.",
+      historyTitle:"Meine Tage", historyEmpty:"Noch keine Bewertungen. Komm heute Abend um 20:00 wieder!",
+      statsTitle:"Bewertungsstatistik", statsTimes:{one:"{count} Mal", other:"{count} Mal"},
+      statsFive:"Fuenf-Sterne-Tage",
+      parentNote:"Nur das Kind bewertet den Tag. Du siehst nur zu.",
+      noText:"(keine Beschreibung)",
+      aria:{ stats:"Statistik", stars:"{n} Sterne", photo:"Foto" }
     }}
   };
 

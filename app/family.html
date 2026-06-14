@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="media/icon/icon-180.png">
-<title>RobTop — Семья</title>
+<title>RobTop — Family</title>
 <link rel="icon" type="image/svg+xml" href="media/icon/icon.svg">
 <style>
   /* ПОСАДОЧНАЯ для ссылок из писем: ?invite=<код> и ?reset=<код>.
@@ -48,15 +48,23 @@
   a.plain{color:var(--cyan);font-weight:700;text-decoration:none}
   .small{font-size:12px}
   .center{text-align:center}
+  .topbar{display:flex;align-items:flex-start;gap:10px}
+  .topbar>div:first-child{min-width:0}
+  .lang{display:flex;gap:4px;margin-left:auto;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:3px}
+  .lang button{font-family:inherit;font-weight:800;font-size:11.5px;color:var(--muted);background:none;border:0;border-radius:9px;padding:5px 8px;cursor:pointer}
+  .lang button.on{color:#041018;background:linear-gradient(135deg,var(--cyan),#6ea8ff)}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div><h1>Rob<b>Top</b> · Семья</h1></div>
-  <div class="sub" id="subline">Приглашение</div>
+  <div class="topbar">
+    <div><h1 id="title">Rob<b>Top</b> · Family</h1></div>
+    <nav class="lang" id="langSeg" aria-label="Language"></nav>
+  </div>
+  <div class="sub" id="subline"></div>
   <div id="app"></div>
   <div class="sub center small" style="margin-top:24px">
-    <a class="plain" href="index.html">← Вернуться в приложение</a>
+    <a class="plain" id="backLink" href="index.html"></a>
   </div>
 </div>
 
@@ -64,6 +72,84 @@
 "use strict";
 var APP = document.getElementById('app');
 var SUB = document.getElementById('subline');
+var TITLE = document.getElementById('title');
+var BACK = document.getElementById('backLink');
+var LANGS = ["en","ru","lv","de"];
+var T = {
+  en:{
+    title:'Rob<b>Top</b> · Family', docTitle:'RobTop - Family', back:'← Back to app',
+    invite:'Invitation', checking:'Checking invitation...', error:'Error ',
+    changeSub:'Change one-time password', newPassword:'New password',
+    mustChange:'You signed in with a one-time password. Create a new password to continue.',
+    save:'Save', min4:'Minimum 4 characters',
+    invalidTitle:'Invitation is not valid', invalidText:'The link has expired or was revoked. Ask for a new one.',
+    acceptedTitle:'Invitation already accepted ✅', acceptedText:'The account from this link has already been created. Just sign in to the app with your login and password.',
+    revokedText:'The invitation was revoked by the sender.', expiredText:'The link has expired. Ask for a new one.',
+    toApp:'Open app', childHead:'{who} invited you 🎉',
+    childHint:'Create a nickname (not your real name!). You will set a password right after signing in.',
+    yourNick:'Your nickname', join:'Join', enterNick:'Enter a nickname',
+    parentHeadChild:'Your child {who} is inviting you 👪', parentHead:'{who} invited you',
+    parentHintChild:'Create a parent account. You will become the real parent of {who} in RobTop: your own family, stats and controls. Email is taken from the invitation.',
+    parentHint:'Create a parent account. Email is taken from the invitation. Everything else is in the app settings.',
+    parentNick:'Your nickname', password:'Password', accept:'Accept invitation', fill:'Fill in the fields',
+    reset:'Password reset', resetDone:'Password changed. The app will open now - sign in with the new password.'
+  },
+  ru:{
+    title:'Rob<b>Top</b> · Семья', docTitle:'RobTop — Семья', back:'← Вернуться в приложение',
+    invite:'Приглашение', checking:'Проверяем приглашение…', error:'Ошибка ',
+    changeSub:'Смените одноразовый пароль', newPassword:'Новый пароль',
+    mustChange:'Ты вошёл по одноразовому паролю. Придумай новый пароль, чтобы продолжить.',
+    save:'Сохранить', min4:'Минимум 4 символа',
+    invalidTitle:'Приглашение недействительно', invalidText:'Ссылка истекла или отозвана. Попросите новую.',
+    acceptedTitle:'Приглашение уже принято ✅', acceptedText:'Аккаунт по этой ссылке уже создан. Просто войдите в приложение со своим логином и паролем.',
+    revokedText:'Приглашение отозвано отправителем.', expiredText:'Срок действия ссылки истёк. Попросите новую.',
+    toApp:'В приложение', childHead:'Тебя позвал(а) {who} 🎉',
+    childHint:'Придумай никнейм (не настоящее имя!). Пароль задашь сразу после входа.',
+    yourNick:'Твой никнейм', join:'Присоединиться', enterNick:'Введите никнейм',
+    parentHeadChild:'Ваш ребёнок {who} приглашает вас 👪', parentHead:'Вас пригласил(а) {who}',
+    parentHintChild:'Создайте родительский аккаунт — вы станете настоящим родителем {who} в RobTop: своя семья, статистика и управление. Email берётся из приглашения.',
+    parentHint:'Создайте родительский аккаунт. Email берётся из приглашения. Дальше всё — в настройках приложения.',
+    parentNick:'Ваш никнейм', password:'Пароль', accept:'Принять приглашение', fill:'Заполните поля',
+    reset:'Сброс пароля', resetDone:'Пароль изменён. Сейчас откроется приложение — войдите с новым паролем.'
+  },
+  lv:{
+    title:'Rob<b>Top</b> · Gimene', docTitle:'RobTop - Gimene', back:'← Atpakal uz lietotni',
+    invite:'Uzaicinajums', checking:'Parbaudam uzaicinajumu...', error:'Kluda ',
+    changeSub:'Nomaini vienreizejo paroli', newPassword:'Jauna parole',
+    mustChange:'Tu ienaci ar vienreizejo paroli. Izveido jaunu paroli, lai turpinatu.',
+    save:'Saglabat', min4:'Vismaz 4 rakstzimes',
+    invalidTitle:'Uzaicinajums nav derigs', invalidText:'Saite ir beigusies vai atsaukta. Paludz jaunu.',
+    acceptedTitle:'Uzaicinajums jau pienemts ✅', acceptedText:'Konts ar so saiti jau ir izveidots. Vienkarsi ienac lietotne ar savu lietotajvardu un paroli.',
+    revokedText:'Nosutitajs atsauca uzaicinajumu.', expiredText:'Saites deriguma termins ir beidzies. Paludz jaunu.',
+    toApp:'Uz lietotni', childHead:'{who} tevi uzaicinaja 🎉',
+    childHint:'Izdomā segvardu (ne isto vardu!). Paroli iestatisi pec ienaksanas.',
+    yourNick:'Tavs segvards', join:'Pievienoties', enterNick:'Ievadi segvardu',
+    parentHeadChild:'Tavs berns {who} tevi uzaicina 👪', parentHead:'{who} tevi uzaicinaja',
+    parentHintChild:'Izveido vecaka kontu. Tu klusi par isto {who} vecaku RobTop: sava gimene, statistika un parvaldiba. E-pasts nemts no uzaicinajuma.',
+    parentHint:'Izveido vecaka kontu. E-pasts nemts no uzaicinajuma. Parejais ir lietotnes iestatijumos.',
+    parentNick:'Tavs segvards', password:'Parole', accept:'Pienemt uzaicinajumu', fill:'Aizpildi laukus',
+    reset:'Paroles atjaunosana', resetDone:'Parole nomainita. Tagad atversies lietotne - ienac ar jauno paroli.'
+  },
+  de:{
+    title:'Rob<b>Top</b> · Familie', docTitle:'RobTop - Familie', back:'← Zurueck zur App',
+    invite:'Einladung', checking:'Einladung wird geprueft...', error:'Fehler ',
+    changeSub:'Einmalpasswort aendern', newPassword:'Neues Passwort',
+    mustChange:'Du hast dich mit einem Einmalpasswort angemeldet. Erstelle ein neues Passwort, um fortzufahren.',
+    save:'Speichern', min4:'Mindestens 4 Zeichen',
+    invalidTitle:'Einladung ist ungueltig', invalidText:'Der Link ist abgelaufen oder wurde widerrufen. Bitte fordere einen neuen an.',
+    acceptedTitle:'Einladung wurde bereits angenommen ✅', acceptedText:'Das Konto aus diesem Link wurde bereits erstellt. Melde dich einfach mit Login und Passwort in der App an.',
+    revokedText:'Die Einladung wurde vom Absender widerrufen.', expiredText:'Der Link ist abgelaufen. Bitte fordere einen neuen an.',
+    toApp:'Zur App', childHead:'{who} hat dich eingeladen 🎉',
+    childHint:'Denk dir einen Nickname aus (nicht deinen echten Namen!). Das Passwort legst du direkt nach dem Anmelden fest.',
+    yourNick:'Dein Nickname', join:'Mitmachen', enterNick:'Nickname eingeben',
+    parentHeadChild:'Dein Kind {who} laedt dich ein 👪', parentHead:'{who} hat dich eingeladen',
+    parentHintChild:'Erstelle ein Elternkonto. Du wirst der echte Elternteil von {who} in RobTop: eigene Familie, Statistik und Verwaltung. Die E-Mail kommt aus der Einladung.',
+    parentHint:'Erstelle ein Elternkonto. Die E-Mail kommt aus der Einladung. Alles Weitere findest du in den App-Einstellungen.',
+    parentNick:'Dein Nickname', password:'Passwort', accept:'Einladung annehmen', fill:'Fuelle die Felder aus',
+    reset:'Passwort zuruecksetzen', resetDone:'Passwort geaendert. Die App oeffnet sich jetzt - melde dich mit dem neuen Passwort an.'
+  }
+};
+var CUR = pickLang();
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 function h(html){ APP.innerHTML = html; }
@@ -71,6 +157,38 @@ function qs(id){ return document.getElementById(id); }
 function errBox(msg){ return '<div class="err">'+esc(msg)+'</div>'; }
 function param(name){ return new URLSearchParams(location.search).get(name); }
 function toApp(){ location.href='index.html'; }
+function t(k, vars){
+  var s = (T[CUR]&&T[CUR][k]) || T.en[k] || k;
+  vars = vars || {};
+  return s.replace(/\{(\w+)\}/g,function(_, key){ return vars[key]==null ? "" : vars[key]; });
+}
+function pickLang(){
+  var q = param('lang');
+  if(q && T[q]) return q;
+  try{ var saved=localStorage.getItem('robtop_locale'); if(saved && T[saved]) return saved; }catch(e){}
+  var langs=(navigator.languages&&navigator.languages.length)?navigator.languages:[navigator.language||""];
+  for(var i=0;i<langs.length;i++){ var c=String(langs[i]||"").slice(0,2).toLowerCase(); if(T[c]) return c; }
+  return "en";
+}
+function langSeg(){
+  var box=document.getElementById('langSeg');
+  box.innerHTML=LANGS.map(function(l){ return '<button type="button" data-lang="'+l+'" class="'+(l===CUR?'on':'')+'">'+l.toUpperCase()+'</button>'; }).join('');
+  box.onclick=function(e){
+    var b=e.target.closest&&e.target.closest('button[data-lang]');
+    if(!b) return;
+    CUR=b.getAttribute('data-lang')||"en";
+    try{ localStorage.setItem('robtop_locale', CUR); }catch(x){}
+    applyChrome();
+    boot();
+  };
+}
+function applyChrome(){
+  document.documentElement.lang=CUR;
+  document.title=t('docTitle');
+  TITLE.innerHTML=t('title');
+  BACK.textContent=t('back');
+  Array.prototype.forEach.call(document.querySelectorAll('#langSeg button'),function(b){ b.classList.toggle('on', b.getAttribute('data-lang')===CUR); });
+}
 
 function api(op, body){
   body = body || {};
@@ -80,7 +198,7 @@ function api(op, body){
     credentials:'same-origin', body: JSON.stringify(body)
   }).then(function(r){
     return r.json().catch(function(){ return {}; }).then(function(j){
-      if(!r.ok){ var e = new Error(j && j.error ? j.error : ('Ошибка ' + r.status)); e.data=j; e.status=r.status; throw e; }
+      if(!r.ok){ var e = new Error(j && j.error ? j.error : (t('error') + r.status)); e.data=j; e.status=r.status; throw e; }
       return j;
     });
   });
@@ -96,14 +214,14 @@ function boot(){
 
 /* ---------------- обязательная смена одноразового пароля ---------------- */
 function screenChangePassword(){
-  SUB.textContent = 'Смените одноразовый пароль';
-  h('<div class="card"><h2>Новый пароль</h2>'+
-    '<div class="muted small">Ты вошёл по одноразовому паролю. Придумай новый пароль, чтобы продолжить.</div>'+
-    '<label>Новый пароль</label><input id="np" type="password" autocomplete="new-password">'+
-    '<button class="btn" id="go">Сохранить</button><div id="msg"></div></div>');
+  SUB.textContent = t('changeSub');
+  h('<div class="card"><h2>'+esc(t('newPassword'))+'</h2>'+
+    '<div class="muted small">'+esc(t('mustChange'))+'</div>'+
+    '<label>'+esc(t('newPassword'))+'</label><input id="np" type="password" autocomplete="new-password">'+
+    '<button class="btn" id="go">'+esc(t('save'))+'</button><div id="msg"></div></div>');
   qs('go').onclick=function(){
     var np=qs('np').value;
-    if(!np || np.length<4){ qs('msg').innerHTML=errBox('Минимум 4 символа'); return; }
+    if(!np || np.length<4){ qs('msg').innerHTML=errBox(t('min4')); return; }
     api('set_password',{new_password:np}).then(function(){ toApp(); })
       .catch(function(e){ qs('msg').innerHTML=errBox(e.message); });
   };
@@ -111,29 +229,29 @@ function screenChangePassword(){
 
 /* ---------------- посадочная приглашения ---------------- */
 function screenInvite(token){
-  SUB.textContent='Приглашение';
-  h('<div class="card center muted">Проверяем приглашение…</div>');
+  SUB.textContent=t('invite');
+  h('<div class="card center muted">'+esc(t('checking'))+'</div>');
   api('invite_info',{token:token}).then(function(info){
     if(!info.valid){
       // различаем статусы: «уже использовано» — это успех, а не ошибка
-      var title='Приглашение недействительно', text='Ссылка истекла или отозвана. Попросите новую.';
-      if(info.status==='accepted'){ title='Приглашение уже принято ✅'; text='Аккаунт по этой ссылке уже создан. Просто войдите в приложение со своим логином и паролем.'; }
-      else if(info.status==='revoked'){ text='Приглашение отозвано отправителем.'; }
-      else if(info.status==='expired' || info.status==='pending'){ text='Срок действия ссылки истёк. Попросите новую.'; }
-      h('<div class="card"><h2>'+title+'</h2><div class="muted">'+text+'</div>'+
-        '<button class="btn sec" id="home">В приложение</button></div>');
+      var title=t('invalidTitle'), text=t('invalidText');
+      if(info.status==='accepted'){ title=t('acceptedTitle'); text=t('acceptedText'); }
+      else if(info.status==='revoked'){ text=t('revokedText'); }
+      else if(info.status==='expired' || info.status==='pending'){ text=t('expiredText'); }
+      h('<div class="card"><h2>'+esc(title)+'</h2><div class="muted">'+esc(text)+'</div>'+
+        '<button class="btn sec" id="home">'+esc(t('toApp'))+'</button></div>');
       qs('home').onclick=toApp;
       return;
     }
     var who = esc(info.inviter||'кто-то');
     if(info.type==='child_to_child'){
-      h('<div class="card"><h2>Тебя позвал(а) '+who+' 🎉</h2>'+
-        '<div class="muted small">Придумай никнейм (не настоящее имя!). Пароль задашь сразу после входа.</div>'+
-        '<label>Твой никнейм</label><input id="nick">'+
-        '<button class="btn pink" id="go">Присоединиться</button><div id="msg"></div></div>');
+      h('<div class="card"><h2>'+esc(t('childHead',{who:info.inviter||'someone'}))+'</h2>'+
+        '<div class="muted small">'+esc(t('childHint'))+'</div>'+
+        '<label>'+esc(t('yourNick'))+'</label><input id="nick">'+
+        '<button class="btn pink" id="go">'+esc(t('join'))+'</button><div id="msg"></div></div>');
       qs('go').onclick=function(){
         var nick=qs('nick').value.trim();
-        if(!nick){ qs('msg').innerHTML=errBox('Введите никнейм'); return; }
+        if(!nick){ qs('msg').innerHTML=errBox(t('enterNick')); return; }
         api('accept',{token:token,nickname:nick}).then(function(r){
           try{ history.replaceState(null,'','family.html'); }catch(x){} // чтобы обновление страницы не показало «уже использовано»
           if(r.user && r.user.mustChangePassword){ return screenChangePassword(); }
@@ -143,19 +261,19 @@ function screenInvite(token){
     } else {
       // child_invite_parent: приглашает САМ ребёнок — родитель получает свою семью и primary-опеку
       var head = (info.type==='child_invite_parent')
-        ? 'Ваш ребёнок '+who+' приглашает вас 👪'
-        : 'Вас пригласил(а) '+who;
+        ? t('parentHeadChild',{who:info.inviter||'someone'})
+        : t('parentHead',{who:info.inviter||'someone'});
       var hint = (info.type==='child_invite_parent')
-        ? 'Создайте родительский аккаунт — вы станете настоящим родителем '+who+' в RobTop: своя семья, статистика и управление. Email берётся из приглашения.'
-        : 'Создайте родительский аккаунт. Email берётся из приглашения. Дальше всё — в настройках приложения.';
-      h('<div class="card"><h2>'+head+'</h2>'+
-        '<div class="muted small">'+hint+'</div>'+
-        '<label>Ваш никнейм</label><input id="nick">'+
-        '<label>Пароль</label><input id="pass" type="password" autocomplete="new-password">'+
-        '<button class="btn pink" id="go">Принять приглашение</button><div id="msg"></div></div>');
+        ? t('parentHintChild',{who:info.inviter||'someone'})
+        : t('parentHint');
+      h('<div class="card"><h2>'+esc(head)+'</h2>'+
+        '<div class="muted small">'+esc(hint)+'</div>'+
+        '<label>'+esc(t('parentNick'))+'</label><input id="nick">'+
+        '<label>'+esc(t('password'))+'</label><input id="pass" type="password" autocomplete="new-password">'+
+        '<button class="btn pink" id="go">'+esc(t('accept'))+'</button><div id="msg"></div></div>');
       qs('go').onclick=function(){
         var nick=qs('nick').value.trim(), pass=qs('pass').value;
-        if(!nick||!pass){ qs('msg').innerHTML=errBox('Заполните поля'); return; }
+        if(!nick||!pass){ qs('msg').innerHTML=errBox(t('fill')); return; }
         api('accept',{token:token,nickname:nick,password:pass}).then(function(){
           try{ history.replaceState(null,'','family.html'); }catch(x){}
           toApp();
@@ -163,27 +281,29 @@ function screenInvite(token){
       };
     }
   }).catch(function(e){
-    h('<div class="card">'+errBox(e.message)+'<button class="btn sec" id="home">В приложение</button></div>');
+    h('<div class="card">'+errBox(e.message)+'<button class="btn sec" id="home">'+esc(t('toApp'))+'</button></div>');
     qs('home').onclick=toApp;
   });
 }
 
 /* ---------------- сброс пароля по ссылке из письма ---------------- */
 function screenReset(token){
-  SUB.textContent='Сброс пароля';
-  h('<div class="card"><h2>Новый пароль</h2>'+
-    '<label>Новый пароль</label><input id="np" type="password" autocomplete="new-password">'+
-    '<button class="btn" id="go">Сохранить</button><div id="msg"></div></div>');
+  SUB.textContent=t('reset');
+  h('<div class="card"><h2>'+esc(t('newPassword'))+'</h2>'+
+    '<label>'+esc(t('newPassword'))+'</label><input id="np" type="password" autocomplete="new-password">'+
+    '<button class="btn" id="go">'+esc(t('save'))+'</button><div id="msg"></div></div>');
   qs('go').onclick=function(){
     var np=qs('np').value;
-    if(!np||np.length<4){ qs('msg').innerHTML=errBox('Минимум 4 символа'); return; }
+    if(!np||np.length<4){ qs('msg').innerHTML=errBox(t('min4')); return; }
     api('reset',{token:token,new_password:np}).then(function(){
-      qs('msg').innerHTML='<div class="note">Пароль изменён. Сейчас откроется приложение — войдите с новым паролем.</div>';
+      qs('msg').innerHTML='<div class="note">'+esc(t('resetDone'))+'</div>';
       setTimeout(toApp, 1400);
     }).catch(function(e){ qs('msg').innerHTML=errBox(e.message); });
   };
 }
 
+langSeg();
+applyChrome();
 boot();
 </script>
 </body>

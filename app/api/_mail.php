@@ -10,7 +10,7 @@
  *               письма чаще попадают в спам, держим как запасной).
  *   Неизвестный драйвер тихо работает как 'log' — ничего не падает.
  *
- * Шаблоны: api/mail/<имя>.<en|ru|lv>.html — простые HTML файлы с плейсхолдерами {{ключ}}.
+ * Шаблоны: api/mail/<имя>.<en|ru|lv|de>.html — простые HTML файлы с плейсхолдерами {{ключ}}.
  * РЕЕСТР всех писем (действие → файл, темы на 3 языках, плейсхолдеры): api/mail/registry.php.
  * Язык письма = язык приложения пользователя: клиент передаёт lang в запросе (rt_mail_lang),
  * фолбэк: mail_default_lang из config → 'en' → первый существующий файл.
@@ -38,7 +38,7 @@ function rt_short_url($prefix, $code) {
 
 /* ---------- язык ---------- */
 
-function rt_mail_langs() { return ['en', 'ru', 'lv']; }
+function rt_mail_langs() { return ['en', 'ru', 'lv', 'de']; }
 
 /** Язык из тела запроса клиента ($b['lang']); null, если не передан или неизвестен. */
 function rt_mail_lang($body) {
@@ -51,7 +51,7 @@ function rt_mail_lang_chain($lang) {
     $c = rt_config();
     $def = isset($c['mail_default_lang']) ? strtolower((string)$c['mail_default_lang']) : 'en';
     $chain = [];
-    foreach ([$lang, $def, 'en', 'ru', 'lv'] as $l) {
+    foreach ([$lang, $def, 'en', 'ru', 'lv', 'de'] as $l) {
         if ($l && in_array($l, rt_mail_langs(), true) && !in_array($l, $chain, true)) $chain[] = $l;
     }
     return $chain;
@@ -176,7 +176,7 @@ function rt_mail_deliver($to, $subject, $html) {
 
 /**
  * Письмо по шаблону из реестра (api/mail/registry.php).
- * $lang — 'en'|'ru'|'lv'|null (язык приложения пользователя, обычно rt_mail_lang($b)).
+ * $lang — 'en'|'ru'|'lv'|'de'|null (язык приложения пользователя, обычно rt_mail_lang($b)).
  * $data — плейсхолдеры шаблона, например ['link' => ..., 'inviter' => ...].
  * Возвращает ['ok'=>bool, 'lang'=>использованный язык] или ['ok'=>false,'error'=>...].
  */

@@ -36,6 +36,16 @@
       inPh:"Piem.: sveiki", speak:"🔊 Nolasīt", sectionHistory:"Vēsture", ariaSpeak:"Nolasīt",
       toast:{ needWord:"Vispirms ieraksti vārdu", ttsUnsupported:"Runa šajā ierīcē netiek atbalstīta",
         ttsFailed:"Neizdevās nolasīt", saved:"Saglabāts: {word}", saveFailed:"Neizdevās saglabāt", deleteFailed:"Neizdevās dzēst" }
+    }},
+    de:{ reverse:{
+      title:"Woerter rueckwaerts", subtitle:"Tippe ein Wort — ich drehe es um",
+      hudLeft:"Woerter <b>rueckwaerts</b>", hudCLbl:"im Verlauf", hudRLbl:"Woerter",
+      outEmpty:"Tippe ein Wort — ich zeige es rueckwaerts",
+      listEmpty:"Noch leer. Drehe ein Wort um und tippe auf “Speichern”.",
+      listError:"Verlauf konnte nicht geladen werden",
+      inPh:"z.B. hallo", speak:"🔊 Vorlesen", sectionHistory:"Verlauf", ariaSpeak:"Vorlesen",
+      toast:{ needWord:"Tippe zuerst ein Wort", ttsUnsupported:"Sprachausgabe wird auf diesem Geraet nicht unterstuetzt",
+        ttsFailed:"Vorlesen fehlgeschlagen", saved:"Gespeichert: {word}", saveFailed:"Konnte nicht gespeichert werden", deleteFailed:"Konnte nicht geloescht werden" }
     }}
   };
 

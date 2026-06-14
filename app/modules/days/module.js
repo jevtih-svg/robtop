@@ -69,6 +69,26 @@
       deleted:"Izdzēsts", restore:"Atsaukt",
       savedToast:"Atskaite saglabāta", saveFailed:"Neizdevās saglabāt", loadFailed:"Neizdevās ielādēt",
       parentNote:"Atskaites veido bērns. Šis ir skats."
+    }},
+    de:{ days:{
+      subtitle:"Wie viele Tage bis zu etwas Schoenem?",
+      hudLeft:"Tage<b>zaehler</b>", hudCLbl:"Countdowns", hudRLbl:"naechstes",
+      emptyTitle:"Noch keine Countdowns", emptyHint:"Waehle ein Datum und zaehle die Tage herunter!",
+      addBtn:"Neues Ereignis", createTitle:"Neuer Countdown", editTitle:"Countdown bearbeiten",
+      nameLbl:"Worauf wartest du?", namePh:"z.B. Reise des Jahres",
+      emojiLbl:"Waehle ein Symbol", dateLbl:"Waehle das Datum",
+      noteLbl:"Ein paar Worte (optional)", notePh:"z.B. Wir fliegen ans Meer!",
+      save:"Speichern", create:"Erstellen",
+      needName:"Gib deinem Ereignis einen Namen", needDate:"Waehle ein Datum", needFuture:"Waehle heute oder ein zukuenftiges Datum",
+      today:"Heute!", reached:"Der Tag ist da! 🎉",
+      leftWord:{ one:"Tag", other:"Tage" },
+      leftLong:{ one:"noch {n} Tag", other:"noch {n} Tage" },
+      passedLong:{ one:"war vor {n} Tag", other:"war vor {n} Tagen" },
+      activeSec:"Bald", doneSec:"Fertig",
+      edit:"Bearbeiten", del:"Loeschen", delConfirm:"Diesen Countdown loeschen?",
+      deleted:"Geloescht", restore:"Rueckgaengig",
+      savedToast:"Countdown gespeichert", saveFailed:"Konnte nicht gespeichert werden", loadFailed:"Konnte nicht geladen werden",
+      parentNote:"Nur das Kind setzt Countdowns. Du siehst nur zu."
     }}
   };
 

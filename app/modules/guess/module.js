@@ -60,6 +60,23 @@
       parentNote:"Piemērus risina bērns. Šis ir skats.",
       saveFailed:"Neizdevās saglabāt", loadFailed:"Neizdevās ielādēt", unit:"sek",
       aria:{ stats:"Statistika", answer:"Atbilde {n}", timeLeft:"Atlikušas {n} sekundes" }
+    }},
+    de:{ guess:{
+      subtitle:"Mathe auf Zeit: die Antwort ist 1 bis 10",
+      hudLeft:"🎯 <b>raten</b>", hudCLbl:"erraten", hudRLbl:"Punkte",
+      startTitle:"Rate die Zahl!", startHint:"Loese die Aufgabe — die Antwort ist von 1 bis 10. Du hast {s} Sekunden!",
+      startBtn:"Spielen", pickHint:"Tippe die Antwort!",
+      resWin:"Erraten! +10", resWrong:"Diesmal nicht… −5", resTimeout:"Zeit vorbei! −5",
+      correctIs:"Die Antwort war {n}", nextBtn:"Weiter",
+      legWin:"erraten +10", legWrong:"falsch −5", legTimeout:"zu spaet −5",
+      historyTitle:"Meine Runden", historyEmpty:"Noch keine Runden. Tippe “Spielen”!",
+      filterAll:"Alle", filterWin:"Erraten", filterWrong:"Falsch", filterTimeout:"Zu spaet",
+      badgeWin:"Erraten", badgeWrong:"Falsch", badgeTimeout:"Zu spaet",
+      histPicked:"tippte {n}",
+      statsTitle:"Rate-Statistik", statTotal:"Runden gesamt", statWin:"erraten", statWrong:"falsch", statTimeout:"zu spaet",
+      parentNote:"Das Kind loest die Aufgaben. Du siehst nur zu.",
+      saveFailed:"Konnte nicht gespeichert werden", loadFailed:"Konnte nicht geladen werden", unit:"Sek.",
+      aria:{ stats:"Statistik", answer:"Antwort {n}", timeLeft:"Noch {n} Sekunden" }
     }}
   };
 
