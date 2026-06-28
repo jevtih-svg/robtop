@@ -5,6 +5,11 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.28.4", d:"2026-06-28", t:{
+    en:"Secret friends now ask for the account password every time before opening.",
+    ru:"«Секретные друзья» теперь каждый раз просят пароль аккаунта перед открытием.",
+    lv:"Slepenie draugi tagad katru reizi pirms atversanas prasa konta paroli.",
+    de:"Geheime Freunde fragen jetzt jedes Mal vor dem Oeffnen nach dem Kontopasswort." } },
   { v:"2026.06.28.3", d:"2026-06-28", t:{
     en:"Dog walks can now be edited or deleted from their detail view.",
     ru:"Прогулки с собакой теперь можно изменить или удалить из карточки прогулки.",

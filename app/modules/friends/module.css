@@ -46,6 +46,18 @@
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 [data-mod="friends"] .fr-empty{color:var(--muted-dim);font-weight:600;font-size:14px;text-align:center;padding:22px 14px}
 
+/* ---------- пароль перед секретным разделом ---------- */
+[data-mod="friends"] .fr-gate{display:flex;flex-direction:column;align-items:stretch;gap:11px;
+  background:linear-gradient(165deg, rgba(var(--panel-rgb),.58), rgba(var(--panel-rgb),.92));
+  border:1.5px solid color-mix(in srgb,var(--purple) 34%,transparent);border-radius:16px;
+  padding:18px 16px;box-shadow:0 10px 26px rgba(0,0,0,.45)}
+[data-mod="friends"] .fr-gate-ic{width:46px;height:46px;border-radius:14px;margin:0 auto;display:grid;place-items:center;
+  color:var(--purple-soft);background:color-mix(in srgb,var(--purple) 12%,transparent);border:1px solid color-mix(in srgb,var(--purple) 45%,transparent)}
+[data-mod="friends"] .fr-gate-ic svg{width:24px;height:24px}
+[data-mod="friends"] .fr-gate h2{font-family:var(--font-display);font-size:22px;color:#fff;text-align:center;margin:0}
+[data-mod="friends"] .fr-gate p{color:var(--muted-2);font-weight:700;font-size:14px;text-align:center;margin:0}
+[data-mod="friends"] .fr-gate-err{color:var(--red-soft);font-weight:800;font-size:14px;text-align:center;white-space:pre-line}
+
 /* ---------- звёзды ---------- */
 .fr-stars{display:flex;gap:4px;align-items:center}
 .fr-stars.pick{gap:8px;justify-content:center;margin:6px 0 4px}

@@ -1,0 +1,4 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^verify-password$ verify-password.php [L]
+</IfModule>

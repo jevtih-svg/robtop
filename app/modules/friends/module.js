@@ -28,6 +28,8 @@
       loadFailed:"Couldn't load friends",
       edit:"Edit", del:"Delete", toSecret:"Make secret", toOpen:"Make open",
       deleted:"Friend deleted", movedSecret:"Moved to Secret", movedOpen:"Moved to Open",
+      secretGateTitle:"Secret friends", secretGateHint:"Enter your account password",
+      secretGateBtn:"Open", secretChecking:"Checking...", secretWrong:"Wrong password.\nTry again.",
       noText:"(nothing yet)",
       statsTitle:"My friends", statsTotal:"Friends total", statsBest:"Best friends (5★)",
       parentNote:"Only the child fills in friends. You're viewing.",
@@ -52,6 +54,8 @@
       loadFailed:"Не удалось загрузить друзей",
       edit:"Изменить", del:"Удалить", toSecret:"В секретные", toOpen:"В открытые",
       deleted:"Друг удалён", movedSecret:"Перенесён в «Секретные»", movedOpen:"Перенесён в «Открытые»",
+      secretGateTitle:"Секретные друзья", secretGateHint:"Введите пароль от аккаунта",
+      secretGateBtn:"Открыть", secretChecking:"Проверяем...", secretWrong:"Неверный пароль.\nПопробуйте еще раз.",
       noText:"(пока пусто)",
       statsTitle:"Мои друзья", statsTotal:"Всего друзей", statsBest:"Лучших друзей (5★)",
       parentNote:"Друзей заполняет ребёнок. Это просмотр.",
@@ -76,6 +80,8 @@
       loadFailed:"Neizdevās ielādēt draugus",
       edit:"Mainīt", del:"Dzēst", toSecret:"Uz slepeniem", toOpen:"Uz atvērtiem",
       deleted:"Draugs izdzēsts", movedSecret:"Pārvietots uz “Slepenie”", movedOpen:"Pārvietots uz “Atvērtie”",
+      secretGateTitle:"Slepenie draugi", secretGateHint:"Ievadi sava konta paroli",
+      secretGateBtn:"Atvert", secretChecking:"Parbaudam...", secretWrong:"Nepareiza parole.\nMegini velreiz.",
       noText:"(pagaidām tukšs)",
       statsTitle:"Mani draugi", statsTotal:"Draugu kopā", statsBest:"Labākie draugi (5★)",
       parentNote:"Draugus aizpilda bērns. Šis ir skats.",
@@ -100,6 +106,8 @@
       loadFailed:"Freunde konnten nicht geladen werden",
       edit:"Bearbeiten", del:"Loeschen", toSecret:"Geheim machen", toOpen:"Offen machen",
       deleted:"Freund geloescht", movedSecret:"Zu “Geheim” verschoben", movedOpen:"Zu “Offen” verschoben",
+      secretGateTitle:"Geheime Freunde", secretGateHint:"Gib dein Kontopasswort ein",
+      secretGateBtn:"Oeffnen", secretChecking:"Pruefen...", secretWrong:"Falsches Passwort.\nVersuche es noch einmal.",
       noText:"(noch nichts)",
       statsTitle:"Meine Freunde", statsTotal:"Freunde gesamt", statsBest:"Beste Freunde (5★)",
       parentNote:"Nur das Kind fuellt Freunde aus. Du siehst nur zu.",
@@ -131,6 +139,7 @@
 
   /* =================== СОСТОЯНИЕ =================== */
   var sdk=null, root=null, E={}, items=[], currentTab="open", loaded=false, failed=false;
+  var secretUnlocked=false, secretChecking=false, secretError=false;
 
   function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
@@ -172,6 +181,10 @@
     Array.prototype.forEach.call(E.tabs.querySelectorAll(".fr-tab"),function(tb){
       tb.classList.toggle("active",tb.getAttribute("data-tab")===currentTab);
     });
+    if(currentTab==="secret" && !secretUnlocked){
+      renderSecretGate();
+      return;
+    }
     var list=byTab(currentTab);
     if(!list.length){
       /* пока первый запрос в пути — спиннер, а не ложное «здесь пусто» */
@@ -188,7 +201,45 @@
         +'<div class="fr-snip">'+esc(snippetOf(it))+'</div></div></article>';
     }).join("");
   }
-  function setTab(tab){ currentTab=tab; render(); }
+  function setTab(tab){
+    if(currentTab==="secret" && tab!=="secret") secretUnlocked=false;
+    currentTab=tab;
+    if(tab==="secret" && !secretUnlocked){ secretChecking=false; secretError=false; }
+    render();
+  }
+
+  function renderSecretGate(){
+    E.list.innerHTML='<form class="fr-gate" id="frSecretGate" autocomplete="off">'
+      +'<div class="fr-gate-ic">'+LOCK_IC+'</div>'
+      +'<h2>'+esc(t("secretGateTitle"))+'</h2>'
+      +'<p>'+esc(secretChecking?t("secretChecking"):t("secretGateHint"))+'</p>'
+      +(secretError?'<div class="fr-gate-err">'+esc(t("secretWrong"))+'</div>':'')
+      +'<input class="fr-in" id="frSecretPass" type="password" autocomplete="current-password" inputmode="text" '+(secretChecking?'disabled ':'')+'autofocus>'
+      +'<button type="submit" class="btn btn-primary" '+(secretChecking?'disabled':'')+'>'+esc(t("secretGateBtn"))+'</button>'
+      +'</form>';
+  }
+
+  function verifySecretPassword(){
+    if(secretChecking || currentTab!=="secret" || secretUnlocked) return;
+    var input=root&&root.querySelector("#frSecretPass");
+    var password=input?String(input.value||""):"";
+    secretChecking=true; secretError=false; render();
+    sdk.api.post("accounts/verify-password", {password:password}).then(function(res){
+      password="";
+      if(!root || currentTab!=="secret") return;
+      if(res&&res.ok){
+        secretUnlocked=true; secretChecking=false; secretError=false; render();
+      }else{
+        secretUnlocked=false; secretChecking=false; secretError=true; render();
+        var next=root.querySelector("#frSecretPass"); if(next){ next.value=""; next.focus(); }
+      }
+    }).catch(function(){
+      password="";
+      if(!root || currentTab!=="secret") return;
+      secretUnlocked=false; secretChecking=false; secretError=true; render();
+      var next=root.querySelector("#frSecretPass"); if(next){ next.value=""; next.focus(); }
+    });
+  }
 
   /* =================== ШТОРКА: КАРТОЧКА ДРУГА =================== */
   function openDetail(id){
@@ -316,6 +367,7 @@
     var to=statusOf(it)==="secret"?"open":"secret";
     it.status=to;
     sdk.data.move("friends", it.id, to).catch(function(){});
+    if(to!=="secret") secretUnlocked=false;
     currentTab=to;
     sdk.ui.toast(to==="secret"?t("movedSecret"):t("movedOpen")); sdk.ui.haptics(8);
     sortItems(); render(); hud();
@@ -356,6 +408,7 @@
   /* =================== mount / unmount =================== */
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; items=[]; currentTab="open"; loaded=false; failed=false;
+    secretUnlocked=false; secretChecking=false; secretError=false;
     var title=sdk.i18n.t("tile.friends"), canEdit=sdk.can("edit");
     var body=sdk.ui.frame({
       titleHtml:'<div class="fr-title"><span class="sic">'+FR_IC+'</span> '+esc(title)+'</div><div class="fr-sub">'+esc(t("subtitle"))+'</div>',
@@ -374,13 +427,17 @@
     sdk.on(root,"click",function(e){
       var tab=e.target.closest("[data-tab]");
       if(tab){ setTab(tab.getAttribute("data-tab")); return; }
+      if(e.target.closest("#frSecretGate")) return;
       var card=e.target.closest(".fr-card");
       if(card){ openDetail(card.getAttribute("data-id")); return; }
+    });
+    sdk.on(root,"submit",function(e){
+      if(e.target && e.target.id==="frSecretGate"){ e.preventDefault(); verifySecretPassword(); }
     });
     if(canEdit) sdk.ui.fab(t("addFriend"), function(){ openForm(null); });
     render(); hud(); load();
   }
-  function unmount(){ E={}; items=[]; root=null; currentTab="open"; loaded=false; failed=false; }
+  function unmount(){ E={}; items=[]; root=null; currentTab="open"; loaded=false; failed=false; secretUnlocked=false; secretChecking=false; secretError=false; }
 
   /* живое обновление (sync v.52): подтянуть чужие/другие правки без выхода из модуля */
   function refresh(){ if(!root) return false; load(); return true; }
