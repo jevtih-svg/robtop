@@ -5,6 +5,11 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.28.2", d:"2026-06-28", t:{
+    en:"Dog walk history now has My walks and All walks filters.",
+    ru:"В истории прогулок с собакой появились фильтры «Мои прогулки» и «Все прогулки».",
+    lv:"Suna pastaigu vesture tagad ir filtri Manas pastaigas un Visas pastaigas.",
+    de:"Der Hundespaziergangsverlauf hat jetzt Filter fuer Meine und Alle Spaziergaenge." } },
   { v:"2026.06.28.1", d:"2026-06-28", t:{
     en:"Family dog walks now load more reliably for every family member.",
     ru:"Семейные прогулки с собакой теперь надёжнее загружаются у всех членов семьи.",

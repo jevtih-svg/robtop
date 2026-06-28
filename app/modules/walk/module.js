@@ -42,7 +42,8 @@
       saveWalk:"Save walk",
       savedToast:"Walk saved!", laterToast:"Walk saved — rate it later!",
       saveFailed:"Couldn't save",
-      historyTitle:"My walks", historyEmpty:"No walks yet. Tap the minutes above!", loadFailed:"Couldn't load walks",
+      historyTitle:"Walk history", historyMine:"My walks", historyAll:"All walks",
+      historyEmpty:"No walks yet. Tap the minutes above!", historyMineEmpty:"You have no walks yet.", loadFailed:"Couldn't load walks",
       noRate:"Not rated yet", rateBtn:"Rate it",
       byAuthor:"Logged by {name}",
       setTitle:"Walk settings",
@@ -87,7 +88,8 @@
       saveWalk:"Сохранить прогулку",
       savedToast:"Прогулка сохранена!", laterToast:"Прогулка сохранена — оценишь позже!",
       saveFailed:"Не удалось сохранить",
-      historyTitle:"Мои прогулки", historyEmpty:"Прогулок пока нет. Нажми на минуты сверху!", loadFailed:"Не удалось загрузить прогулки",
+      historyTitle:"История прогулок", historyMine:"Мои прогулки", historyAll:"Все прогулки",
+      historyEmpty:"Прогулок пока нет. Нажми на минуты сверху!", historyMineEmpty:"У тебя пока нет прогулок.", loadFailed:"Не удалось загрузить прогулки",
       noRate:"Пока без оценки", rateBtn:"Оценить",
       byAuthor:"Записал(а): {name}",
       setTitle:"Настройки прогулки",
@@ -132,7 +134,8 @@
       saveWalk:"Saglabāt pastaigu",
       savedToast:"Pastaiga saglabāta!", laterToast:"Pastaiga saglabāta — novērtēsi vēlāk!",
       saveFailed:"Neizdevās saglabāt",
-      historyTitle:"Manas pastaigas", historyEmpty:"Pastaigu vēl nav. Pieskaries minūtēm augšā!", loadFailed:"Neizdevās ielādēt pastaigas",
+      historyTitle:"Pastaigu vesture", historyMine:"Manas pastaigas", historyAll:"Visas pastaigas",
+      historyEmpty:"Pastaigu vēl nav. Pieskaries minūtēm augšā!", historyMineEmpty:"Tev vel nav pastaigu.", loadFailed:"Neizdevās ielādēt pastaigas",
       noRate:"Vēl nav novērtēta", rateBtn:"Novērtēt",
       byAuthor:"Pierakstīja: {name}",
       setTitle:"Pastaigas iestatījumi",
@@ -177,7 +180,8 @@
       saveWalk:"Spaziergang speichern",
       savedToast:"Spaziergang gespeichert!", laterToast:"Spaziergang gespeichert — spaeter bewerten!",
       saveFailed:"Konnte nicht gespeichert werden",
-      historyTitle:"Meine Spaziergaenge", historyEmpty:"Noch keine Spaziergaenge. Tippe oben auf die Minuten!", loadFailed:"Spaziergaenge konnten nicht geladen werden",
+      historyTitle:"Spaziergangsverlauf", historyMine:"Meine Spaziergaenge", historyAll:"Alle Spaziergaenge",
+      historyEmpty:"Noch keine Spaziergaenge. Tippe oben auf die Minuten!", historyMineEmpty:"Du hast noch keine Spaziergaenge.", loadFailed:"Spaziergaenge konnten nicht geladen werden",
       noRate:"Noch nicht bewertet", rateBtn:"Bewerten",
       byAuthor:"Eingetragen von {name}",
       setTitle:"Spaziergang-Einstellungen",
@@ -239,6 +243,7 @@
   var loaded=false, loadErr=false; // первая загрузка истории: до прихода данных — спиннер, не ложное «прогулок нет»
   var calMonth=null, calPeriod="week"; // calMonth: Date (1-е число месяца); calPeriod: week|month|all
   var careItems=[]; // расписание ухода (walk/care), только родитель пишет
+  var histFilter="all"; // all|mine
 
   function esc(s){ return RobTop.util.esc(s); }
   function t(k,p){ return sdk.t(k,p); }
@@ -636,7 +641,8 @@
     saving=true;
     var noteEl=E.main&&E.main.querySelector("#wkEvtNote");
     var payload={ day:dateOf("#wkEvtDate"), time:timeOf("#wkEvtTime"), kinds:kinds,
-      note:(noteEl?noteEl.value:"").trim().slice(0,120), author:(sdk.user&&sdk.user.name)||"" };
+      note:(noteEl?noteEl.value:"").trim().slice(0,120),
+      author:(sdk.user&&sdk.user.name)||"", authorUid:(sdk.user&&sdk.user.id)||null };
     sdk.data.create("events",payload).then(function(item){
       saving=false; if(!root) return;
       if(item) evts.unshift(item);
@@ -654,7 +660,8 @@
     var issues=selectedOf(beh.sel, issOrder());
     if(!issues.length){ sdk.ui.toast(t("behNeedPick")); return; }
     saving=true;
-    var payload={ day:dayKey(), time:timeOf("#wkBehTime"), issues:issues, author:(sdk.user&&sdk.user.name)||"" };
+    var payload={ day:dayKey(), time:timeOf("#wkBehTime"), issues:issues,
+      author:(sdk.user&&sdk.user.name)||"", authorUid:(sdk.user&&sdk.user.id)||null };
     sdk.data.create("behavior",payload).then(function(item){
       saving=false; if(!root) return;
       if(item) behs.unshift(item);
@@ -779,6 +786,13 @@
   }
   /* автор в строке истории: семейное приложение — видно, кто гулял/записал (фидбек Джеффа) */
   function authBit(d){ return d.author?esc(d.author):""; }
+  function isMineData(d){
+    d=d||{};
+    var uid=sdk&&sdk.user?sdk.user.id:null;
+    if(uid!=null && d.authorUid!=null && String(d.authorUid)===String(uid)) return true;
+    var name=sdk&&sdk.user&&sdk.user.name?String(sdk.user.name).trim():"";
+    return !!(name && d.author && String(d.author).trim()===name);
+  }
   function walkRowHtml(it){
     var d=dataOf(it), r=rateOf(it), ph=(d.photos&&d.photos[0])||null;
     var face=r?('<span class="wk-mini f-'+r+'">'+FACE[r]+'</span>'):('<span class="wk-mini f-none">'+FACE.none+'</span>');
@@ -807,15 +821,30 @@
       +'<div class="m"><div class="d">'+esc(fmtDay(d.day))+(d.time?' · '+esc(d.time):'')+'</div>'
       +'<div class="s gold">'+esc(txt)+'</div></div></div>';
   }
+  function renderFilter(){
+    if(!E.filter) return;
+    var btns=E.filter.querySelectorAll("[data-wfilter]");
+    for(var i=0;i<btns.length;i++){
+      btns[i].classList.toggle("on", btns[i].getAttribute("data-wfilter")===histFilter);
+    }
+  }
   /* единая лента: прогулки + события поведения + важные события, свежие сверху */
   function renderList(){
     if(!root||!E.list) return;
+    renderFilter();
     /* fetch ещё в полёте: спиннер вместо преждевременного «прогулок нет» */
     if(!loaded){ E.list.innerHTML='<div class="rt-loading"><div class="rt-spin"></div></div>'; return; }
-    var rows=entries.map(function(it){ return {at:it.createdAt||0, h:walkRowHtml(it)}; })
-      .concat(behs.map(function(it){ return {at:it.createdAt||0, h:behRowHtml(it)}; }))
-      .concat(evts.map(function(it){ return {at:it.createdAt||0, h:evtRowHtml(it)}; }));
-    if(!rows.length){ E.list.innerHTML='<div class="wk-empty">'+esc(t(loadErr?"loadFailed":"historyEmpty"))+'</div>'; return; }
+    var own=histFilter==="mine";
+    var walkSrc=own?entries.filter(function(it){ return isMineData(dataOf(it)); }):entries;
+    var behSrc=own?behs.filter(function(it){ return isMineData(dataOf(it)); }):behs;
+    var evtSrc=own?evts.filter(function(it){ return isMineData(dataOf(it)); }):evts;
+    var rows=walkSrc.map(function(it){ return {at:it.createdAt||0, h:walkRowHtml(it)}; })
+      .concat(behSrc.map(function(it){ return {at:it.createdAt||0, h:behRowHtml(it)}; }))
+      .concat(evtSrc.map(function(it){ return {at:it.createdAt||0, h:evtRowHtml(it)}; }));
+    if(!rows.length){
+      E.list.innerHTML='<div class="wk-empty">'+esc(t(loadErr?"loadFailed":(own?"historyMineEmpty":"historyEmpty")))+'</div>';
+      return;
+    }
     rows.sort(function(a,b){ return b.at-a.at; });
     E.list.innerHTML=rows.map(function(r){ return r.h; }).join("");
   }
@@ -1019,7 +1048,8 @@
     if(!it) return;
     var d=dataOf(it), today=todayKey();
     sdk.data.create("events",{ day:today, time:hhmm15(), kinds:[d.type],
-      note:d.note||"", author:(sdk.user&&sdk.user.name)||"", src:"care" }).then(function(item){ if(item&&root){ evts.unshift(item); } });
+      note:d.note||"", author:(sdk.user&&sdk.user.name)||"",
+      authorUid:(sdk.user&&sdk.user.id)||null, src:"care" }).then(function(item){ if(item&&root){ evts.unshift(item); } });
     var nx=careAdvance(d.nextDue||today, d.cadence);
     if(nx){
       sdk.data.update("care", it.id, {nextDue:nx, lastDoneDay:today, lastNotified:null}).then(function(){
@@ -1086,7 +1116,7 @@
       var dateEl=node.querySelector("#wkCareDate"), nd=/^\d{4}-\d{2}-\d{2}$/.test(dateEl.value)?dateEl.value:todayKey();
       var payload={ type:node.querySelector("#wkCareType").value, nextDue:nd, cadence:{unit:unit,every:every},
         note:(node.querySelector("#wkCareNote").value||"").trim().slice(0,120),
-        author:(sdk.user&&sdk.user.name)||"" };
+        author:(sdk.user&&sdk.user.name)||"", authorUid:(sdk.user&&sdk.user.id)||null };
       var p = it ? sdk.data.update("care", it.id, payload).then(function(){ it.data=Object.assign({},it.data,payload); })
                  : sdk.data.create("care", payload).then(function(item){ if(item) careItems.push(item); });
       p.then(function(){ if(!root) return; sh.close(); careItems.sort(careSort); renderCal(); }).catch(function(){ sdk.ui.toast(t("saveFailed")); });
@@ -1101,7 +1131,7 @@
   function mount(rootEl, theSdk){
     sdk=theSdk; root=rootEl; E={};
     entries=[]; behs=[]; evts=[]; cmds=[]; iss=[]; evtTypes=[]; careItems=[]; meta={id:null,puppy:1};
-    step="dur"; cur=null; beh=null; ev=null; saving=false; calMonth=null; calPeriod="week"; loaded=false; loadErr=false;
+    step="dur"; cur=null; beh=null; ev=null; saving=false; calMonth=null; calPeriod="week"; histFilter="all"; loaded=false; loadErr=false;
     var title=sdk.i18n.t("tile.walk");
     var body=sdk.ui.frame({
       titleHtml:'<div class="wk-title"><span class="sic">'+PAW_IC+'</span> '+esc(title)+'</div><div class="wk-sub">'+esc(t("subtitle"))+'</div>',
@@ -1121,9 +1151,14 @@
     }).body;
     body.innerHTML='<div class="wk">'
       +'<div id="wkMain"></div>'
-      +'<div class="store-section">'+esc(t("historyTitle"))+'</div><div class="wk-list" id="wkList"></div>'
+      +'<div class="store-section">'+esc(t("historyTitle"))+'</div>'
+      +'<div class="wk-filter" id="wkFilter">'
+        +'<button type="button" data-wfilter="mine">'+esc(t("historyMine"))+'</button>'
+        +'<button type="button" data-wfilter="all">'+esc(t("historyAll"))+'</button>'
+      +'</div>'
+      +'<div class="wk-list" id="wkList"></div>'
     +'</div>';
-    E.main=root.querySelector("#wkMain"); E.list=root.querySelector("#wkList");
+    E.main=root.querySelector("#wkMain"); E.list=root.querySelector("#wkList"); E.filter=root.querySelector("#wkFilter");
     /* root (#module-view) — постоянный узел оболочки: листенер обязателен к снятию в unmount,
        иначе при повторных открытиях модуля обработчики накапливаются (двойные тосты/тоглы) */
     E.onRootClick=function(e){
@@ -1132,6 +1167,7 @@
       b=e.target.closest("[data-per]"); if(b){ calPeriod=b.getAttribute("data-per"); renderCalStats(); return; }
       b=e.target.closest("[data-mon]"); if(b){ calMonth=new Date(calMonth.getFullYear(), calMonth.getMonth()+parseInt(b.getAttribute("data-mon"),10), 1, 12); renderCalGrid(); return; }
       b=e.target.closest("[data-day]"); if(b){ openDayDetail(b.getAttribute("data-day")); return; }
+      b=e.target.closest("[data-wfilter]"); if(b){ histFilter=b.getAttribute("data-wfilter")==="mine"?"mine":"all"; renderFilter(); renderList(); return; }
       if(e.target.closest("#wkCareBtn")){ openCare(); return; }
       if(!sdk.can("edit")) {
         var row0=e.target.closest(".wk-row");

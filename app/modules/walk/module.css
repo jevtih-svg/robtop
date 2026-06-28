@@ -145,6 +145,10 @@
 .wk-stepb:active{transform:scale(.93)}
 
 /* история */
+[data-mod="walk"] .wk-filter{display:flex;gap:6px;margin:0 0 10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:4px}
+[data-mod="walk"] .wk-filter button{flex:1;min-width:0;border:none;background:none;color:#cfe0ff;font:inherit;font-weight:800;font-size:12px;padding:8px 10px;border-radius:999px;cursor:pointer;transition:var(--dur-fast)}
+[data-mod="walk"] .wk-filter button.on{color:#04212b;background:linear-gradient(180deg,#3df0c0,#19c7e0);box-shadow:0 0 14px -5px var(--cyan)}
+[data-mod="walk"] .wk-filter button:active{transform:scale(.97)}
 [data-mod="walk"] .wk-list{display:flex;flex-direction:column;gap:9px;margin-top:6px}
 [data-mod="walk"] .wk-row{display:flex;align-items:center;gap:11px;border-radius:14px;padding:10px 12px;cursor:pointer;
   background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)}
