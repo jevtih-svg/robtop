@@ -2,7 +2,7 @@
   "id": "find",
   "name": "Найти предмет",
   "version": "1.0.0",
-  "color": "#19e3ff",
+  "color": "#a64bff",
   "status": "active",
   "wide": false,
   "entry": "module.js",
@@ -12,5 +12,5 @@
   "server": false,
   "permissions": ["points", "camera"],
   "min_shell": "2.0.0",
-  "sort": 80
+  "sort": 130
 }

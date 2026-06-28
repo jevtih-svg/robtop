@@ -13,6 +13,6 @@
   "server": false,
   "permissions": ["points", "camera"],
   "min_shell": "2.0.0",
-  "sort": 130
+  "sort": 20
 
 }

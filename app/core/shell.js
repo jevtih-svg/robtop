@@ -65,23 +65,23 @@ window.RobTop = window.RobTop || {};
   /* ---- встроенный список модулей (демо/фолбэк). name — фолбэк, отображается tile.<id> ---- */
   var DEFAULTS=[
     {id:"wishlist",name:"Wishlist",color:"#ff3db0",status:"active",source:"native",server:true,sort:10,permissions:["camera"]},
-    {id:"reverse",name:"Words Backwards",color:"#ff7a3d",status:"active",source:"native",server:false,sort:20},
-    {id:"mood",name:"Mood of the Day",color:"#ffd23b",status:"active",source:"native",sort:30,permissions:["camera"]},
-    {id:"teeth",name:"Toothbrushing Timer",color:"#19e3ff",status:"active",source:"native",sort:40,permissions:["notifications","points"]},
-    {id:"guess",name:"Guess the Number",color:"#a64bff",status:"active",source:"native",sort:50,permissions:["points"]},
-    {id:"names",name:"Funny Names",color:"#38e8a0",status:"active",source:"native",sort:60},
-    {id:"days",name:"Day Counter",color:"#3b6bff",status:"active",source:"native",sort:70},
-    {id:"find",name:"Find the Object",color:"#19e3ff",status:"active",source:"native",sort:80,permissions:["points","camera"]},
-    {id:"museum",name:"Home Museum",color:"#c0a0ff",status:"soon",source:"native",sort:90},
-    {id:"rating",name:"Day Rating",color:"#ffd23b",status:"active",source:"native",sort:100,permissions:["camera"]},
-    {id:"friends",name:"Friends",color:"#c08bff",status:"active",source:"native",sort:105},
-    {id:"lost",name:"Lost & Found",color:"#2bf0c0",status:"active",source:"native",sort:110,permissions:["camera"]},
-    {id:"walk",name:"Dog Walk",color:"#38e8a0",status:"active",source:"native",sort:115,permissions:["points","camera"]},
-    {id:"snake",name:"Snake",color:"#19e3ff",status:"active",source:"native",sort:117,permissions:["points"]},
+    {id:"reverse",name:"Words Backwards",color:"#ff7a3d",status:"active",source:"native",server:false,sort:30},
+    {id:"mood",name:"Mood of the Day",color:"#ffd23b",status:"active",source:"native",sort:50,permissions:["camera"]},
+    {id:"teeth",name:"Toothbrushing Timer",color:"#19e3ff",status:"active",source:"native",sort:90,permissions:["notifications","points"]},
+    {id:"guess",name:"Guess the Number",color:"#3b6bff",status:"active",source:"native",sort:140,permissions:["points"]},
+    {id:"names",name:"Funny Names",color:"#ff8a1f",status:"active",source:"native",sort:40},
+    {id:"days",name:"Day Counter",color:"#3b6bff",status:"active",source:"native",sort:110},
+    {id:"find",name:"Find the Object",color:"#a64bff",status:"active",source:"native",sort:130,permissions:["points","camera"]},
+    {id:"museum",name:"Home Museum",color:"#8f86b8",status:"soon",source:"native",sort:160},
+    {id:"rating",name:"Day Rating",color:"#ffd23b",status:"active",source:"native",sort:60,permissions:["camera"]},
+    {id:"friends",name:"Friends",color:"#c08bff",status:"active",source:"native",sort:150},
+    {id:"lost",name:"Lost & Found",color:"#2bf0c0",status:"active",source:"native",sort:80,permissions:["camera"]},
+    {id:"walk",name:"Dog Walk",color:"#38e8a0",status:"active",source:"native",sort:70,permissions:["points","camera"]},
+    {id:"snake",name:"Snake",color:"#19e3ff",status:"active",source:"native",sort:100,permissions:["points"]},
     {id:"bank",name:"Piggy Bank",color:"#ff4d6d",status:"active",source:"native",wide:true,sort:120,permissions:["points"]},
-    {id:"shop",name:"Shop",color:"#ff2bd6",status:"active",source:"native",sort:130,permissions:["points","camera"]},
+    {id:"shop",name:"Shop",color:"#ff2bd6",status:"active",source:"native",sort:20,permissions:["points","camera"]},
     {id:"chat",name:"Chat",color:"#3b6bff",status:"active",source:"native",server:true,sort:135,permissions:["camera"]},
-    {id:"seabattle",name:"Sea Battle",color:"#3b6bff",status:"active",source:"native",sort:140}
+    {id:"seabattle",name:"Sea Battle",color:"#3b6bff",status:"active",source:"native",sort:120}
   ];
 
   /* ---- localStorage помощники (демо) ---- */
@@ -628,8 +628,8 @@ window.RobTop = window.RobTop || {};
       +(soon?'':jglEye(!!m.hidden))
       +'</button>';
   }
-  /* активные плитки всегда сверху; скрытые — за разделителем «Скрытые» (виден только в
-     режиме перестановки); группа «скоро» — ниже, за своим разделителем.
+  /* плитки идут в порядке реестра; soon остаются в той же сетке (замок + статус «скоро»),
+     чтобы будущие приложения могли занимать заданную позицию. Скрытые активные — за разделителем «Скрытые» (виден только в
      keepJgl=true (скрытие/показ плитки): режим перестановки НЕ сбрасывается —
      после innerHTML заново навешиваем классы (homeJgl.refresh). */
   var homeIntroDone=false, homeIntroT=null; // каскадный вход плиток — один раз за загрузку приложения
@@ -641,16 +641,14 @@ window.RobTop = window.RobTop || {};
     }
     var keep=keepJgl && homeJgl && homeJgl.active();
     if(homeJgl && !keep) homeJgl.exit(); // обычная перерисовка сбрасывает режим перестановки
-    var act=[], soon=[], hid=[];
+    var act=[], hid=[];
     RT._registry.forEach(function(m){
       if(m.id==="bank"||m.id==="chat") return; /* BANK/CHAT — вкладки нижнего меню, НЕ плитки (Ф4) */
-      if(m.status!=="active"){ soon.push(m); return; }
-      (m.hidden?hid:act).push(m);
+      if(m.status==="active" && m.hidden) hid.push(m);
+      else act.push(m);
     });
-    /* индекс каскада сквозной через группы: «скоро»-плитки продолжают волну, а не стартуют с нуля */
     appsEl.innerHTML=act.map(tileHtml).join("")
-      +(hid.length?'<div class="apps-sep hidsep">'+esc(t("reorder.hidden"))+'</div>'+hid.map(function(m,i){ return tileHtml(m,act.length+i); }).join(""):"")
-      +(soon.length?'<div class="apps-sep">'+esc(t("home.soonSep"))+'</div>'+soon.map(function(m,i){ return tileHtml(m,act.length+hid.length+i); }).join(""):"");
+      +(hid.length?'<div class="apps-sep hidsep">'+esc(t("reorder.hidden"))+'</div>'+hid.map(function(m,i){ return tileHtml(m,act.length+i); }).join(""):"");
     homeHud();
     if(keep) homeJgl.refresh();
     /* .intro живёт только на первом рендере: перерисовки (sync/язык/реордер) сетку не переигрывают */

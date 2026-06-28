@@ -5,6 +5,11 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.28.6", d:"2026-06-28", t:{
+    en:"The app tiles have new colors and a cleaner order on the home screen.",
+    ru:"Плитки приложений получили новые цвета и новый порядок на главном экране.",
+    lv:"Lietotnu flizes sakuma ekrana tagad ir jaunas krasas un kartiba.",
+    de:"Die App-Kacheln haben neue Farben und eine klarere Reihenfolge auf dem Startbildschirm." } },
   { v:"2026.06.28.5", d:"2026-06-28", t:{
     en:"New app — Lost & Found: snap a photo of something you found and save it as a card the whole family can see.",
     ru:"Новое приложение — «Бюро находок»: сфотографируй находку и сохрани её карточкой, которую видит вся семья.",

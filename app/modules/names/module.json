@@ -2,7 +2,7 @@
   "id": "names",
   "name": "Смешные имена",
   "version": "1.0.0",
-  "color": "#38e8a0",
+  "color": "#ff8a1f",
   "status": "active",
   "wide": false,
   "entry": "module.js",
@@ -12,5 +12,5 @@
   "server": false,
   "permissions": [],
   "min_shell": "2.0.0",
-  "sort": 60
+  "sort": 40
 }

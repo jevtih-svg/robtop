@@ -2,7 +2,7 @@
   "id": "guess",
   "name": "Угадай число",
   "version": "1.0.0",
-  "color": "#a64bff",
+  "color": "#3b6bff",
   "status": "active",
   "wide": false,
   "entry": "module.js",
@@ -12,5 +12,5 @@
   "server": false,
   "permissions": ["points"],
   "min_shell": "2.0.0",
-  "sort": 50
+  "sort": 140
 }

@@ -13,5 +13,5 @@
   "server": false,
   "permissions": ["camera"],
   "min_shell": "2.0.0",
-  "sort": 110
+  "sort": 80
 }
