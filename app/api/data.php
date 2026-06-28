@@ -73,7 +73,13 @@ $man = (!empty($mod['manifest'])) ? json_decode($mod['manifest'], true) : [];
 $familyColls = (is_array($man) && !empty($man['familyCollections']) && is_array($man['familyCollections']))
     ? $man['familyCollections'] : [];
 if ((is_array($man) && !empty($man['familyPool'])) || in_array($coll, $familyColls, true)) {
-    $uid = rt_family_pool_uid($db, $uid);
+    $poolBaseUid = $uid;
+    if ($role === 'parent' && isset($body['child']) && (int)$body['child'] > 0) {
+        $cid = (int)$body['child'];
+        if (!rt_can_manage_child($db, $uid, $cid)) rt_json(['error' => 'forbidden child'], 403);
+        $poolBaseUid = $cid;
+    }
+    $uid = rt_family_pool_uid($db, $poolBaseUid);
 } elseif (in_array($coll, $familyColls, true)) {
     $uid = rt_family_pool_uid($db, $uid);   // эта коллекция — общесемейная (каталог), остальные скоупятся ниже
 } elseif ($role === 'parent') {
@@ -91,7 +97,7 @@ if ((is_array($man) && !empty($man['familyPool'])) || in_array($coll, $familyCol
     $mediaAllowedUids = array_values(array_unique(array_merge(
         $mediaAllowedUids,
         rt_family_children_uids($db, $actorUid),
-        rt_child_parents($db, $actorUid)
+        rt_child_parents($db, $uid)
     )));
 }
 

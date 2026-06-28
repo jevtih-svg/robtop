@@ -343,10 +343,16 @@
   }
 
   /* =================== данные =================== */
+  function listOrEmpty(coll){
+    return sdk.data.list(coll).catch(function(){
+      if(window.console&&console.warn) console.warn("RobTop walk: failed to load "+coll);
+      return [];
+    });
+  }
   function load(){
     Promise.all([
-      sdk.data.list("entries"), sdk.data.list("commands"), sdk.data.list("issues"), sdk.data.list("meta"),
-      sdk.data.list("behavior"), sdk.data.list("events"), sdk.data.list("eventTypes"), sdk.data.list("care")
+      sdk.data.list("entries"), listOrEmpty("commands"), listOrEmpty("issues"), listOrEmpty("meta"),
+      listOrEmpty("behavior"), listOrEmpty("events"), listOrEmpty("eventTypes"), listOrEmpty("care")
     ]).then(function(rr){
       if(!root) return;
       loaded=true; loadErr=false;
