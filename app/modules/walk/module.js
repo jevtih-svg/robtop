@@ -44,7 +44,7 @@
       saveFailed:"Couldn't save",
       historyTitle:"Walk history", historyMine:"My walks", historyAll:"All walks",
       historyEmpty:"No walks yet. Tap the minutes above!", historyMineEmpty:"You have no walks yet.", loadFailed:"Couldn't load walks",
-      noRate:"Not rated yet", rateBtn:"Rate it",
+      noRate:"Not rated yet", rateBtn:"Rate it", editWalk:"Edit walk",
       byAuthor:"Logged by {name}",
       setTitle:"Walk settings",
       puppyLbl:"Puppy mode", puppyHint:"Show the behaviour section",
@@ -90,7 +90,7 @@
       saveFailed:"Не удалось сохранить",
       historyTitle:"История прогулок", historyMine:"Мои прогулки", historyAll:"Все прогулки",
       historyEmpty:"Прогулок пока нет. Нажми на минуты сверху!", historyMineEmpty:"У тебя пока нет прогулок.", loadFailed:"Не удалось загрузить прогулки",
-      noRate:"Пока без оценки", rateBtn:"Оценить",
+      noRate:"Пока без оценки", rateBtn:"Оценить", editWalk:"Изменить прогулку",
       byAuthor:"Записал(а): {name}",
       setTitle:"Настройки прогулки",
       puppyLbl:"Режим «Щенок»", puppyHint:"Показывать раздел про поведение",
@@ -136,7 +136,7 @@
       saveFailed:"Neizdevās saglabāt",
       historyTitle:"Pastaigu vesture", historyMine:"Manas pastaigas", historyAll:"Visas pastaigas",
       historyEmpty:"Pastaigu vēl nav. Pieskaries minūtēm augšā!", historyMineEmpty:"Tev vel nav pastaigu.", loadFailed:"Neizdevās ielādēt pastaigas",
-      noRate:"Vēl nav novērtēta", rateBtn:"Novērtēt",
+      noRate:"Vēl nav novērtēta", rateBtn:"Novērtēt", editWalk:"Labot pastaigu",
       byAuthor:"Pierakstīja: {name}",
       setTitle:"Pastaigas iestatījumi",
       puppyLbl:"Kucēna režīms", puppyHint:"Rādīt uzvedības sadaļu",
@@ -182,7 +182,7 @@
       saveFailed:"Konnte nicht gespeichert werden",
       historyTitle:"Spaziergangsverlauf", historyMine:"Meine Spaziergaenge", historyAll:"Alle Spaziergaenge",
       historyEmpty:"Noch keine Spaziergaenge. Tippe oben auf die Minuten!", historyMineEmpty:"Du hast noch keine Spaziergaenge.", loadFailed:"Spaziergaenge konnten nicht geladen werden",
-      noRate:"Noch nicht bewertet", rateBtn:"Bewerten",
+      noRate:"Noch nicht bewertet", rateBtn:"Bewerten", editWalk:"Spaziergang bearbeiten",
       byAuthor:"Eingetragen von {name}",
       setTitle:"Spaziergang-Einstellungen",
       puppyLbl:"Welpenmodus", puppyHint:"Verhaltensbereich anzeigen",
@@ -536,6 +536,10 @@
     var h='<div class="wk-card"><h3 class="wk-card-title">'+esc(t("dtTitle"))+'</h3>'
       +'<p class="wk-hint">'+esc(t("dtHint"))+'</p>'
       +facesHtml("mini")
+      +(cur&&cur.editId?'<div class="wk-sect">'+esc(t("durTitle"))+'</div>'
+        +'<div class="wk-step"><button type="button" class="wk-stepb" data-edur="-5">−</button>'
+        +'<b id="wkEditDur">'+esc(String(cur.duration||0))+'</b><span>'+esc(t("minWord"))+'</span>'
+        +'<button type="button" class="wk-stepb" data-edur="5">+</button></div>':'')
       +'<div class="wk-sect">'+esc(t("timeLbl"))+'</div>'
       +'<input type="time" class="wk-time" id="wkTime" step="900" value="'+esc(cur.time)+'">'
       +'<div class="wk-sect">'+esc(t("cmdTitle"))+'</div>'+chipsHtml(cmdOrder(), cur.sel, "cmd");
@@ -555,6 +559,12 @@
     if(!E.main) return;
     var btns=E.main.querySelectorAll(".wk-faces [data-rate]");
     for(var i=0;i<btns.length;i++) btns[i].classList.toggle("on", btns[i].getAttribute("data-rate")===(cur&&cur.rating));
+  }
+  function editDuration(delta){
+    if(!cur) return;
+    cur.duration=Math.max(1, Math.min(999, (parseInt(cur.duration,10)||0)+delta));
+    var el=E.main&&E.main.querySelector("#wkEditDur");
+    if(el) el.textContent=String(cur.duration);
   }
   function refreshPhotos(){
     if(!E.main) return;
@@ -686,12 +696,12 @@
     if(!cur||saving) return; saving=true;
     var commands=selectedOf(cur.sel, cmdOrder()), issues=meta.puppy?selectedOf(cur.selIss, issOrder()):[];
     cur.time=timeOf("#wkTime"); // время прогулки с экрана деталей (деф. — текущее)
-    if(cur.editId!=null){ // дооценка записи «Позже»: очки НЕ начисляются повторно
-      var patch={ rating:cur.rating, commands:commands, issues:issues, photos:cur.photos.slice(), time:cur.time };
+    if(cur.editId!=null){ // редактирование существующей записи: очки НЕ начисляются/пересчитываются повторно
+      var patch={ duration:cur.duration, rating:cur.rating, commands:commands, issues:issues, photos:cur.photos.slice(), time:cur.time };
       sdk.data.update("entries", cur.editId, patch).then(function(){
         saving=false; if(!root) return;
         for(var i=0;i<entries.length;i++){ if(String(entries[i].id)===String(cur.editId)){ entries[i].data=Object.assign({},entries[i].data,patch); break; } }
-        sdk.events.track("walk_rated",{rating:cur.rating, commands:commands.length, issues:issues.length, photos:cur.photos.length});
+        sdk.events.track("walk_edited",{rating:cur.rating, duration:cur.duration, commands:commands.length, issues:issues.length, photos:cur.photos.length});
         celebrate(cur.rating); resetToStart(t("savedToast"));
       }).catch(function(){ saving=false; sdk.ui.toast(t("saveFailed")); });
       return;
@@ -893,6 +903,18 @@
       }).catch(function(){ sdk.ui.toast(t("saveFailed")); });
     });
   }
+  function editWalkFromItem(it, sh, toDetails){
+    if(!it) return;
+    var d=dataOf(it);
+    if(sh) sh.close();
+    cur=blankCur(); cur.editId=it.id; cur.duration=parseInt(d.duration,10)||0; cur.rating=rateOf(it);
+    if(/^\d{2}:\d{2}$/.test(String(d.time||""))) cur.time=r15(d.time); // время записи — в поле деталей (шаг 15 мин)
+    (d.commands||[]).forEach(function(cid){ cur.sel[cid]=1; });
+    (d.issues||[]).forEach(function(iid){ cur.selIss[iid]=1; });
+    cur.photos=(d.photos||[]).slice();
+    step=toDetails?"details":"rate"; renderMain();
+    window.scrollTo(0,0);
+  }
   function openDetail(id){
     var it=null; for(var i=0;i<entries.length;i++){ if(String(entries[i].id)===String(id)){ it=entries[i]; break; } }
     if(!it) return;
@@ -918,27 +940,20 @@
       h+='</div>';
     }
     if(d.author) h+='<p class="wk-author">'+esc(t("byAuthor",{name:d.author}))+'</p>';
-    var isParent=sdk.role==="parent"||sdk.isDemo();
     h+='<div class="sheet-actions" style="margin-top:14px">'
-      +(!r&&sdk.can("edit")?'<button class="btn btn-primary" id="wkRateNow">'+esc(t("rateBtn"))+'</button>':'')
-      +(isParent?'<button class="btn btn-danger" id="wkDelWalk">'+esc(t("delWalk"))+'</button>':'')
+      +(sdk.can("edit")?'<button class="btn btn-primary" id="wkEditWalk">'+esc(t("editWalk"))+'</button>':'')
+      +(!r&&sdk.can("edit")?'<button class="btn btn-cancel" id="wkRateNow">'+esc(t("rateBtn"))+'</button>':'')
+      +(sdk.can("edit")?'<button class="btn btn-danger" id="wkDelWalk">'+esc(t("delWalk"))+'</button>':'')
       +'<button class="btn btn-cancel" data-close style="flex:1">'+esc(t("common.close"))+'</button></div>';
     node.innerHTML=h;
     var sh=sdk.ui.sheet(node);
     node.querySelector("[data-close]").addEventListener("click",sh.close);
     var del=node.querySelector("#wkDelWalk");
     if(del) del.addEventListener("click",function(){ deleteWalk(it.id, sh); });
+    var ed=node.querySelector("#wkEditWalk");
+    if(ed) ed.addEventListener("click",function(){ editWalkFromItem(it, sh, !!r); });
     var rn=node.querySelector("#wkRateNow");
-    if(rn) rn.addEventListener("click",function(){
-      sh.close();
-      cur=blankCur(); cur.editId=it.id; cur.duration=parseInt(d.duration,10)||0;
-      if(/^\d{2}:\d{2}$/.test(String(d.time||""))) cur.time=r15(d.time); // время записи — в поле деталей (шаг 15 мин)
-      (d.commands||[]).forEach(function(cid){ cur.sel[cid]=1; });
-      (d.issues||[]).forEach(function(iid){ cur.selIss[iid]=1; });
-      cur.photos=(d.photos||[]).slice();
-      step="rate"; renderMain();
-      window.scrollTo(0,0);
-    });
+    if(rn) rn.addEventListener("click",function(){ editWalkFromItem(it, sh, false); });
   }
 
   /* =================== календарь и статистика =================== */
@@ -1189,6 +1204,7 @@
       b=e.target.closest("[data-evt]"); if(b){ var ek=b.getAttribute("data-evt"); if(ev){ ev.sel[ek]=ev.sel[ek]?0:1; b.classList.toggle("on",!!ev.sel[ek]); sdk.ui.haptics(4); } return; }
       if(e.target.closest("#wkAddEvt")){ openOwn("evt"); return; }
       b=e.target.closest("[data-rate]"); if(b){ pickRate(b.getAttribute("data-rate")); return; }
+      b=e.target.closest("[data-edur]"); if(b){ editDuration(parseInt(b.getAttribute("data-edur"),10)||0); return; }
       if(e.target.closest("#wkLater")){ saveLater(); return; }
       b=e.target.closest("[data-cmd]"); if(b){ var c=b.getAttribute("data-cmd"); if(cur){ cur.sel[c]=cur.sel[c]?0:1; b.classList.toggle("on",!!cur.sel[c]); sdk.ui.haptics(4); } return; }
       b=e.target.closest("[data-iss]"); if(b){ var ii=b.getAttribute("data-iss"), mp=issMap(); mp[ii]=mp[ii]?0:1; b.classList.toggle("on",!!mp[ii]); sdk.ui.haptics(4); return; }
