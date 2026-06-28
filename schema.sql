@@ -255,7 +255,7 @@ INSERT INTO modules (id, name, version, manifest, source, trusted, server, enabl
  ('museum','Домашний музей','1.0.0','{"color":"#c0a0ff","status":"soon"}','native',1,0,1,90),
  ('rating','Оценка дня','1.0.0','{"color":"#ffd23b","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]},"permissions":["camera"]}','native',1,0,1,100),
  ('friends','Друзья','1.0.0','{"color":"#c08bff","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]}}','native',1,0,1,105),
- ('lost','Бюро находок','1.0.0','{"color":"#2bf0c0","status":"soon"}','native',1,0,1,110),
+ ('lost','Бюро находок','1.0.0','{"color":"#2bf0c0","status":"active","wide":false,"familyPool":true,"roles":{"edit":["child","parent"],"read":["child","parent"]},"permissions":["camera"]}','native',1,0,1,110),
  ('walk','Прогулка','1.2.0','{"color":"#38e8a0","status":"active","wide":false,"familyPool":true,"roles":{"edit":["child","parent"],"read":["child","parent"]},"permissions":["points","camera"]}','native',1,0,1,115),
  ('snake','Змейка','1.0.0','{"color":"#19e3ff","status":"active","wide":false,"roles":{"edit":["child"],"read":["child","parent"]},"permissions":["points"]}','native',1,0,1,117),
  ('bank','Копилка','1.0.0','{"color":"#ff4d6d","status":"active","wide":true,"roles":{"edit":["child","parent"],"read":["child","parent"]},"permissions":["points"]}','native',1,0,1,120),

@@ -1,0 +1,17 @@
+{
+  "id": "lost",
+  "name": "Бюро находок",
+  "version": "1.0.0",
+  "color": "#2bf0c0",
+  "status": "active",
+  "wide": false,
+  "entry": "module.js",
+  "styles": "module.css",
+  "familyPool": true,
+  "roles": { "edit": ["child", "parent"], "read": ["child", "parent"] },
+  "data": { "store": "generic", "collections": ["finds"] },
+  "server": false,
+  "permissions": ["camera"],
+  "min_shell": "2.0.0",
+  "sort": 110
+}

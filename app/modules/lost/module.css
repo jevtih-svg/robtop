@@ -1,0 +1,86 @@
+/* RobTop — модуль «Бюро находок» (lost). Скоуп [data-mod="lost"], классы lf-*. Акцент плитки — зелёный var(--green).
+   Список крупных карточек-находок + вертикальный мастер из 5 шагов (фото → название → где → кто → описание).
+   Только токены ui.css, без жёстких цветов/шрифтов (темизация — КОНТЕКСТ §8). */
+
+/* локальный акцент модуля: плитка lost = #2bf0c0 = var(--green) */
+#module-view[data-mod="lost"]{ --lf:var(--green); --lf-soft:var(--green-soft); }
+
+/* guardrails: шапку строит общая рамка (.rt-hdr/.rt-body); здесь — только оформление заголовка */
+[data-mod="lost"] .lf-title{font-family:var(--font-display);font-size:24px;color:#fff;display:flex;align-items:center;gap:8px;
+  text-shadow:0 0 12px color-mix(in srgb,var(--lf) 75%,transparent)}
+[data-mod="lost"] .lf-title .sic{width:24px;height:24px;color:var(--lf);flex:none}
+[data-mod="lost"] .lf-title .sic svg{width:100%;height:100%;display:block;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--lf) 80%,transparent))}
+[data-mod="lost"] .lf-sub{margin:0;color:var(--muted);font-weight:600;font-size:13px}
+
+/* ---------- пустой экран ---------- */
+[data-mod="lost"] .lf-empty{margin-top:34px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;padding:24px 16px}
+[data-mod="lost"] .lf-empty-emo{font-size:54px;line-height:1;margin-bottom:6px;filter:drop-shadow(0 0 14px color-mix(in srgb,var(--lf) 45%,transparent))}
+[data-mod="lost"] .lf-empty-title{font-family:var(--font-display);font-size:20px;color:var(--lf-soft);margin:0}
+[data-mod="lost"] .lf-empty-text{color:var(--muted-dim);font-weight:600;font-size:14px;margin:0 0 12px}
+
+/* ---------- список находок (крупные карточки) ---------- */
+[data-mod="lost"] .lf-list{display:grid;gap:14px;margin-top:14px}
+[data-mod="lost"] .lf-card{border-radius:20px;overflow:hidden;cursor:pointer;background:rgba(var(--panel-rgb),.55);
+  border:1.5px solid var(--line-strong);transition:transform var(--dur-fast)}
+[data-mod="lost"] .lf-card:active{transform:scale(.985)}
+[data-mod="lost"] .lf-card-photo{height:190px;background-size:cover;background-position:center;background-color:rgba(0,0,0,.25)}
+[data-mod="lost"] .lf-card-body{padding:13px 15px 15px}
+[data-mod="lost"] .lf-card-title{font-family:var(--font-display);font-size:19px;color:#fff;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+[data-mod="lost"] .lf-card-meta{display:flex;justify-content:space-between;gap:10px;margin-top:5px;color:var(--muted-2);font-weight:600;font-size:13px}
+[data-mod="lost"] .lf-card-author{color:var(--lf-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+[data-mod="lost"] .lf-card-date{flex:none;color:var(--muted-dim)}
+
+/* ---------- мастер (один вопрос на экран) ---------- */
+[data-mod="lost"] .lf-wiz{margin-top:8px;display:flex;flex-direction:column;min-height:60vh}
+[data-mod="lost"] .lf-progress{display:flex;gap:6px;justify-content:center;margin:6px 0 22px}
+[data-mod="lost"] .lf-dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.16)}
+[data-mod="lost"] .lf-dot.on{background:var(--lf);box-shadow:0 0 8px color-mix(in srgb,var(--lf) 70%,transparent)}
+[data-mod="lost"] .lf-step-q{font-family:var(--font-display);font-size:23px;color:#fff;text-align:center;margin:0 0 6px}
+[data-mod="lost"] .lf-required{text-align:center;color:var(--lf-soft);font-weight:700;font-size:13px;margin:0 0 18px}
+[data-mod="lost"] .lf-optional{text-align:center;color:var(--muted-dim);font-weight:600;font-size:13px;margin:0 0 18px}
+
+/* фото-шаг: крупная плитка камеры */
+[data-mod="lost"] .lf-photo{width:100%;height:230px;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  cursor:pointer;background:rgba(var(--panel-rgb),.5);border:2px dashed color-mix(in srgb,var(--lf) 55%,transparent);
+  color:var(--lf-soft);font-weight:700;font-size:16px;background-size:cover;background-position:center;text-align:center;transition:transform var(--dur-fast)}
+[data-mod="lost"] .lf-photo:active{transform:scale(.99)}
+[data-mod="lost"] .lf-photo.has{border-style:solid;border-color:transparent}
+[data-mod="lost"] .lf-photo.has > .lf-photo-cap{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);
+  background:rgba(0,0,0,.55);padding:7px 14px;border-radius:999px;font-size:14px;color:#fff}
+[data-mod="lost"] .lf-photo.has{position:relative}
+[data-mod="lost"] .lf-photo.uploading{opacity:.7}
+[data-mod="lost"] .lf-photo .pic{width:46px;height:46px;color:var(--lf)}
+[data-mod="lost"] .lf-photo .pic svg{width:100%;height:100%}
+
+/* поля ввода */
+[data-mod="lost"] .lf-input,[data-mod="lost"] .lf-ta{width:100%;border-radius:16px;padding:15px 16px;font-size:17px;font-family:var(--font-body);
+  background:rgba(var(--panel-rgb),.6);border:1.5px solid var(--line-strong);color:var(--ink);outline:none;transition:border-color var(--dur-fast)}
+[data-mod="lost"] .lf-input:focus,[data-mod="lost"] .lf-ta:focus{border-color:var(--lf)}
+[data-mod="lost"] .lf-ta{min-height:120px;resize:vertical;line-height:1.45}
+
+/* большие кнопки шага */
+[data-mod="lost"] .lf-step-actions{display:flex;gap:10px;margin-top:auto;padding-top:24px}
+[data-mod="lost"] .lf-btn{flex:1;border:none;border-radius:16px;padding:16px 12px;cursor:pointer;font-family:var(--font-display);font-size:17px;
+  background:var(--lf);color:var(--on-bright);box-shadow:0 0 22px -6px var(--lf);transition:transform var(--dur-fast),opacity var(--dur-fast)}
+[data-mod="lost"] .lf-btn:active{transform:scale(.97)}
+[data-mod="lost"] .lf-btn[disabled]{opacity:.45;box-shadow:none;cursor:default}
+[data-mod="lost"] .lf-btn-skip{flex:0 0 40%;border-radius:16px;padding:16px 12px;cursor:pointer;font-weight:800;font-size:16px;
+  background:rgba(255,255,255,.06);color:var(--muted-2);border:1.5px solid var(--line-strong)}
+[data-mod="lost"] .lf-btn-skip:active{transform:scale(.97)}
+
+/* ---------- экран «сохранено» ---------- */
+[data-mod="lost"] .lf-success{margin-top:40px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 16px}
+[data-mod="lost"] .lf-success-emo{font-size:60px;line-height:1;filter:drop-shadow(0 0 16px color-mix(in srgb,var(--lf) 55%,transparent))}
+[data-mod="lost"] .lf-success-title{font-family:var(--font-display);font-size:22px;color:var(--lf-soft);margin:0 0 6px}
+[data-mod="lost"] .lf-success-actions{display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px}
+[data-mod="lost"] .lf-success-actions .lf-btn,[data-mod="lost"] .lf-success-actions .lf-btn-skip{flex:none;width:100%}
+
+/* ---------- просмотр карточки (шторка) ---------- */
+.lf-detail h2{font-family:var(--font-display);font-size:22px;color:#fff;margin:0 0 12px;text-align:center}
+.lf-detail .lf-bigphoto{border-radius:18px;height:220px;background-size:cover;background-position:center;background-color:rgba(0,0,0,.25);margin-bottom:14px}
+.lf-detail .lf-field{margin-bottom:12px}
+.lf-detail .lf-field-lbl{display:block;color:var(--muted-dim);font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.lf-detail .lf-field-val{color:var(--ink);font-weight:600;font-size:16px;line-height:1.4;white-space:pre-wrap;word-break:break-word}
+.lf-detail .lf-detail-actions{display:flex;gap:10px;margin-top:18px}
+.lf-detail .lf-detail-actions .btn{display:flex;align-items:center;justify-content:center;gap:7px}
+.lf-detail .lf-detail-actions .btn svg{width:18px;height:18px}

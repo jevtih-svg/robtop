@@ -320,6 +320,7 @@ window.RobTop = window.RobTop || {};
       case "teeth":    return e.type==="created" && coll==="sessions";
       case "rating":   return e.type==="day_rated";
       case "mood":     return e.type==="mood_set";
+      case "lost":     return e.type==="find_added";
       case "guess":    return e.type==="round_played";
       case "reverse":  return e.type==="created" && coll==="history";
       case "seabattle":return e.type==="battle_finished";

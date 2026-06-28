@@ -75,7 +75,7 @@ window.RobTop = window.RobTop || {};
     {id:"museum",name:"Home Museum",color:"#c0a0ff",status:"soon",source:"native",sort:90},
     {id:"rating",name:"Day Rating",color:"#ffd23b",status:"active",source:"native",sort:100,permissions:["camera"]},
     {id:"friends",name:"Friends",color:"#c08bff",status:"active",source:"native",sort:105},
-    {id:"lost",name:"Lost & Found",color:"#2bf0c0",status:"soon",source:"native",sort:110},
+    {id:"lost",name:"Lost & Found",color:"#2bf0c0",status:"active",source:"native",sort:110,permissions:["camera"]},
     {id:"walk",name:"Dog Walk",color:"#38e8a0",status:"active",source:"native",sort:115,permissions:["points","camera"]},
     {id:"snake",name:"Snake",color:"#19e3ff",status:"active",source:"native",sort:117,permissions:["points"]},
     {id:"bank",name:"Piggy Bank",color:"#ff4d6d",status:"active",source:"native",wide:true,sort:120,permissions:["points"]},
