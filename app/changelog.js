@@ -5,6 +5,11 @@
    Тексты — одно короткое предложение, понятное родителю/ребёнку. Технические
    фиксы можно пропускать или объединять. Кодировка файла — UTF-8. */
 window.RT_CHANGELOG=[
+  { v:"2026.06.28.7", d:"2026-06-28", t:{
+    en:"RobTop now shows a small BETA celebration next to the app version in Settings.",
+    ru:"В настройках рядом с версией RobTop теперь есть маленькая праздничная метка BETA.",
+    lv:"Iestatijumos pie RobTop versijas tagad ir neliela BETA svetku atzime.",
+    de:"In den Einstellungen steht neben der RobTop-Version jetzt eine kleine BETA-Feiermarke." } },
   { v:"2026.06.28.6", d:"2026-06-28", t:{
     en:"The app tiles have new colors and a cleaner order on the home screen.",
     ru:"Плитки приложений получили новые цвета и новый порядок на главном экране.",

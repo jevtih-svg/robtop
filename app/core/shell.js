@@ -1385,7 +1385,7 @@ window.RobTop = window.RobTop || {};
       +'<div class="lang-seg">'+langBtns+'</div>'
       +themeSectionHtml()
       +signOutHtml()
-      +'<div class="set-ver">RobTop '+esc(window.RT_VER?("v"+window.RT_VER):"")+'</div>'
+      +'<div class="set-ver"><span>RobTop '+esc(window.RT_VER?("v"+window.RT_VER):"")+'</span><span class="beta-mark" aria-label="Beta version"><i aria-hidden="true"></i>BETA</span></div>'
       +'</div>';
     settingsBody=settingsView.querySelector("#settingsBody");
     settingsView.querySelector("#settingsBack").onclick=closeSettings;

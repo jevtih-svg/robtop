@@ -360,7 +360,16 @@ body.demo .demo-badge{display:block}
 .appver{position:fixed;left:calc(10px + var(--safe-left));bottom:calc(4px + var(--safe-bottom));z-index:1;
   font-family:'Rubik',sans-serif;font-size:9px;font-weight:600;letter-spacing:.3px;color:rgba(147,166,207,.26);
   pointer-events:none;user-select:none}
-.set-ver{margin-top:18px;text-align:center;font-size:11px;font-weight:600;letter-spacing:.4px;color:rgba(147,166,207,.55)}
+.set-ver{margin-top:18px;display:flex;align-items:center;justify-content:center;gap:8px;
+  font-size:11px;font-weight:600;letter-spacing:.4px;color:rgba(147,166,207,.55)}
+.beta-mark{position:relative;display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:999px;
+  font-size:9px;font-weight:900;letter-spacing:.8px;color:#fff;background:linear-gradient(135deg,#ff8a1f,#ffd23b 55%,#ff3db0);
+  border:1px solid rgba(255,255,255,.42);box-shadow:0 0 14px rgba(255,138,31,.35),0 0 20px rgba(255,61,176,.16);
+  text-shadow:0 1px 4px rgba(20,8,30,.32)}
+.beta-mark i{width:4px;height:4px;border-radius:50%;background:#fff;box-shadow:-6px -4px 0 #19e3ff,6px -5px 0 #ffd23b,8px 4px 0 #ff3db0}
+.beta-mark:before,.beta-mark:after{content:"";position:absolute;width:3px;height:3px;border-radius:50%;background:#19e3ff;opacity:.9}
+.beta-mark:before{left:-5px;top:-3px;box-shadow:5px -5px 0 #ffd23b,11px -2px 0 #ff3db0}
+.beta-mark:after{right:-5px;bottom:-3px;box-shadow:-5px 5px 0 #ffd23b,-11px 2px 0 #19e3ff}
 .sheet h2{font-family:var(--font-display);font-weight:400;font-size:21px;margin:0 0 14px;text-align:center;color:#fff;
   text-shadow:0 0 12px color-mix(in srgb,var(--accent) 60%, transparent)}
 .field{margin-top:14px}
